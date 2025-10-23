@@ -49,7 +49,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   }
 
   return (
-    <Sheet modal={true}>
+    <Sheet>
       <SheetTrigger asChild>
         {trigger || (
           <Button variant="outline" size="lg" className="rounded-full bg-transparent font-semibold gap-2">
