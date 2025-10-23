@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '@lumiere/shared/components/ui/button';
+import { Input } from '@lumiere/shared/components/ui/input';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Lock, AlertCircle } from 'lucide-react';
 

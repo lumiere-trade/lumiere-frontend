@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
 import { Bot, TrendingUp, Zap } from "lucide-react"
 import { useState } from "react"
 import { AdminLoginWall } from "@/components/admin-login-wall"

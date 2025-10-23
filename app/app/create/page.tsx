@@ -4,11 +4,11 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { NavigationHeader } from "@/components/navigation-header"
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Card } from '@lumiere/shared/components/ui/card'
+import { Input } from '@lumiere/shared/components/ui/input'
+import { Dialog, DialogContent } from '@lumiere/shared/components/ui/dialog'
+import { NavigationHeader } from '@lumiere/shared/components/navigation-header'
 import {
   Sparkles,
   Send,

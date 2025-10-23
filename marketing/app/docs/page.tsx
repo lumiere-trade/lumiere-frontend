@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Input } from "@/components/ui/input"
+import { Input } from '@lumiere/shared/components/ui/input'
 import { Search, ExternalLink } from "lucide-react"
 import type { JSX } from "react/jsx-runtime"
 

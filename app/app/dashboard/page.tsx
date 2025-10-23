@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { NavigationHeader } from "@/components/navigation-header"
+import { Card } from '@lumiere/shared/components/ui/card'
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Input } from '@lumiere/shared/components/ui/input'
+import { NavigationHeader } from '@lumiere/shared/components/navigation-header'
 import { WalletConnectionModal } from "@/components/wallet/WalletConnectionModal"
 import { AdminLoginWall } from "@/components/AdminLoginWall"
 import { useAuth } from "@/hooks/use-auth"

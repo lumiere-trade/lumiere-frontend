@@ -2,10 +2,10 @@
 
 import { cva, type VariantProps } from 'class-variance-authority'
 
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@lumiere/shared/lib/utils'
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Input } from '@lumiere/shared/components/ui/input'
+import { Textarea } from '@lumiere/shared/components/ui/textarea'
 
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
   return (

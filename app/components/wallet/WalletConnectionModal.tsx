@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Checkbox } from '@lumiere/shared/components/ui/checkbox'
+import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
 import { X, Settings, ChevronDown, Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useWallet } from "@/hooks/use-wallet"

@@ -1,8 +1,8 @@
 "use client"
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@lumiere/shared/components/ui/sheet'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@lumiere/shared/components/ui/tabs'
+import { Button } from '@lumiere/shared/components/ui/button'
 import { Wallet, Copy, DollarSign } from "lucide-react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useAuth } from "@/hooks/use-auth"
