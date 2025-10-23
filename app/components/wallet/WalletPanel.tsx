@@ -147,7 +147,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                           ${mockData.walletFunds.usdc.value.toFixed(2)}
                         </div>
                       </div>
-                      <Button size="sm" className="rounded-full px-6" onClick={handleDeposit">
+                      <Button size="sm" className="rounded-full px-6" onClick={handleDeposit}>
                         Deposit
                       </Button>
                     </div>
