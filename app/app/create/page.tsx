@@ -8,7 +8,7 @@ import { Button } from '@lumiere/shared/components/ui/button'
 import { Card } from '@lumiere/shared/components/ui/card'
 import { Input } from '@lumiere/shared/components/ui/input'
 import { Dialog, DialogContent } from '@lumiere/shared/components/ui/dialog'
-import { NavigationHeader } from '@lumiere/shared/components/navigation-header'
+import { NavigationHeader } from '@/components/NavigationHeader'
 import {
   Sparkles,
   Send,

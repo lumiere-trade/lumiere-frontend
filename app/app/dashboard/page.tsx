@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card } from '@lumiere/shared/components/ui/card'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Input } from '@lumiere/shared/components/ui/input'
-import { NavigationHeader } from '@lumiere/shared/components/navigation-header'
+import { NavigationHeader } from '@/components/NavigationHeader'
 import { WalletConnectionModal } from "@/components/wallet/WalletConnectionModal"
 import { AdminLoginWall } from "@/components/AdminLoginWall"
 import { useAuth } from "@/hooks/use-auth"
