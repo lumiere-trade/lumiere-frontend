@@ -59,8 +59,8 @@ function SheetContent({
         data-slot="sheet-content"
         className={cn(
           'bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out',
-          side === 'right' && 'slide-right inset-y-0 right-0 h-full w-3/4 border-l',
-          side === 'left' && 'slide-left inset-y-0 left-0 h-full w-3/4 border-r',
+          side === 'right' && 'slide-right inset-y-0 right-0 h-full border-l',
+          side === 'left' && 'slide-left inset-y-0 left-0 h-full border-r',
           side === 'top' && 'slide-top inset-x-0 top-0 h-auto border-b',
           side === 'bottom' && 'slide-bottom inset-x-0 bottom-0 h-auto border-t',
           className,
