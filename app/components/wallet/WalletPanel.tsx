@@ -63,7 +63,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="w-[90vw] sm:w-[320px] md:w-[340px] lg:w-[380px] xl:w-[420px] bg-background border-l border-primary/20 [&>button]:hidden">
+      <SheetContent className="w-[75vw] sm:w-[320px] md:w-[340px] lg:w-[380px] xl:w-[420px] bg-background border-l border-primary/20 [&>button]:hidden">
         <SheetHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
