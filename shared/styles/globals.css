@@ -169,3 +169,72 @@
     font-size: 13px;
   }
 }
+
+/* Sheet slide animations */
+@keyframes slideInFromRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOutToRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes slideInFromLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes slideOutToLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes slideInFromTop {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slideOutToTop {
+  from { transform: translateY(0); }
+  to { transform: translateY(-100%); }
+}
+@keyframes slideInFromBottom {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes slideOutToBottom {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+[data-slot="sheet-content"][data-state="open"] {
+  animation-duration: 500ms;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+[data-slot="sheet-content"][data-state="closed"] {
+  animation-duration: 300ms;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+[data-slot="sheet-content"][data-state="open"].slide-right {
+  animation-name: slideInFromRight;
+}
+[data-slot="sheet-content"][data-state="closed"].slide-right {
+  animation-name: slideOutToRight;
+}
+[data-slot="sheet-content"][data-state="open"].slide-left {
+  animation-name: slideInFromLeft;
+}
+[data-slot="sheet-content"][data-state="closed"].slide-left {
+  animation-name: slideOutToLeft;
+}
+[data-slot="sheet-content"][data-state="open"].slide-top {
+  animation-name: slideInFromTop;
+}
+[data-slot="sheet-content"][data-state="closed"].slide-top {
+  animation-name: slideOutToTop;
+}
+[data-slot="sheet-content"][data-state="open"].slide-bottom {
+  animation-name: slideInFromBottom;
+}
+[data-slot="sheet-content"][data-state="closed"].slide-bottom {
+  animation-name: slideOutToBottom;
+}
