@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@lumiere/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@lumiere/shared/components/ui/tabs'
 import { Button } from '@lumiere/shared/components/ui/button'
@@ -12,6 +14,7 @@ interface WalletPanelProps {
 }
 
 export function WalletPanel({ trigger }: WalletPanelProps) {
+  const [open, setOpen] = useState(false)
   const { user } = useAuth()
   const { disconnect } = useWallet()
 
@@ -49,7 +52,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   }
 
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {trigger || (
           <Button variant="outline" size="lg" className="rounded-full bg-transparent font-semibold gap-2">
