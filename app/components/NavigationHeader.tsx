@@ -45,7 +45,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background shrink-0">
-      <div className="container mx-auto flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+      <div className="mx-auto flex items-center justify-between pl-4 md:pl-6 pr-4 md:pr-6 py-3 md:py-4">
         <Link href="/" className="flex flex-col gap-0.5 transition-all hover:brightness-110">
           <div className="text-xl md:text-2xl font-bold tracking-wider text-primary leading-none">
             LUMIERE
@@ -55,7 +55,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
           </p>
         </Link>
 
-        <nav className="flex items-center gap-3">
+        <nav className="container mx-auto flex items-center justify-end gap-3">
           <Link href="/dashboard">
             <Button
               variant="outline"
