@@ -54,19 +54,84 @@ function SheetContent({
 }) {
   return (
     <SheetPortal>
+      <style>{`
+        @keyframes slideInFromRight {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes slideOutToRight {
+          from { transform: translateX(0); }
+          to { transform: translateX(100%); }
+        }
+        @keyframes slideInFromLeft {
+          from { transform: translateX(-100%); }
+          to { transform: translateX(0); }
+        }
+        @keyframes slideOutToLeft {
+          from { transform: translateX(0); }
+          to { transform: translateX(-100%); }
+        }
+        @keyframes slideInFromTop {
+          from { transform: translateY(-100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes slideOutToTop {
+          from { transform: translateY(0); }
+          to { transform: translateY(-100%); }
+        }
+        @keyframes slideInFromBottom {
+          from { transform: translateY(100%); }
+          to { transform: translateY(0); }
+        }
+        @keyframes slideOutToBottom {
+          from { transform: translateY(0); }
+          to { transform: translateY(100%); }
+        }
+        
+        [data-slot="sheet-content"][data-state="open"] {
+          animation-duration: 500ms;
+          animation-timing-function: ease-in-out;
+          animation-fill-mode: both;
+        }
+        [data-slot="sheet-content"][data-state="closed"] {
+          animation-duration: 300ms;
+          animation-timing-function: ease-in-out;
+          animation-fill-mode: both;
+        }
+        [data-slot="sheet-content"][data-state="open"].slide-right {
+          animation-name: slideInFromRight;
+        }
+        [data-slot="sheet-content"][data-state="closed"].slide-right {
+          animation-name: slideOutToRight;
+        }
+        [data-slot="sheet-content"][data-state="open"].slide-left {
+          animation-name: slideInFromLeft;
+        }
+        [data-slot="sheet-content"][data-state="closed"].slide-left {
+          animation-name: slideOutToLeft;
+        }
+        [data-slot="sheet-content"][data-state="open"].slide-top {
+          animation-name: slideInFromTop;
+        }
+        [data-slot="sheet-content"][data-state="closed"].slide-top {
+          animation-name: slideOutToTop;
+        }
+        [data-slot="sheet-content"][data-state="open"].slide-bottom {
+          animation-name: slideInFromBottom;
+        }
+        [data-slot="sheet-content"][data-state="closed"].slide-bottom {
+          animation-name: slideOutToBottom;
+        }
+      `}</style>
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
         className={cn(
-          'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
-          side === 'right' &&
-            'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
-          side === 'left' &&
-            'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
-          side === 'top' &&
-            'data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b',
-          side === 'bottom' &&
-            'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t',
+          'bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out',
+          side === 'right' && 'slide-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
+          side === 'left' && 'slide-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
+          side === 'top' && 'slide-top inset-x-0 top-0 h-auto border-b',
+          side === 'bottom' && 'slide-bottom inset-x-0 bottom-0 h-auto border-t',
           className,
         )}
         {...props}
