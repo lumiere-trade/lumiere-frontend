@@ -1,0 +1,31 @@
+{
+  "name": "lumiere-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lumiere frontend monorepo with marketing site, trading app, and shared components",
+  "workspaces": [
+    "marketing",
+    "app",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=marketing",
+    "dev:marketing": "npm run dev --workspace=marketing",
+    "dev:app": "npm run dev --workspace=app",
+    "build": "npm run build --workspaces",
+    "build:marketing": "npm run build --workspace=marketing",
+    "build:app": "npm run build --workspace=app",
+    "lint": "npm run lint --workspaces",
+    "clean": "rm -rf node_modules marketing/node_modules app/node_modules shared/node_modules marketing/.next app/.next"
+  },
+  "engines": {
+    "node": ">=18.17.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lumiere-trade/lumiere-frontend"
+  },
+  "author": "Lumiere Team",
+  "license": "Apache-2.0"
+}
