@@ -63,7 +63,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
           </Button>
         )}
       </SheetTrigger>
-      <SheetContent className="w-[340px] max-w-[75vw] sm:w-[360px] md:w-[380px] lg:w-[400px] xl:w-[440px] 2xl:w-[500px] bg-background border-l border-primary/20 [&>button]:hidden">
+      <SheetContent className="w-[320px] max-w-[75vw] sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[360px] 2xl:w-[500px] bg-background border-l border-primary/20 [&>button]:hidden">
         <SheetHeader className="border-b border-border pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -147,7 +147,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                           ${mockData.walletFunds.usdc.value.toFixed(2)}
                         </div>
                       </div>
-                      <Button size="sm" className="rounded-full px-6" onClick={handleDeposit}>
+                      <Button size="sm" className="rounded-full px-6" onClick={handleDeposit">
                         Deposit
                       </Button>
                     </div>
