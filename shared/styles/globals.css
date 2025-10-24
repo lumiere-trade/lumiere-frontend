@@ -90,7 +90,31 @@
   * {
     @apply border-border outline-ring/50;
   }
+  
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Responsive base font-size for proper scaling */
+  html {
+    font-size: 12px; /* Small laptops (1280-1440px) */
+  }
+
+  @media (min-width: 1440px) {
+    html {
+      font-size: 13px; /* Medium screens (1440-1920px) */
+    }
+  }
+
+  @media (min-width: 1920px) {
+    html {
+      font-size: 14px; /* Large screens (1920-2560px) */
+    }
+  }
+
+  @media (min-width: 2560px) {
+    html {
+      font-size: 16px; /* 2K/4K screens */
+    }
   }
 }
