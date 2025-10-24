@@ -136,3 +136,58 @@
     }
   }
 }
+
+@layer utilities {
+  /* Slide animations for Sheet component */
+  @keyframes slide-in-from-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-out-to-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes slide-in-from-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-out-to-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-100%);
+    }
+  }
+
+  .slide-right {
+    animation: slide-in-from-right 0.3s ease-out;
+  }
+
+  .slide-right[data-state="closed"] {
+    animation: slide-out-to-right 0.3s ease-in;
+  }
+
+  .slide-left {
+    animation: slide-in-from-left 0.3s ease-out;
+  }
+
+  .slide-left[data-state="closed"] {
+    animation: slide-out-to-left 0.3s ease-in;
+  }
+}
