@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import '@lumiere/shared/styles/globals.css';
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { Providers } from "./providers";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AdminAuthProvider>
-          <Providers>{children}</Providers>
-        </AdminAuthProvider>
+        <ErrorBoundary>
+          <AdminAuthProvider>
+            <Providers>{children}</Providers>
+          </AdminAuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

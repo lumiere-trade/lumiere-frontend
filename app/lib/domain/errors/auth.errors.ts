@@ -1,45 +1,79 @@
+import { DomainError } from './base.error'
+
 /**
- * Authentication domain errors.
+ * Base authentication error
  */
+export class AuthenticationError extends DomainError {
+  constructor(message: string = 'Authentication failed', code?: string) {
+    super(message, code || 'AUTH_ERROR')
+  }
 
-export class AuthError extends Error {
-  constructor(message: string, public readonly code?: string) {
-    super(message);
-    this.name = 'AuthError';
+  public getUserMessage(): string {
+    return 'Unable to authenticate. Please try again.'
   }
 }
 
-export class InvalidSignatureError extends AuthError {
-  constructor(message = 'Invalid wallet signature') {
-    super(message, 'INVALID_SIGNATURE');
-    this.name = 'InvalidSignatureError';
+/**
+ * Invalid signature error
+ */
+export class InvalidSignatureError extends AuthenticationError {
+  constructor(message: string = 'Invalid wallet signature') {
+    super(message, 'INVALID_SIGNATURE')
+  }
+
+  public getUserMessage(): string {
+    return 'Signature verification failed. Please sign the message again.'
   }
 }
 
-export class UserNotFoundError extends AuthError {
-  constructor(message = 'User not found') {
-    super(message, 'USER_NOT_FOUND');
-    this.name = 'UserNotFoundError';
+/**
+ * User not found error
+ */
+export class UserNotFoundError extends AuthenticationError {
+  constructor(message: string = 'User not found') {
+    super(message, 'USER_NOT_FOUND')
+  }
+
+  public getUserMessage(): string {
+    return 'Account not found. Please create an account first.'
   }
 }
 
-export class UserAlreadyExistsError extends AuthError {
-  constructor(message = 'User already exists') {
-    super(message, 'USER_EXISTS');
-    this.name = 'UserAlreadyExistsError';
+/**
+ * Wallet connection error
+ */
+export class WalletConnectionError extends AuthenticationError {
+  constructor(message: string = 'Failed to connect wallet') {
+    super(message, 'WALLET_CONNECTION_ERROR')
+  }
+
+  public getUserMessage(): string {
+    return 'Unable to connect to wallet. Please make sure your wallet is unlocked.'
   }
 }
 
-export class TokenExpiredError extends AuthError {
-  constructor(message = 'Authentication token expired') {
-    super(message, 'TOKEN_EXPIRED');
-    this.name = 'TokenExpiredError';
+/**
+ * Session expired error
+ */
+export class SessionExpiredError extends AuthenticationError {
+  constructor(message: string = 'Session expired') {
+    super(message, 'SESSION_EXPIRED')
+  }
+
+  public getUserMessage(): string {
+    return 'Your session has expired. Please log in again.'
   }
 }
 
-export class UnauthorizedError extends AuthError {
-  constructor(message = 'Unauthorized') {
-    super(message, 'UNAUTHORIZED');
-    this.name = 'UnauthorizedError';
+/**
+ * Unauthorized error
+ */
+export class UnauthorizedError extends AuthenticationError {
+  constructor(message: string = 'Unauthorized access') {
+    super(message, 'UNAUTHORIZED')
+  }
+
+  public getUserMessage(): string {
+    return 'You do not have permission to access this resource.'
   }
 }

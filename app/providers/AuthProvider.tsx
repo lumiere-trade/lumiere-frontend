@@ -18,7 +18,7 @@ import { container } from '@/lib/infrastructure/di/container';
 import { User } from '@/lib/domain/entities/user.entity';
 import { PendingDocument } from '@/lib/domain/entities/pending-document.entity';
 import { LegalDocument } from '@/lib/domain/entities/legal-document.entity';
-import { AuthError } from '@/lib/domain/errors/auth.errors';
+import { AuthenticationError } from '@/lib/domain/errors/auth.errors';
 import { ROUTES } from '@/config/constants';
 
 interface AuthContextType {
@@ -144,7 +144,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof AuthError
+        err instanceof AuthenticationError
           ? err.message
           : 'Authentication failed';
       setError(errorMessage);
@@ -168,7 +168,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         router.push(ROUTES.DASHBOARD);
       } catch (err) {
         const errorMessage =
-          err instanceof AuthError
+          err instanceof AuthenticationError
             ? err.message
             : 'Account creation failed';
         setError(errorMessage);
