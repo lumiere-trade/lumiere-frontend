@@ -1,9 +1,7 @@
 "use client"
 
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@lumiere/shared/components/ui/sheet'
 import Link from "next/link"
-import { Menu } from "lucide-react"
 
 export function MarketingHeader() {
   const handleLaunchApp = () => {
@@ -22,7 +20,7 @@ export function MarketingHeader() {
           </p>
         </Link>
 
-        <nav className="container mx-auto flex items-center justify-end gap-3">
+        <nav className="flex items-center justify-end gap-3">
           <Link href="/docs">
             <Button
               variant="outline"
