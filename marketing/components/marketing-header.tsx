@@ -22,20 +22,31 @@ export function MarketingHeader() {
           </p>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-3">
+        <nav className="container mx-auto flex items-center justify-end gap-3">
           <Link href="/docs">
-            <Button variant="outline" size="lg" className="rounded-full px-6 md:px-8 font-semibold">
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-6 md:px-8 font-semibold"
+            >
               DOCS
             </Button>
           </Link>
           <Link href="/learn-more">
-            <Button variant="outline" size="lg" className="rounded-full px-6 md:px-8 font-semibold">
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-6 md:px-8 font-semibold"
+            >
               LEARN MORE
             </Button>
           </Link>
           <Link href="/terms">
-            <Button variant="outline" size="lg" className="rounded-full px-6 md:px-8 font-semibold">
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-6 md:px-8 font-semibold"
+            >
               LEGAL
             </Button>
           </Link>
@@ -48,52 +59,6 @@ export function MarketingHeader() {
             LAUNCH APP
           </Button>
         </nav>
-
-        {/* Mobile Navigation */}
-        <div className="flex md:hidden items-center gap-2">
-          <Button
-            variant="default"
-            size="sm"
-            className="rounded-full px-4 font-semibold"
-            onClick={handleLaunchApp}
-          >
-            LAUNCH
-          </Button>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="rounded-full">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-background border-l border-primary/20">
-              <nav className="flex flex-col gap-4 mt-8">
-                <Link href="/docs">
-                  <Button variant="outline" size="lg" className="w-full rounded-full font-semibold">
-                    DOCS
-                  </Button>
-                </Link>
-                <Link href="/learn-more">
-                  <Button variant="outline" size="lg" className="w-full rounded-full font-semibold">
-                    LEARN MORE
-                  </Button>
-                </Link>
-                <Link href="/terms">
-                  <Button variant="outline" size="lg" className="w-full rounded-full font-semibold">
-                    LEGAL
-                  </Button>
-                </Link>
-                <Button
-                  variant="default"
-                  size="lg"
-                  className="w-full rounded-full font-semibold"
-                  onClick={handleLaunchApp}
-                >
-                  LAUNCH APP
-                </Button>
-              </nav>
-            </SheetContent>
-          </Sheet>
-        </div>
       </div>
     </header>
   )
