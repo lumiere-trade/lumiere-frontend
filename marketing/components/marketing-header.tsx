@@ -20,7 +20,7 @@ export function MarketingHeader() {
           </p>
         </Link>
 
-        <nav className="flex items-center justify-end gap-3">
+        <nav className="container mx-auto flex items-center justify-end gap-3">
           <Link href="/docs">
             <Button
               variant="outline"
