@@ -82,7 +82,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 DEPOSIT
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-[#2a1f1a] border-2 border-primary/30 rounded-2xl shadow-2xl">
+            <DialogContent className="sm:max-w-md bg-card border border-primary/30 rounded-2xl shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-primary">Deposit Funds</DialogTitle>
               </DialogHeader>
@@ -98,7 +98,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                       placeholder="0.00"
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
-                      className="pr-20 rounded-lg border-primary/30 bg-card text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="pr-20 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <Button
                       variant="ghost"
@@ -114,7 +114,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                   </p>
                 </div>
 
-                <div className="rounded-lg border border-primary/20 bg-card/50 p-4">
+                <div className="rounded-lg border border-primary/20 bg-background/50 p-4">
                   <div className="mb-2 text-sm text-muted-foreground">Deposit Summary</div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm">You will deposit</span>
@@ -147,14 +147,14 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 <Settings className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-[#2a1f1a] border-2 border-primary/30 rounded-2xl shadow-2xl">
+            <DialogContent className="sm:max-w-md bg-card border border-primary/30 rounded-2xl shadow-2xl">
               <DialogHeader>
                 <DialogTitle className="text-2xl font-bold text-primary">User Profile</DialogTitle>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-muted-foreground">Wallet Address</label>
-                  <div className="flex items-center gap-2 rounded-lg border border-border bg-card p-3">
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-3">
                     <span className="flex-1 font-mono text-sm">{user?.walletAddress || "Not connected"}</span>
                     <Button
                       variant="ghost"
@@ -169,11 +169,11 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-muted-foreground">Wallet Type</label>
-                  <div className="rounded-lg border border-border bg-card p-3 capitalize">{walletType}</div>
+                  <div className="rounded-lg border border-border bg-background p-3 capitalize">{walletType}</div>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-muted-foreground">Member Since</label>
-                  <div className="rounded-lg border border-border bg-card p-3">
+                  <div className="rounded-lg border border-border bg-background p-3">
                     {user?.createdAt ? user.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Not available"}
                   </div>
                 </div>
