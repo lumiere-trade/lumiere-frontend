@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  transpilePackages: ['@lumiere/shared'],
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -7,5 +8,4 @@ const nextConfig = {
     unoptimized: true,
   },
 }
-
 export default nextConfig
