@@ -95,6 +95,24 @@
     @apply bg-background text-foreground;
   }
 
+  /* Cursor pointer for all interactive elements */
+  button,
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  a,
+  select,
+  summary,
+  [role="tab"],
+  [role="menuitem"],
+  [role="option"],
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"] {
+    cursor: pointer;
+  }
+
   /* Responsive base font-size for proper scaling */
   html {
     font-size: 12px; /* Small laptops (1280-1440px) */
