@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import '@lumiere/shared/styles/globals.css';
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { Providers } from "./providers";
 

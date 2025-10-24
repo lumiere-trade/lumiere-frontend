@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
+import '@lumiere/shared/styles/globals.css';
 import { ThemeProvider } from '@lumiere/shared/components/theme-provider';
 import { MarketingHeader } from '@/components/marketing-header';
 import { Footer } from '@/components/footer';
