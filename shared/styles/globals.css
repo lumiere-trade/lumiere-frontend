@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+@source "../components";
+@source "../../marketing/app";
+@source "../../marketing/components";
+@source "../../app/app";
+@source "../../app/components";
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -87,154 +93,4 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  button,
-  [role="button"],
-  [type="button"],
-  [type="submit"],
-  [type="reset"],
-  a,
-  select,
-  summary,
-  label[for],
-  input[type="checkbox"],
-  input[type="radio"] {
-    cursor: pointer;
-  }
-
-  ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: oklch(0.24 0.03 40);
-    border-radius: 6px;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: oklch(0.78 0.08 70);
-    border-radius: 6px;
-    border: 2px solid oklch(0.24 0.03 40);
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0.83 0.1 70);
-  }
-
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: oklch(0.78 0.08 70) oklch(0.24 0.03 40);
-  }
-}
-
-/* Responsive scaling for different screen sizes */
-@media (max-width: 1920px) and (min-width: 1440px) {
-  html {
-    font-size: 14px;
-  }
-}
-
-@media (max-width: 1439px) {
-  html {
-    font-size: 12px;
-  }
-}
-
-@media (min-width: 1921px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-@media (min-width: 2560px) {
-  html {
-    font-size: 18px;
-  }
-}
-
-@media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
-
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
-
-@media (max-width: 640px) {
-  html {
-    font-size: 13px;
-  }
-}
-
-/* Sheet slide animations */
-@keyframes slideInFromRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-@keyframes slideOutToRight {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-@keyframes slideInFromLeft {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-@keyframes slideOutToLeft {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-@keyframes slideInFromTop {
-  from { transform: translateY(-100%); }
-  to { transform: translateY(0); }
-}
-@keyframes slideOutToTop {
-  from { transform: translateY(0); }
-  to { transform: translateY(-100%); }
-}
-@keyframes slideInFromBottom {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-@keyframes slideOutToBottom {
-  from { transform: translateY(0); }
-  to { transform: translateY(100%); }
-}
-
-[data-slot="sheet-content"][data-state="open"] {
-  animation-duration: 500ms;
-  animation-timing-function: ease-in-out;
-  animation-fill-mode: both;
-}
-[data-slot="sheet-content"][data-state="closed"] {
-  animation-duration: 300ms;
-  animation-timing-function: ease-in-out;
-  animation-fill-mode: both;
-}
-[data-slot="sheet-content"][data-state="open"].slide-right {
-  animation-name: slideInFromRight;
-}
-[data-slot="sheet-content"][data-state="closed"].slide-right {
-  animation-name: slideOutToRight;
-}
-[data-slot="sheet-content"][data-state="open"].slide-left {
-  animation-name: slideInFromLeft;
-}
-[data-slot="sheet-content"][data-state="closed"].slide-left {
-  animation-name: slideOutToLeft;
-}
-[data-slot="sheet-content"][data-state="open"].slide-top {
-  animation-name: slideInFromTop;
-}
-[data-slot="sheet-content"][data-state="closed"].slide-top {
-  animation-name: slideOutToTop;
-}
-[data-slot="sheet-content"][data-state="open"].slide-bottom {
-  animation-name: slideInFromBottom;
-}
-[data-slot="sheet-content"][data-state="closed"].slide-bottom {
-  animation-name: slideOutToBottom;
 }
