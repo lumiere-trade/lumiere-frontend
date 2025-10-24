@@ -90,9 +90,17 @@
   * {
     @apply border-border outline-ring/50;
   }
-  
+
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Remove focus glow from inputs, keep only border */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none !important;
+    box-shadow: none !important;
   }
 
   /* Cursor pointer for all interactive elements */
