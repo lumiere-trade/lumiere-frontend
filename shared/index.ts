@@ -24,3 +24,4 @@ export * from './components/ui/use-toast'
 
 // Utils
 export { cn } from './lib/utils'
+export * from './components/ui/sidebar'
