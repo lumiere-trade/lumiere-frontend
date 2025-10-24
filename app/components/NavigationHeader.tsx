@@ -88,7 +88,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
               </DialogHeader>
               <div className="space-y-6 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount" className="text-sm font-semibold text-muted-foreground">
+                  <Label htmlFor="amount" className="text-base font-semibold text-muted-foreground">
                     Amount (USDC)
                   </Label>
                   <div className="relative">
@@ -98,13 +98,13 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                       placeholder="0.00"
                       value={depositAmount}
                       onChange={(e) => setDepositAmount(e.target.value)}
-                      className="pr-20 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={handleMaxClick}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 rounded-md bg-primary/20 hover:bg-primary/30 font-semibold text-primary"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 rounded-md bg-primary/20 hover:bg-primary/30 font-semibold text-primary text-xs"
                     >
                       MAX
                     </Button>
@@ -115,10 +115,10 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 </div>
 
                 <div className="rounded-lg border border-primary/20 bg-background/50 p-4">
-                  <div className="mb-2 text-sm text-muted-foreground">Deposit Summary</div>
+                  <div className="mb-2 text-base text-muted-foreground">Deposit Summary</div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm">You will deposit</span>
-                    <span className="font-semibold text-primary">{depositAmount || "0.00"} USDC</span>
+                    <span className="text-base">You will deposit</span>
+                    <span className="font-semibold text-primary text-lg">{depositAmount || "0.00"} USDC</span>
                   </div>
                 </div>
 
@@ -130,7 +130,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                   CONFIRM DEPOSIT
                 </Button>
 
-                <p className="text-center text-xs text-muted-foreground">
+                <p className="text-center text-sm text-muted-foreground">
                   Deposits are processed instantly. Gas fees may apply.
                 </p>
               </div>
