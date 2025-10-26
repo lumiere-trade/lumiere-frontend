@@ -2,6 +2,7 @@
 
 import { AuthProvider } from '@/providers/AuthProvider';
 import { WalletProvider } from '@/providers/WalletProvider';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react';
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets';
 import { clusterApiUrl } from '@solana/web3.js';
@@ -23,14 +24,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <SolanaWalletProvider wallets={wallets} autoConnect={false}>
-        <WalletProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
-        </WalletProvider>
-      </SolanaWalletProvider>
-    </ConnectionProvider>
+    <QueryProvider>
+      <ConnectionProvider endpoint={endpoint}>
+        <SolanaWalletProvider wallets={wallets} autoConnect={false}>
+          <WalletProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </WalletProvider>
+        </SolanaWalletProvider>
+      </ConnectionProvider>
+    </QueryProvider>
   );
 }
