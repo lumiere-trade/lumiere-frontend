@@ -7,6 +7,7 @@ import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
 import { X, Settings, ChevronDown, Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { useLegalDocuments } from "@/hooks/use-legal-documents"
 import { useWallet } from "@/hooks/use-wallet"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { useRouter } from "next/navigation"
@@ -14,6 +15,8 @@ import { ROUTES, AUTH_CONFIG } from "@/config/constants"
 import { container } from "@/lib/infrastructure/di/container"
 import type React from "react"
 import bs58 from "bs58"
+import { useQueryClient } from "@tanstack/react-query"
+import { AUTH_QUERY_KEYS } from "@/lib/presentation/hooks/queries"
 
 type WalletOption = {
   name: string
@@ -39,10 +42,12 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
   const [localError, setError] = useState<string | null>(null)
   const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null)
 
-  const { refreshUser, legalDocuments, loadLegalDocuments, error: authError } = useAuth()
+  const { error: authError } = useAuth()
+  const { legalDocuments, isLoading: isLoadingLegalDocs } = useLegalDocuments()
   const { error: walletError, disconnect } = useWallet()
   const solanaWallet = useSolanaWallet()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const initialWallets: WalletOption[] = [
     { name: "Phantom", icon: Ghost, recent: true, installUrl: "https://phantom.app/download" },
@@ -167,185 +172,239 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
         await solanaWallet.connect()
 
         console.log('[Wallet] Connection successful')
-        await new Promise(resolve => setTimeout(resolve, 500))
 
-        const walletAddress = solanaWallet.publicKey?.toString()
-        if (!walletAddress) {
+        if (!solanaWallet.publicKey) {
           throw new Error('Failed to get wallet address')
         }
 
+        const walletAddress = solanaWallet.publicKey.toString()
         setConnectedWalletAddress(walletAddress)
+
         await authenticateWithBackend(walletAddress, wallet.name)
       }
-
     } catch (error: any) {
       console.error('[Wallet] Connection error:', error)
-
-      if (error.message?.includes('User rejected') || error.code === 4001) {
-        setError('Connection rejected. Please try again.')
-      } else {
-        setError(error.message || 'Failed to connect wallet. Please try again.')
-      }
-    } finally {
+      setError(error.message || 'Failed to connect wallet. Please try again.')
       setIsProcessing(false)
+      setSelectedWallet(null)
     }
   }
 
-  const authenticateWithBackend = async (walletAddress: string, walletType: string) => {
-    console.log('[Auth] Authenticating with backend, wallet:', walletAddress, 'type:', walletType)
-
+  const authenticateWithBackend = async (walletAddress: string, walletName: string) => {
     try {
-      const provider = (window as any).phantom?.solana
-      if (!provider) {
-        throw new Error('Wallet provider not available')
-      }
+      console.log('[Auth] Starting authentication...')
+
+      const authService = container.authService
+      const walletProvider = container.walletProvider
 
       const message = AUTH_CONFIG.MESSAGE
-      console.log('[Auth] Requesting signature for message:', message)
+      const messageBytes = new TextEncoder().encode(message)
 
-      const encodedMessage = new TextEncoder().encode(message)
-      const signedMessage = await provider.signMessage(encodedMessage)
-      const signature = bs58.encode(signedMessage.signature)
+      console.log('[Auth] Requesting signature...')
 
-      console.log('[Auth] Signature obtained, calling backend...')
+      let signatureBytes: Uint8Array
 
-      const authRepository = container.authRepository
-
-      try {
-        const verifyResult = await authRepository.verifyWallet(
-          walletAddress,
-          message,
-          signature
-        )
-
-        console.log('[Auth] Verify result:', verifyResult)
-
-        if (!verifyResult.userExists) {
-          console.log('[Auth] User not found, loading legal documents...')
-          await loadLegalDocuments()
-          setShowTermsDialog(true)
-          return
+      if (walletName === 'Phantom' && typeof window !== 'undefined') {
+        const provider = (window as any).phantom?.solana
+        if (!provider) {
+          throw new Error('Phantom provider not found')
         }
 
-        console.log('[Auth] User exists, logging in...')
-        const loginResult = await authRepository.login(
-          walletAddress,
-          message,
-          signature,
-          walletType
-        )
-
-        console.log('[Auth] Login successful!')
-        container.updateAuthToken(loginResult.accessToken)
-
-        await refreshUser()
-
-        onClose()
-        router.push(ROUTES.DASHBOARD)
-
-      } catch (authError: any) {
-        console.error('[Auth] Authentication error:', authError)
-
-        if (authError.message?.includes('not found')) {
-          await loadLegalDocuments()
-          setShowTermsDialog(true)
-        } else {
-          setError(authError.message || 'Authentication failed')
+        const { signature } = await provider.signMessage(messageBytes, 'utf8')
+        signatureBytes = signature
+      } else {
+        if (!solanaWallet.signMessage) {
+          throw new Error('Wallet does not support message signing')
         }
+
+        signatureBytes = await solanaWallet.signMessage(messageBytes)
       }
 
+      const signatureBase58 = bs58.encode(signatureBytes)
+      console.log('[Auth] Signature obtained')
+
+      console.log('[Auth] Verifying wallet with backend...')
+      const verifyResult = await authService.authRepository.verifyWallet(
+        walletAddress,
+        message,
+        signatureBase58
+      )
+
+      console.log('[Auth] Verification result:', verifyResult)
+
+      if (!verifyResult.signatureValid) {
+        throw new Error('Invalid signature. Please try again.')
+      }
+
+      if (!verifyResult.userExists) {
+        console.log('[Auth] User does not exist, opening terms dialog')
+        setShowTermsDialog(true)
+        setIsProcessing(false)
+        return
+      }
+
+      console.log('[Auth] User exists, logging in...')
+      const loginResult = await authService.authRepository.login(
+        walletAddress,
+        message,
+        signatureBase58,
+        walletName
+      )
+
+      authService.storage.setToken(loginResult.accessToken)
+
+      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, loginResult.user)
+
+      console.log('[Auth] Login successful')
+
+      if (loginResult.pendingDocuments.length > 0) {
+        console.log('[Auth] User has pending documents, redirecting to onboarding')
+        router.push('/onboarding')
+      } else {
+        console.log('[Auth] User is fully onboarded, redirecting to dashboard')
+        router.push(ROUTES.DASHBOARD)
+      }
+
+      onClose()
+      setIsProcessing(false)
+      setSelectedWallet(null)
+
     } catch (error: any) {
-      console.error('[Auth] Backend authentication failed:', error)
-      setError(error.message || 'Authentication failed')
+      console.error('[Auth] Authentication failed:', error)
+      setError(error.message || 'Authentication failed. Please try again.')
+      setIsProcessing(false)
+      setSelectedWallet(null)
+
+      if (disconnect) {
+        await disconnect()
+      }
     }
   }
 
   const handleConfirmTerms = async () => {
-    if (!agreedToTerms || !connectedWalletAddress || !selectedWallet) return
+    if (!agreedToTerms) return
+    if (!connectedWalletAddress || !selectedWallet) {
+      setError('Wallet connection lost. Please try again.')
+      setShowTermsDialog(false)
+      return
+    }
 
     setIsProcessing(true)
     setError(null)
 
     try {
-      console.log('[Account] Creating account for wallet:', connectedWalletAddress)
-
-      const provider = (window as any).phantom?.solana
-      if (!provider) {
-        throw new Error('Wallet provider not available')
-      }
+      const authService = container.authService
 
       const message = AUTH_CONFIG.MESSAGE
-      const encodedMessage = new TextEncoder().encode(message)
-      const signedMessage = await provider.signMessage(encodedMessage)
-      const signature = bs58.encode(signedMessage.signature)
+      const messageBytes = new TextEncoder().encode(message)
 
-      const documentIds = legalDocuments.map(doc => doc.id)
-      console.log('[Account] Calling create-account API...')
+      let signatureBytes: Uint8Array
 
-      const authRepository = container.authRepository
-      const result = await authRepository.createAccount(
+      if (selectedWallet === 'Phantom' && typeof window !== 'undefined') {
+        const provider = (window as any).phantom?.solana
+        if (!provider) {
+          throw new Error('Phantom provider not found')
+        }
+
+        const { signature } = await provider.signMessage(messageBytes, 'utf8')
+        signatureBytes = signature
+      } else {
+        if (!solanaWallet.signMessage) {
+          throw new Error('Wallet does not support message signing')
+        }
+
+        signatureBytes = await solanaWallet.signMessage(messageBytes)
+      }
+
+      const signatureBase58 = bs58.encode(signatureBytes)
+
+      const acceptedDocIds = legalDocuments.map((doc) => doc.id)
+
+      const createResult = await authService.authRepository.createAccount(
         connectedWalletAddress,
         message,
-        signature,
+        signatureBase58,
         selectedWallet,
-        documentIds
+        acceptedDocIds
       )
 
-      console.log('[Account] Account created successfully!')
-      container.updateAuthToken(result.accessToken)
+      authService.storage.setToken(createResult.accessToken)
 
-      await refreshUser()
+      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, createResult.user)
 
-      setShowTermsDialog(false)
+      console.log('[Auth] Account created successfully')
+
+      router.push(ROUTES.DASHBOARD)
+
       onClose()
-      router.push(ROUTES.CREATE)
-    } catch (error: any) {
-      console.error('[Account] Account creation error:', error)
-      setError(error.message || 'Account creation failed')
-    } finally {
+      setShowTermsDialog(false)
       setIsProcessing(false)
+      setSelectedWallet(null)
+
+    } catch (error: any) {
+      console.error('[Auth] Account creation failed:', error)
+      setError(error.message || 'Account creation failed. Please try again.')
+      setIsProcessing(false)
+
+      if (disconnect) {
+        await disconnect()
+      }
     }
   }
 
   const handleCancelTerms = () => {
     setShowTermsDialog(false)
     setAgreedToTerms(false)
-    disconnect()
+    setSelectedWallet(null)
+    setConnectedWalletAddress(null)
     setIsProcessing(false)
+
+    if (disconnect) {
+      disconnect()
+    }
   }
 
   if (showTermsDialog) {
     return (
       <Dialog open={showTermsDialog} onOpenChange={setShowTermsDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Terms & Conditions</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-center">Terms & Conditions</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Please review and accept the following legal documents to continue:
-            </p>
-
-            <ScrollArea className="h-[300px] rounded-lg border p-4">
+          <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-y-auto pr-4">
               <div className="space-y-4">
-                {legalDocuments.map((doc) => (
-                  <div key={doc.id} className="space-y-2">
-                    <h3 className="font-semibold">{doc.title}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{doc.content}</p>
+                {isLoadingLegalDocs ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
-                ))}
+                ) : legalDocuments.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No legal documents available
+                  </div>
+                ) : (
+                  legalDocuments.map((doc) => (
+                    <div key={doc.id} className="space-y-2 p-4 bg-card/50 rounded-lg border border-primary/20">
+                      <h3 className="font-semibold text-lg text-foreground">{doc.title}</h3>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-60 overflow-y-auto">
+                        {doc.content}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
-            </ScrollArea>
+            </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-start gap-3 p-4 bg-card/50 rounded-lg border border-primary/20 flex-shrink-0">
               <Checkbox
                 id="terms"
                 checked={agreedToTerms}
-                onCheckedChange={(checked) => setAgreedToTerms(checked === true)}
+                onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                className="mt-1"
               />
-              <label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                I have read and agree to the Terms of Use and Legal Agreements
+              <label htmlFor="terms" className="text-sm text-foreground cursor-pointer flex-1">
+                I have read and agree to all the terms and conditions above
               </label>
             </div>
 
@@ -359,7 +418,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
               <Button variant="outline" onClick={handleCancelTerms} className="rounded-full" disabled={isProcessing}>
                 Cancel
               </Button>
-              <Button onClick={handleConfirmTerms} disabled={!agreedToTerms || isProcessing} className="rounded-full">
+              <Button onClick={handleConfirmTerms} disabled={!agreedToTerms || isProcessing || isLoadingLegalDocs} className="rounded-full">
                 {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

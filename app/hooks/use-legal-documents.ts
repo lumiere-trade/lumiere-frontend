@@ -1,14 +1,14 @@
 /**
  * useLegalDocuments hook.
- * Helper hook for working with legal documents.
+ * Helper hook for working with legal documents using React Query.
  */
 
 import { useMemo } from 'react';
-import { useAuth } from './use-auth';
+import { useLegalDocumentsQuery } from '@/lib/presentation/hooks/queries';
 import type { LegalDocument } from '@/lib/domain/entities/legal-document.entity';
 
 export function useLegalDocuments() {
-  const { legalDocuments, loadLegalDocuments } = useAuth();
+  const { data: legalDocuments = [], isLoading, error } = useLegalDocumentsQuery();
 
   const termsOfService = useMemo(
     () => legalDocuments.find((doc) => doc.documentType === 'terms_of_service'),
@@ -37,6 +37,7 @@ export function useLegalDocuments() {
     privacyPolicy,
     cookiePolicy,
     getDocumentsByType,
-    loadLegalDocuments,
+    isLoading,
+    error,
   };
 }

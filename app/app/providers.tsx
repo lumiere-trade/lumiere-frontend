@@ -1,6 +1,5 @@
 'use client';
 
-import { AuthProvider } from '@/providers/AuthProvider';
 import { WalletProvider } from '@/providers/WalletProvider';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from '@solana/wallet-adapter-react';
@@ -28,9 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ConnectionProvider endpoint={endpoint}>
         <SolanaWalletProvider wallets={wallets} autoConnect={false}>
           <WalletProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
+            {children}
           </WalletProvider>
         </SolanaWalletProvider>
       </ConnectionProvider>
