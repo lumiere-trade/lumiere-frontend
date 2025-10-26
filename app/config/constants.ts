@@ -5,24 +5,29 @@
 export const API_CONFIG = {
   BASE_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000',
   TIMEOUT: 30000,
-} as const;
+} as const
+
+export const PASSEUR_CONFIG = {
+  BASE_URL: process.env.NEXT_PUBLIC_PASSEUR_URL || 'http://localhost:8767',
+  TIMEOUT: 30000,
+} as const
 
 export const AUTH_CONFIG = {
   TOKEN_KEY: 'lumiere_auth_token',
   MESSAGE: process.env.NEXT_PUBLIC_AUTH_MESSAGE || 'Sign this message to authenticate with Lumiere',
-} as const;
+} as const
 
 export const SOLANA_CONFIG = {
   NETWORK: process.env.NEXT_PUBLIC_SOLANA_NETWORK || 'devnet',
   RPC_URL: process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-} as const;
+} as const
 
 export const ROUTES = {
   HOME: '/',
   DASHBOARD: '/dashboard',
   CREATE: '/create',
   TERMS: '/terms',
-} as const;
+} as const
 
 export const API_ENDPOINTS = {
   AUTH: {
@@ -34,4 +39,10 @@ export const API_ENDPOINTS = {
   LEGAL: {
     DOCUMENTS: '/legal/documents',
   },
-} as const;
+  ESCROW: {
+    BALANCE: '/api/escrow/balance',
+    INITIALIZE: '/api/escrow/initialize',
+    DEPOSIT: '/api/escrow/deposit',
+    WITHDRAW: '/api/escrow/withdraw',
+  },
+} as const

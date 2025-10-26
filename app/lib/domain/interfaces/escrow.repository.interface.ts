@@ -1,0 +1,48 @@
+/**
+ * Escrow Repository Interface (Port)
+ * 
+ * Defines contract for escrow data access.
+ * Infrastructure layer will implement this interface.
+ */
+
+import { Escrow } from '../entities/escrow.entity'
+
+export interface InitializeEscrowRequest {
+  txSignature: string
+}
+
+export interface InitializeEscrowResponse {
+  escrowAccount: string
+  userId: string
+  initializedAt: string
+}
+
+export interface DepositToEscrowRequest {
+  amount: string
+  txSignature: string
+}
+
+export interface DepositToEscrowResponse {
+  escrowAccount: string
+  amount: string
+  newBalance: string
+  txHash: string
+}
+
+export interface IEscrowRepository {
+  /**
+   * Get user's escrow account details
+   * @param sync - If true, sync with blockchain before returning
+   */
+  getEscrowBalance(sync?: boolean): Promise<Escrow>
+  
+  /**
+   * Initialize escrow account (register with Pourtier after blockchain tx)
+   */
+  initializeEscrow(request: InitializeEscrowRequest): Promise<InitializeEscrowResponse>
+  
+  /**
+   * Deposit to escrow (register with Pourtier after blockchain tx)
+   */
+  depositToEscrow(request: DepositToEscrowRequest): Promise<DepositToEscrowResponse>
+}
