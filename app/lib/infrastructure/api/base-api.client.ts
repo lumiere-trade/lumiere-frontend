@@ -11,9 +11,44 @@ export interface RequestConfig extends RequestInit {
 
 export class BaseApiClient {
   private baseUrl: string
+  private authToken: string | null = null
 
   constructor(baseUrl: string = API_URL) {
     this.baseUrl = baseUrl
+  }
+
+  /**
+   * Set authentication token
+   */
+  setAuthToken(token: string): void {
+    this.authToken = token
+  }
+
+  /**
+   * Clear authentication token
+   */
+  clearAuthToken(): void {
+    this.authToken = null
+  }
+
+  /**
+   * Get headers with auth token if available
+   */
+  private getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    }
+
+    if (this.authToken) {
+      headers['Authorization'] = `Bearer ${this.authToken}`
+    }
+
+    // Merge with additional headers
+    if (additionalHeaders) {
+      Object.assign(headers, additionalHeaders)
+    }
+
+    return headers
   }
 
   /**
@@ -71,10 +106,7 @@ export class BaseApiClient {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         ...options,
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers: this.getHeaders(options.headers),
       })
 
       clearTimeout(timeoutId)

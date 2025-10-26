@@ -35,24 +35,14 @@ export interface CheckComplianceResult {
 }
 
 export class AuthRepository implements IAuthRepository {
-  private authToken: string | null = null
-
   constructor(private readonly apiClient: BaseApiClient) {}
 
   setAuthToken(token: string): void {
-    this.authToken = token
+    this.apiClient.setAuthToken(token)
   }
 
   clearAuthToken(): void {
-    this.authToken = null
-  }
-
-  private getHeaders(): Record<string, string> {
-    const headers: Record<string, string> = {}
-    if (this.authToken) {
-      headers['Authorization'] = `Bearer ${this.authToken}`
-    }
-    return headers
+    this.apiClient.clearAuthToken()
   }
 
   async verifyWallet(
@@ -163,9 +153,7 @@ export class AuthRepository implements IAuthRepository {
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await this.apiClient.get<any>('/api/users/me', {
-      headers: this.getHeaders(),
-    })
+    const response = await this.apiClient.get<any>('/api/users/me')
 
     return User.fromApi({
       id: response.id,
@@ -179,8 +167,7 @@ export class AuthRepository implements IAuthRepository {
 
   async checkCompliance(): Promise<CheckComplianceResult> {
     const response = await this.apiClient.get<CheckComplianceResponse>(
-      '/api/auth/compliance',
-      { headers: this.getHeaders() }
+      '/api/auth/compliance'
     )
 
     const missingDocuments = (response.pending_documents || []).map((doc) =>
@@ -197,9 +184,7 @@ export class AuthRepository implements IAuthRepository {
       document_ids: documentIds,
     }
 
-    await this.apiClient.post('/api/auth/accept-documents', request, {
-      headers: this.getHeaders(),
-    })
+    await this.apiClient.post('/api/auth/accept-documents', request)
   }
 
   async getLegalDocuments(): Promise<LegalDocument[]> {
