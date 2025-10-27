@@ -8,12 +8,10 @@ import { clusterApiUrl } from '@solana/web3.js';
 import { useMemo } from 'react';
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Get RPC URL from env or use devnet
   const endpoint = useMemo(() => {
     return process.env.NEXT_PUBLIC_SOLANA_RPC_URL || clusterApiUrl('devnet');
   }, []);
 
-  // Configure wallets (only Phantom and Solflare for now)
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
@@ -25,7 +23,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
       <ConnectionProvider endpoint={endpoint}>
-        <SolanaWalletProvider wallets={wallets} autoConnect={false}>
+        <SolanaWalletProvider wallets={wallets} autoConnect={true}>
           <WalletProvider>
             {children}
           </WalletProvider>
