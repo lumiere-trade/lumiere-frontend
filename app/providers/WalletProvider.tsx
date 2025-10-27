@@ -1,12 +1,12 @@
-'use client';
+'use client'
 
 /**
  * Wallet Provider.
  * Bridges Solana Wallet Adapter with our Clean Architecture.
- * 
- * CRITICAL: This provider MUST sync the Solana wallet adapter
- * with the DI container's wallet provider instance to ensure
- * AuthService has access to the connected wallet.
+ *
+ * CRITICAL: This provider syncs the Solana wallet adapter state
+ * with walletStateManager to ensure all services have access
+ * to the connected wallet via reactive getters.
  */
 
 import React, {
@@ -15,73 +15,70 @@ import React, {
   useCallback,
   useEffect,
   useState,
-} from 'react';
-import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
-import { container } from '@/lib/infrastructure/di/container';
+} from 'react'
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react'
+import { walletStateManager } from '@/lib/infrastructure/wallet/wallet-state'
 
 interface WalletContextType {
-  address: string | null;
-  isConnected: boolean;
-  isConnecting: boolean;
-  error: string | null;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  clearError: () => void;
+  address: string | null
+  isConnected: boolean
+  isConnecting: boolean
+  error: string | null
+  connect: () => Promise<void>
+  disconnect: () => Promise<void>
+  clearError: () => void
 }
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
 interface WalletProviderProps {
-  children: React.ReactNode;
+  children: React.ReactNode
 }
 
 export function WalletProvider({ children }: WalletProviderProps) {
-  const solanaWallet = useSolanaWallet();
-  const [error, setError] = useState<string | null>(null);
+  const solanaWallet = useSolanaWallet()
+  const [error, setError] = useState<string | null>(null)
 
-  // CRITICAL: Sync Solana wallet adapter with DI container
-  // This ensures AuthService can access the connected wallet
+  // CRITICAL: Sync Solana wallet adapter with wallet state manager
+  // This ensures all services can access the connected wallet
   useEffect(() => {
-    if (solanaWallet.wallet?.adapter) {
-      container.walletProvider.setWallet(solanaWallet.wallet.adapter as any);
-    }
-  }, [solanaWallet.wallet?.adapter]);
-
-  // Additional sync when connection state changes
-  useEffect(() => {
-    if (solanaWallet.connected && solanaWallet.publicKey) {
-      // Ensure wallet is set even after connection completes
-      if (solanaWallet.wallet?.adapter) {
-        container.walletProvider.setWallet(solanaWallet.wallet.adapter as any);
-      }
-    }
-  }, [solanaWallet.connected, solanaWallet.publicKey, solanaWallet.wallet?.adapter]);
+    walletStateManager.updateState(
+      solanaWallet.wallet?.adapter as any ?? null,
+      solanaWallet.publicKey ?? null,
+      solanaWallet.connected
+    )
+  }, [
+    solanaWallet.wallet?.adapter,
+    solanaWallet.publicKey,
+    solanaWallet.connected,
+  ])
 
   const connect = useCallback(async () => {
-    setError(null);
+    setError(null)
     try {
       // Connection is handled by WalletConnectionModal
       // which uses solanaWallet.select() and solanaWallet.connect()
       // This function is kept for API compatibility
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to connect wallet';
-      setError(errorMessage);
-      throw err;
+      const errorMessage = err.message || 'Failed to connect wallet'
+      setError(errorMessage)
+      throw err
     }
-  }, []);
+  }, [])
 
   const disconnect = useCallback(async () => {
     try {
-      await solanaWallet.disconnect();
-      setError(null);
+      await solanaWallet.disconnect()
+      walletStateManager.clearState()
+      setError(null)
     } catch (err) {
-      console.error('Disconnect error:', err);
+      console.error('Disconnect error:', err)
     }
-  }, [solanaWallet]);
+  }, [solanaWallet])
 
   const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+    setError(null)
+  }, [])
 
   return (
     <WalletContext.Provider
@@ -97,13 +94,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
     >
       {children}
     </WalletContext.Provider>
-  );
+  )
 }
 
 export function useWallet() {
-  const context = useContext(WalletContext);
+  const context = useContext(WalletContext)
   if (context === undefined) {
-    throw new Error('useWallet must be used within WalletProvider');
+    throw new Error('useWallet must be used within WalletProvider')
   }
-  return context;
+  return context
 }
