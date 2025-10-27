@@ -3,10 +3,6 @@
 /**
  * Wallet Provider.
  * Bridges Solana Wallet Adapter with our Clean Architecture.
- *
- * CRITICAL: This provider syncs the Solana wallet adapter state
- * with walletStateManager to ensure all services have access
- * to the connected wallet via reactive getters.
  */
 
 import React, {
@@ -39,9 +35,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
   const solanaWallet = useSolanaWallet()
   const [error, setError] = useState<string | null>(null)
 
-  // CRITICAL: Sync Solana wallet adapter with wallet state manager
-  // This ensures all services can access the connected wallet
   useEffect(() => {
+    console.log('[WalletProvider] Syncing wallet state:', {
+      adapter: solanaWallet.wallet?.adapter?.name,
+      publicKey: solanaWallet.publicKey?.toString().slice(0, 8) + '...',
+      connected: solanaWallet.connected,
+    })
+    
     walletStateManager.updateState(
       solanaWallet.wallet?.adapter as any ?? null,
       solanaWallet.publicKey ?? null,
@@ -57,8 +57,6 @@ export function WalletProvider({ children }: WalletProviderProps) {
     setError(null)
     try {
       // Connection is handled by WalletConnectionModal
-      // which uses solanaWallet.select() and solanaWallet.connect()
-      // This function is kept for API compatibility
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to connect wallet'
       setError(errorMessage)
