@@ -6,7 +6,6 @@
 import { BaseApiClient } from '../api/base-api.client'
 import { AuthRepository } from '../api/auth.repository'
 import { EscrowRepository } from '../api/escrow.repository'
-import { PasseurRepository } from '../api/passeur.repository'
 import { SolanaWalletProvider } from '../wallet/solana-wallet-provider'
 import { walletStateManager } from '../wallet/wallet-state'
 import { authStorage } from '../storage/auth-storage'
@@ -24,7 +23,6 @@ class Container {
   private _apiClient?: BaseApiClient
   private _authRepository?: AuthRepository
   private _escrowRepository?: EscrowRepository
-  private _passeurRepository?: PasseurRepository
   private _walletProvider?: SolanaWalletProvider
   private _authService?: AuthService
   private _legalService?: LegalService
@@ -64,13 +62,6 @@ class Container {
     return this._escrowRepository
   }
 
-  get passeurRepository(): PasseurRepository {
-    if (!this._passeurRepository) {
-      this._passeurRepository = new PasseurRepository()
-    }
-    return this._passeurRepository
-  }
-
   get walletProvider(): SolanaWalletProvider {
     if (!this._walletProvider) {
       this._walletProvider = new SolanaWalletProvider(
@@ -102,7 +93,6 @@ class Container {
     if (!this._escrowService) {
       this._escrowService = new EscrowService(
         this.escrowRepository,
-        this.passeurRepository,
         this.walletProvider
       )
     }
@@ -135,7 +125,6 @@ class Container {
     this._apiClient = undefined
     this._authRepository = undefined
     this._escrowRepository = undefined
-    this._passeurRepository = undefined
     this._walletProvider = undefined
     this._authService = undefined
     this._legalService = undefined

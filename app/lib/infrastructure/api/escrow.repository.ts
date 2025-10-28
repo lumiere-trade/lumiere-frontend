@@ -1,6 +1,6 @@
 /**
  * Escrow Repository Implementation
- * 
+ *
  * Adapter for Pourtier escrow API endpoints.
  */
 
@@ -11,6 +11,7 @@ import type {
   InitializeEscrowResponse,
   DepositToEscrowRequest,
   DepositToEscrowResponse,
+  WalletBalance,
 } from '@/lib/domain/interfaces/escrow.repository.interface'
 import { BaseAPIClient } from './base-api.client'
 
@@ -22,7 +23,7 @@ export class EscrowRepository implements IEscrowRepository {
    */
   async getEscrowBalance(sync: boolean = false): Promise<Escrow> {
     const params = sync ? '?sync=true' : ''
-    
+
     const response = await this.apiClient.request<{
       escrow_account: string | null
       balance: string
@@ -35,6 +36,25 @@ export class EscrowRepository implements IEscrowRepository {
     })
 
     return Escrow.fromApi(response)
+  }
+
+  /**
+   * GET /api/wallet/balance?wallet={address}
+   */
+  async getWalletBalance(walletAddress: string): Promise<WalletBalance> {
+    const response = await this.apiClient.request<{
+      wallet_address: string
+      balance: string
+      token_mint: string
+    }>(`/api/wallet/balance?wallet=${walletAddress}`, {
+      method: 'GET',
+    })
+
+    return {
+      walletAddress: response.wallet_address,
+      balance: response.balance,
+      tokenMint: response.token_mint,
+    }
   }
 
   /**

@@ -1,6 +1,6 @@
 /**
  * Escrow Service
- * 
+ *
  * Orchestrates escrow operations between domain logic and infrastructure.
  */
 
@@ -10,7 +10,6 @@ import {
   InvalidDepositAmountError,
 } from '@/lib/domain/errors/escrow.errors'
 import type { IEscrowRepository } from '@/lib/domain/interfaces/escrow.repository.interface'
-import type { IPasseurRepository } from '@/lib/domain/interfaces/passeur.repository.interface'
 import type { IWalletProvider } from '@/lib/domain/interfaces/wallet.provider.interface'
 
 export interface InitializeEscrowResult {
@@ -27,7 +26,6 @@ export interface DepositResult {
 export class EscrowService {
   constructor(
     private readonly escrowRepository: IEscrowRepository,
-    private readonly passeurRepository: IPasseurRepository,
     private readonly walletProvider: IWalletProvider
   ) {}
 
@@ -43,18 +41,18 @@ export class EscrowService {
    */
   async getWalletBalance(): Promise<string> {
     const walletAddress = this.walletProvider.getAddress()
-    
+
     if (!walletAddress) {
       throw new Error('Wallet not connected')
     }
 
-    const balance = await this.passeurRepository.getWalletBalance(walletAddress)
+    const balance = await this.escrowRepository.getWalletBalance(walletAddress)
     return balance.balance
   }
 
   /**
    * Initialize escrow account
-   * 
+   *
    * Flow:
    * 1. Check if already initialized
    * 2. Prepare blockchain transaction via Passeur
@@ -63,7 +61,7 @@ export class EscrowService {
    */
   async initializeEscrow(): Promise<InitializeEscrowResult> {
     const walletAddress = this.walletProvider.getAddress()
-    
+
     if (!walletAddress) {
       throw new Error('Wallet not connected')
     }
@@ -77,30 +75,14 @@ export class EscrowService {
       }
     }
 
-    // Prepare transaction via Passeur
-    const { escrowAccount, signature, transaction } = 
-      await this.passeurRepository.prepareInitializeEscrow(walletAddress)
-
-    // User signs transaction in wallet
-    const signedTx = await this.walletProvider.signTransaction(transaction)
-
-    // Register with Pourtier
-    const result = await this.escrowRepository.initializeEscrow({
-      txSignature: signature,
-    })
-
-    // Fetch updated escrow
-    const updatedEscrow = await this.escrowRepository.getEscrowBalance(true)
-
-    return {
-      escrow: updatedEscrow,
-      txSignature: signature,
-    }
+    // TODO: Implement initialize escrow flow
+    // This requires blockchain transaction preparation
+    throw new Error('Initialize escrow not yet implemented')
   }
 
   /**
    * Deposit funds to escrow
-   * 
+   *
    * Flow:
    * 1. Validate amount
    * 2. Check escrow initialized
@@ -136,28 +118,8 @@ export class EscrowService {
       throw new EscrowNotInitializedError()
     }
 
-    // Prepare deposit transaction
-    const { signature, transaction } = await this.passeurRepository.prepareDeposit(
-      escrow.escrowAccount,
-      amount
-    )
-
-    // User signs transaction
-    const signedTx = await this.walletProvider.signTransaction(transaction)
-
-    // Register deposit with Pourtier
-    await this.escrowRepository.depositToEscrow({
-      amount,
-      txSignature: signature,
-    })
-
-    // Fetch updated escrow
-    const updatedEscrow = await this.escrowRepository.getEscrowBalance(true)
-
-    return {
-      escrow: updatedEscrow,
-      txSignature: signature,
-      amount,
-    }
+    // TODO: Implement deposit flow
+    // This requires blockchain transaction preparation
+    throw new Error('Deposit not yet implemented')
   }
 }
