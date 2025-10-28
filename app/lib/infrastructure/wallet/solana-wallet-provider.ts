@@ -5,7 +5,6 @@
  * REACTIVE DESIGN: Uses factory function to get fresh wallet state
  * on every call, eliminating race conditions.
  */
-
 import type {
   IWalletProvider,
   SignatureResult,
@@ -16,11 +15,14 @@ import {
   WalletConnectionError,
 } from '@/lib/domain/errors/wallet.errors'
 import bs58 from 'bs58'
+import { Transaction, VersionedTransaction } from '@solana/web3.js'
 
 export interface SolanaWalletAdapter {
   publicKey: { toString(): string } | null
   signMessage(message: Uint8Array): Promise<Uint8Array>
-  signTransaction?(transaction: any): Promise<any>
+  signTransaction?(
+    transaction: Transaction | VersionedTransaction
+  ): Promise<Transaction | VersionedTransaction>
   connected: boolean
   connect(): Promise<void>
   disconnect(): Promise<void>
@@ -38,19 +40,18 @@ export class SolanaWalletProvider implements IWalletProvider {
 
   async connect(): Promise<string> {
     const state = this.getWalletState()
-    
     if (!state.adapter) {
       throw new WalletConnectionError('No wallet adapter available')
     }
 
     try {
       await state.adapter.connect()
-      
       const freshState = this.getWalletState()
+
       if (!freshState.publicKey) {
         throw new WalletConnectionError('Failed to get public key')
       }
-      
+
       return freshState.publicKey.toString()
     } catch (error) {
       throw new WalletConnectionError(
@@ -72,7 +73,7 @@ export class SolanaWalletProvider implements IWalletProvider {
 
   async signMessage(message: string): Promise<SignatureResult> {
     const state = this.getWalletState()
-    
+
     if (!state.adapter || !state.connected || !state.publicKey) {
       throw new WalletNotConnectedError()
     }
@@ -91,22 +92,44 @@ export class SolanaWalletProvider implements IWalletProvider {
     }
   }
 
-  async signTransaction(transaction: any): Promise<any> {
+  async signTransaction(transactionBase64: string): Promise<string> {
     const state = this.getWalletState()
-    
+
     if (!state.adapter || !state.connected || !state.publicKey) {
       throw new WalletNotConnectedError()
     }
 
     if (!state.adapter.signTransaction) {
-      throw new WalletSignatureError('Wallet does not support transaction signing')
+      throw new WalletSignatureError(
+        'Wallet does not support transaction signing'
+      )
     }
 
     try {
-      return await state.adapter.signTransaction(transaction)
+      // Decode base64 transaction from backend
+      const transactionBuffer = Buffer.from(transactionBase64, 'base64')
+
+      // Try VersionedTransaction first (newer format)
+      let transaction: Transaction | VersionedTransaction
+      try {
+        transaction = VersionedTransaction.deserialize(transactionBuffer)
+      } catch {
+        // Fall back to legacy Transaction
+        transaction = Transaction.from(transactionBuffer)
+      }
+
+      // Sign with wallet
+      const signedTransaction =
+        await state.adapter.signTransaction(transaction)
+
+      // Serialize signed transaction to base64
+      const serialized = signedTransaction.serialize()
+      return Buffer.from(serialized).toString('base64')
     } catch (error) {
       throw new WalletSignatureError(
-        error instanceof Error ? error.message : 'Transaction signature failed'
+        error instanceof Error
+          ? error.message
+          : 'Transaction signature failed'
       )
     }
   }

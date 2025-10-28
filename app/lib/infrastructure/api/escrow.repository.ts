@@ -3,13 +3,12 @@
  *
  * Adapter for Pourtier escrow API endpoints.
  */
-
 import { Escrow } from '@/lib/domain/entities/escrow.entity'
 import type {
   IEscrowRepository,
   InitializeEscrowRequest,
   InitializeEscrowResponse,
-  DepositToEscrowRequest,
+  PrepareDepositResponse,
   DepositToEscrowResponse,
   WalletBalance,
 } from '@/lib/domain/interfaces/escrow.repository.interface'
@@ -23,7 +22,6 @@ export class EscrowRepository implements IEscrowRepository {
    */
   async getEscrowBalance(sync: boolean = false): Promise<Escrow> {
     const params = sync ? '?sync=true' : ''
-
     const response = await this.apiClient.request<{
       escrow_account: string | null
       balance: string
@@ -85,32 +83,59 @@ export class EscrowRepository implements IEscrowRepository {
   }
 
   /**
-   * POST /api/escrow/deposit
+   * POST /api/escrow/prepare-deposit
+   * Get unsigned transaction for wallet signing
    */
-  async depositToEscrow(
-    request: DepositToEscrowRequest
-  ): Promise<DepositToEscrowResponse> {
+  async prepareDeposit(amount: string): Promise<PrepareDepositResponse> {
     const response = await this.apiClient.request<{
-      status: string
-      data: {
-        escrow_account: string
-        amount: string
-        new_balance: string
-        tx_hash: string
-      }
-    }>('/api/escrow/deposit', {
+      transaction: string
+      escrow_account: string
+      amount: string
+    }>('/api/escrow/prepare-deposit', {
       method: 'POST',
       body: JSON.stringify({
-        amount: request.amount,
-        tx_signature: request.txSignature,
+        amount: amount,
       }),
     })
 
     return {
-      escrowAccount: response.data.escrow_account,
-      amount: response.data.amount,
-      newBalance: response.data.new_balance,
-      txHash: response.data.tx_hash,
+      transaction: response.transaction,
+      escrowAccount: response.escrow_account,
+      amount: response.amount,
+    }
+  }
+
+  /**
+   * POST /api/escrow/deposit
+   * Submit signed transaction
+   */
+  async submitDeposit(
+    amount: string,
+    signedTx: string
+  ): Promise<DepositToEscrowResponse> {
+    const response = await this.apiClient.request<{
+      id: string
+      user_id: string
+      tx_signature: string
+      transaction_type: string
+      amount: string
+      token_mint: string
+      status: string
+      created_at: string
+      confirmed_at: string | null
+    }>('/api/escrow/deposit', {
+      method: 'POST',
+      body: JSON.stringify({
+        amount: amount,
+        tx_signature: signedTx,
+      }),
+    })
+
+    return {
+      escrowAccount: '',
+      amount: response.amount,
+      newBalance: '0',
+      txHash: response.tx_signature,
     }
   }
 }

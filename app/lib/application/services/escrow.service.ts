@@ -3,7 +3,6 @@
  *
  * Orchestrates escrow operations between domain logic and infrastructure.
  */
-
 import { Escrow } from '@/lib/domain/entities/escrow.entity'
 import {
   EscrowNotInitializedError,
@@ -41,7 +40,6 @@ export class EscrowService {
    */
   async getWalletBalance(): Promise<string> {
     const walletAddress = this.walletProvider.getAddress()
-
     if (!walletAddress) {
       throw new Error('Wallet not connected')
     }
@@ -61,7 +59,6 @@ export class EscrowService {
    */
   async initializeEscrow(): Promise<InitializeEscrowResult> {
     const walletAddress = this.walletProvider.getAddress()
-
     if (!walletAddress) {
       throw new Error('Wallet not connected')
     }
@@ -71,7 +68,7 @@ export class EscrowService {
     if (currentEscrow.isInitialized) {
       return {
         escrow: currentEscrow,
-        txSignature: '', // Already initialized
+        txSignature: '',
       }
     }
 
@@ -86,9 +83,9 @@ export class EscrowService {
    * Flow:
    * 1. Validate amount
    * 2. Check escrow initialized
-   * 3. Prepare blockchain transaction
-   * 4. User signs transaction
-   * 5. Register with Pourtier
+   * 3. Prepare unsigned transaction via Pourtier
+   * 4. User signs transaction in wallet
+   * 5. Submit signed transaction to Pourtier
    */
   async depositToEscrow(amount: string): Promise<DepositResult> {
     // Validate amount
@@ -118,8 +115,27 @@ export class EscrowService {
       throw new EscrowNotInitializedError()
     }
 
-    // TODO: Implement deposit flow
-    // This requires blockchain transaction preparation
-    throw new Error('Deposit not yet implemented')
+    // Step 1: Prepare unsigned transaction
+    const prepareResult = await this.escrowRepository.prepareDeposit(amount)
+
+    // Step 2: Sign transaction with wallet
+    const signedTx = await this.walletProvider.signTransaction(
+      prepareResult.transaction
+    )
+
+    // Step 3: Submit signed transaction to Pourtier
+    const depositResult = await this.escrowRepository.submitDeposit(
+      amount,
+      signedTx
+    )
+
+    // Step 4: Return updated escrow state
+    const updatedEscrow = await this.escrowRepository.getEscrowBalance(true)
+
+    return {
+      escrow: updatedEscrow,
+      txSignature: depositResult.txSignature,
+      amount: amount,
+    }
   }
 }

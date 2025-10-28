@@ -16,6 +16,12 @@ export interface InitializeEscrowResponse {
   initializedAt: string
 }
 
+export interface PrepareDepositResponse {
+  transaction: string
+  escrowAccount: string
+  amount: string
+}
+
 export interface DepositToEscrowRequest {
   amount: string
   txSignature: string
@@ -50,10 +56,18 @@ export interface IEscrowRepository {
   /**
    * Initialize escrow account (register with Pourtier after blockchain tx)
    */
-  initializeEscrow(request: InitializeEscrowRequest): Promise<InitializeEscrowResponse>
+  initializeEscrow(
+    request: InitializeEscrowRequest
+  ): Promise<InitializeEscrowResponse>
 
   /**
-   * Deposit to escrow (register with Pourtier after blockchain tx)
+   * Prepare deposit transaction (unsigned)
+   * Returns base64 transaction for wallet signing
    */
-  depositToEscrow(request: DepositToEscrowRequest): Promise<DepositToEscrowResponse>
+  prepareDeposit(amount: string): Promise<PrepareDepositResponse>
+
+  /**
+   * Submit deposit to escrow (register with Pourtier after signing)
+   */
+  submitDeposit(amount: string, signedTx: string): Promise<DepositToEscrowResponse>
 }
