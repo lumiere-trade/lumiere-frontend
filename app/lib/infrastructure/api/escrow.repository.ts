@@ -6,7 +6,7 @@
 import { Escrow } from '@/lib/domain/entities/escrow.entity'
 import type {
   IEscrowRepository,
-  InitializeEscrowRequest,
+  PrepareInitializeEscrowResponse,
   InitializeEscrowResponse,
   PrepareDepositResponse,
   DepositToEscrowResponse,
@@ -56,29 +56,45 @@ export class EscrowRepository implements IEscrowRepository {
   }
 
   /**
-   * POST /api/escrow/initialize
+   * POST /api/escrow/prepare-initialize
+   * Get unsigned initialize transaction for wallet signing
    */
-  async initializeEscrow(
-    request: InitializeEscrowRequest
+  async prepareInitializeEscrow(): Promise<PrepareInitializeEscrowResponse> {
+    const response = await this.apiClient.request<{
+      transaction: string
+      token_mint: string
+    }>('/api/escrow/prepare-initialize', {
+      method: 'POST',
+    })
+
+    return {
+      transaction: response.transaction,
+      tokenMint: response.token_mint,
+    }
+  }
+
+  /**
+   * POST /api/escrow/initialize
+   * Submit signed initialize transaction
+   */
+  async submitInitializeEscrow(
+    signedTx: string
   ): Promise<InitializeEscrowResponse> {
     const response = await this.apiClient.request<{
-      status: string
-      data: {
-        escrow_account: string
-        user_id: string
-        initialized_at: string
-      }
+      escrow_account: string
+      balance: string
+      token_mint: string
     }>('/api/escrow/initialize', {
       method: 'POST',
       body: JSON.stringify({
-        tx_signature: request.txSignature,
+        tx_signature: signedTx,
       }),
     })
 
     return {
-      escrowAccount: response.data.escrow_account,
-      userId: response.data.user_id,
-      initializedAt: response.data.initialized_at,
+      escrowAccount: response.escrow_account,
+      userId: '',
+      initializedAt: new Date().toISOString(),
     }
   }
 

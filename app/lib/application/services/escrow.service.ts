@@ -53,9 +53,9 @@ export class EscrowService {
    *
    * Flow:
    * 1. Check if already initialized
-   * 2. Prepare blockchain transaction via Passeur
+   * 2. Prepare unsigned transaction via Pourtier
    * 3. User signs transaction in wallet
-   * 4. Register with Pourtier
+   * 4. Submit signed transaction to Pourtier
    */
   async initializeEscrow(): Promise<InitializeEscrowResult> {
     const walletAddress = this.walletProvider.getAddress()
@@ -72,9 +72,25 @@ export class EscrowService {
       }
     }
 
-    // TODO: Implement initialize escrow flow
-    // This requires blockchain transaction preparation
-    throw new Error('Initialize escrow not yet implemented')
+    // Step 1: Prepare unsigned transaction
+    const prepareResult =
+      await this.escrowRepository.prepareInitializeEscrow()
+
+    // Step 2: Sign transaction with wallet
+    const signedTx = await this.walletProvider.signTransaction(
+      prepareResult.transaction
+    )
+
+    // Step 3: Submit signed transaction to Pourtier
+    await this.escrowRepository.submitInitializeEscrow(signedTx)
+
+    // Step 4: Get updated escrow state
+    const updatedEscrow = await this.escrowRepository.getEscrowBalance(true)
+
+    return {
+      escrow: updatedEscrow,
+      txSignature: signedTx,
+    }
   }
 
   /**
@@ -82,7 +98,7 @@ export class EscrowService {
    *
    * Flow:
    * 1. Validate amount
-   * 2. Check escrow initialized
+   * 2. Check escrow initialized (initialize if needed)
    * 3. Prepare unsigned transaction via Pourtier
    * 4. User signs transaction in wallet
    * 5. Submit signed transaction to Pourtier
@@ -134,7 +150,7 @@ export class EscrowService {
 
     return {
       escrow: updatedEscrow,
-      txSignature: depositResult.txSignature,
+      txSignature: depositResult.txHash,
       amount: amount,
     }
   }
