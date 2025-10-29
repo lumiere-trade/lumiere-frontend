@@ -40,6 +40,11 @@ class Container {
   get apiClient(): BaseApiClient {
     if (!this._apiClient) {
       this._apiClient = new BaseApiClient(API_CONFIG.BASE_URL)
+      // Initialize with token from storage if available
+      const token = authStorage.getToken()
+      if (token) {
+        this._apiClient.setAuthToken(token)
+      }
     }
     return this._apiClient
   }
@@ -47,10 +52,6 @@ class Container {
   get authRepository(): AuthRepository {
     if (!this._authRepository) {
       this._authRepository = new AuthRepository(this.apiClient)
-      const token = authStorage.getToken()
-      if (token) {
-        this._authRepository.setAuthToken(token)
-      }
     }
     return this._authRepository
   }
@@ -113,12 +114,14 @@ class Container {
 
   updateAuthToken(token: string): void {
     authStorage.setToken(token)
-    this.authRepository.setAuthToken(token)
+    // Update the shared apiClient instance so all repositories have the token
+    this.apiClient.setAuthToken(token)
   }
 
   clearAuthToken(): void {
     authStorage.removeToken()
-    this.authRepository.clearAuthToken()
+    // Clear from shared apiClient instance
+    this.apiClient.clearAuthToken()
   }
 
   reset(): void {

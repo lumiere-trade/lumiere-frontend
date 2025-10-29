@@ -249,7 +249,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
         walletName
       )
 
-      authService.storage.setToken(loginResult.accessToken)
+      container.updateAuthToken(loginResult.accessToken)
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, loginResult.user)
 
@@ -326,7 +326,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
         acceptedDocIds
       )
 
-      authService.storage.setToken(createResult.accessToken)
+      container.updateAuthToken(createResult.accessToken)
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, createResult.user)
 
