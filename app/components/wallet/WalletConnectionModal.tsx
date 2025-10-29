@@ -6,7 +6,6 @@ import { Checkbox } from '@lumiere/shared/components/ui/checkbox'
 import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
 import { X, Settings, ChevronDown, Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink } from "lucide-react"
-import { useAuth } from "@/hooks/use-auth"
 import { useLegalDocuments } from "@/hooks/use-legal-documents"
 import { useWallet } from "@/hooks/use-wallet"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
@@ -42,7 +41,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
   const [localError, setError] = useState<string | null>(null)
   const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null)
 
-  const { error: authError } = useAuth()
   const { legalDocuments, isLoading: isLoadingLegalDocs } = useLegalDocuments()
   const { error: walletError, disconnect } = useWallet()
   const solanaWallet = useSolanaWallet()
@@ -408,9 +406,9 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
               </label>
             </div>
 
-            {(authError || localError) && (
+            {localError && (
               <div className="text-sm text-red-500 text-center p-2 bg-red-500/10 rounded-lg border border-red-500/20">
-                {localError || authError}
+                {localError}
               </div>
             )}
 
@@ -555,9 +553,9 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
             </ScrollArea>
           </div>
 
-          {(walletError || authError || localError) && (
+          {(walletError || localError) && (
             <div className="flex-shrink-0 text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-              {localError || walletError || authError}
+              {localError || walletError}
             </div>
           )}
 
