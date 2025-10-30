@@ -2,7 +2,6 @@
  * Auth Service (Application Layer).
  * Orchestrates authentication business logic.
  */
-
 import type { IAuthRepository } from '@/lib/domain/interfaces/auth.repository.interface';
 import type { IWalletProvider } from '@/lib/domain/interfaces/wallet.provider.interface';
 import type { IStorage } from '@/lib/domain/interfaces/storage.interface';
@@ -29,6 +28,7 @@ export class AuthService {
 
   async verifyAndLogin(): Promise<AuthState> {
     const address = this.walletProvider.getAddress();
+
     if (!address) {
       return {
         user: null,
@@ -55,7 +55,6 @@ export class AuthService {
     }
 
     const walletType = this.walletProvider.getWalletType();
-
     const loginResult = await this.authRepository.login(
       address,
       message,
@@ -64,6 +63,7 @@ export class AuthService {
     );
 
     this.storage.setToken(loginResult.accessToken);
+    this.authRepository.setAuthToken(loginResult.accessToken);
 
     return {
       user: loginResult.user,
@@ -74,6 +74,7 @@ export class AuthService {
 
   async createAccount(acceptedDocumentIds: string[]): Promise<AuthState> {
     const address = this.walletProvider.getAddress();
+
     if (!address) {
       throw new Error('Wallet not connected');
     }
@@ -91,6 +92,7 @@ export class AuthService {
     );
 
     this.storage.setToken(result.accessToken);
+    this.authRepository.setAuthToken(result.accessToken);
 
     return {
       user: result.user,
@@ -114,6 +116,7 @@ export class AuthService {
 
   logout(): void {
     this.storage.removeToken();
+    this.authRepository.clearAuthToken();
     this.walletProvider.disconnect();
   }
 
