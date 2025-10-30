@@ -167,7 +167,7 @@ export class AuthRepository implements IAuthRepository {
 
   async checkCompliance(): Promise<CheckComplianceResult> {
     const response = await this.apiClient.get<CheckComplianceResponse>(
-      '/api/auth/compliance'
+      '/api/legal/compliance'
     )
 
     const missingDocuments = (response.pending_documents || []).map((doc) =>
@@ -184,7 +184,7 @@ export class AuthRepository implements IAuthRepository {
       document_ids: documentIds,
     }
 
-    await this.apiClient.post('/api/auth/accept-documents', request)
+    await this.apiClient.post('/api/legal/accept-documents', request)
   }
 
   async getLegalDocuments(): Promise<LegalDocument[]> {
