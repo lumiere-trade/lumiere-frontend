@@ -84,10 +84,12 @@ export class EscrowRepository implements IEscrowRepository {
       escrow_account: string
       balance: string
       token_mint: string
+      tx_signature: string
     }>('/api/escrow/initialize', {
       method: 'POST',
       body: JSON.stringify({
-        tx_signature: signedTx,
+        signed_transaction: signedTx,
+        token_mint: 'USDC',
       }),
     })
 
@@ -143,7 +145,7 @@ export class EscrowRepository implements IEscrowRepository {
       method: 'POST',
       body: JSON.stringify({
         amount: amount,
-        tx_signature: signedTx,
+        signed_transaction: signedTx,
       }),
     })
 
