@@ -12,10 +12,10 @@ import type {
   DepositToEscrowResponse,
   WalletBalance,
 } from '@/lib/domain/interfaces/escrow.repository.interface'
-import { BaseAPIClient } from './base-api.client'
+import { BaseApiClient } from './base-api.client'
 
 export class EscrowRepository implements IEscrowRepository {
-  constructor(private readonly apiClient: BaseAPIClient) {}
+  constructor(private readonly apiClient: BaseApiClient) {}
 
   /**
    * GET /api/escrow/balance

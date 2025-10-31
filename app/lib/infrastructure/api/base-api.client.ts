@@ -187,6 +187,3 @@ export class BaseApiClient {
     return this.request<T>(endpoint, { ...config, method: 'DELETE' })
   }
 }
-
-// Export singleton instance
-export const apiClient = new BaseApiClient()
