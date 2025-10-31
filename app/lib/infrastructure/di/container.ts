@@ -78,7 +78,7 @@ class Container {
         this.authRepository,
         this.walletProvider,
         authStorage,
-        (token: string) => this.updateAuthToken(token)
+        this.updateAuthToken.bind(this)
       )
     }
     return this._authService
