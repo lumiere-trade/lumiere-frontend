@@ -23,7 +23,8 @@ export class AuthService {
   constructor(
     private readonly authRepository: IAuthRepository,
     private readonly walletProvider: IWalletProvider,
-    private readonly storage: IStorage
+    private readonly storage: IStorage,
+    private readonly updateToken: (token: string) => void
   ) {}
 
   async verifyAndLogin(): Promise<AuthState> {
@@ -62,8 +63,7 @@ export class AuthService {
       walletType
     );
 
-    this.storage.setToken(loginResult.accessToken);
-    this.authRepository.setAuthToken(loginResult.accessToken);
+    this.updateToken(loginResult.accessToken);
 
     return {
       user: loginResult.user,
@@ -91,8 +91,7 @@ export class AuthService {
       acceptedDocumentIds
     );
 
-    this.storage.setToken(result.accessToken);
-    this.authRepository.setAuthToken(result.accessToken);
+    this.updateToken(result.accessToken);
 
     return {
       user: result.user,
