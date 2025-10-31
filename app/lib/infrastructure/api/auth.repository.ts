@@ -45,6 +45,10 @@ export class AuthRepository implements IAuthRepository {
     this.apiClient.clearAuthToken()
   }
 
+  hasAuthToken(): boolean {
+    return this.apiClient.hasAuthToken()
+  }
+
   async verifyWallet(
     walletAddress: string,
     message: string,

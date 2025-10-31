@@ -120,6 +120,6 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return this.storage.hasToken();
+    return this.authRepository.hasAuthToken();
   }
 }

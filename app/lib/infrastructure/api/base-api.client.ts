@@ -32,6 +32,13 @@ export class BaseApiClient {
   }
 
   /**
+   * Check if authentication token is set
+   */
+  hasAuthToken(): boolean {
+    return this.authToken !== null
+  }
+
+  /**
    * Get headers with auth token if available
    */
   private getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
