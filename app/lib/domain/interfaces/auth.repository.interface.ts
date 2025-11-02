@@ -28,6 +28,16 @@ export interface CheckComplianceResult {
 }
 
 export interface IAuthRepository {
+  /**
+   * Token management
+   */
+  setAuthToken(token: string): void;
+  clearAuthToken(): void;
+  hasAuthToken(): boolean;
+
+  /**
+   * Authentication operations
+   */
   verifyWallet(
     walletAddress: string,
     message: string,
@@ -51,9 +61,10 @@ export interface IAuthRepository {
 
   getCurrentUser(): Promise<User>;
 
+  /**
+   * Compliance operations
+   */
   checkCompliance(): Promise<CheckComplianceResult>;
-
   acceptDocuments(documentIds: string[]): Promise<void>;
-
   getLegalDocuments(): Promise<LegalDocument[]>;
 }

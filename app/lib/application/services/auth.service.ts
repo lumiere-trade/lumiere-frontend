@@ -2,6 +2,7 @@
  * Auth Service (Application Layer).
  * Orchestrates authentication business logic.
  */
+
 import type { IAuthRepository } from '@/lib/domain/interfaces/auth.repository.interface';
 import type { IWalletProvider } from '@/lib/domain/interfaces/wallet.provider.interface';
 import type { IStorage } from '@/lib/domain/interfaces/storage.interface';
@@ -27,9 +28,56 @@ export class AuthService {
     private readonly updateToken: (token: string) => void
   ) {}
 
+  /**
+   * Low-level auth methods for fine-grained control
+   */
+  async verifyWallet(
+    address: string,
+    message: string,
+    signature: string
+  ) {
+    return this.authRepository.verifyWallet(address, message, signature);
+  }
+
+  async loginWithSignature(
+    address: string,
+    message: string,
+    signature: string,
+    walletType: string
+  ) {
+    const result = await this.authRepository.login(
+      address,
+      message,
+      signature,
+      walletType
+    );
+    this.updateToken(result.accessToken);
+    return result;
+  }
+
+  async createAccountWithSignature(
+    address: string,
+    message: string,
+    signature: string,
+    walletType: string,
+    acceptedDocumentIds: string[]
+  ) {
+    const result = await this.authRepository.createAccount(
+      address,
+      message,
+      signature,
+      walletType,
+      acceptedDocumentIds
+    );
+    this.updateToken(result.accessToken);
+    return result;
+  }
+
+  /**
+   * High-level auth flow using wallet provider
+   */
   async verifyAndLogin(): Promise<AuthState> {
     const address = this.walletProvider.getAddress();
-
     if (!address) {
       return {
         user: null,
@@ -74,7 +122,6 @@ export class AuthService {
 
   async createAccount(acceptedDocumentIds: string[]): Promise<AuthState> {
     const address = this.walletProvider.getAddress();
-
     if (!address) {
       throw new Error('Wallet not connected');
     }

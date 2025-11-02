@@ -7,9 +7,10 @@ export class NetworkError extends DomainError {
   constructor(
     message: string,
     public readonly statusCode?: number,
-    public readonly originalError?: Error
+    public readonly originalError?: Error,
+    code?: string
   ) {
-    super(message, `NETWORK_ERROR_${statusCode || 'UNKNOWN'}`)
+    super(message, code || `NETWORK_ERROR_${statusCode || 'UNKNOWN'}`)
   }
 
   public getUserMessage(): string {
@@ -28,8 +29,7 @@ export class NetworkError extends DomainError {
  */
 export class TimeoutError extends NetworkError {
   constructor(message: string = 'Request timeout') {
-    super(message)
-    this.code = 'TIMEOUT_ERROR'
+    super(message, undefined, undefined, 'TIMEOUT_ERROR')
   }
 
   public getUserMessage(): string {
@@ -42,8 +42,7 @@ export class TimeoutError extends NetworkError {
  */
 export class ConnectionError extends NetworkError {
   constructor(message: string = 'Connection error', originalError?: Error) {
-    super(message, undefined, originalError)
-    this.code = 'CONNECTION_ERROR'
+    super(message, undefined, originalError, 'CONNECTION_ERROR')
   }
 
   public getUserMessage(): string {
@@ -56,8 +55,7 @@ export class ConnectionError extends NetworkError {
  */
 export class ServerError extends NetworkError {
   constructor(message: string, statusCode: number) {
-    super(message, statusCode)
-    this.code = 'SERVER_ERROR'
+    super(message, statusCode, undefined, 'SERVER_ERROR')
   }
 
   public getUserMessage(): string {
@@ -70,8 +68,7 @@ export class ServerError extends NetworkError {
  */
 export class ClientError extends NetworkError {
   constructor(message: string, statusCode: number) {
-    super(message, statusCode)
-    this.code = 'CLIENT_ERROR'
+    super(message, statusCode, undefined, 'CLIENT_ERROR')
   }
 
   public getUserMessage(): string {

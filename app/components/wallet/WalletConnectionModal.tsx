@@ -193,7 +193,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       console.log('[Auth] Starting authentication...')
 
       const authService = container.authService
-      const walletProvider = container.walletProvider
 
       const message = AUTH_CONFIG.MESSAGE
       const messageBytes = new TextEncoder().encode(message)
@@ -222,7 +221,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       console.log('[Auth] Signature obtained')
 
       console.log('[Auth] Verifying wallet with backend...')
-      const verifyResult = await authService.authRepository.verifyWallet(
+      const verifyResult = await authService.verifyWallet(
         walletAddress,
         message,
         signatureBase58
@@ -242,14 +241,12 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       }
 
       console.log('[Auth] User exists, logging in...')
-      const loginResult = await authService.authRepository.login(
+      const loginResult = await authService.loginWithSignature(
         walletAddress,
         message,
         signatureBase58,
         walletName
       )
-
-      container.updateAuthToken(loginResult.accessToken)
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, loginResult.user)
 
@@ -318,15 +315,13 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
       const acceptedDocIds = legalDocuments.map((doc) => doc.id)
 
-      const createResult = await authService.authRepository.createAccount(
+      const createResult = await authService.createAccountWithSignature(
         connectedWalletAddress,
         message,
         signatureBase58,
         selectedWallet,
         acceptedDocIds
       )
-
-      container.updateAuthToken(createResult.accessToken)
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, createResult.user)
 

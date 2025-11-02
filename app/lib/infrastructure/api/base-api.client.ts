@@ -81,7 +81,12 @@ export class BaseApiClient {
         lastError = error as Error
 
         // Don't retry on client errors (4xx)
-        if (error instanceof NetworkError && error.statusCode >= 400 && error.statusCode < 500) {
+        if (
+          error instanceof NetworkError &&
+          error.statusCode !== undefined &&
+          error.statusCode >= 400 &&
+          error.statusCode < 500
+        ) {
           throw error
         }
 
