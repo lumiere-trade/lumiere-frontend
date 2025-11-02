@@ -7,11 +7,6 @@ export const API_CONFIG = {
   TIMEOUT: 30000,
 } as const
 
-export const PASSEUR_CONFIG = {
-  BASE_URL: process.env.NEXT_PUBLIC_PASSEUR_URL || 'http://localhost:8767',
-  TIMEOUT: 30000,
-} as const
-
 export const AUTH_CONFIG = {
   TOKEN_KEY: 'lumiere_auth_token',
   MESSAGE: process.env.NEXT_PUBLIC_AUTH_MESSAGE || 'Sign this message to authenticate with Lumiere',
