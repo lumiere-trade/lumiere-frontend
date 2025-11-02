@@ -45,13 +45,17 @@ export class AuthService {
     signature: string,
     walletType: string
   ) {
+    console.log('[AuthService] loginWithSignature called');
     const result = await this.authRepository.login(
       address,
       message,
       signature,
       walletType
     );
+    console.log('[AuthService] Login result:', { hasToken: !!result.accessToken, tokenLength: result.accessToken?.length });
+    console.log('[AuthService] Calling updateToken with token:', result.accessToken?.substring(0, 50) + '...');
     this.updateToken(result.accessToken);
+    console.log('[AuthService] updateToken called successfully');
     return result;
   }
 
@@ -62,6 +66,7 @@ export class AuthService {
     walletType: string,
     acceptedDocumentIds: string[]
   ) {
+    console.log('[AuthService] createAccountWithSignature called');
     const result = await this.authRepository.createAccount(
       address,
       message,
@@ -69,6 +74,7 @@ export class AuthService {
       walletType,
       acceptedDocumentIds
     );
+    console.log('[AuthService] Create account result:', { hasToken: !!result.accessToken });
     this.updateToken(result.accessToken);
     return result;
   }
