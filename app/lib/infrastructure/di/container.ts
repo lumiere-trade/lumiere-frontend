@@ -114,9 +114,14 @@ class Container {
   }
 
   updateAuthToken(token: string): void {
-    authStorage.setToken(token)
+    console.log('[Container] updateAuthToken called with:', token?.substring(0, 50) + '...');
+    console.log('[Container] Calling authStorage.setToken');
+    authStorage.setToken(token);
+    console.log('[Container] authStorage.setToken completed');
+    console.log('[Container] Calling apiClient.setAuthToken');
     // Update the shared apiClient instance so all repositories have the token
-    this.apiClient.setAuthToken(token)
+    this.apiClient.setAuthToken(token);
+    console.log('[Container] apiClient.setAuthToken completed');
   }
 
   clearAuthToken(): void {
