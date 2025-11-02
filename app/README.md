@@ -1,0 +1,1 @@
+# Vercel environment variables updated
