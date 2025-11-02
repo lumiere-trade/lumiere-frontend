@@ -12,6 +12,7 @@ import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { useRouter } from "next/navigation"
 import { ROUTES, AUTH_CONFIG } from "@/config/constants"
 import { container } from "@/lib/infrastructure/di/container"
+import { invalidateAuthDependentQueries } from "@/lib/infrastructure/cache/auth-cache-manager"
 import type React from "react"
 import bs58 from "bs58"
 import { useQueryClient } from "@tanstack/react-query"
@@ -249,6 +250,8 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       )
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, loginResult.user)
+      
+      invalidateAuthDependentQueries(queryClient)
 
       console.log('[Auth] Login successful')
 
@@ -324,6 +327,8 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       )
 
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, createResult.user)
+      
+      invalidateAuthDependentQueries(queryClient)
 
       console.log('[Auth] Account created successfully')
 
