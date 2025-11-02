@@ -38,6 +38,7 @@ class AuthStorage implements IStorage {
   }
 
   removeToken(): void {
+    console.log("[AuthStorage] removeToken called - STACK TRACE:", new Error().stack);
     if (typeof window === 'undefined') return;
     try {
       localStorage.removeItem(this.tokenKey);

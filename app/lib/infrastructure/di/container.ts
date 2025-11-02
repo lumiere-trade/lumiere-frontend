@@ -125,6 +125,7 @@ class Container {
   }
 
   clearAuthToken(): void {
+    console.log("[Container] clearAuthToken called - STACK TRACE:", new Error().stack);
     authStorage.removeToken()
     // Clear from shared apiClient instance
     this.apiClient.clearAuthToken()
