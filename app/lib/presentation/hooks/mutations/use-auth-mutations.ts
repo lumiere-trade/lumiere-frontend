@@ -6,6 +6,7 @@
 import { useMutation, useQueryClient, UseMutationOptions } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { container } from '@/lib/infrastructure/di/container';
+import { invalidateAuthDependentQueries } from '@/lib/infrastructure/cache/auth-cache-manager';
 import { User } from '@/lib/domain/entities/user.entity';
 import { PendingDocument } from '@/lib/domain/entities/pending-document.entity';
 import { AUTH_QUERY_KEYS } from '../queries/use-auth-queries';
@@ -44,7 +45,11 @@ export function useLoginMutation(
       };
     },
     onSuccess: (data) => {
+      // Update user in cache optimistically
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, data.user);
+      
+      // Invalidate all auth-dependent queries (centralized)
+      invalidateAuthDependentQueries(queryClient);
 
       if (data.pendingDocuments.length > 0) {
         router.push('/onboarding');
@@ -71,8 +76,12 @@ export function useCreateAccountMutation(
       };
     },
     onSuccess: (data) => {
+      // Update user in cache optimistically
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, data.user);
-      queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.compliance });
+      
+      // Invalidate all auth-dependent queries (centralized)
+      invalidateAuthDependentQueries(queryClient);
+      
       router.push(ROUTES.DASHBOARD);
     },
     ...options,
@@ -91,6 +100,7 @@ export function useLogoutMutation(
       authService.logout();
     },
     onSuccess: () => {
+      // Clear all cached queries on logout
       queryClient.clear();
       router.push(ROUTES.HOME);
     },
