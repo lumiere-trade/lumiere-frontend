@@ -25,8 +25,9 @@ export interface PendingDocumentDto {
 export interface UserDto {
   id: string;
   wallet_address: string;
+  wallet_type?: string;
   created_at: string;
-  updated_at: string;
+  pending_documents?: PendingDocumentDto[];
 }
 
 export interface VerifyWalletRequest {

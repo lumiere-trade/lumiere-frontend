@@ -1,6 +1,8 @@
 /**
  * User domain entity.
  * Pure business logic, no external dependencies.
+ * 
+ * Immutable Web3 identity - User never changes after creation.
  */
 
 import { LegalDocument } from './legal-document.entity';
@@ -11,7 +13,6 @@ export class User {
     public readonly walletAddress: string,
     public readonly walletType: string,
     public readonly createdAt: Date,
-    public readonly updatedAt: Date,
     public readonly pendingDocuments: LegalDocument[] = []
   ) {}
 
@@ -20,7 +21,6 @@ export class User {
     wallet_address: string;
     wallet_type?: string;
     created_at: string;
-    updated_at: string;
     pending_documents?: Array<{
       id: string;
       document_type: string;
@@ -40,9 +40,8 @@ export class User {
     return new User(
       data.id,
       data.wallet_address,
-      data.wallet_type || 'Unknown Wallet',
+      data.wallet_type || 'Unknown',
       new Date(data.created_at),
-      new Date(data.updated_at),
       pendingDocuments
     );
   }

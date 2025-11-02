@@ -98,7 +98,6 @@ export class AuthRepository implements IAuthRepository {
       wallet_address: response.wallet_address,
       wallet_type: walletType,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       pending_documents: pendingDocuments.map(doc => ({
         id: doc.id,
         document_type: doc.documentType,
@@ -146,7 +145,6 @@ export class AuthRepository implements IAuthRepository {
       wallet_address: response.wallet_address,
       wallet_type: walletType,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
       pending_documents: [],
     })
 
@@ -164,7 +162,6 @@ export class AuthRepository implements IAuthRepository {
       wallet_address: response.wallet_address,
       wallet_type: response.wallet_type || 'Unknown',
       created_at: response.created_at,
-      updated_at: response.updated_at,
       pending_documents: response.pending_documents || [],
     })
   }
