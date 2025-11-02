@@ -6,6 +6,11 @@
  */
 import { Escrow } from '../entities/escrow.entity'
 
+export interface PrepareInitializeEscrowResponse {
+  transaction: string
+  tokenMint: string
+}
+
 export interface InitializeEscrowRequest {
   txSignature: string
 }
@@ -54,10 +59,16 @@ export interface IEscrowRepository {
   getWalletBalance(walletAddress: string): Promise<WalletBalance>
 
   /**
-   * Initialize escrow account (register with Pourtier after blockchain tx)
+   * Prepare initialize escrow transaction (unsigned)
+   * Returns base64 transaction for wallet signing
    */
-  initializeEscrow(
-    request: InitializeEscrowRequest
+  prepareInitializeEscrow(): Promise<PrepareInitializeEscrowResponse>
+
+  /**
+   * Submit initialize escrow (register with Pourtier after signing)
+   */
+  submitInitializeEscrow(
+    signedTx: string
   ): Promise<InitializeEscrowResponse>
 
   /**
@@ -69,5 +80,8 @@ export interface IEscrowRepository {
   /**
    * Submit deposit to escrow (register with Pourtier after signing)
    */
-  submitDeposit(amount: string, signedTx: string): Promise<DepositToEscrowResponse>
+  submitDeposit(
+    amount: string,
+    signedTx: string
+  ): Promise<DepositToEscrowResponse>
 }
