@@ -17,8 +17,17 @@ interface LoginResult {
   pendingDocuments: PendingDocument[]
 }
 
+interface LoginParams {
+  walletAddress?: string
+  signature?: string
+  walletType?: string
+}
+
 interface CreateAccountParams {
   acceptedDocumentIds: string[]
+  walletAddress?: string
+  signature?: string
+  walletType?: string
 }
 
 interface CreateAccountResult {
@@ -34,37 +43,49 @@ export function useLoginMutation() {
   const router = useRouter()
   const { publicKey, signMessage } = useWallet()
 
-  return useMutation<LoginResult, Error, void>({
-    mutationFn: async () => {
-      if (!publicKey || !signMessage) {
-        throw new Error('Wallet not connected')
+  return useMutation<LoginResult, Error, LoginParams | void>({
+    mutationFn: async (params) => {
+      let walletAddress: string
+      let signatureBase58: string
+      let walletType: string
+
+      if (params && params.signature && params.walletAddress && params.walletType) {
+        walletAddress = params.walletAddress
+        signatureBase58 = params.signature
+        walletType = params.walletType
+      } else {
+        if (!publicKey || !signMessage) {
+          throw new Error('Wallet not connected')
+        }
+
+        walletAddress = publicKey.toBase58()
+        const message = AUTH_CONFIG.MESSAGE
+        const encodedMessage = new TextEncoder().encode(message)
+        const signature = await signMessage(encodedMessage)
+        signatureBase58 = Buffer.from(signature).toString('base64')
+        walletType = 'Phantom'
+
+        const verifyResult = await authApi.verifyWallet(
+          walletAddress,
+          message,
+          signatureBase58
+        )
+
+        if (!verifyResult.signature_valid) {
+          throw new Error('Invalid signature')
+        }
+
+        if (!verifyResult.user_exists) {
+          throw new Error('User not found. Please create an account.')
+        }
       }
 
-      const walletAddress = publicKey.toBase58()
       const message = AUTH_CONFIG.MESSAGE
-      const encodedMessage = new TextEncoder().encode(message)
-      const signature = await signMessage(encodedMessage)
-      const signatureBase58 = Buffer.from(signature).toString('base64')
-
-      const verifyResult = await authApi.verifyWallet(
-        walletAddress,
-        message,
-        signatureBase58
-      )
-
-      if (!verifyResult.signature_valid) {
-        throw new Error('Invalid signature')
-      }
-
-      if (!verifyResult.user_exists) {
-        throw new Error('User not found. Please create an account.')
-      }
-
       const loginResponse = await authApi.login(
         walletAddress,
         message,
         signatureBase58,
-        'Phantom'
+        walletType
       )
 
       console.log('[AUTH-DEBUG] Login response received:', {
@@ -75,7 +96,7 @@ export function useLoginMutation() {
 
       console.log('[AUTH-DEBUG] Calling storage.setToken...')
       storage.setToken(loginResponse.access_token)
-      
+
       console.log('[AUTH-DEBUG] Verifying token was saved...')
       const savedToken = storage.getToken()
       console.log('[AUTH-DEBUG] Token saved successfully?', savedToken !== null, {
@@ -89,7 +110,7 @@ export function useLoginMutation() {
       const user = transformUser({
         id: loginResponse.user_id,
         wallet_address: loginResponse.wallet_address,
-        wallet_type: 'Phantom',
+        wallet_type: walletType,
         created_at: new Date().toISOString(),
       })
 
@@ -102,7 +123,7 @@ export function useLoginMutation() {
       console.log('[AUTH-DEBUG] onSuccess called, checking token again...')
       const token = storage.getToken()
       console.log('[AUTH-DEBUG] Token in onSuccess:', token?.substring(0, 20))
-      
+
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, data.user)
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.currentUser })
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.compliance })
@@ -123,23 +144,35 @@ export function useCreateAccountMutation() {
   const { publicKey, signMessage } = useWallet()
 
   return useMutation<CreateAccountResult, Error, CreateAccountParams>({
-    mutationFn: async ({ acceptedDocumentIds }) => {
-      if (!publicKey || !signMessage) {
-        throw new Error('Wallet not connected')
+    mutationFn: async (params) => {
+      let walletAddress: string
+      let signatureBase58: string
+      let walletType: string
+
+      if (params.signature && params.walletAddress && params.walletType) {
+        walletAddress = params.walletAddress
+        signatureBase58 = params.signature
+        walletType = params.walletType
+      } else {
+        if (!publicKey || !signMessage) {
+          throw new Error('Wallet not connected')
+        }
+
+        walletAddress = publicKey.toBase58()
+        const message = AUTH_CONFIG.MESSAGE
+        const encodedMessage = new TextEncoder().encode(message)
+        const signature = await signMessage(encodedMessage)
+        signatureBase58 = Buffer.from(signature).toString('base64')
+        walletType = 'Phantom'
       }
 
-      const walletAddress = publicKey.toBase58()
       const message = AUTH_CONFIG.MESSAGE
-      const encodedMessage = new TextEncoder().encode(message)
-      const signature = await signMessage(encodedMessage)
-      const signatureBase58 = Buffer.from(signature).toString('base64')
-
       const response = await authApi.createAccount(
         walletAddress,
         message,
         signatureBase58,
-        'Phantom',
-        acceptedDocumentIds
+        walletType,
+        params.acceptedDocumentIds
       )
 
       storage.setToken(response.access_token)
@@ -148,7 +181,7 @@ export function useCreateAccountMutation() {
       const user = transformUser({
         id: response.user_id,
         wallet_address: response.wallet_address,
-        wallet_type: 'Phantom',
+        wallet_type: walletType,
         created_at: new Date().toISOString(),
       })
 
