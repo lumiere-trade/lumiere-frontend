@@ -32,6 +32,9 @@ function initializeAuthToken(): void {
       const token = localStorage.getItem('lumiere_auth_token')
       if (token) {
         authToken = token
+        console.log('[CLIENT-DEBUG] Auth token initialized from localStorage:', token.substring(0, 20))
+      } else {
+        console.log('[CLIENT-DEBUG] No token found in localStorage')
       }
     } catch (error) {
       console.error('Failed to initialize auth token:', error)
@@ -43,10 +46,12 @@ initializeAuthToken()
 
 export function setAuthToken(token: string): void {
   authToken = token
+  console.log('[CLIENT-DEBUG] setAuthToken called, token set to:', token.substring(0, 20))
 }
 
 export function clearAuthToken(): void {
   authToken = null
+  console.log('[CLIENT-DEBUG] clearAuthToken called')
 }
 
 export function getAuthToken(): string | null {
@@ -54,6 +59,8 @@ export function getAuthToken(): string | null {
 }
 
 function getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
+  console.log('[CLIENT-DEBUG] getHeaders called, authToken:', authToken ? authToken.substring(0, 20) + '...' : 'NULL')
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
