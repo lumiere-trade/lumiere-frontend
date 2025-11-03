@@ -1,6 +1,6 @@
 /**
  * Debug Configuration
- * Centralized debug settings for the entire application
+ * SSR-safe: only runs in browser
  */
 
 export enum LogLevel {
@@ -35,13 +35,14 @@ interface DebugConfig {
   maxStoredLogs: number
 }
 
+const isBrowser = typeof window !== 'undefined'
+
 class DebugConfiguration {
   private config: DebugConfig
 
   constructor() {
-    // Read from localStorage or environment
     const isDev = process.env.NODE_ENV === 'development'
-    const savedConfig = this.loadFromStorage()
+    const savedConfig = isBrowser ? this.loadFromStorage() : null
 
     this.config = {
       enabled: savedConfig?.enabled ?? isDev,
@@ -53,8 +54,7 @@ class DebugConfiguration {
       maxStoredLogs: savedConfig?.maxStoredLogs ?? 1000,
     }
 
-    // Expose to window for runtime control
-    if (typeof window !== 'undefined') {
+    if (isBrowser) {
       (window as any).__LUMIERE_DEBUG__ = {
         enable: () => this.enable(),
         disable: () => this.disable(),
@@ -67,7 +67,7 @@ class DebugConfiguration {
   }
 
   private loadFromStorage(): Partial<DebugConfig> | null {
-    if (typeof window === 'undefined') return null
+    if (!isBrowser) return null
     try {
       const stored = localStorage.getItem('lumiere_debug_config')
       if (!stored) return null
@@ -82,7 +82,7 @@ class DebugConfiguration {
   }
 
   private saveToStorage(): void {
-    if (typeof window === 'undefined') return
+    if (!isBrowser) return
     try {
       localStorage.setItem(
         'lumiere_debug_config',
