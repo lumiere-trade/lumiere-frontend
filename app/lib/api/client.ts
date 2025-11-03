@@ -1,6 +1,6 @@
 /**
  * HTTP Client for Lumiere API
- * Simple function-based approach without classes
+ * Token read directly from localStorage on every request
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000'
@@ -24,49 +24,41 @@ export class TimeoutError extends Error {
   }
 }
 
-let authToken: string | null = null
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem('lumiere_auth_token')
+  } catch (error) {
+    console.error('Failed to read auth token:', error)
+    return null
+  }
+}
 
-function initializeAuthToken(): void {
+export function setAuthToken(_token: string): void {
+  console.log('[CLIENT-DEBUG] setAuthToken called (no-op, using localStorage directly)')
+}
+
+export function clearAuthToken(): void {
   if (typeof window !== 'undefined') {
     try {
-      const token = localStorage.getItem('lumiere_auth_token')
-      if (token) {
-        authToken = token
-        console.log('[CLIENT-DEBUG] Auth token initialized from localStorage:', token.substring(0, 20))
-      } else {
-        console.log('[CLIENT-DEBUG] No token found in localStorage')
-      }
+      localStorage.removeItem('lumiere_auth_token')
+      console.log('[CLIENT-DEBUG] clearAuthToken: token removed from localStorage')
     } catch (error) {
-      console.error('Failed to initialize auth token:', error)
+      console.error('Failed to clear auth token:', error)
     }
   }
 }
 
-initializeAuthToken()
-
-export function setAuthToken(token: string): void {
-  authToken = token
-  console.log('[CLIENT-DEBUG] setAuthToken called, token set to:', token.substring(0, 20))
-}
-
-export function clearAuthToken(): void {
-  authToken = null
-  console.log('[CLIENT-DEBUG] clearAuthToken called')
-}
-
-export function getAuthToken(): string | null {
-  return authToken
-}
-
 function getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
-  console.log('[CLIENT-DEBUG] getHeaders called, authToken:', authToken ? authToken.substring(0, 20) + '...' : 'NULL')
+  const token = getAuthToken()
+  console.log('[CLIENT-DEBUG] getHeaders called, token from localStorage:', token ? token.substring(0, 20) + '...' : 'NULL')
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
 
-  if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   if (additionalHeaders) {
