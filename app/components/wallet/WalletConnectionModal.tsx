@@ -1,5 +1,4 @@
 "use client"
-import { logger, LogCategory } from "@/lib/debug"
 
 import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
@@ -9,15 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/share
 import { X, Settings, ChevronDown, Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink } from "lucide-react"
 import { useLegalDocuments } from "@/hooks/use-legal-documents"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
-import { useRouter } from "next/navigation"
-import { ROUTES, AUTH_CONFIG } from "@/config/constants"
-import { invalidateAuthDependentQueries } from "@/lib/infrastructure/cache/auth-cache-manager"
-import { authApi, storage, setAuthToken } from "@/lib/api"
-import { transformUser } from "@/types/ui.types"
+import { AUTH_CONFIG } from "@/config/constants"
+import { authApi } from "@/lib/api"
+import { useLoginMutation, useCreateAccountMutation } from "@/hooks/mutations/use-auth-mutations"
+import { logger, LogCategory } from "@/lib/debug"
 import type React from "react"
 import bs58 from "bs58"
-import { useQueryClient } from "@tanstack/react-query"
-import { AUTH_QUERY_KEYS } from "@/hooks/queries/use-auth-queries"
 
 type WalletOption = {
   name: string
@@ -39,14 +35,17 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
   const [showTermsDialog, setShowTermsDialog] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
   const [localError, setError] = useState<string | null>(null)
   const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null)
+  const [pendingSignature, setPendingSignature] = useState<string | null>(null)
 
   const { legalDocuments, isLoading: isLoadingLegalDocs } = useLegalDocuments()
   const solanaWallet = useSolanaWallet()
-  const router = useRouter()
-  const queryClient = useQueryClient()
+  
+  const loginMutation = useLoginMutation()
+  const createAccountMutation = useCreateAccountMutation()
+
+  const isProcessing = loginMutation.isPending || createAccountMutation.isPending
 
   const initialWallets: WalletOption[] = [
     { name: "Phantom", icon: Ghost, recent: true, installUrl: "https://phantom.app/download" },
@@ -66,7 +65,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
   const handleWalletClick = async (wallet: WalletOption) => {
     setSelectedWallet(wallet.name)
-    setIsProcessing(true)
     setError(null)
 
     try {
@@ -80,7 +78,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
             window.open(wallet.installUrl, '_blank')
             setError('Please install Phantom wallet first')
           }
-          setIsProcessing(false)
           return
         }
 
@@ -135,6 +132,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           } else {
             setError(connectError.message || 'Failed to connect. Please try again.')
           }
+          setSelectedWallet(null)
         }
       } else {
         const walletAdapter = solanaWallet.wallets.find(
@@ -148,7 +146,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           } else {
             setError(`${wallet.name} wallet is not available`)
           }
-          setIsProcessing(false)
           return
         }
 
@@ -184,7 +181,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     } catch (error: any) {
       logger.error(LogCategory.WALLET, 'Connection error:', error)
       setError(error.message || 'Failed to connect wallet. Please try again.')
-      setIsProcessing(false)
       setSelectedWallet(null)
     }
   }
@@ -234,50 +230,24 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
       if (!verifyResult.user_exists) {
         logger.info(LogCategory.AUTH, 'User does not exist, opening terms dialog')
+        setPendingSignature(signatureBase58)
         setShowTermsDialog(true)
-        setIsProcessing(false)
         return
       }
 
-      logger.info(LogCategory.AUTH, 'User exists, logging in...')
-      const loginResponse = await authApi.login(
+      logger.info(LogCategory.AUTH, 'User exists, logging in via mutation...')
+      await loginMutation.mutateAsync({
         walletAddress,
-        message,
-        signatureBase58,
-        walletName
-      )
-
-      storage.setToken(loginResponse.access_token)
-      setAuthToken(loginResponse.access_token)
-
-      const user = transformUser({
-        id: loginResponse.user_id,
-        wallet_address: loginResponse.wallet_address,
-        wallet_type: walletName,
-        created_at: new Date().toISOString(),
+        signature: signatureBase58,
+        walletType: walletName
       })
-
-      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
-      invalidateAuthDependentQueries(queryClient)
-
-      logger.info(LogCategory.AUTH, 'Login successful')
-
-      if (loginResponse.pending_documents.length > 0) {
-        logger.info(LogCategory.AUTH, 'User has pending documents, redirecting to onboarding')
-        router.push('/onboarding')
-      } else {
-        logger.info(LogCategory.AUTH, 'User is fully onboarded, redirecting to dashboard')
-        router.push(ROUTES.DASHBOARD)
-      }
-
+      
       onClose()
-      setIsProcessing(false)
       setSelectedWallet(null)
 
     } catch (error: any) {
       logger.error(LogCategory.AUTH, 'Authentication failed:', error)
       setError(error.message || 'Authentication failed. Please try again.')
-      setIsProcessing(false)
       setSelectedWallet(null)
 
       if (solanaWallet.disconnect) {
@@ -288,75 +258,30 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
   const handleConfirmTerms = async () => {
     if (!agreedToTerms) return
-    if (!connectedWalletAddress || !selectedWallet) {
+    if (!connectedWalletAddress || !selectedWallet || !pendingSignature) {
       setError('Wallet connection lost. Please try again.')
       setShowTermsDialog(false)
       return
     }
 
-    setIsProcessing(true)
-    setError(null)
-
     try {
-      const message = AUTH_CONFIG.MESSAGE
-      const messageBytes = new TextEncoder().encode(message)
-
-      let signatureBytes: Uint8Array
-
-      if (selectedWallet === 'Phantom' && typeof window !== 'undefined') {
-        const provider = (window as any).phantom?.solana
-        if (!provider) {
-          throw new Error('Phantom provider not found')
-        }
-
-        const { signature } = await provider.signMessage(messageBytes, 'utf8')
-        signatureBytes = signature
-      } else {
-        if (!solanaWallet.signMessage) {
-          throw new Error('Wallet does not support message signing')
-        }
-
-        signatureBytes = await solanaWallet.signMessage(messageBytes)
-      }
-
-      const signatureBase58 = bs58.encode(signatureBytes)
-
       const acceptedDocIds = legalDocuments.map((doc) => doc.id)
 
-      const createResponse = await authApi.createAccount(
-        connectedWalletAddress,
-        message,
-        signatureBase58,
-        selectedWallet,
-        acceptedDocIds
-      )
-
-      storage.setToken(createResponse.access_token)
-      setAuthToken(createResponse.access_token)
-
-      const user = transformUser({
-        id: createResponse.user_id,
-        wallet_address: createResponse.wallet_address,
-        wallet_type: selectedWallet,
-        created_at: new Date().toISOString(),
+      await createAccountMutation.mutateAsync({
+        acceptedDocumentIds: acceptedDocIds,
+        walletAddress: connectedWalletAddress,
+        signature: pendingSignature,
+        walletType: selectedWallet
       })
-
-      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
-      invalidateAuthDependentQueries(queryClient)
-
-      logger.info(LogCategory.AUTH, 'Account created successfully')
-
-      router.push(ROUTES.DASHBOARD)
 
       onClose()
       setShowTermsDialog(false)
-      setIsProcessing(false)
       setSelectedWallet(null)
+      setPendingSignature(null)
 
     } catch (error: any) {
       logger.error(LogCategory.AUTH, 'Account creation failed:', error)
       setError(error.message || 'Account creation failed. Please try again.')
-      setIsProcessing(false)
 
       if (solanaWallet.disconnect) {
         await solanaWallet.disconnect()
@@ -369,7 +294,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     setAgreedToTerms(false)
     setSelectedWallet(null)
     setConnectedWalletAddress(null)
-    setIsProcessing(false)
+    setPendingSignature(null)
 
     if (solanaWallet.disconnect) {
       solanaWallet.disconnect()
@@ -519,7 +444,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           <div className="text-center space-y-2 flex-shrink-0">
             <h1 className="text-3xl font-bold tracking-tight text-primary">Connect Wallet</h1>
             <p className="text-sm text-muted-foreground">
-              Secure and simple. Lumiere is independently audited, with you in full control of your funds.
+              Secure and simple. Lumière is independently audited, with you in full control of your funds.
             </p>
           </div>
 
