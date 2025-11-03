@@ -35,14 +35,13 @@ function getAuthToken(): string | null {
 }
 
 export function setAuthToken(_token: string): void {
-  console.log('[CLIENT-DEBUG] setAuthToken called (no-op, using localStorage directly)')
+  // No-op: token managed directly via localStorage
 }
 
 export function clearAuthToken(): void {
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('lumiere_auth_token')
-      console.log('[CLIENT-DEBUG] clearAuthToken: token removed from localStorage')
     } catch (error) {
       console.error('Failed to clear auth token:', error)
     }
@@ -51,8 +50,7 @@ export function clearAuthToken(): void {
 
 function getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
   const token = getAuthToken()
-  console.log('[CLIENT-DEBUG] getHeaders called, token from localStorage:', token ? token.substring(0, 20) + '...' : 'NULL')
-  
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
