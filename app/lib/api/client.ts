@@ -26,6 +26,21 @@ export class TimeoutError extends Error {
 
 let authToken: string | null = null
 
+function initializeAuthToken(): void {
+  if (typeof window !== 'undefined') {
+    try {
+      const token = localStorage.getItem('lumiere_auth_token')
+      if (token) {
+        authToken = token
+      }
+    } catch (error) {
+      console.error('Failed to initialize auth token:', error)
+    }
+  }
+}
+
+initializeAuthToken()
+
 export function setAuthToken(token: string): void {
   authToken = token
 }
