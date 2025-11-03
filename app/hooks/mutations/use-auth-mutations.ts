@@ -67,7 +67,23 @@ export function useLoginMutation() {
         'Phantom'
       )
 
+      console.log('[AUTH-DEBUG] Login response received:', {
+        has_access_token: 'access_token' in loginResponse,
+        token_length: loginResponse.access_token?.length,
+        token_preview: loginResponse.access_token?.substring(0, 20) + '...'
+      })
+
+      console.log('[AUTH-DEBUG] Calling storage.setToken...')
       storage.setToken(loginResponse.access_token)
+      
+      console.log('[AUTH-DEBUG] Verifying token was saved...')
+      const savedToken = storage.getToken()
+      console.log('[AUTH-DEBUG] Token saved successfully?', savedToken !== null, {
+        saved_length: savedToken?.length,
+        matches: savedToken === loginResponse.access_token
+      })
+
+      console.log('[AUTH-DEBUG] Calling setAuthToken...')
       setAuthToken(loginResponse.access_token)
 
       const user = transformUser({
@@ -83,6 +99,10 @@ export function useLoginMutation() {
       }
     },
     onSuccess: (data) => {
+      console.log('[AUTH-DEBUG] onSuccess called, checking token again...')
+      const token = storage.getToken()
+      console.log('[AUTH-DEBUG] Token in onSuccess:', token?.substring(0, 20))
+      
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, data.user)
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.currentUser })
       queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.compliance })
