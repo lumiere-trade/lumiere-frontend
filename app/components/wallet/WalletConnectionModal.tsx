@@ -1,4 +1,5 @@
 "use client"
+import { logger, LogCategory } from "@/lib/debug"
 
 import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
@@ -69,7 +70,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     setError(null)
 
     try {
-      console.log(`[Wallet] Attempting to connect: ${wallet.name}`)
+      logger.info(LogCategory.WALLET, "Attempting to connect", { wallet: wallet.name })
 
       if (wallet.name === 'Phantom' && typeof window !== 'undefined') {
         const provider = (window as any).phantom?.solana
@@ -83,10 +84,10 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           return
         }
 
-        console.log('[Wallet] Phantom provider found')
+        logger.info(LogCategory.WALLET, 'Phantom provider found')
 
         if (provider.isConnected && provider.publicKey) {
-          console.log('[Wallet] Phantom already connected')
+          logger.info(LogCategory.WALLET, 'Phantom already connected')
           const walletAddress = provider.publicKey.toString()
           setConnectedWalletAddress(walletAddress)
 
@@ -101,12 +102,12 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           return
         }
 
-        console.log('[Wallet] Requesting Phantom connection...')
+        logger.info(LogCategory.WALLET, 'Requesting Phantom connection...')
 
         try {
           const resp = await provider.connect({ onlyIfTrusted: false })
           const walletAddress = resp.publicKey.toString()
-          console.log('[Wallet] Phantom connected:', walletAddress)
+          logger.info(LogCategory.WALLET, 'Phantom connected:', walletAddress)
           setConnectedWalletAddress(walletAddress)
 
           const walletAdapter = solanaWallet.wallets.find(
@@ -114,7 +115,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           )
 
           if (walletAdapter) {
-            console.log('[Wallet] Syncing with wallet adapter...')
+            logger.info(LogCategory.WALLET, 'Syncing with wallet adapter...')
             solanaWallet.select(walletAdapter.adapter.name)
 
             let attempts = 0
@@ -127,7 +128,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           await authenticateWithBackend(walletAddress, wallet.name)
 
         } catch (connectError: any) {
-          console.error('[Wallet] Phantom connection failed:', connectError)
+          logger.error(LogCategory.WALLET, 'Phantom connection failed:', connectError)
 
           if (connectError.code === 4001 || connectError.message?.includes('User rejected')) {
             setError('Connection rejected. Please try again.')
@@ -151,10 +152,10 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           return
         }
 
-        console.log('[Wallet] Selecting adapter...')
+        logger.info(LogCategory.WALLET, 'Selecting adapter...')
         solanaWallet.select(walletAdapter.adapter.name)
 
-        console.log('[Wallet] Waiting for wallet initialization...')
+        logger.info(LogCategory.WALLET, 'Waiting for wallet initialization...')
         let attempts = 0
         const maxAttempts = 30
         while (!solanaWallet.wallet && attempts < maxAttempts) {
@@ -166,10 +167,10 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
           throw new Error('Wallet failed to initialize. Please try again.')
         }
 
-        console.log('[Wallet] Requesting connection...')
+        logger.info(LogCategory.WALLET, 'Requesting connection...')
         await solanaWallet.connect()
 
-        console.log('[Wallet] Connection successful')
+        logger.info(LogCategory.WALLET, 'Connection successful')
 
         if (!solanaWallet.publicKey) {
           throw new Error('Failed to get wallet address')
@@ -181,7 +182,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
         await authenticateWithBackend(walletAddress, wallet.name)
       }
     } catch (error: any) {
-      console.error('[Wallet] Connection error:', error)
+      logger.error(LogCategory.WALLET, 'Connection error:', error)
       setError(error.message || 'Failed to connect wallet. Please try again.')
       setIsProcessing(false)
       setSelectedWallet(null)
@@ -190,12 +191,12 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
   const authenticateWithBackend = async (walletAddress: string, walletName: string) => {
     try {
-      console.log('[Auth] Starting authentication...')
+      logger.info(LogCategory.AUTH, 'Starting authentication...')
 
       const message = AUTH_CONFIG.MESSAGE
       const messageBytes = new TextEncoder().encode(message)
 
-      console.log('[Auth] Requesting signature...')
+      logger.info(LogCategory.AUTH, 'Requesting signature...')
 
       let signatureBytes: Uint8Array
 
@@ -216,29 +217,29 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       }
 
       const signatureBase58 = bs58.encode(signatureBytes)
-      console.log('[Auth] Signature obtained')
+      logger.info(LogCategory.AUTH, 'Signature obtained')
 
-      console.log('[Auth] Verifying wallet with backend...')
+      logger.info(LogCategory.AUTH, 'Verifying wallet with backend...')
       const verifyResult = await authApi.verifyWallet(
         walletAddress,
         message,
         signatureBase58
       )
 
-      console.log('[Auth] Verification result:', verifyResult)
+      logger.info(LogCategory.AUTH, 'Verification result:', verifyResult)
 
       if (!verifyResult.signature_valid) {
         throw new Error('Invalid signature. Please try again.')
       }
 
       if (!verifyResult.user_exists) {
-        console.log('[Auth] User does not exist, opening terms dialog')
+        logger.info(LogCategory.AUTH, 'User does not exist, opening terms dialog')
         setShowTermsDialog(true)
         setIsProcessing(false)
         return
       }
 
-      console.log('[Auth] User exists, logging in...')
+      logger.info(LogCategory.AUTH, 'User exists, logging in...')
       const loginResponse = await authApi.login(
         walletAddress,
         message,
@@ -259,13 +260,13 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
       invalidateAuthDependentQueries(queryClient)
 
-      console.log('[Auth] Login successful')
+      logger.info(LogCategory.AUTH, 'Login successful')
 
       if (loginResponse.pending_documents.length > 0) {
-        console.log('[Auth] User has pending documents, redirecting to onboarding')
+        logger.info(LogCategory.AUTH, 'User has pending documents, redirecting to onboarding')
         router.push('/onboarding')
       } else {
-        console.log('[Auth] User is fully onboarded, redirecting to dashboard')
+        logger.info(LogCategory.AUTH, 'User is fully onboarded, redirecting to dashboard')
         router.push(ROUTES.DASHBOARD)
       }
 
@@ -274,7 +275,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       setSelectedWallet(null)
 
     } catch (error: any) {
-      console.error('[Auth] Authentication failed:', error)
+      logger.error(LogCategory.AUTH, 'Authentication failed:', error)
       setError(error.message || 'Authentication failed. Please try again.')
       setIsProcessing(false)
       setSelectedWallet(null)
@@ -343,7 +344,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
       invalidateAuthDependentQueries(queryClient)
 
-      console.log('[Auth] Account created successfully')
+      logger.info(LogCategory.AUTH, 'Account created successfully')
 
       router.push(ROUTES.DASHBOARD)
 
@@ -353,7 +354,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       setSelectedWallet(null)
 
     } catch (error: any) {
-      console.error('[Auth] Account creation failed:', error)
+      logger.error(LogCategory.AUTH, 'Account creation failed:', error)
       setError(error.message || 'Account creation failed. Please try again.')
       setIsProcessing(false)
 

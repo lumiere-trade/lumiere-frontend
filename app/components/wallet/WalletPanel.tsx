@@ -1,20 +1,23 @@
 "use client"
 
-import { useState } from "react"
-
+import { useState, useEffect } from "react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@lumiere/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@lumiere/shared/components/ui/tabs'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Wallet, Copy, DollarSign } from "lucide-react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useAuth } from "@/hooks/use-auth"
+import { useLogger } from "@/hooks/use-logger"
+import { LogCategory } from "@/lib/debug"
 
 interface WalletPanelProps {
   trigger?: React.ReactNode
 }
 
 export function WalletPanel({ trigger }: WalletPanelProps) {
+  const log = useLogger('WalletPanel', LogCategory.WALLET)
   const [open, setOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('balances')
   const { user } = useAuth()
   const { disconnect } = useWallet()
 
@@ -37,25 +40,62 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
     },
   }
 
+  useEffect(() => {
+    if (open) {
+      log.info('Wallet panel opened', {
+        walletAddress: user?.walletAddress?.substring(0, 8) + '...',
+        walletType
+      })
+    } else {
+      log.info('Wallet panel closed')
+    }
+  }, [open])
+
+  useEffect(() => {
+    if (open) {
+      log.info('Tab changed', { tab: activeTab })
+    }
+  }, [activeTab, open])
+
   const handleCopyAddress = () => {
     if (user?.walletAddress) {
+      log.info('Copying wallet address')
       navigator.clipboard.writeText(user.walletAddress)
+      log.info('Wallet address copied to clipboard')
+    } else {
+      log.warn('Attempted to copy address but no wallet connected')
     }
   }
 
   const handleDeposit = () => {
-    console.log('Deposit USDC')
+    log.info('Deposit button clicked from wallet panel')
   }
 
-  const handleDisconnect = () => {
-    disconnect()
+  const handleDisconnect = async () => {
+    log.info('Disconnect initiated from wallet panel')
+    log.time('disconnect')
+    
+    try {
+      await disconnect()
+      log.info('Wallet disconnected successfully')
+      setOpen(false)
+    } catch (error) {
+      log.error('Disconnect failed', error)
+    } finally {
+      log.timeEnd('disconnect')
+    }
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="lg" className="rounded-full bg-transparent font-semibold gap-2">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="rounded-full bg-transparent font-semibold gap-2"
+            onClick={() => log.info('Wallet panel trigger clicked')}
+          >
             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20">
               <Wallet className="h-4 w-4 text-primary" />
             </div>
@@ -87,7 +127,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
         </SheetHeader>
 
         <div className="mt-6 px-2">
-          <Tabs defaultValue="balances" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-muted/30">
               <TabsTrigger value="balances">Balances</TabsTrigger>
               <TabsTrigger value="positions">Positions</TabsTrigger>

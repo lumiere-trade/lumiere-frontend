@@ -2,7 +2,7 @@
 
 /**
  * Deposit Funds Modal
- * 
+ *
  * Allows user to deposit USDC to escrow account.
  * Auto-initializes escrow if not already initialized.
  */
@@ -14,6 +14,8 @@ import { Input } from '@lumiere/shared/components/ui/input'
 import { Label } from '@lumiere/shared/components/ui/label'
 import { useEscrow } from '@/hooks/use-escrow'
 import { useToast } from '@/hooks/use-toast'
+import { useLogger } from '@/hooks/use-logger'
+import { LogCategory } from '@/lib/debug'
 
 interface DepositFundsModalProps {
   isOpen: boolean
@@ -21,9 +23,10 @@ interface DepositFundsModalProps {
 }
 
 export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
+  const log = useLogger('DepositFundsModal', LogCategory.ESCROW)
   const [amount, setAmount] = useState('')
   const { toast } = useToast()
-  
+
   const {
     walletBalance,
     escrowBalance,
@@ -35,72 +38,135 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
     depositToEscrow,
     error,
   } = useEscrow()
-  
-  // Reset amount when modal closes
+
+  useEffect(() => {
+    if (isOpen) {
+      log.info('Deposit modal opened', {
+        walletBalance,
+        escrowBalance,
+        isInitialized
+      })
+    } else {
+      log.info('Deposit modal closed')
+    }
+  }, [isOpen])
+
   useEffect(() => {
     if (!isOpen) {
       setAmount('')
+      log.debug('Amount reset on modal close')
     }
   }, [isOpen])
-  
+
+  useEffect(() => {
+    if (error) {
+      log.error('Escrow error detected', error)
+    }
+  }, [error])
+
   const handleMaxClick = () => {
+    log.info('MAX button clicked', { walletBalance })
     setAmount(walletBalance)
   }
-  
+
+  const handleAmountChange = (value: string) => {
+    setAmount(value)
+    if (value) {
+      log.debug('Amount changed', { amount: value })
+    }
+  }
+
   const handleConfirmDeposit = async () => {
+    log.group('Deposit Flow')
+    log.time('deposit')
+    log.info('Deposit initiated', { amount })
+
     if (!amount || parseFloat(amount) <= 0) {
+      log.warn('Invalid amount provided', { amount })
       toast({
         title: 'Invalid Amount',
         description: 'Please enter a valid amount',
         variant: 'destructive',
       })
+      log.groupEnd()
       return
     }
-    
+
     const amountNum = parseFloat(amount)
     const walletBalanceNum = parseFloat(walletBalance)
-    
+
     if (amountNum > walletBalanceNum) {
+      log.warn('Insufficient balance', {
+        requested: amountNum,
+        available: walletBalanceNum
+      })
       toast({
         title: 'Insufficient Balance',
         description: `You only have ${walletBalance} USDC available`,
         variant: 'destructive',
       })
+      log.groupEnd()
       return
     }
-    
+
     try {
-      // depositToEscrow will auto-initialize if needed
+      if (!isInitialized) {
+        log.info('Escrow not initialized, will auto-initialize')
+      }
+
+      log.info('Calling depositToEscrow', { amount })
       await depositToEscrow(amount)
-      
+
+      log.info('Deposit successful', {
+        amount,
+        newBalance: escrowBalance
+      })
+
       toast({
         title: 'Deposit Successful',
         description: `Deposited ${amount} USDC to escrow`,
       })
-      
+
+      log.timeEnd('deposit')
+      log.groupEnd()
       onClose()
     } catch (err: any) {
-      console.error('Deposit error:', err)
+      log.error('Deposit failed', {
+        error: err.message,
+        amount
+      })
+      
       toast({
         title: 'Deposit Failed',
         description: err.message || 'Failed to deposit funds',
         variant: 'destructive',
       })
+      
+      log.timeEnd('deposit')
+      log.groupEnd()
     }
   }
-  
+
   const displayAmount = amount || '0.00'
   const isProcessing = isInitializing || isDepositing
-  
+
+  useEffect(() => {
+    if (isProcessing) {
+      log.info('Processing state changed', {
+        isInitializing,
+        isDepositing
+      })
+    }
+  }, [isProcessing, isInitializing, isDepositing])
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-card border border-primary/30 rounded-2xl shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">Deposit Funds</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
-          {/* Amount Input */}
           <div className="space-y-2">
             <Label htmlFor="amount" className="text-base font-semibold text-muted-foreground">
               Amount (USDC)
@@ -111,7 +177,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
                 type="number"
                 placeholder="0.00"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => handleAmountChange(e.target.value)}
                 disabled={isProcessing || isLoadingWallet}
                 className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
@@ -135,7 +201,6 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
             </p>
           </div>
 
-          {/* Deposit Summary */}
           <div className="rounded-lg border border-primary/20 bg-background/50 p-4">
             <div className="mb-2 text-base text-muted-foreground">Deposit Summary</div>
             <div className="flex items-center justify-between">
@@ -144,7 +209,6 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
             </div>
           </div>
 
-          {/* Confirm Button */}
           <Button
             onClick={handleConfirmDeposit}
             disabled={isProcessing || isLoadingWallet || !amount || parseFloat(amount) <= 0}
@@ -157,7 +221,6 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
               : 'CONFIRM DEPOSIT'}
           </Button>
 
-          {/* Info Text */}
           <p className="text-center text-sm text-muted-foreground">
             {!isInitialized && amount && parseFloat(amount) > 0 ? (
               <>Escrow will be automatically initialized for your first deposit.</>
@@ -165,8 +228,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
               <>Deposits are processed instantly. Gas fees may apply.</>
             )}
           </p>
-          
-          {/* Error Display */}
+
           {error && (
             <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               {error.message}

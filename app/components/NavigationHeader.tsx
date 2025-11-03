@@ -3,18 +3,21 @@
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@lumiere/shared/components/ui/dialog'
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Settings, Copy, Wallet, ArrowDownToLine, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { WalletPanel } from "@/components/wallet/WalletPanel"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
+import { useLogger } from "@/hooks/use-logger"
+import { LogCategory } from "@/lib/debug"
 
 interface NavigationHeaderProps {
   currentPage?: "dashboard" | "create"
 }
 
 export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
+  const log = useLogger('NavigationHeader', LogCategory.COMPONENT)
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
@@ -22,13 +25,45 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
   const walletType = user?.walletType || "Unknown"
 
+  useEffect(() => {
+    if (user) {
+      log.info('User loaded', { 
+        walletAddress: user.walletAddress.substring(0, 8) + '...',
+        walletType: user.walletType
+      })
+    }
+  }, [user])
+
+  const handleDepositClick = () => {
+    log.info('Deposit button clicked')
+    setIsDepositModalOpen(true)
+  }
+
+  const handleDepositClose = () => {
+    log.info('Deposit modal closed')
+    setIsDepositModalOpen(false)
+  }
+
+  const handleCopyAddress = () => {
+    if (user?.walletAddress) {
+      navigator.clipboard.writeText(user.walletAddress)
+      log.info('Wallet address copied to clipboard')
+    }
+  }
+
   const handleDisconnect = async () => {
+    log.info('Disconnect initiated')
+    log.time('disconnect')
+    
     try {
       await disconnect()
       logout()
+      log.info('Disconnect successful')
     } catch (error) {
-      console.error('Disconnect error:', error)
+      log.error('Disconnect failed', error)
       logout()
+    } finally {
+      log.timeEnd('disconnect')
     }
   }
 
@@ -69,7 +104,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
               variant="default"
               size="lg"
               className="rounded-full px-4 md:px-6 font-semibold gap-2"
-              onClick={() => setIsDepositModalOpen(true)}
+              onClick={handleDepositClick}
             >
               <ArrowDownToLine className="h-4 w-4" />
               DEPOSIT
@@ -81,6 +116,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                   variant="outline"
                   size="icon"
                   className="rounded-full"
+                  onClick={() => log.info('Settings dialog opened')}
                 >
                   <Settings className="h-5 w-5" />
                 </Button>
@@ -98,7 +134,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => user?.walletAddress && navigator.clipboard.writeText(user.walletAddress)}
+                        onClick={handleCopyAddress}
                         disabled={!user?.walletAddress}
                       >
                         <Copy className="h-4 w-4" />
@@ -147,7 +183,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
       <DepositFundsModal
         isOpen={isDepositModalOpen}
-        onClose={() => setIsDepositModalOpen(false)}
+        onClose={handleDepositClose}
       />
     </>
   )
