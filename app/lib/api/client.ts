@@ -52,7 +52,7 @@ export function clearAuthToken(): void {
 function getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
   const token = getAuthToken()
   console.log('[CLIENT-DEBUG] getHeaders called, token from localStorage:', token ? token.substring(0, 20) + '...' : 'NULL')
-
+  
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
@@ -103,21 +103,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
       errorCode = errorData.code
     } catch {
       errorMessage = response.statusText || errorMessage
-    }
-
-    // Auto-logout on "User not found" or 401 Unauthorized with valid token
-    if (
-      (response.status === 401 && getAuthToken()) ||
-      errorMessage.includes('User not found') ||
-      errorMessage.includes('Not authenticated')
-    ) {
-      console.warn('[AUTH] Auto-logout: Invalid or expired token detected')
-      clearAuthToken()
-      
-      // Redirect to home page only if not already there
-      if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-        window.location.href = '/'
-      }
     }
 
     throw new ApiError(errorMessage, response.status, errorCode)
