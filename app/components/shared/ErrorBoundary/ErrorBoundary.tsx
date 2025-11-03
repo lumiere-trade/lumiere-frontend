@@ -1,7 +1,6 @@
 'use client'
 
 import React, { Component, ReactNode } from 'react'
-import { DomainError } from '@/lib/domain/errors/base.error'
 import { ErrorFallback } from './ErrorFallback'
 
 interface Props {
@@ -32,16 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
-
-    // Call optional error handler
     this.props.onError?.(error, errorInfo)
-
-    // TODO: Send to error tracking service (Sentry)
-    // Sentry.captureException(error, { extra: errorInfo })
   }
 
   private handleReset = () => {
@@ -53,12 +46,9 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError && this.state.error) {
-      // Use custom fallback if provided
       if (this.props.fallback) {
         return this.props.fallback
       }
-
-      // Use default error fallback
       return (
         <ErrorFallback
           error={this.state.error}
@@ -66,7 +56,6 @@ export class ErrorBoundary extends Component<Props, State> {
         />
       )
     }
-
     return this.props.children
   }
 }

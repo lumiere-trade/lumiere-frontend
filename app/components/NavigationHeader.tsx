@@ -65,10 +65,9 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
               </Button>
             </Link>
 
-            {/* Deposit Button - Opens DepositFundsModal */}
-            <Button 
-              variant="default" 
-              size="lg" 
+            <Button
+              variant="default"
+              size="lg"
               className="rounded-full px-4 md:px-6 font-semibold gap-2"
               onClick={() => setIsDepositModalOpen(true)}
             >
@@ -76,7 +75,6 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
               DEPOSIT
             </Button>
 
-            {/* Settings Dialog */}
             <Dialog>
               <DialogTrigger asChild>
                 <Button
@@ -114,7 +112,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-muted-foreground">Member Since</label>
                     <div className="rounded-lg border border-border bg-background p-3">
-                      {user?.createdAt ? user.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Not available"}
+                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Not available"}
                     </div>
                   </div>
                 </div>
@@ -147,10 +145,9 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
         </div>
       </header>
 
-      {/* Deposit Funds Modal */}
-      <DepositFundsModal 
-        isOpen={isDepositModalOpen} 
-        onClose={() => setIsDepositModalOpen(false)} 
+      <DepositFundsModal
+        isOpen={isDepositModalOpen}
+        onClose={() => setIsDepositModalOpen(false)}
       />
     </>
   )

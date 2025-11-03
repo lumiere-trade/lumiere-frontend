@@ -1,6 +1,5 @@
 /**
- * useWallet hook.
- * Re-export from WalletProvider for convenience.
+ * Wallet Hook
+ * Re-export from Solana Wallet Adapter
  */
-
-export { useWallet } from '@/providers/WalletProvider';
+export { useWallet } from '@solana/wallet-adapter-react'

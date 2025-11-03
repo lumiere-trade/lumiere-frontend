@@ -7,16 +7,16 @@ import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
 import { X, Settings, ChevronDown, Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink } from "lucide-react"
 import { useLegalDocuments } from "@/hooks/use-legal-documents"
-import { useWallet } from "@/hooks/use-wallet"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { useRouter } from "next/navigation"
 import { ROUTES, AUTH_CONFIG } from "@/config/constants"
-import { container } from "@/lib/infrastructure/di/container"
 import { invalidateAuthDependentQueries } from "@/lib/infrastructure/cache/auth-cache-manager"
+import { authApi, storage, setAuthToken } from "@/lib/api"
+import { transformUser } from "@/types/ui.types"
 import type React from "react"
 import bs58 from "bs58"
 import { useQueryClient } from "@tanstack/react-query"
-import { AUTH_QUERY_KEYS } from "@/lib/presentation/hooks/queries"
+import { AUTH_QUERY_KEYS } from "@/hooks/queries/use-auth-queries"
 
 type WalletOption = {
   name: string
@@ -43,7 +43,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
   const [connectedWalletAddress, setConnectedWalletAddress] = useState<string | null>(null)
 
   const { legalDocuments, isLoading: isLoadingLegalDocs } = useLegalDocuments()
-  const { error: walletError, disconnect } = useWallet()
   const solanaWallet = useSolanaWallet()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -193,8 +192,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     try {
       console.log('[Auth] Starting authentication...')
 
-      const authService = container.authService
-
       const message = AUTH_CONFIG.MESSAGE
       const messageBytes = new TextEncoder().encode(message)
 
@@ -222,7 +219,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       console.log('[Auth] Signature obtained')
 
       console.log('[Auth] Verifying wallet with backend...')
-      const verifyResult = await authService.verifyWallet(
+      const verifyResult = await authApi.verifyWallet(
         walletAddress,
         message,
         signatureBase58
@@ -230,11 +227,11 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
       console.log('[Auth] Verification result:', verifyResult)
 
-      if (!verifyResult.signatureValid) {
+      if (!verifyResult.signature_valid) {
         throw new Error('Invalid signature. Please try again.')
       }
 
-      if (!verifyResult.userExists) {
+      if (!verifyResult.user_exists) {
         console.log('[Auth] User does not exist, opening terms dialog')
         setShowTermsDialog(true)
         setIsProcessing(false)
@@ -242,20 +239,29 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       }
 
       console.log('[Auth] User exists, logging in...')
-      const loginResult = await authService.loginWithSignature(
+      const loginResponse = await authApi.login(
         walletAddress,
         message,
         signatureBase58,
         walletName
       )
 
-      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, loginResult.user)
-      
+      storage.setToken(loginResponse.access_token)
+      setAuthToken(loginResponse.access_token)
+
+      const user = transformUser({
+        id: loginResponse.user_id,
+        wallet_address: loginResponse.wallet_address,
+        wallet_type: walletName,
+        created_at: new Date().toISOString(),
+      })
+
+      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
       invalidateAuthDependentQueries(queryClient)
 
       console.log('[Auth] Login successful')
 
-      if (loginResult.pendingDocuments.length > 0) {
+      if (loginResponse.pending_documents.length > 0) {
         console.log('[Auth] User has pending documents, redirecting to onboarding')
         router.push('/onboarding')
       } else {
@@ -273,8 +279,8 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       setIsProcessing(false)
       setSelectedWallet(null)
 
-      if (disconnect) {
-        await disconnect()
+      if (solanaWallet.disconnect) {
+        await solanaWallet.disconnect()
       }
     }
   }
@@ -291,8 +297,6 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     setError(null)
 
     try {
-      const authService = container.authService
-
       const message = AUTH_CONFIG.MESSAGE
       const messageBytes = new TextEncoder().encode(message)
 
@@ -318,7 +322,7 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
 
       const acceptedDocIds = legalDocuments.map((doc) => doc.id)
 
-      const createResult = await authService.createAccountWithSignature(
+      const createResponse = await authApi.createAccount(
         connectedWalletAddress,
         message,
         signatureBase58,
@@ -326,8 +330,17 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
         acceptedDocIds
       )
 
-      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, createResult.user)
-      
+      storage.setToken(createResponse.access_token)
+      setAuthToken(createResponse.access_token)
+
+      const user = transformUser({
+        id: createResponse.user_id,
+        wallet_address: createResponse.wallet_address,
+        wallet_type: selectedWallet,
+        created_at: new Date().toISOString(),
+      })
+
+      queryClient.setQueryData(AUTH_QUERY_KEYS.currentUser, user)
       invalidateAuthDependentQueries(queryClient)
 
       console.log('[Auth] Account created successfully')
@@ -344,8 +357,8 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
       setError(error.message || 'Account creation failed. Please try again.')
       setIsProcessing(false)
 
-      if (disconnect) {
-        await disconnect()
+      if (solanaWallet.disconnect) {
+        await solanaWallet.disconnect()
       }
     }
   }
@@ -357,8 +370,8 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
     setConnectedWalletAddress(null)
     setIsProcessing(false)
 
-    if (disconnect) {
-      disconnect()
+    if (solanaWallet.disconnect) {
+      solanaWallet.disconnect()
     }
   }
 
@@ -553,9 +566,9 @@ export function WalletConnectionModal({ isOpen, onClose }: WalletConnectionModal
             </ScrollArea>
           </div>
 
-          {(walletError || localError) && (
+          {localError && (
             <div className="flex-shrink-0 text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-              {localError || walletError}
+              {localError}
             </div>
           )}
 
