@@ -62,23 +62,6 @@ export function WalletConnectSection() {
         }
 
         logger.info(LogCategory.WALLET, 'Phantom provider found')
-
-        if (provider.isConnected && provider.publicKey) {
-          logger.info(LogCategory.WALLET, 'Phantom already connected')
-          const walletAddress = provider.publicKey.toString()
-          setConnectedWalletAddress(walletAddress)
-
-          const walletAdapter = solanaWallet.wallets.find(
-            w => w.adapter.name.toLowerCase() === 'phantom'
-          )
-          if (walletAdapter) {
-            solanaWallet.select(walletAdapter.adapter.name)
-          }
-
-          await authenticateWithBackend(walletAddress, wallet.name)
-          return
-        }
-
         logger.info(LogCategory.WALLET, 'Requesting Phantom connection...')
 
         try {
