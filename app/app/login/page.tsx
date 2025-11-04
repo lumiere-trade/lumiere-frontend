@@ -11,7 +11,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Login page mounted, checking JWT...')
-    
+
     if (storage.hasToken()) {
       logger.info(LogCategory.AUTH, 'JWT found, redirecting to dashboard')
       router.replace('/dashboard')
@@ -21,12 +21,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 gap-8">
       <div className="text-center space-y-3">
-        <h1 className="text-6xl md:text-7xl font-bold tracking-wider text-primary">LUMIERE</h1>
+        <h1 className="text-6xl md:text-7xl font-bold tracking-wider text-primary">LUMIÈRE</h1>
         <p className="text-sm md:text-base text-muted-foreground tracking-wide">
           Blind to emotion, guided by algorithm
         </p>
       </div>
-      
+
       <WalletConnectSection />
     </div>
   )
