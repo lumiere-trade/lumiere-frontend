@@ -114,9 +114,7 @@ export function WalletConnectSection() {
         } catch (connectError: any) {
           logger.error(LogCategory.WALLET, 'Phantom connection failed:', connectError)
 
-          if (connectError.code === 4001 || connectError.message?.includes('User rejected')) {
-            setError('Connection rejected. Please try again.')
-          } else {
+          if (connectError.code !== 4001 && !connectError.message?.includes('User rejected')) {
             setError(connectError.message || 'Failed to connect. Please try again.')
           }
           setSelectedWallet(null)
