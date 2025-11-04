@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Checkbox } from '@lumiere/shared/components/ui/checkbox'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@lumiere/shared/components/ui/dialog'
@@ -25,13 +25,31 @@ export function TermsDialog({
   walletType
 }: TermsDialogProps) {
   const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const { legalDocuments, isLoading: isLoadingLegalDocs } = useLegalDocuments()
   const createAccountMutation = useCreateAccountMutation()
 
+  useEffect(() => {
+    const scrollContainer = scrollRef.current
+    if (!scrollContainer) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+      const isBottom = scrollTop + clientHeight >= scrollHeight - 10
+      setHasScrolledToBottom(isBottom)
+    }
+
+    scrollContainer.addEventListener('scroll', handleScroll)
+    handleScroll()
+
+    return () => scrollContainer.removeEventListener('scroll', handleScroll)
+  }, [legalDocuments])
+
   const handleConfirmTerms = async () => {
-    if (!agreedToTerms) return
+    if (!agreedToTerms || !hasScrolledToBottom) return
 
     try {
       const acceptedDocIds = legalDocuments.map((doc) => doc.id)
@@ -52,6 +70,7 @@ export function TermsDialog({
 
   const handleCancel = () => {
     setAgreedToTerms(false)
+    setHasScrolledToBottom(false)
     setError(null)
     onClose()
   }
@@ -81,15 +100,20 @@ export function TermsDialog({
     })
   }
 
+  const canConfirm = agreedToTerms && hasScrolledToBottom && !createAccountMutation.isPending && !isLoadingLegalDocs
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[50vh] overflow-hidden flex flex-col">
+    <Dialog open={isOpen} onOpenChange={() => {}}>
+      <DialogContent 
+        className="max-w-lg max-h-[50vh] overflow-hidden flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">Terms & Conditions</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-4">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden pr-4">
             <div className="space-y-4">
               {isLoadingLegalDocs ? (
                 <div className="flex items-center justify-center py-12">
@@ -124,6 +148,12 @@ export function TermsDialog({
             </label>
           </div>
 
+          {!hasScrolledToBottom && (
+            <div className="text-xs text-yellow-500 text-center p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              Please scroll to the bottom to continue
+            </div>
+          )}
+
           {error && (
             <div className="text-sm text-red-500 text-center p-2 bg-red-500/10 rounded-lg border border-red-500/20">
               {error}
@@ -141,7 +171,7 @@ export function TermsDialog({
             </Button>
             <Button
               onClick={handleConfirmTerms}
-              disabled={!agreedToTerms || createAccountMutation.isPending || isLoadingLegalDocs}
+              disabled={!canConfirm}
               className="rounded-full"
             >
               {createAccountMutation.isPending ? (
