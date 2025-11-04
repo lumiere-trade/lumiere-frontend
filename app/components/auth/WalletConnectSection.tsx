@@ -258,81 +258,72 @@ export function WalletConnectSection() {
       <Card className="w-full max-w-lg border-2 border-primary/30 shadow-2xl rounded-2xl p-8">
         <div className="space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-5xl font-bold tracking-wider text-primary">LUMIERE</h1>
-            <p className="text-xs text-muted-foreground tracking-wide">
-              Blind to emotion, guided by algorithm
+            <h2 className="text-2xl font-bold text-primary">Connect Wallet</h2>
+            <p className="text-xs text-muted-foreground">
+              Secure and simple. Lumiere is independently audited, with you in full control of your funds.
             </p>
           </div>
 
-          <div className="border-t border-border pt-6">
-            <div className="text-center space-y-2 mb-4">
-              <h2 className="text-xl font-bold text-primary">Connect Wallet</h2>
-              <p className="text-xs text-muted-foreground">
-                Secure and simple. Lumiere is independently audited, with you in full control of your funds.
-              </p>
-            </div>
+          <div className="h-[400px] overflow-hidden">
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-3">
+                {displayedWallets.map((wallet) => {
+                  const IconComponent = wallet.icon
+                  const isInstalled = solanaWallet.wallets.some(
+                    w => w.adapter.name.toLowerCase() === wallet.name.toLowerCase()
+                  )
 
-            <div className="h-[400px] overflow-hidden">
-              <ScrollArea className="h-full pr-4">
-                <div className="space-y-3">
-                  {displayedWallets.map((wallet) => {
-                    const IconComponent = wallet.icon
-                    const isInstalled = solanaWallet.wallets.some(
-                      w => w.adapter.name.toLowerCase() === wallet.name.toLowerCase()
-                    )
-
-                    return (
-                      <button
-                        key={wallet.name}
-                        onClick={() => handleWalletClick(wallet)}
-                        disabled={isProcessing}
-                        className="w-full flex items-center justify-between p-4 rounded-xl bg-card/50 border border-primary/20 hover:border-primary/30 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="rounded-lg bg-primary/10 p-2">
-                            <IconComponent className="w-6 h-6 text-primary" />
-                          </div>
-                          <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {wallet.name}
+                  return (
+                    <button
+                      key={wallet.name}
+                      onClick={() => handleWalletClick(wallet)}
+                      disabled={isProcessing}
+                      className="w-full flex items-center justify-between p-4 rounded-xl bg-card/50 border border-primary/20 hover:border-primary/30 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="rounded-lg bg-primary/10 p-2">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <span className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {wallet.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!isInstalled && wallet.installUrl && (
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        )}
+                        {wallet.recent && (
+                          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary border border-primary/30">
+                            Recent
                           </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!isInstalled && wallet.installUrl && (
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                          )}
-                          {wallet.recent && (
-                            <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary border border-primary/30">
-                              Recent
-                            </span>
-                          )}
-                          {isProcessing && selectedWallet === wallet.name && (
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </ScrollArea>
-            </div>
-
-            {!showAllWallets && (
-              <button
-                onClick={() => setShowAllWallets(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors font-semibold mt-4"
-                disabled={isProcessing}
-              >
-                <ChevronDown className="h-5 w-5" />
-                <span>All Wallets</span>
-              </button>
-            )}
-
-            {error && (
-              <div className="text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20 mt-4">
-                {error}
+                        )}
+                        {isProcessing && selectedWallet === wallet.name && (
+                          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-            )}
+            </ScrollArea>
           </div>
+
+          {!showAllWallets && (
+            <button
+              onClick={() => setShowAllWallets(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors font-semibold"
+              disabled={isProcessing}
+            >
+              <ChevronDown className="h-5 w-5" />
+              <span>All Wallets</span>
+            </button>
+          )}
+
+          {error && (
+            <div className="text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+              {error}
+            </div>
+          )}
         </div>
       </Card>
 
