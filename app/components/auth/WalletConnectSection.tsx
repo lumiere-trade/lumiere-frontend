@@ -231,7 +231,10 @@ export function WalletConnectSection() {
 
     } catch (error: any) {
       logger.error(LogCategory.AUTH, 'Authentication failed:', error)
-      setError(error.message || 'Authentication failed. Please try again.')
+      
+      if (!error.message?.includes('User rejected')) {
+        setError(error.message || 'Authentication failed. Please try again.')
+      }
       setSelectedWallet(null)
 
       if (solanaWallet.disconnect) {
