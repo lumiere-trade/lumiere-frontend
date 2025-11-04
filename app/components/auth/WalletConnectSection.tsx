@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Card } from '@lumiere/shared/components/ui/card'
 import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
-import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
+import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { AUTH_CONFIG } from "@/config/constants"
 import { authApi } from "@/lib/api"
@@ -22,17 +22,17 @@ type WalletOption = {
 }
 
 const initialWallets: WalletOption[] = [
-  { name: "Phantom", icon: Ghost, recent: true, installUrl: "https://phantom.app/download" },
-  { name: "Solflare", icon: Sun, recent: false, installUrl: "https://solflare.com/download" },
-  { name: "Backpack", icon: Backpack, recent: false },
-  { name: "Binance Wallet", icon: Gem, recent: false },
+  { name: "Phantom", icon: Ghost, installUrl: "https://phantom.app/download" },
+  { name: "Solflare", icon: Sun, installUrl: "https://solflare.com/download" },
+  { name: "Backpack", icon: Backpack },
+  { name: "Binance Wallet", icon: Gem },
 ]
 
 const additionalWallets: WalletOption[] = [
-  { name: "OKX Wallet", icon: Zap, recent: false },
-  { name: "Coinbase Wallet", icon: Circle, recent: false },
-  { name: "Trust Wallet", icon: Shield, recent: false },
-  { name: "MetaMask", icon: Wallet, recent: false },
+  { name: "OKX Wallet", icon: Zap },
+  { name: "Coinbase Wallet", icon: Circle },
+  { name: "Trust Wallet", icon: Shield },
+  { name: "MetaMask", icon: Wallet },
 ]
 
 export function WalletConnectSection() {
@@ -257,11 +257,8 @@ export function WalletConnectSection() {
     <>
       <Card className="w-full max-w-lg border-2 border-primary/30 shadow-2xl rounded-2xl p-8">
         <div className="space-y-6">
-          <div className="text-center space-y-2">
+          <div className="text-center">
             <h2 className="text-2xl font-bold text-primary">Connect Wallet</h2>
-            <p className="text-xs text-muted-foreground">
-              Secure and simple. Lumiere is independently audited, with you in full control of your funds.
-            </p>
           </div>
 
           <div className="h-[300px] overflow-hidden">
@@ -269,9 +266,6 @@ export function WalletConnectSection() {
               <div className="space-y-3">
                 {displayedWallets.map((wallet) => {
                   const IconComponent = wallet.icon
-                  const isInstalled = solanaWallet.wallets.some(
-                    w => w.adapter.name.toLowerCase() === wallet.name.toLowerCase()
-                  )
 
                   return (
                     <button
@@ -289,14 +283,6 @@ export function WalletConnectSection() {
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        {!isInstalled && wallet.installUrl && (
-                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                        )}
-                        {wallet.recent && (
-                          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-primary/20 text-primary border border-primary/30">
-                            Recent
-                          </span>
-                        )}
                         {isProcessing && selectedWallet === wallet.name && (
                           <Loader2 className="h-5 w-5 animate-spin text-primary" />
                         )}
