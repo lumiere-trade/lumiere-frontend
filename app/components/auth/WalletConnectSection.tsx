@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Card } from '@lumiere/shared/components/ui/card'
 import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
-import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink, ChevronDown } from "lucide-react"
+import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ExternalLink, ChevronDown, ChevronUp } from "lucide-react"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { AUTH_CONFIG } from "@/config/constants"
 import { authApi } from "@/lib/api"
@@ -264,7 +264,7 @@ export function WalletConnectSection() {
             </p>
           </div>
 
-          <div className="h-[280px] overflow-hidden">
+          <div className="h-[340px] overflow-hidden">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
                 {displayedWallets.map((wallet) => {
@@ -308,16 +308,23 @@ export function WalletConnectSection() {
             </ScrollArea>
           </div>
 
-          {!showAllWallets && (
-            <button
-              onClick={() => setShowAllWallets(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors font-semibold"
-              disabled={isProcessing}
-            >
-              <ChevronDown className="h-5 w-5" />
-              <span>All Wallets</span>
-            </button>
-          )}
+          <button
+            onClick={() => setShowAllWallets(!showAllWallets)}
+            className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors font-semibold"
+            disabled={isProcessing}
+          >
+            {showAllWallets ? (
+              <>
+                <ChevronUp className="h-5 w-5" />
+                <span>Show Less</span>
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-5 w-5" />
+                <span>All Wallets</span>
+              </>
+            )}
+          </button>
 
           {error && (
             <div className="text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
