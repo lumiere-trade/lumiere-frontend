@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Card } from '@lumiere/shared/components/ui/card'
 import { ScrollArea } from '@lumiere/shared/components/ui/scroll-area'
-import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2, ChevronDown, ChevronUp } from "lucide-react"
+import { Ghost, Sun, Backpack, Gem, Zap, Circle, Shield, Wallet, Loader2 } from "lucide-react"
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react"
 import { AUTH_CONFIG } from "@/config/constants"
 import { authApi } from "@/lib/api"
@@ -17,18 +17,14 @@ import bs58 from "bs58"
 type WalletOption = {
   name: string
   icon: React.ComponentType<{ className?: string }>
-  recent?: boolean
   installUrl?: string
 }
 
-const initialWallets: WalletOption[] = [
+const allWallets: WalletOption[] = [
   { name: "Phantom", icon: Ghost, installUrl: "https://phantom.app/download" },
   { name: "Solflare", icon: Sun, installUrl: "https://solflare.com/download" },
   { name: "Backpack", icon: Backpack },
   { name: "Binance Wallet", icon: Gem },
-]
-
-const additionalWallets: WalletOption[] = [
   { name: "OKX Wallet", icon: Zap },
   { name: "Coinbase Wallet", icon: Circle },
   { name: "Trust Wallet", icon: Shield },
@@ -36,7 +32,6 @@ const additionalWallets: WalletOption[] = [
 ]
 
 export function WalletConnectSection() {
-  const [showAllWallets, setShowAllWallets] = useState(false)
   const [showTermsDialog, setShowTermsDialog] = useState(false)
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -47,8 +42,6 @@ export function WalletConnectSection() {
   const loginMutation = useLoginMutation()
 
   const isProcessing = loginMutation.isPending
-
-  const displayedWallets = showAllWallets ? [...initialWallets, ...additionalWallets] : initialWallets
 
   const handleWalletClick = async (wallet: WalletOption) => {
     setSelectedWallet(wallet.name)
@@ -231,7 +224,7 @@ export function WalletConnectSection() {
 
     } catch (error: any) {
       logger.error(LogCategory.AUTH, 'Authentication failed:', error)
-      
+
       if (!error.message?.includes('User rejected')) {
         setError(error.message || 'Authentication failed. Please try again.')
       }
@@ -262,10 +255,10 @@ export function WalletConnectSection() {
             <h2 className="text-2xl font-bold text-primary">Connect Wallet</h2>
           </div>
 
-          <div className="h-[300px] overflow-hidden">
+          <div className="h-[400px] overflow-hidden">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
-                {displayedWallets.map((wallet) => {
+                {allWallets.map((wallet) => {
                   const IconComponent = wallet.icon
 
                   return (
@@ -294,24 +287,6 @@ export function WalletConnectSection() {
               </div>
             </ScrollArea>
           </div>
-
-          <button
-            onClick={() => setShowAllWallets(!showAllWallets)}
-            className="w-full flex items-center justify-center gap-2 py-3 text-primary hover:text-primary/80 transition-colors font-semibold"
-            disabled={isProcessing}
-          >
-            {showAllWallets ? (
-              <>
-                <ChevronUp className="h-5 w-5" />
-                <span>Show Less</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-5 w-5" />
-                <span>All Wallets</span>
-              </>
-            )}
-          </button>
 
           {error && (
             <div className="text-sm text-red-500 text-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
