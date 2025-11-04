@@ -56,9 +56,34 @@ export function TermsDialog({
     onClose()
   }
 
+  const formatContent = (content: string) => {
+    const lines = content.split('\n')
+    return lines.map((line, index) => {
+      const trimmedLine = line.trim()
+      
+      if (/^\d+\.\s+[A-Z\s]+$/.test(trimmedLine)) {
+        return (
+          <p key={index} className="font-bold text-muted-foreground mt-4 mb-2">
+            {trimmedLine}
+          </p>
+        )
+      }
+      
+      if (trimmedLine) {
+        return (
+          <p key={index} className="text-sm text-muted-foreground mb-2">
+            {trimmedLine}
+          </p>
+        )
+      }
+      
+      return null
+    })
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">Terms & Conditions</DialogTitle>
         </DialogHeader>
@@ -76,11 +101,11 @@ export function TermsDialog({
                 </div>
               ) : (
                 legalDocuments.map((doc) => (
-                  <div key={doc.id} className="space-y-2 p-4 bg-card/50 rounded-lg border border-primary/20">
-                    <h3 className="font-semibold text-lg text-foreground">{doc.title}</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-60 overflow-y-auto">
-                      {doc.content}
-                    </p>
+                  <div key={doc.id} className="space-y-3 p-4 bg-card/50 rounded-lg border border-primary/20">
+                    <h3 className="font-bold text-lg text-foreground">{doc.title}</h3>
+                    <div className="text-sm">
+                      {formatContent(doc.content)}
+                    </div>
                   </div>
                 ))
               )}
