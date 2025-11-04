@@ -255,7 +255,7 @@ export function WalletConnectSection() {
             <h2 className="text-2xl font-bold text-primary">Connect Wallet</h2>
           </div>
 
-          <div className="h-[360px] overflow-hidden">
+          <div className="h-[370px] overflow-hidden">
             <ScrollArea className="h-full pr-4">
               <div className="space-y-3">
                 {allWallets.map((wallet) => {
