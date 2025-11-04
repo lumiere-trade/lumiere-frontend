@@ -60,23 +60,23 @@ export function TermsDialog({
     const lines = content.split('\n')
     return lines.map((line, index) => {
       const trimmedLine = line.trim()
-      
+
       if (/^\d+\.\s+[A-Z\s]+$/.test(trimmedLine)) {
         return (
-          <p key={index} className="font-bold text-muted-foreground mt-4 mb-2">
+          <p key={index} className="font-bold text-muted-foreground mt-4 mb-2 break-words">
             {trimmedLine}
           </p>
         )
       }
-      
+
       if (trimmedLine) {
         return (
-          <p key={index} className="text-sm text-muted-foreground mb-2">
+          <p key={index} className="text-sm text-muted-foreground mb-2 break-words">
             {trimmedLine}
           </p>
         )
       }
-      
+
       return null
     })
   }
@@ -89,7 +89,7 @@ export function TermsDialog({
         </DialogHeader>
 
         <div className="space-y-6 flex-1 overflow-hidden flex flex-col">
-          <div className="flex-1 overflow-y-auto pr-4">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-4">
             <div className="space-y-4">
               {isLoadingLegalDocs ? (
                 <div className="flex items-center justify-center py-12">
@@ -102,7 +102,7 @@ export function TermsDialog({
               ) : (
                 legalDocuments.map((doc) => (
                   <div key={doc.id} className="space-y-3 p-4 bg-card/50 rounded-lg border border-primary/20">
-                    <h3 className="font-bold text-lg text-foreground">{doc.title}</h3>
+                    <h3 className="font-bold text-lg text-foreground break-words">{doc.title}</h3>
                     <div className="text-sm">
                       {formatContent(doc.content)}
                     </div>
