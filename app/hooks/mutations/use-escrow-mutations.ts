@@ -31,11 +31,11 @@ export function useInitializeEscrowMutation() {
       }
 
       const prepareResponse = await escrowApi.prepareInitializeEscrow()
-      
+
       const transaction = Transaction.from(
         Buffer.from(prepareResponse.transaction, 'base64')
       )
-      
+
       const signedTx = await signTransaction(transaction)
       const signedTxBase64 = signedTx.serialize().toString('base64')
 
@@ -65,7 +65,7 @@ export function useInitializeEscrowMutation() {
 
 export function useDepositToEscrowMutation() {
   const queryClient = useQueryClient()
-  const { signTransaction, publicKey } = useWallet()
+  const { signTransaction } = useWallet()
 
   return useMutation<DepositResult, Error, string>({
     mutationFn: async (amount: string) => {
@@ -74,11 +74,11 @@ export function useDepositToEscrowMutation() {
       }
 
       const prepareResponse = await escrowApi.prepareDeposit(amount)
-      
+
       const transaction = Transaction.from(
         Buffer.from(prepareResponse.transaction, 'base64')
       )
-      
+
       const signedTx = await signTransaction(transaction)
       const signedTxBase64 = signedTx.serialize().toString('base64')
 
@@ -107,13 +107,9 @@ export function useDepositToEscrowMutation() {
       }
     },
     onSuccess: (data) => {
+      // Only invalidate escrow balance - wallet balance refetches on modal open
       queryClient.setQueryData(ESCROW_QUERY_KEYS.balance, data.escrow)
       queryClient.invalidateQueries({ queryKey: ESCROW_QUERY_KEYS.balance })
-      if (publicKey) {
-        queryClient.invalidateQueries({ 
-        queryKey: ["wallet"] // Invalidate ALL wallet queries
-        })
-      }
     },
     retry: 1,
   })
