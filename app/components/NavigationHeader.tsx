@@ -27,7 +27,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
   useEffect(() => {
     if (user) {
-      log.info('User loaded', { 
+      log.info('User loaded', {
         walletAddress: user.walletAddress.substring(0, 8) + '...',
         walletType: user.walletType
       })
@@ -54,7 +54,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
   const handleDisconnect = async () => {
     log.info('Disconnect initiated')
     log.time('disconnect')
-    
+
     try {
       await disconnect()
       logout()
@@ -71,13 +71,10 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
     <>
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background shrink-0">
         <div className="mx-auto flex items-center justify-between pl-4 md:pl-6 pr-4 md:pr-6 py-3 md:py-4">
-          <Link href="/" className="flex flex-col gap-0.5 transition-all hover:brightness-110">
-            <div className="text-xl md:text-2xl font-bold tracking-wider text-primary leading-none">
-              LUMIERE
+          <Link href="/" className="flex items-center transition-all hover:brightness-110">
+            <div className="text-3xl md:text-4xl font-bold tracking-wider text-primary leading-none">
+              LUMIÈRE
             </div>
-            <p className="text-[10px] md:text-[11px] text-muted-foreground tracking-wide leading-none">
-              Blind to emotion, guided by algorithm
-            </p>
           </Link>
 
           <nav className="container mx-auto flex items-center justify-end gap-3">
