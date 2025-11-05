@@ -104,7 +104,7 @@ export function TermsDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent 
+      <DialogContent
         className="max-w-lg max-h-[50vh] overflow-hidden flex flex-col"
         onInteractOutside={(e) => e.preventDefault()}
       >
@@ -147,12 +147,6 @@ export function TermsDialog({
               I have read and agree to all the terms and conditions above
             </label>
           </div>
-
-          {!hasScrolledToBottom && (
-            <div className="text-xs text-yellow-500 text-center p-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-              Please scroll to the bottom to continue
-            </div>
-          )}
 
           {error && (
             <div className="text-sm text-red-500 text-center p-2 bg-red-500/10 rounded-lg border border-red-500/20">
