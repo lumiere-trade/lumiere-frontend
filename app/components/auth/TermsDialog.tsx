@@ -103,7 +103,7 @@ export function TermsDialog({
   const canConfirm = agreedToTerms && hasScrolledToBottom && !createAccountMutation.isPending && !isLoadingLegalDocs
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={handleCancel}>
       <DialogContent
         className="max-w-lg max-h-[50vh] overflow-hidden flex flex-col"
         onInteractOutside={(e) => e.preventDefault()}
