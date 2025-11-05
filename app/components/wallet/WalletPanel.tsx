@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useWalletBalance } from "@/hooks/use-wallet-balance"
 import { useEscrow } from "@/hooks/use-escrow"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
+import { WithdrawFundsModal } from "@/components/wallet/WithdrawFundsModal"
 import { LogCategory } from "@/lib/debug"
 
 interface WalletPanelProps {
@@ -24,6 +25,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('balances')
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false)
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
   const { balance: walletBalance, isLoading: isLoadingWallet } = useWalletBalance()
@@ -77,6 +79,11 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const handleDeposit = () => {
     log.info('Deposit button clicked from wallet panel')
     setIsDepositModalOpen(true)
+  }
+
+  const handleWithdraw = () => {
+    log.info('Withdraw button clicked from wallet panel')
+    setIsWithdrawModalOpen(true)
   }
 
   const handleDisconnect = async () => {
@@ -168,13 +175,24 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                           <div className="text-sm text-muted-foreground">USD Coin</div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold">
-                          {isLoadingEscrow ? '...' : escrowBalanceNum.toFixed(2)}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-semibold">
+                            {isLoadingEscrow ? '...' : escrowBalanceNum.toFixed(2)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {isLoadingEscrow ? '...' : `$${escrowBalanceNum.toFixed(2)}`}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {isLoadingEscrow ? '...' : `$${escrowBalanceNum.toFixed(2)}`}
-                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="rounded-full px-6 border-primary/30 bg-transparent" 
+                          onClick={handleWithdraw}
+                          disabled={escrowBalanceNum <= 0}
+                        >
+                          Withdraw
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -232,6 +250,11 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
       <DepositFundsModal 
         isOpen={isDepositModalOpen}
         onClose={() => setIsDepositModalOpen(false)}
+      />
+
+      <WithdrawFundsModal 
+        isOpen={isWithdrawModalOpen}
+        onClose={() => setIsWithdrawModalOpen(false)}
       />
     </>
   )
