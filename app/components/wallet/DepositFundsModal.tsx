@@ -13,6 +13,7 @@ import { Button } from '@lumiere/shared/components/ui/button'
 import { Input } from '@lumiere/shared/components/ui/input'
 import { Label } from '@lumiere/shared/components/ui/label'
 import { useEscrow } from '@/hooks/use-escrow'
+import { useWalletBalance } from '@/hooks/use-wallet-balance'
 import { useToast } from '@/hooks/use-toast'
 import { useLogger } from '@/hooks/use-logger'
 import { LogCategory } from '@/lib/debug'
@@ -27,17 +28,25 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
   const [amount, setAmount] = useState('')
   const { toast } = useToast()
 
+  // Wallet balance (from authenticated user)
   const {
-    walletBalance,
+    balance: walletBalance,
+    isLoading: isLoadingWallet,
+    error: walletError,
+  } = useWalletBalance()
+
+  // Escrow operations
+  const {
     escrowBalance,
     isInitialized,
-    isLoading,
-    isLoadingWallet,
+    isLoading: isLoadingEscrow,
     isInitializing,
     isDepositing,
     depositToEscrow,
-    error,
+    error: escrowError,
   } = useEscrow()
+
+  const error = walletError || escrowError
 
   useEffect(() => {
     if (isOpen) {
@@ -60,7 +69,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
 
   useEffect(() => {
     if (error) {
-      log.error('Escrow error detected', error)
+      log.error('Error detected', error)
     }
   }, [error])
 
@@ -135,13 +144,13 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
         error: err.message,
         amount
       })
-      
+
       toast({
         title: 'Deposit Failed',
         description: err.message || 'Failed to deposit funds',
         variant: 'destructive',
       })
-      
+
       log.timeEnd('deposit')
       log.groupEnd()
     }

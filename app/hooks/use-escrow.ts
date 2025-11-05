@@ -1,12 +1,8 @@
 /**
  * Escrow Hook
- * Unified interface for escrow operations
+ * Unified interface for escrow operations only
  */
-import { useWallet } from '@solana/wallet-adapter-react'
-import {
-  useEscrowBalanceQuery,
-  useWalletBalanceQuery,
-} from './queries'
+import { useEscrowBalanceQuery } from './queries'
 import {
   useInitializeEscrowMutation,
   useDepositToEscrowMutation,
@@ -16,14 +12,6 @@ import { LogCategory } from '@/lib/debug'
 
 export function useEscrow() {
   const log = useLogger('useEscrow', LogCategory.ESCROW)
-  const { publicKey, connected } = useWallet()
-  const walletAddress = publicKey?.toBase58() || ''
-
-  log.debug('Hook state', {
-    connected,
-    walletAddress,
-    hasPublicKey: !!publicKey,
-  })
 
   const {
     data: escrow,
@@ -31,37 +19,26 @@ export function useEscrow() {
     error: escrowError
   } = useEscrowBalanceQuery(false)
 
-  const {
-    data: walletBalance,
-    isLoading: isLoadingWallet,
-    error: walletError
-  } = useWalletBalanceQuery(walletAddress)
-
-  log.debug('Wallet balance query', {
-    walletBalance,
-    isLoadingWallet,
-    hasError: !!walletError,
+  log.debug('Escrow state', {
+    isInitialized: escrow?.isInitialized || false,
+    escrowBalance: escrow?.balance || '0',
+    isLoading: isLoadingEscrow,
   })
 
   const initializeEscrowMutation = useInitializeEscrowMutation()
   const depositToEscrowMutation = useDepositToEscrowMutation()
 
   return {
-    // State
+    // Escrow state
     escrow: escrow || null,
-    walletBalance: walletBalance || '0',
     isInitialized: escrow?.isInitialized || false,
     escrowBalance: escrow?.balance || '0',
 
     // Loading states
-    isLoading: isLoadingEscrow || isLoadingWallet,
-    isLoadingEscrow,
-    isLoadingWallet,
+    isLoading: isLoadingEscrow,
 
     // Errors
-    error: escrowError || walletError,
-    escrowError,
-    walletError,
+    error: escrowError,
 
     // Actions
     initializeEscrow: () => initializeEscrowMutation.mutateAsync(),
