@@ -4,6 +4,7 @@ import '@lumiere/shared/styles/globals.css';
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext";
 import { Providers } from "./providers";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
             <Providers>{children}</Providers>
           </AdminAuthProvider>
         </ErrorBoundary>
+        <Toaster />
       </body>
     </html>
   );
