@@ -33,6 +33,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
     balance: walletBalance,
     isLoading: isLoadingWallet,
     error: walletError,
+    refetch: refetchWalletBalance,
   } = useWalletBalance()
 
   // Escrow operations
@@ -48,6 +49,14 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
   } = useEscrow()
 
   const error = walletError || escrowError
+
+  // Refetch wallet balance when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      log.info('Deposit modal opened, refetching wallet balance...')
+      refetchWalletBalance()
+    }
+  }, [isOpen, refetchWalletBalance])
 
   useEffect(() => {
     if (isOpen) {
@@ -123,9 +132,9 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
       // Step 1: Initialize escrow if needed
       if (!isInitialized) {
         log.info('Escrow not initialized, initializing now...')
-        
+
         await initializeEscrow()
-        
+
         log.info('Escrow initialized successfully')
         toast({
           title: 'Escrow Initialized',
