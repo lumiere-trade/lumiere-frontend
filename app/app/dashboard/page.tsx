@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { NavigationHeader } from '@/components/NavigationHeader'
+import { NavigationHeader } from '@/components/navigation/NavigationHeader'
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"

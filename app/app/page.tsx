@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { AdminLoginWall } from "@/components/AdminLoginWall"
+import { AdminLoginWall } from "@/components/security/AdminLoginWall"
 import { storage } from "@/lib/api"
 import { logger, LogCategory } from "@/lib/debug"
 
