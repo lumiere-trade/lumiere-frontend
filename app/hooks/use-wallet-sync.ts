@@ -2,7 +2,7 @@
  * Wallet Sync Hook
  *
  * Ensures wallet stays connected when user is authenticated.
- * Automatically connects wallet if user has valid JWT but wallet disconnected.
+ * Automatically connects the correct wallet based on user's walletType.
  * Retries wallet detection with exponential backoff.
  */
 import { useEffect, useState, useRef } from 'react'
@@ -18,7 +18,7 @@ const MAX_DELAY = 5000 // ms
 export function useWalletSync() {
   const log = useLogger('useWalletSync', LogCategory.WALLET)
   const { user, isAuthenticated } = useAuth()
-  const { connected, connecting, connect, wallet, wallets } = useWallet()
+  const { connected, connecting, select, connect, wallets } = useWallet()
   const [retryCount, setRetryCount] = useState(0)
   const timeoutRef = useRef<NodeJS.Timeout>()
 
@@ -47,30 +47,43 @@ export function useWalletSync() {
       return
     }
 
-    // Wallet detected - connect now
-    if (wallet) {
-      log.info('Wallet detected, auto-connecting', {
+    // Find the correct wallet by name
+    const userWalletType = user.walletType.toLowerCase()
+    const matchingWallet = wallets.find(w => 
+      w.adapter.name.toLowerCase().includes(userWalletType)
+    )
+
+    if (matchingWallet) {
+      log.info('Matching wallet found, selecting and connecting', {
         userWallet: user.walletAddress.substring(0, 8) + '...',
-        walletName: wallet.adapter.name,
+        userWalletType: user.walletType,
+        matchedWallet: matchingWallet.adapter.name,
         retryCount,
       })
 
-      connect().catch((error) => {
-        log.error('Auto-connect failed', error)
-      })
+      // Select the wallet first, then connect
+      select(matchingWallet.adapter.name)
+      
+      // Small delay to let selection complete
+      setTimeout(() => {
+        connect().catch((error) => {
+          log.error('Auto-connect failed', error)
+        })
+      }, 100)
 
       setRetryCount(0)
       return
     }
 
-    // No wallet detected yet - retry with backoff
+    // No matching wallet detected yet - retry with backoff
     if (retryCount < MAX_RETRIES) {
       const delay = Math.min(INITIAL_DELAY * Math.pow(2, retryCount), MAX_DELAY)
       
       log.debug('Wallet not detected, retrying...', {
         retryCount,
         nextRetryIn: delay,
-        availableWallets: wallets.length,
+        lookingFor: user.walletType,
+        availableWallets: wallets.map(w => w.adapter.name),
       })
 
       timeoutRef.current = setTimeout(() => {
@@ -79,7 +92,8 @@ export function useWalletSync() {
     } else {
       log.warn('Max retries reached, wallet not detected', {
         maxRetries: MAX_RETRIES,
-        availableWallets: wallets.length,
+        lookingFor: user.walletType,
+        availableWallets: wallets.map(w => w.adapter.name),
       })
     }
 
@@ -88,15 +102,15 @@ export function useWalletSync() {
         clearTimeout(timeoutRef.current)
       }
     }
-  }, [isAuthenticated, user, connected, connecting, wallet, wallets, connect, retryCount, log])
+  }, [isAuthenticated, user, connected, connecting, wallets, select, connect, retryCount, log])
 
   log.debug('Wallet sync state', {
     isAuthenticated,
     hasUser: !!user,
+    userWalletType: user?.walletType,
     connected,
     connecting,
-    hasWallet: !!wallet,
-    availableWallets: wallets.length,
+    availableWallets: wallets.map(w => w.adapter.name),
     retryCount,
   })
 }
