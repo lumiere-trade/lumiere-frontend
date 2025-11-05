@@ -11,22 +11,37 @@ import {
   useInitializeEscrowMutation,
   useDepositToEscrowMutation,
 } from './mutations'
+import { useLogger } from './use-logger'
+import { LogCategory } from '@/lib/debug'
 
 export function useEscrow() {
-  const { publicKey } = useWallet()
+  const log = useLogger('useEscrow', LogCategory.ESCROW)
+  const { publicKey, connected } = useWallet()
   const walletAddress = publicKey?.toBase58() || ''
 
-  const { 
-    data: escrow, 
-    isLoading: isLoadingEscrow, 
-    error: escrowError 
+  log.debug('Hook state', {
+    connected,
+    walletAddress,
+    hasPublicKey: !!publicKey,
+  })
+
+  const {
+    data: escrow,
+    isLoading: isLoadingEscrow,
+    error: escrowError
   } = useEscrowBalanceQuery(false)
 
-  const { 
-    data: walletBalance, 
-    isLoading: isLoadingWallet, 
-    error: walletError 
+  const {
+    data: walletBalance,
+    isLoading: isLoadingWallet,
+    error: walletError
   } = useWalletBalanceQuery(walletAddress)
+
+  log.debug('Wallet balance query', {
+    walletBalance,
+    isLoadingWallet,
+    hasError: !!walletError,
+  })
 
   const initializeEscrowMutation = useInitializeEscrowMutation()
   const depositToEscrowMutation = useDepositToEscrowMutation()
