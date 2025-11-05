@@ -8,6 +8,7 @@ import { Wallet, Copy, DollarSign } from "lucide-react"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
+import { useToast } from "@/hooks/use-toast"
 import { LogCategory } from "@/lib/debug"
 
 interface WalletPanelProps {
@@ -16,6 +17,7 @@ interface WalletPanelProps {
 
 export function WalletPanel({ trigger }: WalletPanelProps) {
   const log = useLogger('WalletPanel', LogCategory.WALLET)
+  const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('balances')
   const { user } = useAuth()
@@ -61,9 +63,18 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
     if (user?.walletAddress) {
       log.info('Copying wallet address')
       navigator.clipboard.writeText(user.walletAddress)
+      toast({
+        title: "Address copied!",
+        description: "Wallet address copied to clipboard",
+      })
       log.info('Wallet address copied to clipboard')
     } else {
       log.warn('Attempted to copy address but no wallet connected')
+      toast({
+        title: "Error",
+        description: "No wallet address to copy",
+        variant: "destructive",
+      })
     }
   }
 
@@ -74,7 +85,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const handleDisconnect = async () => {
     log.info('Disconnect initiated from wallet panel')
     log.time('disconnect')
-    
+
     try {
       await disconnect()
       log.info('Wallet disconnected successfully')
@@ -90,9 +101,9 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {trigger || (
-          <Button 
-            variant="outline" 
-            size="lg" 
+          <Button
+            variant="outline"
+            size="lg"
             className="rounded-full bg-transparent font-semibold gap-2"
             onClick={() => log.info('Wallet panel trigger clicked')}
           >
