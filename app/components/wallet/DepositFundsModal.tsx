@@ -42,6 +42,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
     isLoading: isLoadingEscrow,
     isInitializing,
     isDepositing,
+    initializeEscrow,
     depositToEscrow,
     error: escrowError,
   } = useEscrow()
@@ -88,7 +89,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
   const handleConfirmDeposit = async () => {
     log.group('Deposit Flow')
     log.time('deposit')
-    log.info('Deposit initiated', { amount })
+    log.info('Deposit initiated', { amount, isInitialized })
 
     if (!amount || parseFloat(amount) <= 0) {
       log.warn('Invalid amount provided', { amount })
@@ -119,11 +120,21 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
     }
 
     try {
+      // Step 1: Initialize escrow if needed
       if (!isInitialized) {
-        log.info('Escrow not initialized, will auto-initialize')
+        log.info('Escrow not initialized, initializing now...')
+        
+        await initializeEscrow()
+        
+        log.info('Escrow initialized successfully')
+        toast({
+          title: 'Escrow Initialized',
+          description: 'Your escrow account has been created',
+        })
       }
 
-      log.info('Calling depositToEscrow', { amount })
+      // Step 2: Deposit funds
+      log.info('Depositing funds', { amount })
       await depositToEscrow(amount)
 
       log.info('Deposit successful', {
@@ -140,9 +151,10 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
       log.groupEnd()
       onClose()
     } catch (err: any) {
-      log.error('Deposit failed', {
+      log.error('Deposit flow failed', {
         error: err.message,
-        amount
+        amount,
+        wasInitialized: isInitialized
       })
 
       toast({
