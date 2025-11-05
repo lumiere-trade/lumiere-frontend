@@ -9,6 +9,8 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
 import { useToast } from "@/hooks/use-toast"
+import { useWalletBalance } from "@/hooks/use-wallet-balance"
+import { useEscrow } from "@/hooks/use-escrow"
 import { LogCategory } from "@/lib/debug"
 
 interface WalletPanelProps {
@@ -22,25 +24,17 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const [activeTab, setActiveTab] = useState('balances')
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
+  const { balance: walletBalance, isLoading: isLoadingWallet } = useWalletBalance()
+  const { escrowBalance, isLoading: isLoadingEscrow } = useEscrow()
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
   const walletType = user?.walletType || "Unknown Wallet"
 
-  const mockData = {
-    totalBalance: 1193.83,
-    depositedFunds: {
-      usdc: {
-        amount: 500.00,
-        value: 500.00,
-      },
-    },
-    walletFunds: {
-      usdc: {
-        amount: 493.353413,
-        value: 493.20,
-      },
-    },
-  }
+  // Calculate real balances
+  const walletBalanceNum = parseFloat(walletBalance)
+  const escrowBalanceNum = parseFloat(escrowBalance)
+  const totalBalance = walletBalanceNum + escrowBalanceNum
+  const isLoading = isLoadingWallet || isLoadingEscrow
 
   useEffect(() => {
     if (open) {
@@ -150,7 +144,9 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
             <TabsContent value="balances" className="mt-6 space-y-6 px-1">
               <div className="rounded-lg border border-primary/20 bg-card p-6">
                 <div className="mb-2 text-sm text-muted-foreground">Total Balance</div>
-                <div className="text-4xl font-bold text-primary">${mockData.totalBalance.toFixed(2)}</div>
+                <div className="text-4xl font-bold text-primary">
+                  {isLoading ? '...' : `$${totalBalance.toFixed(2)}`}
+                </div>
               </div>
 
               <div>
@@ -169,9 +165,11 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold">{mockData.depositedFunds.usdc.amount.toFixed(2)}</div>
+                      <div className="font-semibold">
+                        {isLoadingEscrow ? '...' : escrowBalanceNum.toFixed(2)}
+                      </div>
                       <div className="text-sm text-muted-foreground">
-                        ${mockData.depositedFunds.usdc.value.toFixed(2)}
+                        {isLoadingEscrow ? '...' : `$${escrowBalanceNum.toFixed(2)}`}
                       </div>
                     </div>
                   </div>
@@ -195,9 +193,11 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="font-semibold">{mockData.walletFunds.usdc.amount.toFixed(6)}</div>
+                        <div className="font-semibold">
+                          {isLoadingWallet ? '...' : walletBalanceNum.toFixed(6)}
+                        </div>
                         <div className="text-sm text-muted-foreground">
-                          ${mockData.walletFunds.usdc.value.toFixed(2)}
+                          {isLoadingWallet ? '...' : `$${walletBalanceNum.toFixed(2)}`}
                         </div>
                       </div>
                       <Button size="sm" className="rounded-full px-6" onClick={handleDeposit}>
