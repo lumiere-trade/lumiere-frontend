@@ -20,7 +20,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('balances')
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const { disconnect } = useWallet()
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
@@ -88,10 +88,12 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
 
     try {
       await disconnect()
-      log.info('Wallet disconnected successfully')
+      logout()
+      log.info('Disconnect successful')
       setOpen(false)
     } catch (error) {
       log.error('Disconnect failed', error)
+      logout()
     } finally {
       log.timeEnd('disconnect')
     }
