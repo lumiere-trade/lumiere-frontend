@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from '@lumiere/shared/components/ui/button'
 import { 
   PanelLeftClose, 
   PanelLeftOpen, 
@@ -12,7 +11,7 @@ import {
   ChevronRight
 } from "lucide-react"
 
-interface CreatePanelProps {
+interface StrategyPanelProps {
   isOpen: boolean
   onToggle: () => void
 }
@@ -28,12 +27,9 @@ const mockStrategies = [
   { id: 2, name: "RSI Reversion", status: "Backtesting", winRate: "72.1%" },
 ]
 
-export function CreatePanel({ isOpen, onToggle }: CreatePanelProps) {
-  const [expandedSection, setExpandedSection] = useState<'chats' | 'strategies' | null>(null)
-
-  const toggleSection = (section: 'chats' | 'strategies') => {
-    setExpandedSection(expandedSection === section ? null : section)
-  }
+export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
+  const [chatsExpanded, setChatsExpanded] = useState(false)
+  const [strategiesExpanded, setStrategiesExpanded] = useState(false)
 
   if (!isOpen) {
     return (
@@ -63,23 +59,22 @@ export function CreatePanel({ isOpen, onToggle }: CreatePanelProps) {
         </button>
       </div>
 
-      {/* New Chat Button */}
-      <div className="p-4 border-b border-primary/20">
-        <Button 
-          className="w-full rounded-full gap-2"
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          New Chat
-        </Button>
-      </div>
-
       {/* Scrollable Sections */}
       <div className="flex-1 overflow-y-auto">
+        {/* New Chat Section */}
+        <div className="border-b border-primary/20">
+          <button
+            className="w-full flex items-center gap-3 p-4 hover:bg-card/30 transition-colors"
+          >
+            <Plus className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">New Chat</span>
+          </button>
+        </div>
+
         {/* Chats Section */}
         <div className="border-b border-primary/20">
           <button
-            onClick={() => toggleSection('chats')}
+            onClick={() => setChatsExpanded(!chatsExpanded)}
             className="w-full flex items-center justify-between p-4 hover:bg-card/30 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -88,14 +83,14 @@ export function CreatePanel({ isOpen, onToggle }: CreatePanelProps) {
                 Chats
               </h3>
             </div>
-            {expandedSection === 'chats' ? (
+            {chatsExpanded ? (
               <ChevronDown className="h-4 w-4 text-primary" />
             ) : (
               <ChevronRight className="h-4 w-4 text-primary" />
             )}
           </button>
 
-          {expandedSection === 'chats' && (
+          {chatsExpanded && (
             <div className="p-4 pt-0 space-y-2">
               {mockChats.map((chat) => (
                 <button
@@ -117,7 +112,7 @@ export function CreatePanel({ isOpen, onToggle }: CreatePanelProps) {
         {/* Strategies Section */}
         <div className="border-b border-primary/20">
           <button
-            onClick={() => toggleSection('strategies')}
+            onClick={() => setStrategiesExpanded(!strategiesExpanded)}
             className="w-full flex items-center justify-between p-4 hover:bg-card/30 transition-colors"
           >
             <div className="flex items-center gap-2">
@@ -126,14 +121,14 @@ export function CreatePanel({ isOpen, onToggle }: CreatePanelProps) {
                 Strategies
               </h3>
             </div>
-            {expandedSection === 'strategies' ? (
+            {strategiesExpanded ? (
               <ChevronDown className="h-4 w-4 text-primary" />
             ) : (
               <ChevronRight className="h-4 w-4 text-primary" />
             )}
           </button>
 
-          {expandedSection === 'strategies' && (
+          {strategiesExpanded && (
             <div className="p-4 pt-0 space-y-2">
               {mockStrategies.map((strategy) => (
                 <button
