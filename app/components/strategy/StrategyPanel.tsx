@@ -27,7 +27,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   return (
     <>
       {/* Collapsed state - thin strip */}
-      <div 
+      <div
         className={`fixed left-0 top-0 h-screen w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
           isOpen ? '-translate-x-full' : 'translate-x-0'
         }`}
@@ -42,7 +42,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
       </div>
 
       {/* Expanded state - full panel */}
-      <div 
+      <div
         className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -70,10 +70,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           {/* New Strategy Section */}
           <div className="border-b border-primary/20">
             <button
-              className="w-full flex items-center gap-2 px-4 py-4 hover:bg-card/30 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-card/30 transition-colors"
             >
-              <Plus className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+              <Plus className="h-5 w-5 text-primary shrink-0" />
+              <span className="text-lg font-bold text-primary whitespace-nowrap">
                 New Strategy
               </span>
             </button>
@@ -85,9 +85,9 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
               onClick={() => setStrategiesExpanded(!strategiesExpanded)}
               className="w-full flex items-center justify-between px-4 py-4 hover:bg-card/30 transition-colors"
             >
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary shrink-0" />
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+              <div className="flex items-center gap-3">
+                <Layers className="h-5 w-5 text-primary shrink-0" />
+                <h3 className="text-lg font-bold text-primary whitespace-nowrap">
                   Strategies
                 </h3>
               </div>
