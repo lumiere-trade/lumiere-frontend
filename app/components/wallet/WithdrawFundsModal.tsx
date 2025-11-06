@@ -169,7 +169,7 @@ export function WithdrawFundsModal({ isOpen, onClose }: WithdrawFundsModalProps)
                 value={amount}
                 onChange={(e) => handleAmountChange(e.target.value)}
                 disabled={isProcessing || isLoadingEscrow}
-                className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                autoComplete="off" className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <Button
                 variant="ghost"

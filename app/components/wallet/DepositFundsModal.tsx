@@ -209,7 +209,7 @@ export function DepositFundsModal({ isOpen, onClose }: DepositFundsModalProps) {
                 value={amount}
                 onChange={(e) => handleAmountChange(e.target.value)}
                 disabled={isProcessing || isLoadingWallet}
-                className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                autoComplete="off" className="pr-16 rounded-lg border-primary/30 bg-background text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <Button
                 variant="ghost"
