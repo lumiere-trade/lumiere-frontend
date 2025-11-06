@@ -3,6 +3,9 @@
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { NavigationHeader } from '@/components/navigation/NavigationHeader'
+import { DashboardStats } from '@/components/dashboard/DashboardStats'
+import { EmptyState } from '@/components/dashboard/EmptyState'
+import { RecentActivity } from '@/components/dashboard/RecentActivity'
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"
@@ -33,9 +36,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <NavigationHeader currentPage="dashboard" />
-      
+
       <div className="container mx-auto px-6 py-12">
-        {/* Empty dashboard - ready to build with real data */}
+        <DashboardStats />
+        <EmptyState />
+        <div className="mt-16">
+          <RecentActivity />
+        </div>
       </div>
     </div>
   )
