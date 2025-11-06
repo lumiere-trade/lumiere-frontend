@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { NavigationHeader } from '@/components/navigation/NavigationHeader'
-import { StrategyPanel } from '@/components/strategy/CreatePanel'
+import { StrategyPanel } from '@/components/strategy/StrategyPanel'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, Send } from "lucide-react"
 import { storage } from "@/lib/api"
