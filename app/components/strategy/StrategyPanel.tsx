@@ -39,18 +39,20 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
   return (
     <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
-      {/* Header with text logo and close button - matches NavigationHeader exactly */}
-      <div className="flex items-center justify-between pl-4 md:pl-6 pr-4 md:pr-6 py-3 md:py-4 border-b border-primary/20">
-        <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
-          LUMIÈRE
+      {/* Header with text logo and close button - matches NavigationHeader structure */}
+      <div className="border-b border-primary/20">
+        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+          <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
+            LUMIÈRE
+          </div>
+          <button
+            onClick={onToggle}
+            className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
+            title="Close sidebar"
+          >
+            <PanelLeftClose className="h-5 w-5 text-primary" />
+          </button>
         </div>
-        <button
-          onClick={onToggle}
-          className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
-          title="Close sidebar"
-        >
-          <PanelLeftClose className="h-5 w-5 text-primary" />
-        </button>
       </div>
 
       {/* Scrollable Sections */}
