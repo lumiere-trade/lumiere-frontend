@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { NavigationHeader } from '@/components/navigation/NavigationHeader'
-import { CreatePanel } from '@/components/strategy/CreatePanel'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, Send } from "lucide-react"
 import { storage } from "@/lib/api"
@@ -22,7 +21,6 @@ export default function CreatePage() {
   const { user, isLoading } = useAuth()
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Create page mounted, checking JWT...')
@@ -63,102 +61,116 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <NavigationHeader currentPage="create" />
 
-      <CreatePanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-
-      <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-8'}`}>
-        <div className="container mx-auto px-6 py-12 max-w-4xl">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]">
-              <div className="w-full max-w-3xl space-y-8">
-                <div className="text-center mb-12">
-                  <div className="flex justify-center mb-6">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
-                      <Sparkles className="h-8 w-8 text-primary" />
-                    </div>
+      <div className="container mx-auto px-6 py-12 max-w-4xl">
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
+            <div className="w-full max-w-3xl space-y-8">
+              <div className="text-center mb-12">
+                <div className="flex justify-center mb-6">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
+                    <Sparkles className="h-8 w-8 text-primary" />
                   </div>
-                  <h1 className="text-3xl font-bold text-foreground mb-3">
-                    Ready to create your strategy?
-                  </h1>
-                  <p className="text-lg text-muted-foreground">
-                    Describe your trading idea in natural language
-                  </p>
                 </div>
+                <h1 className="text-3xl font-bold text-foreground mb-3">
+                  Ready to create your strategy?
+                </h1>
+                <p className="text-lg text-muted-foreground">
+                  Describe your trading idea in natural language
+                </p>
+              </div>
 
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground text-center">Try one of these:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {examplePrompts.map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleExamplePrompt(prompt)}
-                        className="rounded-xl border border-primary/20 bg-card/50 px-4 py-3 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
+              <div className="relative">
+                <textarea
+                  placeholder="How can I help you today?"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault()
+                      handleSend()
+                    }
+                  }}
+                  className="w-full min-h-[120px] rounded-2xl border border-primary/30 bg-card px-6 py-4 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
+                />
+                <Button
+                  size="icon"
+                  className="absolute bottom-4 right-4 h-10 w-10 rounded-full"
+                  onClick={handleSend}
+                  disabled={!input.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground text-center">Try one of these:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {examplePrompts.map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleExamplePrompt(prompt)}
+                      className="rounded-xl border border-primary/20 bg-card/50 px-4 py-3 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-8 max-w-3xl mx-auto pb-32">
-              {messages.map((message, index) => (
-                <div key={index} className="space-y-4">
-                  {message.role === "user" ? (
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
-                        <span className="text-xs font-semibold text-primary">You</span>
-                      </div>
-                      <div className="flex-1 pt-1">
-                        <p className="text-base leading-relaxed text-foreground">{message.content}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-                        <Sparkles className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="flex-1 pt-1">
-                        <p className="text-base leading-relaxed text-foreground">{message.content}</p>
-                      </div>
-                    </div>
+          </div>
+        ) : (
+          <div className="space-y-6 max-w-3xl mx-auto">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`p-6 rounded-2xl ${
+                  message.role === "user"
+                    ? "bg-primary/5 border border-primary/20"
+                    : "bg-card border border-primary/20"
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  {message.role === "assistant" && (
+                    <>
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-semibold text-primary">Prophet</span>
+                    </>
+                  )}
+                  {message.role === "user" && (
+                    <span className="text-sm font-semibold text-foreground">You</span>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+                <p className="text-base leading-relaxed text-foreground">{message.content}</p>
+              </div>
+            ))}
 
-      {/* Fixed Bottom Input */}
-      <div className={`border-t border-primary/20 bg-background transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-8'}`}>
-        <div className="container mx-auto px-6 py-4 max-w-4xl">
-          <div className="relative max-w-3xl mx-auto">
-            <textarea
-              placeholder="How can I help you today?"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              className="w-full min-h-[60px] max-h-[200px] rounded-2xl border border-primary/30 bg-card px-6 py-4 pr-14 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <Button
-              size="icon"
-              className="absolute bottom-3 right-3 h-10 w-10 rounded-full"
-              onClick={handleSend}
-              disabled={!input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <div className="relative">
+              <textarea
+                placeholder="Continue the conversation..."
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
+                className="w-full min-h-[100px] rounded-2xl border border-primary/30 bg-card px-6 py-4 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <Button
+                size="icon"
+                className="absolute bottom-4 right-4 h-10 w-10 rounded-full"
+                onClick={handleSend}
+                disabled={!input.trim()}
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
