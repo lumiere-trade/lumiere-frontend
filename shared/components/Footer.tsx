@@ -8,7 +8,11 @@ interface FooterProps {
 export function Footer({ isSidebarOpen = false }: FooterProps) {
   return (
     <footer 
-      className="fixed bottom-0 left-0 w-full z-30 border-t border-primary/20 bg-background"
+      className="fixed bottom-0 z-30 border-t border-primary/20 bg-background transition-all duration-300"
+      style={{
+        left: isSidebarOpen ? '300px' : '0',
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+      }}
     >
       <div className="px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
