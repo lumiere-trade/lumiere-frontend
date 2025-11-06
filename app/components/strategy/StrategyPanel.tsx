@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { 
   PanelLeftClose, 
   PanelLeftOpen, 
@@ -40,15 +39,11 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
   return (
     <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
-      {/* Header with logo and close button */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-primary/20">
-        <Image 
-          src="/images/lumiere-logo.png" 
-          alt="Lumière" 
-          width={120} 
-          height={32}
-          className="h-8 w-auto"
-        />
+      {/* Header with text logo and close button */}
+      <div className="flex items-center justify-between px-4 py-3 md:py-4 border-b border-primary/20 h-[73px]">
+        <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
+          LUMIÈRE
+        </div>
         <button
           onClick={onToggle}
           className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
