@@ -69,7 +69,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-border/50 bg-background shrink-0">
+      <header className="sticky top-0 z-50 border-b border-primary/20 bg-background shrink-0">
         <div className="mx-auto flex items-center justify-between pl-4 md:pl-6 pr-4 md:pr-6 py-3 md:py-4">
           <Link href="/" className="flex items-center transition-all hover:brightness-110">
             <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
