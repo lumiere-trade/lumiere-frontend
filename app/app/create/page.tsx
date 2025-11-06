@@ -1,8 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { NavigationHeader } from '@/components/navigation/NavigationHeader'
+import { CreatePanel } from '@/components/strategy/CreatePanel'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, Send } from "lucide-react"
 import { storage } from "@/lib/api"
@@ -21,6 +24,7 @@ export default function CreatePage() {
   const { user, isLoading } = useAuth()
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Create page mounted, checking JWT...')
@@ -63,8 +67,10 @@ export default function CreatePage() {
   return (
     <div className="min-h-screen bg-background">
       <NavigationHeader currentPage="create" />
+      
+      <CreatePanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-      <div className="container mx-auto px-6 py-12 max-w-4xl">
+      <div className={`container mx-auto px-6 py-12 max-w-4xl transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-8'}`}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)]">
             <div className="w-full max-w-3xl space-y-8">
