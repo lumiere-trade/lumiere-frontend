@@ -40,7 +40,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   return (
     <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
       {/* Header with close button */}
-      <div className="flex items-center justify-between p-4 border-b border-primary/20">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20">
         <h2 className="text-sm font-bold text-primary">CREATE</h2>
         <button
           onClick={onToggle}
@@ -56,10 +56,12 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
         {/* New Strategy Section */}
         <div className="border-b border-primary/20">
           <button
-            className="w-full flex items-center gap-3 p-4 hover:bg-card/30 transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-4 hover:bg-card/30 transition-colors"
           >
             <Plus className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">New Strategy</span>
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              New Strategy
+            </span>
           </button>
         </div>
 
@@ -67,7 +69,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
         <div className="border-b border-primary/20">
           <button
             onClick={() => setStrategiesExpanded(!strategiesExpanded)}
-            className="w-full flex items-center justify-between p-4 hover:bg-card/30 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-4 hover:bg-card/30 transition-colors"
           >
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-primary" />
@@ -83,7 +85,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           </button>
 
           {strategiesExpanded && (
-            <div className="p-4 pt-0 space-y-2">
+            <div className="px-4 pb-4 space-y-2">
               {mockStrategies.map((strategy) => (
                 <button
                   key={strategy.id}
