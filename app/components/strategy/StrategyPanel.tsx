@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { 
   PanelLeftClose, 
   PanelLeftOpen, 
@@ -39,12 +40,14 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
   return (
     <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
-      {/* Header with text logo and close button - matches NavigationHeader structure */}
-      <div className="border-b border-primary/20">
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
-          <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
-            LUMIÈRE
-          </div>
+      {/* Header with text logo and close button */}
+      <div className="border-b border-primary/20 h-[73px] flex items-center">
+        <div className="flex items-center justify-between px-4 md:px-6 w-full">
+          <Link href="/dashboard" className="transition-all hover:brightness-110">
+            <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
+              LUMIÈRE
+            </div>
+          </Link>
           <button
             onClick={onToggle}
             className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
