@@ -156,7 +156,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
               </TabsList>
 
               <TabsContent value="balances" className="mt-6 space-y-6 px-1">
-                <div className="rounded-lg border border-primary/20 bg-card p-6">
+                <div className="rounded-lg border border-primary/20 bg-card p-6 hover:border-primary/40 transition-colors cursor-pointer">
                   <div className="mb-2 text-sm text-muted-foreground">Total Balance</div>
                   <div className="text-4xl font-bold text-primary">
                     {isLoading ? '...' : `$${totalBalance.toFixed(2)}`}
@@ -167,7 +167,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                   <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                     Deposited Funds
                   </h3>
-                  <div className="rounded-lg border border-primary/20 bg-card p-4">
+                  <div className="rounded-lg border border-primary/20 bg-card p-4 hover:border-primary/40 transition-colors cursor-pointer">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
@@ -204,7 +204,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                   <h3 className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                     Wallet Funds
                   </h3>
-                  <div className="rounded-lg border border-primary/20 bg-card p-4">
+                  <div className="rounded-lg border border-primary/20 bg-card p-4 hover:border-primary/40 transition-colors cursor-pointer">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
@@ -240,7 +240,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
               </TabsContent>
 
               <TabsContent value="activity" className="mt-6 px-1">
-                <TransactionList 
+                <TransactionList
                   transactions={transactionsData?.transactions || []}
                   isLoading={isLoadingTransactions}
                 />

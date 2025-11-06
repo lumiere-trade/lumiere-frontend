@@ -72,7 +72,7 @@ function TransactionItem({ transaction }: TransactionItemProps) {
   })
 
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-card p-4 hover:bg-accent/50 transition-colors">
+    <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-card p-4 hover:border-primary/40 transition-colors cursor-pointer">
       <div className={'flex h-10 w-10 items-center justify-center rounded-full ' + (isDeposit ? 'bg-green-500/20' : 'bg-red-500/20')}>
         <Icon className={'h-5 w-5 ' + (isDeposit ? 'text-green-500' : 'text-red-500')} />
       </div>
