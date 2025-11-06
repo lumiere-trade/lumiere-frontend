@@ -130,10 +130,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                             e.stopPropagation()
                             console.log('Delete strategy', strategy.id)
                           }}
-                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                          className="p-1 rounded hover:bg-primary/10 transition-colors"
                           title="Delete strategy"
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 text-primary" />
                         </button>
                       </div>
                     </div>
