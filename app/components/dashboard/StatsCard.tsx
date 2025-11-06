@@ -21,7 +21,7 @@ export function StatsCard({ title, value, subtitle, icon: Icon, iconColor }: Sta
       </div>
       <div className="space-y-1">
         <div className="text-3xl font-bold text-foreground">{value}</div>
-        <div className="text-base text-muted-foreground">{subtitle}</div>
+        <div className="text-sm text-muted-foreground">{subtitle}</div>
       </div>
     </div>
   )
