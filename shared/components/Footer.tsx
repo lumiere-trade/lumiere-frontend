@@ -8,14 +8,10 @@ interface FooterProps {
 export function Footer({ isSidebarOpen = false }: FooterProps) {
   return (
     <footer 
-      className="fixed bottom-0 z-30 border-t border-border/50 bg-background transition-all duration-300"
-      style={{
-        left: isSidebarOpen ? '300px' : '0',
-        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
-      }}
+      className="fixed bottom-0 left-0 w-full z-30 border-t border-border/50 bg-background"
     >
       <div className="px-4 md:px-6 py-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center gap-12">
           <div className="flex flex-wrap items-center gap-6 text-sm">
             <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors">
               Documentation
@@ -35,18 +31,18 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
             </span>
           </div>
           
-          <div className="flex gap-3 mr-8">
+          <div className="flex gap-3">
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Twitter className="w-5 h-5" />
+              <Twitter className="w-[18px] h-[18px]" />
             </a>
             <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-[18px] h-[18px]" />
             </a>
             <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Send className="w-5 h-5" />
+              <Send className="w-[18px] h-[18px]" />
             </a>
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Github className="w-5 h-5" />
+              <Github className="w-[18px] h-[18px]" />
             </a>
           </div>
         </div>
