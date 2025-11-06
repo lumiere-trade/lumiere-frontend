@@ -34,7 +34,7 @@ export function EmptyState() {
 
           <div>
             
-              href="#"
+              <a href="#"
               className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm"
             >
               Learn about strategy types
