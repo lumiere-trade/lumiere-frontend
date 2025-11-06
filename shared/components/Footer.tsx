@@ -12,9 +12,9 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
     >
       <div className="px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
-          {/* Center: Links */}
-          <div className="flex-1 flex justify-center">
-            <div className="flex flex-wrap items-center gap-6 text-sm">
+          {/* Center: Links (slightly offset to right) */}
+          <div className="flex-1 flex justify-center pl-32">
+            <div className="flex flex-wrap items-center gap-6 text-base">
               <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors">
                 Documentation
               </Link>
