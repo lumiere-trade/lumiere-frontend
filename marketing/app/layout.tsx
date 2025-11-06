@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import '@lumiere/shared/styles/globals.css';
 import { ThemeProvider } from '@lumiere/shared/components/theme-provider';
+import { Footer } from '@lumiere/shared/components';
 import { MarketingHeader } from '@/components/marketing-header';
-import { Footer } from '@/components/footer';
 import { AdminAuthProvider } from '@/src/contexts/AdminAuthContext';
 
 const geistSans = Geist({
