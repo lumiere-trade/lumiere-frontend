@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { NavigationHeader } from '@/components/navigation/NavigationHeader'
+import { CreatePanel } from '@/components/strategy/CreatePanel'
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, Send } from "lucide-react"
 import { storage } from "@/lib/api"
@@ -21,6 +22,7 @@ export default function CreatePage() {
   const { user, isLoading } = useAuth()
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Create page mounted, checking JWT...')
@@ -64,7 +66,9 @@ export default function CreatePage() {
     <div className="flex flex-col h-screen bg-background">
       <NavigationHeader currentPage="create" />
 
-      <div className="flex-1 overflow-y-auto">
+      <CreatePanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+      <div className={`flex-1 overflow-y-auto transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-8'}`}>
         <div className="container mx-auto px-6 py-12 max-w-4xl">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-300px)]">
@@ -130,7 +134,7 @@ export default function CreatePage() {
       </div>
 
       {/* Fixed Bottom Input */}
-      <div className="border-t border-primary/20 bg-background">
+      <div className={`border-t border-primary/20 bg-background transition-all duration-300 ${isSidebarOpen ? 'ml-80' : 'ml-8'}`}>
         <div className="container mx-auto px-6 py-4 max-w-4xl">
           <div className="relative max-w-3xl mx-auto">
             <textarea
