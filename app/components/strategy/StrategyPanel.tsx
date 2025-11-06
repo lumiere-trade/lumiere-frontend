@@ -28,13 +28,15 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     <>
       {/* Collapsed state - thin strip */}
       <div 
-        className={`fixed left-0 top-0 h-screen z-40 transition-all duration-300 ${
-          isOpen ? 'w-0 opacity-0' : 'w-8 opacity-100'
+        className={`fixed left-0 top-0 h-screen z-40 bg-card border-r border-primary/20 transition-all duration-300 ease-in-out ${
+          isOpen ? 'w-0 border-r-0' : 'w-8'
         }`}
       >
         <button
           onClick={onToggle}
-          className="h-full w-full px-2 bg-card border-r border-primary/20 hover:bg-card/80 transition-colors"
+          className={`h-full w-8 px-2 hover:bg-card/80 transition-colors ${
+            isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
           title="Open sidebar"
         >
           <PanelLeftOpen className="h-5 w-5 text-primary" />
@@ -43,8 +45,8 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
       {/* Expanded state - full panel */}
       <div 
-        className={`fixed left-0 top-0 h-screen bg-background border-r border-primary/20 z-40 flex flex-col transition-all duration-300 ${
-          isOpen ? 'w-[300px] opacity-100' : 'w-0 opacity-0 pointer-events-none'
+        className={`fixed left-0 top-0 h-screen bg-background border-r border-primary/20 z-40 transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'w-[300px]' : 'w-0 border-r-0'
         }`}
       >
         <div className="h-full w-[300px] flex flex-col">
