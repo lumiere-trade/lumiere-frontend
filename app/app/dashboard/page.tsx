@@ -37,12 +37,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <NavigationHeader currentPage="dashboard" />
+      <NavigationHeader currentPage="dashboard" isSidebarOpen={isSidebarOpen} />
       
       <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
       <main 
-        className="transition-all duration-300"
+        className="pt-[73px] transition-all duration-300"
         style={{
           marginLeft: isSidebarOpen ? '300px' : '32px',
           width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)'

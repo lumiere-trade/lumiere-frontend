@@ -14,9 +14,10 @@ import { LogCategory } from "@/lib/debug"
 
 interface NavigationHeaderProps {
   currentPage?: "dashboard" | "create"
+  isSidebarOpen?: boolean
 }
 
-export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
+export function NavigationHeader({ currentPage, isSidebarOpen = true }: NavigationHeaderProps) {
   const log = useLogger('NavigationHeader', LogCategory.COMPONENT)
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
@@ -69,8 +70,14 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-primary/20 bg-background shrink-0">
-        <div className="mx-auto flex items-center justify-end pl-4 md:pl-6 pr-4 md:pr-6 py-3 md:py-4">
+      <header 
+        className="fixed top-0 z-40 border-b border-primary/20 bg-background transition-all duration-300"
+        style={{
+          left: isSidebarOpen ? '300px' : '32px',
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)'
+        }}
+      >
+        <div className="flex items-center justify-end px-4 md:px-6 py-3 md:py-4">
           <nav className="flex items-center gap-3">
             <Link href="/dashboard">
               <Button
