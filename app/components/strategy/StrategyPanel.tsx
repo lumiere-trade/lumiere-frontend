@@ -8,7 +8,9 @@ import {
   Plus,
   Layers,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Pencil,
+  Trash2
 } from "lucide-react"
 
 interface StrategyPanelProps {
@@ -17,8 +19,8 @@ interface StrategyPanelProps {
 }
 
 const mockStrategies = [
-  { id: 1, name: "SOL Momentum", status: "Active", winRate: "67.3%" },
-  { id: 2, name: "RSI Reversion", status: "Backtesting", winRate: "72.1%" },
+  { id: 1, name: "SOL Momentum", status: "Active" },
+  { id: 2, name: "RSI Reversion", status: "Backtesting" },
 ]
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
@@ -101,22 +103,41 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
             {strategiesExpanded && (
               <div className="px-4 pb-4 space-y-2">
                 {mockStrategies.map((strategy) => (
-                  <button
+                  <div
                     key={strategy.id}
                     className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
                   >
-                    <div className="text-sm font-medium text-foreground truncate">
+                    <div className="text-base font-medium text-foreground truncate">
                       {strategy.name}
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         {strategy.status}
                       </span>
-                      <span className="text-xs text-green-500">
-                        {strategy.winRate}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            console.log('Edit strategy', strategy.id)
+                          }}
+                          className="p-1 rounded hover:bg-primary/10 transition-colors"
+                          title="Edit strategy"
+                        >
+                          <Pencil className="h-4 w-4 text-primary" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            console.log('Delete strategy', strategy.id)
+                          }}
+                          className="p-1 rounded hover:bg-destructive/10 transition-colors"
+                          title="Delete strategy"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </button>
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             )}
