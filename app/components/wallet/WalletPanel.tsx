@@ -184,10 +184,9 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                             {isLoadingEscrow ? '...' : `$${escrowBalanceNum.toFixed(2)}`}
                           </div>
                         </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="rounded-full px-6 border-primary/30 bg-transparent" 
+                        <Button
+                          size="sm"
+                          className="rounded-full px-6"
                           onClick={handleWithdraw}
                           disabled={escrowBalanceNum <= 0}
                         >
@@ -216,7 +215,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <div className="font-semibold">
-                            {isLoadingWallet ? '...' : walletBalanceNum.toFixed(6)}
+                            {isLoadingWallet ? '...' : walletBalanceNum.toFixed(2)}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {isLoadingWallet ? '...' : `$${walletBalanceNum.toFixed(2)}`}
@@ -247,12 +246,12 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
         </SheetContent>
       </Sheet>
 
-      <DepositFundsModal 
+      <DepositFundsModal
         isOpen={isDepositModalOpen}
         onClose={() => setIsDepositModalOpen(false)}
       />
 
-      <WithdrawFundsModal 
+      <WithdrawFundsModal
         isOpen={isWithdrawModalOpen}
         onClose={() => setIsWithdrawModalOpen(false)}
       />
