@@ -25,7 +25,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
   if (!isOpen) {
     return (
-      <div className="fixed left-0 top-0 h-screen z-40">
+      <div className="fixed left-0 top-[73px] h-[calc(100vh-73px)] z-40">
         <button
           onClick={onToggle}
           className="h-full px-2 bg-card border-r border-primary/20 hover:bg-card/80 transition-colors"
@@ -38,7 +38,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   }
 
   return (
-    <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
+    <div className="fixed left-0 top-[73px] h-[calc(100vh-73px)] w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
       {/* Header with close button */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-primary/20">
         <h2 className="text-sm font-bold text-primary">CREATE</h2>
