@@ -436,3 +436,4 @@ import type { User } from '@/types/ui.types'
 - `lib/debug/README.md` - Debug system documentation
 - `lib/debug/EXAMPLES.md` - Debug usage examples
 - Component documentation in file headers
+
