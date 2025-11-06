@@ -73,8 +73,8 @@ export default function CreatePage() {
       <div
         className="transition-all duration-300"
         style={{
-          marginLeft: isSidebarOpen ? '360px' : '32px',
-          width: isSidebarOpen ? 'calc(100vw - 360px)' : 'calc(100vw - 32px)'
+          marginLeft: isSidebarOpen ? '300px' : '32px',
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)'
         }}
       >
         <div className="flex items-center justify-center px-6 py-12">
