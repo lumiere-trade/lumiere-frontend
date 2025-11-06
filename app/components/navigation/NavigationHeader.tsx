@@ -73,8 +73,8 @@ export function NavigationHeader({ currentPage, isSidebarOpen = true }: Navigati
       <header 
         className="fixed top-0 z-40 border-b border-primary/20 bg-background transition-all duration-300"
         style={{
-          left: isSidebarOpen ? '300px' : '32px',
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)'
+          left: isSidebarOpen ? '300px' : '0',
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
         }}
       >
         <div className="flex items-center justify-end px-4 md:px-6 py-3 md:py-4">
