@@ -34,9 +34,9 @@ export default function CreatePage() {
   }
 
   return (
-    <div className="flex items-center justify-center px-6 py-6">
+    <div className="min-h-[calc(100vh-134px)] flex items-center justify-center px-6">
       {messages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center w-full max-w-3xl space-y-6">
+        <div className="flex flex-col items-center w-full max-w-3xl space-y-6">
           <div className="text-center">
             <div className="flex justify-center mb-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
@@ -90,7 +90,7 @@ export default function CreatePage() {
           </div>
         </div>
       ) : (
-        <div className="w-full max-w-3xl space-y-6">
+        <div className="w-full max-w-3xl space-y-6 py-6">
           {messages.map((message, index) => (
             <div
               key={index}
