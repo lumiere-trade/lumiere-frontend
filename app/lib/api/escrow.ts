@@ -8,6 +8,7 @@ import type {
   PrepareInitializeResponse,
   InitializeEscrowResponse,
   PrepareDepositResponse,
+  PrepareWithdrawResponse,
   DepositResponse,
 } from './types'
 
@@ -44,6 +45,22 @@ export async function submitDeposit(
   signedTx: string
 ): Promise<DepositResponse> {
   return post<DepositResponse>('/api/escrow/deposit', {
+    amount,
+    signed_transaction: signedTx,
+  })
+}
+
+export async function prepareWithdraw(amount: string): Promise<PrepareWithdrawResponse> {
+  return post<PrepareWithdrawResponse>('/api/escrow/prepare-withdraw', {
+    amount,
+  })
+}
+
+export async function submitWithdraw(
+  amount: string,
+  signedTx: string
+): Promise<DepositResponse> {
+  return post<DepositResponse>('/api/escrow/withdraw', {
     amount,
     signed_transaction: signedTx,
   })

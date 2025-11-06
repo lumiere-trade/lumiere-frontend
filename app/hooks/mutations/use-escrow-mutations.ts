@@ -20,6 +20,11 @@ interface DepositResult {
   txHash: string
 }
 
+interface WithdrawResult {
+  escrow: Escrow
+  txHash: string
+}
+
 export function useInitializeEscrowMutation() {
   const queryClient = useQueryClient()
   const { signTransaction } = useWallet()
@@ -91,6 +96,58 @@ export function useDepositToEscrowMutation() {
       const newBalance = currentBalance
         ? (parseFloat(currentBalance.balance) + parseFloat(amount)).toString()
         : amount
+
+      const escrow = transformEscrow({
+        escrow_account: currentBalance?.escrowAccount || '',
+        balance: newBalance,
+        token_mint: 'USDC',
+        is_initialized: true,
+        initialized_at: currentBalance?.initializedAt || new Date().toISOString(),
+        last_synced_at: new Date().toISOString(),
+      })
+
+      return {
+        escrow,
+        txHash: response.tx_signature,
+      }
+    },
+    onSuccess: (data) => {
+      // Only invalidate escrow balance - wallet balance refetches on modal open
+      queryClient.setQueryData(ESCROW_QUERY_KEYS.balance, data.escrow)
+      queryClient.invalidateQueries({ queryKey: ESCROW_QUERY_KEYS.balance })
+    },
+    retry: 1,
+  })
+}
+
+export function useWithdrawFromEscrowMutation() {
+  const queryClient = useQueryClient()
+  const { signTransaction } = useWallet()
+
+  return useMutation<WithdrawResult, Error, string>({
+    mutationFn: async (amount: string) => {
+      if (!signTransaction) {
+        throw new Error('Wallet does not support transaction signing')
+      }
+
+      const prepareResponse = await escrowApi.prepareWithdraw(amount)
+
+      const transaction = Transaction.from(
+        Buffer.from(prepareResponse.transaction, 'base64')
+      )
+
+      const signedTx = await signTransaction(transaction)
+      const signedTxBase64 = signedTx.serialize().toString('base64')
+
+      const response = await escrowApi.submitWithdraw(amount, signedTxBase64)
+
+      const currentBalance = queryClient.getQueryData<Escrow>(
+        ESCROW_QUERY_KEYS.balance
+      )
+
+      const newBalance = currentBalance
+        ? (parseFloat(currentBalance.balance) - parseFloat(amount)).toString()
+        : '0'
 
       const escrow = transformEscrow({
         escrow_account: currentBalance?.escrowAccount || '',

@@ -12,6 +12,7 @@ import { Button } from '@lumiere/shared/components/ui/button'
 import { Input } from '@lumiere/shared/components/ui/input'
 import { Label } from '@lumiere/shared/components/ui/label'
 import { useEscrow } from '@/hooks/use-escrow'
+import { useWithdrawFromEscrowMutation } from '@/hooks/mutations/use-escrow-mutations'
 import { useToast } from '@/hooks/use-toast'
 import { useLogger } from '@/hooks/use-logger'
 import { LogCategory } from '@/lib/debug'
@@ -32,6 +33,9 @@ export function WithdrawFundsModal({ isOpen, onClose }: WithdrawFundsModalProps)
     isInitialized,
     isLoading: isLoadingEscrow,
   } = useEscrow()
+
+  // Withdraw mutation
+  const withdrawMutation = useWithdrawFromEscrowMutation()
 
   useEffect(() => {
     if (isOpen) {
@@ -108,12 +112,18 @@ export function WithdrawFundsModal({ isOpen, onClose }: WithdrawFundsModalProps)
     }
 
     try {
-      // TODO: Implement withdraw mutation when backend endpoint is ready
-      log.info('Withdraw endpoint not yet implemented')
-      
+      log.info('Executing withdraw mutation', { amount })
+
+      const result = await withdrawMutation.mutateAsync(amount)
+
+      log.info('Withdraw successful', {
+        txHash: result.txHash,
+        newBalance: result.escrow.balance
+      })
+
       toast({
-        title: 'Coming Soon',
-        description: 'Withdraw functionality will be available soon',
+        title: 'Withdraw Successful',
+        description: `Successfully withdrew ${amount} USDC to your wallet`,
       })
 
       log.timeEnd('withdraw')
@@ -137,7 +147,7 @@ export function WithdrawFundsModal({ isOpen, onClose }: WithdrawFundsModalProps)
   }
 
   const displayAmount = amount || '0.00'
-  const isProcessing = false // TODO: Add isWithdrawing state when mutation is ready
+  const isProcessing = withdrawMutation.isPending
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

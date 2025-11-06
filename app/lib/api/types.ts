@@ -84,6 +84,12 @@ export interface PrepareDepositResponse {
   amount: string
 }
 
+export interface PrepareWithdrawResponse {
+  transaction: string
+  escrow_account: string
+  amount: string
+}
+
 export interface DepositResponse {
   id: string
   user_id: string
