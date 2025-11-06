@@ -11,8 +11,10 @@ import { useLogger } from "@/hooks/use-logger"
 import { useToast } from "@/hooks/use-toast"
 import { useWalletBalance } from "@/hooks/use-wallet-balance"
 import { useEscrow } from "@/hooks/use-escrow"
+import { useEscrowTransactionsQuery } from "@/hooks/queries/use-escrow-queries"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
 import { WithdrawFundsModal } from "@/components/wallet/WithdrawFundsModal"
+import { TransactionList } from "@/components/wallet/TransactionList"
 import { LogCategory } from "@/lib/debug"
 
 interface WalletPanelProps {
@@ -30,6 +32,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const { disconnect } = useWallet()
   const { balance: walletBalance, isLoading: isLoadingWallet } = useWalletBalance()
   const { escrowBalance, isLoading: isLoadingEscrow } = useEscrow()
+  const { data: transactionsData, isLoading: isLoadingTransactions } = useEscrowTransactionsQuery()
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
   const walletType = user?.walletType || "Unknown Wallet"
@@ -237,9 +240,10 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
               </TabsContent>
 
               <TabsContent value="activity" className="mt-6 px-1">
-                <div className="text-center py-12 text-muted-foreground">
-                  No recent activity
-                </div>
+                <TransactionList 
+                  transactions={transactionsData?.transactions || []}
+                  isLoading={isLoadingTransactions}
+                />
               </TabsContent>
             </Tabs>
           </div>

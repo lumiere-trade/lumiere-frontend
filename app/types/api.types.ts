@@ -94,3 +94,23 @@ export interface CheckComplianceResponse {
   is_compliant: boolean;
   pending_documents: PendingDocumentDto[];
 }
+
+export type TransactionType = 'initialize' | 'deposit' | 'withdraw' | 'subscription_fee';
+export type TransactionStatus = 'pending' | 'confirmed' | 'failed';
+
+export interface EscrowTransactionDto {
+  id: string;
+  user_id: string;
+  tx_signature: string;
+  transaction_type: TransactionType;
+  amount: string;
+  token_mint: string;
+  status: TransactionStatus;
+  created_at: string;
+  confirmed_at: string | null;
+}
+
+export interface TransactionListResponse {
+  transactions: EscrowTransactionDto[];
+  total: number;
+}

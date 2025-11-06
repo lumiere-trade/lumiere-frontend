@@ -11,6 +11,7 @@ import type {
   PrepareWithdrawResponse,
   DepositResponse,
 } from './types'
+import type { TransactionListResponse, TransactionType } from '@/types/api.types'
 
 export async function getEscrowBalance(sync: boolean = false): Promise<Escrow> {
   const params = sync ? '?sync=true' : ''
@@ -19,6 +20,13 @@ export async function getEscrowBalance(sync: boolean = false): Promise<Escrow> {
 
 export async function getWalletBalance(walletAddress: string): Promise<WalletBalance> {
   return get<WalletBalance>(`/api/wallet/balance?wallet=${walletAddress}`)
+}
+
+export async function getEscrowTransactions(
+  transactionType?: TransactionType
+): Promise<TransactionListResponse> {
+  const params = transactionType ? `?transaction_type=${transactionType}` : ''
+  return get<TransactionListResponse>(`/api/escrow/transactions${params}`)
 }
 
 export async function prepareInitializeEscrow(): Promise<PrepareInitializeResponse> {

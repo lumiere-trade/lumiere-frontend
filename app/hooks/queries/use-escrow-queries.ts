@@ -6,10 +6,12 @@ import { useQuery } from '@tanstack/react-query'
 import { escrowApi, storage, setAuthToken } from '@/lib/api'
 import { transformEscrow } from '@/types/ui.types'
 import type { Escrow } from '@/types/ui.types'
+import type { TransactionListResponse, TransactionType } from '@/types/api.types'
 
 export const ESCROW_QUERY_KEYS = {
   balance: ['escrow', 'balance'] as const,
   walletBalance: (address: string) => ['wallet', 'balance', address] as const,
+  transactions: (type?: TransactionType) => ['escrow', 'transactions', type] as const,
 }
 
 export function useEscrowBalanceQuery(sync: boolean = false) {
@@ -44,6 +46,24 @@ export function useWalletBalanceQuery(walletAddress: string) {
     },
     enabled: storage.hasToken() && !!walletAddress,
     staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 2,
+  })
+}
+
+export function useEscrowTransactionsQuery(transactionType?: TransactionType) {
+  return useQuery<TransactionListResponse>({
+    queryKey: ESCROW_QUERY_KEYS.transactions(transactionType),
+    queryFn: async () => {
+      const token = storage.getToken()
+      if (token) {
+        setAuthToken(token)
+      }
+      return await escrowApi.getEscrowTransactions(transactionType)
+    },
+    enabled: storage.hasToken(),
+    staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     retry: 2,
