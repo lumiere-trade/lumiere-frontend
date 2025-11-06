@@ -6,8 +6,8 @@ import Link from "next/link"
 
 export function EmptyState() {
   return (
-    <div className="flex items-center justify-center">
-      <div className="relative overflow-hidden rounded-3xl bg-card border border-primary/20 p-12 max-w-2xl w-full text-center">
+    <div className="w-full">
+      <div className="relative overflow-hidden rounded-3xl bg-card border border-primary/20 p-12 w-full text-center">
         <div className="relative">
           <div className="flex justify-center mb-6">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
