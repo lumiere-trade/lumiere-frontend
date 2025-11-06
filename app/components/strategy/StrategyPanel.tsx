@@ -41,7 +41,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   return (
     <div className="fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col">
       {/* Header with text logo and close button */}
-      <div className="border-b border-primary/20 h-[54px] flex items-center">
+      <div className="border-b border-primary/20 h-[55px] flex items-center">
         <div className="flex items-center justify-between px-4 md:px-6 w-full">
           <Link href="/dashboard" className="transition-all hover:brightness-110">
             <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none">
