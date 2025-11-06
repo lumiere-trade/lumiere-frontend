@@ -73,15 +73,15 @@ function TransactionItem({ transaction }: TransactionItemProps) {
 
   return (
     <div className="flex items-center gap-3 rounded-lg border border-primary/20 bg-card p-4 hover:bg-accent/50 transition-colors">
-      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isDeposit ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-        <Icon className={`h-5 w-5 ${isDeposit ? 'text-green-500' : 'text-red-500'}`} />
+      <div className={'flex h-10 w-10 items-center justify-center rounded-full ' + (isDeposit ? 'bg-green-500/20' : 'bg-red-500/20')}>
+        <Icon className={'h-5 w-5 ' + (isDeposit ? 'text-green-500' : 'text-red-500')} />
       </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="font-semibold truncate">{typeLabel}</p>
           {!isInitialize && (
-            <p className={`font-semibold whitespace-nowrap ${amountColor}`}>
+            <p className={'font-semibold whitespace-nowrap ' + amountColor}>
               {amountPrefix}{parseFloat(transaction.amount).toFixed(2)} {transaction.token_mint}
             </p>
           )}
@@ -90,11 +90,11 @@ function TransactionItem({ transaction }: TransactionItemProps) {
         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
           <span>{formattedDate} at {formattedTime}</span>
           <span>•</span>
-          <span className={`capitalize ${statusColor}`}>{transaction.status}</span>
+          <span className={'capitalize ' + statusColor}>{transaction.status}</span>
         </div>
         
         
-          href={`https://solscan.io/tx/${transaction.tx_signature}`}
+          <a href={'https://solscan.io/tx/' + transaction.tx_signature}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-primary hover:underline mt-1 inline-block truncate max-w-full"
