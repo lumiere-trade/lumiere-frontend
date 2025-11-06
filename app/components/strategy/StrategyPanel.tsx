@@ -28,15 +28,13 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     <>
       {/* Collapsed state - thin strip */}
       <div 
-        className={`fixed left-0 top-0 h-screen z-40 bg-card border-r border-primary/20 transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-0 border-r-0' : 'w-8'
+        className={`fixed left-0 top-0 h-screen w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
+          isOpen ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
         <button
           onClick={onToggle}
-          className={`h-full w-8 px-2 hover:bg-card/80 transition-colors ${
-            isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
+          className="h-full w-full px-2 hover:bg-card/80 transition-colors"
           title="Open sidebar"
         >
           <PanelLeftOpen className="h-5 w-5 text-primary" />
@@ -45,85 +43,83 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
       {/* Expanded state - full panel */}
       <div 
-        className={`fixed left-0 top-0 h-screen bg-background border-r border-primary/20 z-40 transition-all duration-300 ease-in-out overflow-hidden ${
-          isOpen ? 'w-[300px]' : 'w-0 border-r-0'
+        className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-full w-[300px] flex flex-col">
-          {/* Header with text logo and close button */}
-          <div className="border-b border-primary/20 h-[54px] flex items-center shrink-0">
-            <div className="flex items-center justify-between px-4 md:px-6 w-full">
-              <Link href="/dashboard" className="transition-all hover:brightness-110">
-                <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none whitespace-nowrap">
-                  LUMIÈRE
-                </div>
-              </Link>
-              <button
-                onClick={onToggle}
-                className="p-1 rounded-lg hover:bg-primary/10 transition-colors shrink-0"
-                title="Close sidebar"
-              >
-                <PanelLeftClose className="h-5 w-5 text-primary" />
-              </button>
-            </div>
+        {/* Header with text logo and close button */}
+        <div className="border-b border-primary/20 h-[54px] flex items-center shrink-0">
+          <div className="flex items-center justify-between px-4 md:px-6 w-full">
+            <Link href="/dashboard" className="transition-all hover:brightness-110">
+              <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none whitespace-nowrap">
+                LUMIÈRE
+              </div>
+            </Link>
+            <button
+              onClick={onToggle}
+              className="p-1 rounded-lg hover:bg-primary/10 transition-colors shrink-0"
+              title="Close sidebar"
+            >
+              <PanelLeftClose className="h-5 w-5 text-primary" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Sections */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          {/* New Strategy Section */}
+          <div className="border-b border-primary/20">
+            <button
+              className="w-full flex items-center gap-2 px-4 py-4 hover:bg-card/30 transition-colors"
+            >
+              <Plus className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                New Strategy
+              </span>
+            </button>
           </div>
 
-          {/* Scrollable Sections */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            {/* New Strategy Section */}
-            <div className="border-b border-primary/20">
-              <button
-                className="w-full flex items-center gap-2 px-4 py-4 hover:bg-card/30 transition-colors"
-              >
-                <Plus className="h-4 w-4 text-primary shrink-0" />
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
-                  New Strategy
-                </span>
-              </button>
-            </div>
-
-            {/* Strategies Section */}
-            <div className="border-b border-primary/20">
-              <button
-                onClick={() => setStrategiesExpanded(!strategiesExpanded)}
-                className="w-full flex items-center justify-between px-4 py-4 hover:bg-card/30 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-primary shrink-0" />
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
-                    Strategies
-                  </h3>
-                </div>
-                {strategiesExpanded ? (
-                  <ChevronDown className="h-4 w-4 text-primary shrink-0" />
-                ) : (
-                  <ChevronRight className="h-4 w-4 text-primary shrink-0" />
-                )}
-              </button>
-
-              {strategiesExpanded && (
-                <div className="px-4 pb-4 space-y-2">
-                  {mockStrategies.map((strategy) => (
-                    <button
-                      key={strategy.id}
-                      className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
-                    >
-                      <div className="text-sm font-medium text-foreground truncate">
-                        {strategy.name}
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-xs text-muted-foreground">
-                          {strategy.status}
-                        </span>
-                        <span className="text-xs text-green-500">
-                          {strategy.winRate}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+          {/* Strategies Section */}
+          <div className="border-b border-primary/20">
+            <button
+              onClick={() => setStrategiesExpanded(!strategiesExpanded)}
+              className="w-full flex items-center justify-between px-4 py-4 hover:bg-card/30 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-primary shrink-0" />
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                  Strategies
+                </h3>
+              </div>
+              {strategiesExpanded ? (
+                <ChevronDown className="h-4 w-4 text-primary shrink-0" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-primary shrink-0" />
               )}
-            </div>
+            </button>
+
+            {strategiesExpanded && (
+              <div className="px-4 pb-4 space-y-2">
+                {mockStrategies.map((strategy) => (
+                  <button
+                    key={strategy.id}
+                    className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                  >
+                    <div className="text-sm font-medium text-foreground truncate">
+                      {strategy.name}
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-muted-foreground">
+                        {strategy.status}
+                      </span>
+                      <span className="text-xs text-green-500">
+                        {strategy.winRate}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
