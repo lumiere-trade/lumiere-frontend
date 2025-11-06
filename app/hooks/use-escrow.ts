@@ -16,7 +16,8 @@ export function useEscrow() {
   const {
     data: escrow,
     isLoading: isLoadingEscrow,
-    error: escrowError
+    error: escrowError,
+    refetch: refetchEscrowBalance,
   } = useEscrowBalanceQuery(false)
 
   log.debug('Escrow state', {
@@ -39,6 +40,9 @@ export function useEscrow() {
 
     // Errors
     error: escrowError,
+
+    // Refetch
+    refetch: refetchEscrowBalance,
 
     // Actions
     initializeEscrow: () => initializeEscrowMutation.mutateAsync(),

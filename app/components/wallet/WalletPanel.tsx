@@ -30,9 +30,9 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false)
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
-  const { balance: walletBalance, isLoading: isLoadingWallet } = useWalletBalance()
-  const { escrowBalance, isLoading: isLoadingEscrow } = useEscrow()
-  const { data: transactionsData, isLoading: isLoadingTransactions } = useEscrowTransactionsQuery()
+  const { balance: walletBalance, isLoading: isLoadingWallet, refetch: refetchWalletBalance } = useWalletBalance()
+  const { escrowBalance, isLoading: isLoadingEscrow, refetch: refetchEscrowBalance } = useEscrow()
+  const { data: transactionsData, isLoading: isLoadingTransactions, refetch: refetchTransactions } = useEscrowTransactionsQuery()
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
   const walletType = user?.walletType || "Unknown Wallet"
@@ -45,10 +45,10 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
 
   useEffect(() => {
     if (open) {
-      log.info('Wallet panel opened', {
-        walletAddress: user?.walletAddress?.substring(0, 8) + '...',
-        walletType
-      })
+      log.info('Wallet panel opened - refreshing data')
+      refetchWalletBalance()
+      refetchEscrowBalance()
+      refetchTransactions()
     } else {
       log.info('Wallet panel closed')
     }
@@ -57,6 +57,15 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
   useEffect(() => {
     if (open) {
       log.info('Tab changed', { tab: activeTab })
+      
+      if (activeTab === 'balances') {
+        log.info('Refreshing balance data')
+        refetchWalletBalance()
+        refetchEscrowBalance()
+      } else if (activeTab === 'activity') {
+        log.info('Refreshing transactions')
+        refetchTransactions()
+      }
     }
   }, [activeTab, open])
 
