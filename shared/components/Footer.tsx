@@ -15,17 +15,8 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
       }}
     >
       <div className="px-4 md:px-6 py-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <div className="text-lg font-bold tracking-wider text-primary">
-              LUMIÈRE
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Blind to emotion, guided by algorithm
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-4 text-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center gap-6 text-sm">
             <Link href="/docs" className="text-muted-foreground hover:text-primary transition-colors">
               Documentation
             </Link>
@@ -35,8 +26,8 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
             <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
               Terms of Use
             </Link>
-            <a href="mailto:hello@lumiere.trade" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5">
-              <Mail className="w-3 h-3" />
+            <a href="mailto:hello@lumiere.trade" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
+              <Mail className="w-4 h-4" />
               hello@lumiere.trade
             </a>
             <span className="text-muted-foreground">
@@ -44,18 +35,18 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
             </span>
           </div>
           
-          <div className="flex gap-2">
-            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition-colors">
-              <Twitter className="w-3 h-3" />
+          <div className="flex gap-3 mr-8">
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
+              <Twitter className="w-5 h-5" />
             </a>
-            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition-colors">
-              <MessageCircle className="w-3 h-3" />
+            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
+              <MessageCircle className="w-5 h-5" />
             </a>
-            <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition-colors">
-              <Send className="w-3 h-3" />
+            <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
+              <Send className="w-5 h-5" />
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-1.5 text-primary hover:bg-primary/20 transition-colors">
-              <Github className="w-3 h-3" />
+            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
+              <Github className="w-5 h-5" />
             </a>
           </div>
         </div>
