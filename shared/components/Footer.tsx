@@ -25,7 +25,7 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
                 Terms of Use
               </Link>
               <a href="mailto:hello@lumiere.trade" className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-2">
-                <Mail className="w-[18px] h-[18px]" />
+                <Mail className="w-[17px] h-[17px]" />
                 hello@lumiere.trade
               </a>
               <span className="text-muted-foreground">
@@ -37,16 +37,16 @@ export function Footer({ isSidebarOpen = false }: FooterProps) {
           {/* Right: Social Icons */}
           <div className="flex gap-3 pr-4">
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Twitter className="w-[18px] h-[18px]" />
+              <Twitter className="w-[17px] h-[17px]" />
             </a>
             <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <MessageCircle className="w-[18px] h-[18px]" />
+              <MessageCircle className="w-[17px] h-[17px]" />
             </a>
             <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Send className="w-[18px] h-[18px]" />
+              <Send className="w-[17px] h-[17px]" />
             </a>
             <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="rounded-full bg-primary/10 p-2 text-primary hover:bg-primary/20 transition-colors">
-              <Github className="w-[18px] h-[18px]" />
+              <Github className="w-[17px] h-[17px]" />
             </a>
           </div>
         </div>
