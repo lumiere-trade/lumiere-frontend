@@ -73,7 +73,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
               className="w-full flex items-center gap-3 px-4 py-4 hover:bg-card/30 transition-colors"
             >
               <Plus className="h-5 w-5 text-primary shrink-0" />
-              <span className="text-lg font-bold text-primary whitespace-nowrap">
+              <span className="text-lg text-primary whitespace-nowrap">
                 New Strategy
               </span>
             </button>
@@ -87,7 +87,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
             >
               <div className="flex items-center gap-3">
                 <Layers className="h-5 w-5 text-primary shrink-0" />
-                <h3 className="text-lg font-bold text-primary whitespace-nowrap">
+                <h3 className="text-lg text-primary whitespace-nowrap">
                   Strategies
                 </h3>
               </div>
