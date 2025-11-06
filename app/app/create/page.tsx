@@ -122,34 +122,34 @@ export default function CreatePage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6 max-w-3xl mx-auto">
+          <div className="space-y-8 max-w-3xl mx-auto">
             {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`p-6 rounded-2xl ${
-                  message.role === "user"
-                    ? "bg-primary/5 border border-primary/20"
-                    : "bg-card border border-primary/20"
-                }`}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  {message.role === "assistant" && (
-                    <>
-                      <Sparkles className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-semibold text-primary">Prophet</span>
-                    </>
-                  )}
-                  {message.role === "user" && (
-                    <span className="text-sm font-semibold text-foreground">You</span>
-                  )}
-                </div>
-                <p className="text-base leading-relaxed text-foreground">{message.content}</p>
+              <div key={index} className="space-y-4">
+                {message.role === "user" ? (
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20">
+                      <span className="text-xs font-semibold text-primary">You</span>
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-base leading-relaxed text-foreground">{message.content}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-base leading-relaxed text-foreground">{message.content}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 
-            <div className="relative">
+            <div className="relative mt-8">
               <textarea
-                placeholder="Continue the conversation..."
+                placeholder="How can I help you today?"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
