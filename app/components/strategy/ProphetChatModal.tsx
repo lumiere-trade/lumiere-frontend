@@ -37,7 +37,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
         width: 'calc(100vw - 300px)'
       }}
     >
-      <div className="max-w-3xl mx-auto pointer-events-auto">
+      <div className="max-w-5xl mx-auto pointer-events-auto">
         <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
             <div className="flex items-center gap-3">
