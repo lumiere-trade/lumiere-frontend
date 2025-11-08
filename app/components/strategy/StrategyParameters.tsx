@@ -107,82 +107,82 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       </div>
 
       <div className="bg-card border border-primary/20 rounded-2xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">RSI Buy Threshold</label>
-              <span className="text-sm font-mono text-primary">{rsiBuy}</span>
-            </div>
-            <Slider
-              value={[rsiBuy]}
-              onValueChange={(value) => setRsiBuy(value[0])}
-              min={10}
-              max={50}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Buy when RSI &lt; {rsiBuy} (oversold condition)
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">RSI Buy Threshold</label>
+            <span className="text-sm font-mono text-primary">{rsiBuy}</span>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">RSI Sell Threshold</label>
-              <span className="text-sm font-mono text-primary">{rsiSell}</span>
-            </div>
-            <Slider
-              value={[rsiSell]}
-              onValueChange={(value) => setRsiSell(value[0])}
-              min={50}
-              max={90}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Sell when RSI &gt; {rsiSell} (overbought condition)
-            </p>
-          </div>
+          <Slider
+            value={[rsiBuy]}
+            onValueChange={(value) => setRsiBuy(value[0])}
+            min={10}
+            max={50}
+            step={1}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            Buy when RSI &lt; {rsiBuy} (oversold condition)
+          </p>
         </div>
       </div>
 
       <div className="bg-card border border-primary/20 rounded-2xl p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Take Profit</label>
-              <span className="text-sm font-mono text-primary">{takeProfit}%</span>
-            </div>
-            <Slider
-              value={[takeProfit]}
-              onValueChange={(value) => setTakeProfit(value[0])}
-              min={1}
-              max={20}
-              step={0.5}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Close position at {takeProfit}% profit
-            </p>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">RSI Sell Threshold</label>
+            <span className="text-sm font-mono text-primary">{rsiSell}</span>
           </div>
+          <Slider
+            value={[rsiSell]}
+            onValueChange={(value) => setRsiSell(value[0])}
+            min={50}
+            max={90}
+            step={1}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            Sell when RSI &gt; {rsiSell} (overbought condition)
+          </p>
+        </div>
+      </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Stop Loss</label>
-              <span className="text-sm font-mono text-primary">{stopLoss}%</span>
-            </div>
-            <Slider
-              value={[stopLoss]}
-              onValueChange={(value) => setStopLoss(value[0])}
-              min={0.5}
-              max={10}
-              step={0.5}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Maximum loss per trade: {stopLoss}%
-            </p>
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">Take Profit</label>
+            <span className="text-sm font-mono text-primary">{takeProfit}%</span>
           </div>
+          <Slider
+            value={[takeProfit]}
+            onValueChange={(value) => setTakeProfit(value[0])}
+            min={1}
+            max={20}
+            step={0.5}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            Close position at {takeProfit}% profit
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">Stop Loss</label>
+            <span className="text-sm font-mono text-primary">{stopLoss}%</span>
+          </div>
+          <Slider
+            value={[stopLoss]}
+            onValueChange={(value) => setStopLoss(value[0])}
+            min={0.5}
+            max={10}
+            step={0.5}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            Maximum loss per trade: {stopLoss}%
+          </p>
         </div>
       </div>
 
