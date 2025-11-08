@@ -2,7 +2,11 @@
 
 import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, Send } from "lucide-react"
+import { Sparkles, MessageSquare } from "lucide-react"
+import { ProphetChatModal } from "@/components/strategy/ProphetChatModal"
+import { StrategyParameters } from "@/components/strategy/StrategyParameters"
+import { useLogger } from "@/hooks/use-logger"
+import { LogCategory } from "@/lib/debug"
 
 const examplePrompts = [
   "Create a momentum strategy for SOL/USD",
@@ -12,133 +16,104 @@ const examplePrompts = [
 ]
 
 export default function CreatePage() {
-  const [input, setInput] = useState("")
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const log = useLogger('CreatePage', LogCategory.COMPONENT)
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
 
-  const handleSend = () => {
-    if (!input.trim()) return
-    
-    setMessages([...messages, { role: "user", content: input }])
-    setInput("")
-    
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "I'm analyzing your request. Prophet AI integration coming soon..."
-      }])
-    }, 1000)
+  const handleOpenChat = () => {
+    log.info('Opening Prophet chat modal')
+    setIsChatOpen(true)
+  }
+
+  const handleCloseChat = () => {
+    log.info('Closing Prophet chat modal')
+    setIsChatOpen(false)
+  }
+
+  const handleStrategyGenerated = (strategy: any) => {
+    log.info('Strategy generated and received', { strategy })
+    setGeneratedStrategy(strategy)
   }
 
   const handleExamplePrompt = (prompt: string) => {
-    setInput(prompt)
+    log.info('Example prompt selected', { prompt })
+    handleOpenChat()
   }
 
   return (
-    <div className="min-h-[calc(100vh-134px)] flex items-center justify-center px-6">
-      {messages.length === 0 ? (
-        <div className="flex flex-col items-center w-full max-w-3xl space-y-6">
-          <div className="text-center">
-            <div className="flex justify-center mb-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
-                <Sparkles className="h-7 w-7 text-primary" />
+    <>
+      <div className="relative min-h-[calc(100vh-134px)]">
+        {generatedStrategy && (
+          <div className="px-6 py-8">
+            <StrategyParameters strategy={generatedStrategy} />
+          </div>
+        )}
+
+        {!generatedStrategy && (
+          <div className="absolute inset-0 flex items-center justify-center px-6">
+            <div className="text-center space-y-4">
+              <div className="flex justify-center mb-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
+                  <Sparkles className="h-7 w-7 text-primary" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Ready to create your strategy?
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Describe your trading idea in natural language
+              </p>
+
+              <div className="space-y-3 pt-4 max-w-2xl mx-auto">
+                <p className="text-sm text-muted-foreground">Try one of these:</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {examplePrompts.map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleExamplePrompt(prompt)}
+                      className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Ready to create your strategy?
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Describe your trading idea in natural language
-            </p>
           </div>
+        )}
+      </div>
 
-          <div className="relative w-full">
-            <textarea
-              placeholder="How can I help you today?"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              className="w-full min-h-[100px] rounded-2xl border border-primary/30 bg-card px-6 py-4 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 placeholder:text-muted-foreground"
-            />
-            <Button
-              size="icon"
-              className="absolute bottom-4 right-4 h-10 w-10 rounded-full"
-              onClick={handleSend}
-              disabled={!input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <div className="space-y-2 w-full">
-            <p className="text-sm text-muted-foreground text-center">Try one of these:</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {examplePrompts.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleExamplePrompt(prompt)}
-                  className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="w-full max-w-3xl space-y-6 py-6">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`p-6 rounded-2xl ${
-                message.role === "user"
-                  ? "bg-primary/5 border border-primary/20"
-                  : "bg-card border border-primary/20"
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                {message.role === "assistant" && (
-                  <>
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-semibold text-primary">Prophet</span>
-                  </>
-                )}
-                {message.role === "user" && (
-                  <span className="text-sm font-semibold text-foreground">You</span>
-                )}
-              </div>
-              <p className="text-base leading-relaxed text-foreground">{message.content}</p>
-            </div>
-          ))}
-
-          <div className="relative">
-            <textarea
-              placeholder="Continue the conversation..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSend()
-                }
-              }}
-              className="w-full min-h-[100px] rounded-2xl border border-primary/30 bg-card px-6 py-4 text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <Button
-              size="icon"
-              className="absolute bottom-4 right-4 h-10 w-10 rounded-full"
-              onClick={handleSend}
-              disabled={!input.trim()}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {isChatOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40"
+          onClick={handleCloseChat}
+        />
       )}
-    </div>
+
+      <div 
+        className="fixed bottom-[100px] left-0 right-0 z-50 px-6"
+        style={{
+          marginLeft: '300px',
+          width: 'calc(100vw - 300px)'
+        }}
+      >
+        <div className="max-w-3xl mx-auto">
+          <Button
+            onClick={handleOpenChat}
+            className="w-full h-14 rounded-2xl bg-card border border-primary/30 hover:border-primary/50 hover:bg-card/80 transition-all shadow-lg text-muted-foreground hover:text-foreground justify-start px-6 gap-3"
+            variant="outline"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-base">How can I help you today?</span>
+          </Button>
+        </div>
+      </div>
+
+      <ProphetChatModal
+        isOpen={isChatOpen}
+        onClose={handleCloseChat}
+        onStrategyGenerated={handleStrategyGenerated}
+      />
+    </>
   )
 }
