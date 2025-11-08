@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare } from "lucide-react"
+import { Sparkles, MessageSquare, Send } from "lucide-react"
 import { ProphetChatModal } from "@/components/strategy/ProphetChatModal"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useLogger } from "@/hooks/use-logger"
@@ -50,9 +50,22 @@ export default function CreatePage() {
     handleOpenChat()
   }
 
+  const handleSend = () => {
+    if (inputValue.trim()) {
+      handleOpenChat()
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
+  }
+
   return (
     <>
-      <div className="relative min-h-[calc(100vh-134px)]">
+      <div className="relative min-h-[calc(100vh-134px)] pb-32">
         {generatedStrategy && (
           <div className="px-6 py-8">
             <StrategyParameters strategy={generatedStrategy} />
@@ -101,7 +114,7 @@ export default function CreatePage() {
       )}
 
       <div 
-        className="fixed bottom-[100px] left-0 right-0 z-50 px-6"
+        className="fixed bottom-6 left-0 right-0 z-50 px-6"
         style={{
           marginLeft: '300px',
           width: 'calc(100vw - 300px)'
@@ -115,10 +128,19 @@ export default function CreatePage() {
               onChange={(e) => setInputValue(e.target.value)}
               onClick={handleTextareaClick}
               onFocus={handleTextareaFocus}
+              onKeyDown={handleKeyDown}
               placeholder="How can I help you today?"
               rows={3}
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
+              className="w-full pl-12 pr-14 py-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
             />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!inputValue.trim()}
+              className="absolute right-3 bottom-3 h-9 w-9 rounded-lg"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       </div>
