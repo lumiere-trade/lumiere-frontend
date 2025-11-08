@@ -122,7 +122,7 @@ export default function CreatePage() {
       >
         <div className="max-w-3xl mx-auto">
           <div className="relative">
-            <MessageSquare className="absolute left-4 top-4 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
@@ -131,7 +131,7 @@ export default function CreatePage() {
               onKeyDown={handleKeyDown}
               placeholder="How can I help you today?"
               rows={3}
-              className="w-full pl-12 pr-14 py-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
             />
             <Button
               size="icon"
