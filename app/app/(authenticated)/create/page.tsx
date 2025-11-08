@@ -47,7 +47,18 @@ export default function CreatePage() {
   const handleExamplePrompt = (prompt: string) => {
     log.info('Example prompt selected', { prompt })
     setInputValue(prompt)
-    handleOpenChat()
+  }
+
+  const handleTextareaClick = () => {
+    if (!isChatOpen) {
+      handleOpenChat()
+    }
+  }
+
+  const handleTextareaFocus = () => {
+    if (!isChatOpen) {
+      handleOpenChat()
+    }
   }
 
   const handleSend = async () => {
@@ -57,10 +68,6 @@ export default function CreatePage() {
     setInputValue("")
     
     log.info('User sent message', { message: userMessage })
-    
-    if (!isChatOpen) {
-      handleOpenChat()
-    }
     
     setMessages(prev => [...prev, { role: "user", content: userMessage }])
 
@@ -217,6 +224,8 @@ strategy:
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
+              onClick={handleTextareaClick}
+              onFocus={handleTextareaFocus}
               onKeyDown={handleKeyDown}
               placeholder="How can I help you today?"
               rows={3}
