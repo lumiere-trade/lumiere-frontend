@@ -19,6 +19,7 @@ export default function CreatePage() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
+  const [inputValue, setInputValue] = useState("")
 
   const handleOpenChat = () => {
     log.info('Opening Prophet chat modal')
@@ -37,6 +38,15 @@ export default function CreatePage() {
 
   const handleExamplePrompt = (prompt: string) => {
     log.info('Example prompt selected', { prompt })
+    setInputValue(prompt)
+    handleOpenChat()
+  }
+
+  const handleTextareaClick = () => {
+    handleOpenChat()
+  }
+
+  const handleTextareaFocus = () => {
     handleOpenChat()
   }
 
@@ -98,14 +108,18 @@ export default function CreatePage() {
         }}
       >
         <div className="max-w-3xl mx-auto">
-          <Button
-            onClick={handleOpenChat}
-            className="w-full h-14 rounded-2xl bg-card border border-primary/30 hover:border-primary/50 hover:bg-card/80 transition-all shadow-lg text-muted-foreground hover:text-foreground justify-start px-6 gap-3"
-            variant="outline"
-          >
-            <MessageSquare className="h-5 w-5" />
-            <span className="text-base">How can I help you today?</span>
-          </Button>
+          <div className="relative">
+            <MessageSquare className="absolute left-4 top-4 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onClick={handleTextareaClick}
+              onFocus={handleTextareaFocus}
+              placeholder="How can I help you today?"
+              rows={3}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
+            />
+          </div>
         </div>
       </div>
 
