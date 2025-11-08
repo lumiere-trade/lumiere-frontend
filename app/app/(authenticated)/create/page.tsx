@@ -135,6 +135,7 @@ strategy:
 
         log.info('Strategy generated', { strategy: mockStrategy })
         handleStrategyGenerated(mockStrategy)
+        handleCloseChat()
         setIsGenerating(false)
       }, 3000)
     } else {
