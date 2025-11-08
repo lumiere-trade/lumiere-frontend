@@ -137,7 +137,7 @@ export default function CreatePage() {
               size="icon"
               onClick={handleSend}
               disabled={!inputValue.trim()}
-              className="absolute right-3 bottom-3 h-9 w-9 rounded-lg"
+              className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
             >
               <Send className="h-4 w-4" />
             </Button>
