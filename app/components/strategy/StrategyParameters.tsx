@@ -33,13 +33,13 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [positionSize, setPositionSize] = useState(strategy.parameters.position_size_percent)
 
   const handleSave = () => {
-    log.info('Strategy saved', { 
-      name, 
-      rsiBuy, 
-      rsiSell, 
-      takeProfit, 
-      stopLoss, 
-      positionSize 
+    log.info('Strategy saved', {
+      name,
+      rsiBuy,
+      rsiSell,
+      takeProfit,
+      stopLoss,
+      positionSize
     })
     alert('Strategy saved! (Mock implementation)')
   }
@@ -50,7 +50,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 p-6 bg-card border border-primary/20 rounded-2xl">
+    <div className="w-full max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Strategy Parameters</h2>
         <div className="flex gap-2">
@@ -84,14 +84,14 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       </div>
 
       {showCode && (
-        <div className="bg-background border border-primary/20 rounded-xl p-4">
+        <div className="bg-card border border-primary/20 rounded-2xl p-6">
           <pre className="text-xs text-muted-foreground overflow-x-auto">
             <code>{strategy.tsdl_code}</code>
           </pre>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-foreground">Strategy Name</label>
           <input
@@ -104,7 +104,9 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             Give your strategy a descriptive name
           </p>
         </div>
+      </div>
 
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -141,7 +143,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               Sell when RSI &gt; {rsiSell} (overbought condition)
             </p>
           </div>
+        </div>
+      </div>
 
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-foreground">Take Profit</label>
@@ -177,24 +183,26 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               Maximum loss per trade: {stopLoss}%
             </p>
           </div>
+        </div>
+      </div>
 
-          <div className="space-y-3 md:col-span-2">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Position Size</label>
-              <span className="text-sm font-mono text-primary">{positionSize}%</span>
-            </div>
-            <Slider
-              value={[positionSize]}
-              onValueChange={(value) => setPositionSize(value[0])}
-              min={1}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Allocate {positionSize}% of available capital per trade
-            </p>
+      <div className="bg-card border border-primary/20 rounded-2xl p-6">
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-foreground">Position Size</label>
+            <span className="text-sm font-mono text-primary">{positionSize}%</span>
           </div>
+          <Slider
+            value={[positionSize]}
+            onValueChange={(value) => setPositionSize(value[0])}
+            min={1}
+            max={100}
+            step={1}
+            className="w-full"
+          />
+          <p className="text-xs text-muted-foreground">
+            Allocate {positionSize}% of available capital per trade
+          </p>
         </div>
       </div>
     </div>
