@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
-import { Slider } from "@lumiere/shared/components/ui/slider"
-import { Input } from "@lumiere/shared/components/ui/input"
+import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -95,10 +94,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       <div className="space-y-6">
         <div className="space-y-2">
           <label className="text-sm font-semibold text-foreground">Strategy Name</label>
-          <Input
+          <input
+            type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-background border-primary/20"
+            className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <p className="text-xs text-muted-foreground">
             Give your strategy a descriptive name
