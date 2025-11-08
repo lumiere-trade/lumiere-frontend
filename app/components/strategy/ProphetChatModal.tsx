@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef } from "react"
-import { Dialog, DialogContent, DialogTitle } from "@lumiere/shared/components/ui/dialog"
-import { Sparkles, Loader2 } from "lucide-react"
+import { Sparkles, Loader2, X } from "lucide-react"
+import { Button } from "@lumiere/shared/components/ui/button"
 
 interface Message {
   role: "user" | "assistant"
@@ -27,26 +27,39 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
     scrollToBottom()
   }, [messages])
 
+  if (!isOpen) return null
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="max-w-3xl max-h-[80vh] p-0 gap-0 bg-card border-primary/30"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <DialogTitle className="sr-only">Prophet AI Chat</DialogTitle>
-        
-        <div className="flex flex-col h-[80vh]">
-          <div className="flex items-center gap-3 border-b border-primary/20 px-6 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
-              <Sparkles className="h-5 w-5 text-primary" />
+    <div 
+      className="fixed bottom-48 left-0 right-0 z-50 px-6"
+      style={{
+        marginLeft: '300px',
+        width: 'calc(100vw - 300px)'
+      }}
+    >
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden">
+          <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
+                <p className="text-sm text-muted-foreground">Strategy Creation Assistant</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
-              <p className="text-sm text-muted-foreground">Strategy Creation Assistant</p>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 rounded-lg"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="h-96 overflow-y-auto px-6 py-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
@@ -81,7 +94,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
                       ? "bg-primary text-primary-foreground"
                       : message.isThinking
                       ? "bg-primary/10 border border-primary/20"
-                      : "bg-card border border-primary/20"
+                      : "bg-background border border-primary/20"
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-line">
@@ -93,7 +106,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
             <div ref={messagesEndRef} />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   )
 }
