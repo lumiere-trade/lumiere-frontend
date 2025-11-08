@@ -15,11 +15,19 @@ const examplePrompts = [
   "Copy a successful whale wallet's trades",
 ]
 
+interface Message {
+  role: "user" | "assistant"
+  content: string
+  isThinking?: boolean
+}
+
 export default function CreatePage() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
   const [inputValue, setInputValue] = useState("")
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleOpenChat = () => {
     log.info('Opening Prophet chat modal')
@@ -42,17 +50,100 @@ export default function CreatePage() {
     handleOpenChat()
   }
 
-  const handleTextareaClick = () => {
-    handleOpenChat()
-  }
+  const handleSend = async () => {
+    if (!inputValue.trim() || isGenerating) return
 
-  const handleTextareaFocus = () => {
-    handleOpenChat()
-  }
-
-  const handleSend = () => {
-    if (inputValue.trim()) {
+    const userMessage = inputValue.trim()
+    setInputValue("")
+    
+    log.info('User sent message', { message: userMessage })
+    
+    if (!isChatOpen) {
       handleOpenChat()
+    }
+    
+    setMessages(prev => [...prev, { role: "user", content: userMessage }])
+
+    if (userMessage.toLowerCase().includes("generate strategy")) {
+      log.info('Strategy generation triggered')
+      setIsGenerating(true)
+      
+      setMessages(prev => [...prev, { 
+        role: "assistant", 
+        content: "Generating your strategy...",
+        isThinking: true 
+      }])
+
+      setTimeout(() => {
+        setMessages(prev => prev.filter(m => !m.isThinking))
+        
+        const strategyMessage = `I've created an RSI-based momentum strategy for you. Here's what I've set up:
+
+- **Strategy Name**: RSI Momentum Strategy
+- **Buy Signal**: When RSI falls below 30 (oversold)
+- **Sell Signal**: When RSI rises above 70 (overbought)
+- **Take Profit**: 5% gain target
+- **Stop Loss**: 2% maximum loss
+- **Position Size**: 10% of available capital per trade
+
+The strategy is ready for you to review and customize. You can adjust any parameters below.`
+
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: strategyMessage 
+        }])
+
+        const mockStrategy = {
+          name: "RSI Momentum Strategy",
+          type: "indicator_based",
+          parameters: {
+            rsi_buy_threshold: 30,
+            rsi_sell_threshold: 70,
+            take_profit_percent: 5,
+            stop_loss_percent: 2,
+            position_size_percent: 10,
+          },
+          tsdl_code: `metadata:
+  name: "RSI Momentum Strategy"
+  strategy_composition:
+    base_strategies:
+      - indicator_based
+
+strategy:
+  entry:
+    conditions:
+      - indicator: RSI
+        comparison: lt
+        threshold: 30
+  exit:
+    conditions:
+      - indicator: RSI
+        comparison: gt
+        threshold: 70
+  risk:
+    take_profit: 5%
+    stop_loss: 2%
+    position_size: 10%`
+        }
+
+        log.info('Strategy generated', { strategy: mockStrategy })
+        handleStrategyGenerated(mockStrategy)
+        setIsGenerating(false)
+      }, 3000)
+    } else {
+      setTimeout(() => {
+        const responses = [
+          "I understand. Could you tell me more about your trading preferences?",
+          "That's interesting. What timeframe are you targeting for this strategy?",
+          "Great! What risk level are you comfortable with?",
+        ]
+        const response = responses[Math.floor(Math.random() * responses.length)]
+        
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: response 
+        }])
+      }, 1000)
     }
   }
 
@@ -126,17 +217,16 @@ export default function CreatePage() {
             <textarea
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              onClick={handleTextareaClick}
-              onFocus={handleTextareaFocus}
               onKeyDown={handleKeyDown}
               placeholder="How can I help you today?"
               rows={3}
-              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base"
+              disabled={isGenerating}
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base disabled:opacity-50"
             />
             <Button
               size="icon"
               onClick={handleSend}
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() || isGenerating}
               className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
             >
               <Send className="h-4 w-4" />
@@ -148,7 +238,7 @@ export default function CreatePage() {
       <ProphetChatModal
         isOpen={isChatOpen}
         onClose={handleCloseChat}
-        onStrategyGenerated={handleStrategyGenerated}
+        messages={messages}
       />
     </>
   )
