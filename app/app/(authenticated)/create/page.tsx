@@ -114,7 +114,7 @@ export default function CreatePage() {
       )}
 
       <div 
-        className="fixed bottom-6 left-0 right-0 z-50 px-6"
+        className="fixed bottom-24 left-0 right-0 z-50 px-6"
         style={{
           marginLeft: '300px',
           width: 'calc(100vw - 300px)'
