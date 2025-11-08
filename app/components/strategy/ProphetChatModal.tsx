@@ -31,15 +31,14 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
 
   return (
     <div 
-      className="fixed bottom-56 left-0 right-0 z-50 px-6"
+      className="fixed bottom-56 left-0 right-0 z-50 px-6 pointer-events-none"
       style={{
         marginLeft: '300px',
         width: 'calc(100vw - 300px)'
       }}
-      onClick={(e) => e.stopPropagation()}
     >
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden">
+      <div className="max-w-3xl mx-auto pointer-events-auto">
+        <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">

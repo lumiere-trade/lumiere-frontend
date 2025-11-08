@@ -212,15 +212,14 @@ strategy:
       )}
 
       <div 
-        className="fixed bottom-20 left-0 right-0 z-50 px-6"
+        className="fixed bottom-20 left-0 right-0 z-50 px-6 pointer-events-none"
         style={{
           marginLeft: '300px',
           width: 'calc(100vw - 300px)'
         }}
-        onClick={(e) => e.stopPropagation()}
       >
-        <div className="max-w-3xl mx-auto">
-          <div className="relative">
+        <div className="max-w-3xl mx-auto pointer-events-auto">
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
             <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
             <textarea
               value={inputValue}
