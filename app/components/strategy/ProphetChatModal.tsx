@@ -59,7 +59,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
             </Button>
           </div>
 
-          <div className="h-[450px] overflow-y-auto px-6 py-4 space-y-4">
+          <div className={`h-[450px] px-6 py-4 space-y-4 ${messages.length > 0 ? 'overflow-y-auto' : 'overflow-hidden'}`}>
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
