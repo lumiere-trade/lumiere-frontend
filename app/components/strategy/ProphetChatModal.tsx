@@ -31,7 +31,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
 
   return (
     <div 
-      className="fixed bottom-48 left-0 right-0 z-50 px-6"
+      className="fixed bottom-56 left-0 right-0 z-50 px-6"
       style={{
         marginLeft: '300px',
         width: 'calc(100vw - 300px)'
@@ -59,7 +59,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
             </Button>
           </div>
 
-          <div className="h-96 overflow-y-auto px-6 py-4 space-y-4">
+          <div className="h-[450px] overflow-y-auto px-6 py-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex items-center justify-center h-full text-center">
                 <div className="space-y-2">
