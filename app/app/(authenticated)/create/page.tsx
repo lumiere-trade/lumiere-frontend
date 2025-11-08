@@ -218,7 +218,7 @@ strategy:
           width: 'calc(100vw - 300px)'
         }}
       >
-        <div className="max-w-3xl mx-auto pointer-events-auto">
+        <div className="max-w-5xl mx-auto pointer-events-auto">
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
             <textarea
@@ -230,7 +230,7 @@ strategy:
               placeholder="How can I help you today?"
               rows={3}
               disabled={isGenerating}
-              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-lg text-base disabled:opacity-50"
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
             />
             <Button
               size="icon"
