@@ -36,6 +36,7 @@ export function ProphetChatModal({ isOpen, onClose, messages }: ProphetChatModal
         marginLeft: '300px',
         width: 'calc(100vw - 300px)'
       }}
+      onClick={(e) => e.stopPropagation()}
     >
       <div className="max-w-3xl mx-auto">
         <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden">

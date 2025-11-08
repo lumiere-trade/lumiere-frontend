@@ -217,6 +217,7 @@ strategy:
           marginLeft: '300px',
           width: 'calc(100vw - 300px)'
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="max-w-3xl mx-auto">
           <div className="relative">
