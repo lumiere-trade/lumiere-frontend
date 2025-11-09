@@ -172,7 +172,7 @@ strategy:
                 </Button>
               </div>
 
-              <div className="h-[500px] px-6 py-4 space-y-4 overflow-y-auto">
+              <div className="h-[460px] px-6 py-4 space-y-4 overflow-y-auto">
                 {messages.length === 0 && (
                   <div className="flex items-center justify-center h-full text-center">
                     <div className="space-y-2">
