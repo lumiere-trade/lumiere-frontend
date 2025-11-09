@@ -45,9 +45,9 @@ export function ChatPanel({ onStrategyGenerated, isExpanded, onExpand, onCollaps
 
   const handleSend = async () => {
     if (!inputValue.trim() || isGenerating) {
-      log.warn('Send blocked', { 
+      log.warn('Send blocked', {
         reason: !inputValue.trim() ? 'empty input' : 'already generating',
-        inputLength: inputValue.length 
+        inputLength: inputValue.length
       })
       return
     }
@@ -55,7 +55,7 @@ export function ChatPanel({ onStrategyGenerated, isExpanded, onExpand, onCollaps
     const userMessage = inputValue.trim()
     setInputValue("")
 
-    log.info('User sent message', { 
+    log.info('User sent message', {
       message: userMessage,
       messageLength: userMessage.length,
       messagePreview: userMessage.substring(0, 50)
@@ -63,7 +63,7 @@ export function ChatPanel({ onStrategyGenerated, isExpanded, onExpand, onCollaps
 
     setMessages(prev => {
       const newMessages = [...prev, { role: "user" as const, content: userMessage }]
-      log.debug('Messages state updated', { 
+      log.debug('Messages state updated', {
         totalMessages: newMessages.length,
         userMessages: newMessages.filter(m => m.role === 'user').length
       })
@@ -138,12 +138,12 @@ strategy:
         }
 
         log.timeEnd('strategy-generation')
-        log.info('Strategy generated successfully', { 
+        log.info('Strategy generated successfully', {
           strategyName: mockStrategy.name,
           strategyType: mockStrategy.type,
           parameters: mockStrategy.parameters
         })
-        
+
         onStrategyGenerated(mockStrategy)
         setIsGenerating(false)
         handleCollapse()
@@ -186,8 +186,8 @@ strategy:
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 px-6 pointer-events-auto">
-      <div className="max-w-5xl mx-auto space-y-4">
+    <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-auto">
+      <div className="max-w-5xl mx-auto space-y-4 px-6">
         {isExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
