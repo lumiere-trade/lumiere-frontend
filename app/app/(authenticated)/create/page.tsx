@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Sparkles } from "lucide-react"
-import { ProphetChat } from "@/components/strategy/ProphetChat"
+import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -91,7 +91,7 @@ export default function CreatePage() {
           )}
         </div>
 
-        <ProphetChat 
+        <ChatPanel 
           onStrategyGenerated={handleStrategyGenerated}
           isExpanded={isChatExpanded}
           onExpand={handleChatExpand}
