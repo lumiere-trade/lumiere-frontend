@@ -13,13 +13,14 @@ interface Message {
 }
 
 interface ChatPanelProps {
+  isSidebarOpen: boolean
   onStrategyGenerated: (strategy: any) => void
   isExpanded: boolean
   onExpand: () => void
   onCollapse: () => void
 }
 
-export function ChatPanel({ onStrategyGenerated, isExpanded, onExpand, onCollapse }: ChatPanelProps) {
+export function ChatPanel({ isSidebarOpen, onStrategyGenerated, isExpanded, onExpand, onCollapse }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
@@ -186,7 +187,14 @@ strategy:
   }
 
   return (
-    <div className="fixed bottom-0 z-50 pointer-events-auto" style={{ left: 0, right: 0 }}>
+    <div 
+      className="fixed bottom-0 z-50 pointer-events-auto transition-all duration-300"
+      style={{
+        left: isSidebarOpen ? '300px' : '0',
+        right: 0,
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+      }}
+    >
       <div className="max-w-5xl mx-auto space-y-4 px-6 pb-6">
         {isExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>

@@ -14,7 +14,11 @@ const examplePrompts = [
   "Copy a successful whale wallet's trades",
 ]
 
-export default function CreatePage() {
+interface CreatePageProps {
+  isSidebarOpen?: boolean
+}
+
+export default function CreatePage({ isSidebarOpen = true }: CreatePageProps) {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
@@ -47,7 +51,7 @@ export default function CreatePage() {
         />
       )}
 
-      <div 
+      <div
         className="relative min-h-[calc(100vh-120px)] pb-16"
         onClick={handlePageClick}
       >
@@ -91,7 +95,8 @@ export default function CreatePage() {
           )}
         </div>
 
-        <ChatPanel 
+        <ChatPanel
+          isSidebarOpen={isSidebarOpen}
           onStrategyGenerated={handleStrategyGenerated}
           isExpanded={isChatExpanded}
           onExpand={handleChatExpand}

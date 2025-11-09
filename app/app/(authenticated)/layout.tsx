@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, cloneElement, isValidElement } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
@@ -40,20 +40,25 @@ export default function AuthenticatedLayout({
     return null
   }
 
+  // Pass isSidebarOpen to children
+  const childrenWithProps = isValidElement(children)
+    ? cloneElement(children, { isSidebarOpen } as any)
+    : children
+
   return (
     <div className="min-h-screen bg-background">
       <NavigationHeader currentPage={currentPage} isSidebarOpen={isSidebarOpen} />
-      
+
       <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-      <main 
+      <main
         className="pt-[54px] pb-[80px] transition-all duration-300"
         style={{
           marginLeft: isSidebarOpen ? '300px' : '0',
           width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
         }}
       >
-        {children}
+        {childrenWithProps}
       </main>
 
       <Footer isSidebarOpen={isSidebarOpen} />
