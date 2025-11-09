@@ -41,7 +41,7 @@ export default function CreatePage() {
         />
       )}
 
-      <div className={`relative min-h-[calc(100vh-134px)] pb-16 ${isChatExpanded ? 'pointer-events-none' : ''}`}>
+      <div className={`relative min-h-[calc(100vh-120px)] pb-16 ${isChatExpanded ? 'pointer-events-none' : ''}`}>
         {generatedStrategy && (
           <div className="px-6 py-8">
             <StrategyParameters strategy={generatedStrategy} />
