@@ -186,8 +186,8 @@ strategy:
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 pointer-events-auto">
-      <div className="max-w-5xl mx-auto space-y-4 px-6">
+    <div className="fixed bottom-0 z-50 pointer-events-auto" style={{ left: 0, right: 0 }}>
+      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-6">
         {isExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
