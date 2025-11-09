@@ -190,7 +190,7 @@ strategy:
       }}
       onClick={handleBackdropClick}
     >
-      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-14">
+      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-16">
         {isChatExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
