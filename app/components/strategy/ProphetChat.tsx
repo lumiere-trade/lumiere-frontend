@@ -32,9 +32,7 @@ export function ProphetChat({ onStrategyGenerated }: ProphetChatProps) {
   }
 
   const handleOverlayClick = () => {
-    if (messages.length === 0) {
-      handleCollapse()
-    }
+    handleCollapse()
   }
 
   const handleSend = async () => {
