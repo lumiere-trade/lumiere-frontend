@@ -15,12 +15,17 @@ const examplePrompts = [
 
 export default function CreatePage() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
-  const { isChatExpanded, generatedStrategy, collapseChat } = useCreateChat()
+  const { isChatExpanded, generatedStrategy, collapseChat, expandChat, setInputValue } = useCreateChat()
 
   const handlePageClick = () => {
     if (isChatExpanded) {
       collapseChat()
     }
+  }
+
+  const handlePromptClick = (prompt: string) => {
+    setInputValue(prompt)
+    expandChat()
   }
 
   return (
@@ -64,6 +69,7 @@ export default function CreatePage() {
                     {examplePrompts.map((prompt, index) => (
                       <button
                         key={index}
+                        onClick={() => handlePromptClick(prompt)}
                         className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
                       >
                         {prompt}

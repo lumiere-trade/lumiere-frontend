@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, MessageSquare, Send, X } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
@@ -19,8 +19,7 @@ interface ChatPanelProps {
 
 export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
-  const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy } = useCreateChat()
-  const [inputValue, setInputValue] = useState("")
+  const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
   const [messages, setMessages] = useState<Message[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
 

@@ -5,9 +5,11 @@ import { createContext, useContext, useState, ReactNode } from 'react'
 interface CreateChatContextType {
   isChatExpanded: boolean
   generatedStrategy: any | null
+  inputValue: string
   expandChat: () => void
   collapseChat: () => void
   setGeneratedStrategy: (strategy: any) => void
+  setInputValue: (value: string) => void
 }
 
 const CreateChatContext = createContext<CreateChatContextType | undefined>(undefined)
@@ -15,6 +17,7 @@ const CreateChatContext = createContext<CreateChatContextType | undefined>(undef
 export function CreateChatProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
+  const [inputValue, setInputValue] = useState("")
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
@@ -24,9 +27,11 @@ export function CreateChatProvider({ children }: { children: ReactNode }) {
       value={{
         isChatExpanded,
         generatedStrategy,
+        inputValue,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
+        setInputValue,
       }}
     >
       {children}
