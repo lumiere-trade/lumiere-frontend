@@ -128,7 +128,7 @@ strategy:
   }
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 px-6">
+    <div className="absolute bottom-0 left-0 right-0 z-50 px-6 pointer-events-auto">
       <div className="max-w-5xl mx-auto space-y-4">
         {isExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
