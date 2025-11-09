@@ -22,6 +22,10 @@ export default function AuthenticatedLayout({
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
 
   useEffect(() => {
+    console.log('[Layout] isSidebarOpen changed:', isSidebarOpen)
+  }, [isSidebarOpen])
+
+  useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
 
     if (!storage.hasToken()) {
@@ -44,6 +48,9 @@ export default function AuthenticatedLayout({
   const childrenWithProps = isValidElement(children)
     ? cloneElement(children, { isSidebarOpen } as any)
     : children
+
+  console.log('[Layout] Rendering with isSidebarOpen:', isSidebarOpen)
+  console.log('[Layout] Children is valid element:', isValidElement(children))
 
   return (
     <div className="min-h-screen bg-background">

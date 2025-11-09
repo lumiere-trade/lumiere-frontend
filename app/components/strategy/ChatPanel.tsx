@@ -27,6 +27,12 @@ export function ChatPanel({ isSidebarOpen, onStrategyGenerated, isExpanded, onEx
   const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
+    console.log('[ChatPanel] isSidebarOpen prop:', isSidebarOpen)
+    console.log('[ChatPanel] Calculated left:', isSidebarOpen ? '300px' : '0')
+    console.log('[ChatPanel] Calculated width:', isSidebarOpen ? 'calc(100vw - 300px)' : '100vw')
+  }, [isSidebarOpen])
+
+  useEffect(() => {
     if (isExpanded) {
       log.info('Chat panel opened', { messagesCount: messages.length })
     } else {
@@ -186,13 +192,18 @@ strategy:
     }
   }
 
+  const leftValue = isSidebarOpen ? '300px' : '0'
+  const widthValue = isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+
+  console.log('[ChatPanel] Rendering with styles - left:', leftValue, 'width:', widthValue)
+
   return (
-    <div 
+    <div
       className="fixed bottom-0 z-50 pointer-events-auto transition-all duration-300"
       style={{
-        left: isSidebarOpen ? '300px' : '0',
+        left: leftValue,
         right: 0,
-        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+        width: widthValue
       }}
     >
       <div className="max-w-5xl mx-auto space-y-4 px-6 pb-6">

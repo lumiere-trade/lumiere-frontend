@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sparkles } from "lucide-react"
 import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
@@ -23,6 +23,10 @@ export default function CreatePage({ isSidebarOpen = true }: CreatePageProps) {
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
   const [isChatExpanded, setIsChatExpanded] = useState(false)
 
+  useEffect(() => {
+    console.log('[CreatePage] isSidebarOpen prop:', isSidebarOpen)
+  }, [isSidebarOpen])
+
   const handleStrategyGenerated = (strategy: any) => {
     log.info('Strategy generated and received', { strategy })
     setGeneratedStrategy(strategy)
@@ -41,6 +45,8 @@ export default function CreatePage({ isSidebarOpen = true }: CreatePageProps) {
       handleChatCollapse()
     }
   }
+
+  console.log('[CreatePage] Rendering with isSidebarOpen:', isSidebarOpen)
 
   return (
     <>
