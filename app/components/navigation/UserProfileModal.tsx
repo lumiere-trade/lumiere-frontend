@@ -4,11 +4,13 @@ import { Button } from '@lumiere/shared/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@lumiere/shared/components/ui/dialog'
 import { Settings, Copy } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/hooks/use-toast"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
 export function UserProfileModal() {
   const log = useLogger('UserProfileModal', LogCategory.COMPONENT)
+  const { toast } = useToast()
   const { user } = useAuth()
 
   const shortenAddress = (address: string) => {
@@ -17,8 +19,20 @@ export function UserProfileModal() {
 
   const handleCopyAddress = () => {
     if (user?.walletAddress) {
+      log.info('Copying wallet address')
       navigator.clipboard.writeText(user.walletAddress)
+      toast({
+        title: "Address copied!",
+        description: "Wallet address copied to clipboard",
+      })
       log.info('Wallet address copied to clipboard')
+    } else {
+      log.warn('Attempted to copy address but no wallet connected')
+      toast({
+        title: "Error",
+        description: "No wallet address to copy",
+        variant: "destructive",
+      })
     }
   }
 
