@@ -44,16 +44,18 @@ export default function AuthenticatedLayout({
   }
 
   const content = (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <NavigationHeader currentPage={currentPage} isSidebarOpen={isSidebarOpen} />
 
       <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
       <main
-        className="pt-[54px] pb-[80px] transition-all duration-300"
+        className="flex-1 overflow-y-auto transition-all duration-300"
         style={{
           marginLeft: isSidebarOpen ? '300px' : '0',
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
+          marginTop: '54px',
+          marginBottom: '80px'
         }}
       >
         {children}
