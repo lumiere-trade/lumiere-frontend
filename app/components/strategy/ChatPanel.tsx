@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, MessageSquare, Send, X } from "lucide-react"
+import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -14,41 +15,22 @@ interface Message {
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
-  onStrategyGenerated: (strategy: any) => void
-  isExpanded: boolean
-  onExpand: () => void
-  onCollapse: () => void
 }
 
-export function ChatPanel({ isSidebarOpen, onStrategyGenerated, isExpanded, onExpand, onCollapse }: ChatPanelProps) {
+export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
+  const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy } = useCreateChat()
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useState<Message[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
 
   useEffect(() => {
-    console.log('[ChatPanel] isSidebarOpen prop:', isSidebarOpen)
-    console.log('[ChatPanel] Calculated left:', isSidebarOpen ? '300px' : '0')
-    console.log('[ChatPanel] Calculated width:', isSidebarOpen ? 'calc(100vw - 300px)' : '100vw')
-  }, [isSidebarOpen])
-
-  useEffect(() => {
-    if (isExpanded) {
+    if (isChatExpanded) {
       log.info('Chat panel opened', { messagesCount: messages.length })
     } else {
       log.info('Chat panel closed')
     }
-  }, [isExpanded])
-
-  const handleExpand = () => {
-    log.info('Expand triggered - opening chat panel')
-    onExpand()
-  }
-
-  const handleCollapse = () => {
-    log.info('Collapse triggered - closing chat panel')
-    onCollapse()
-  }
+  }, [isChatExpanded])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isGenerating) {
@@ -151,9 +133,9 @@ strategy:
           parameters: mockStrategy.parameters
         })
 
-        onStrategyGenerated(mockStrategy)
+        setGeneratedStrategy(mockStrategy)
         setIsGenerating(false)
-        handleCollapse()
+        collapseChat()
         setMessages([])
         log.info('Chat cleared and closed after strategy generation')
       }, 3000)
@@ -192,22 +174,17 @@ strategy:
     }
   }
 
-  const leftValue = isSidebarOpen ? '300px' : '0'
-  const widthValue = isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
-
-  console.log('[ChatPanel] Rendering with styles - left:', leftValue, 'width:', widthValue)
-
   return (
     <div
       className="fixed bottom-0 z-50 pointer-events-auto transition-all duration-300"
       style={{
-        left: leftValue,
+        left: isSidebarOpen ? '300px' : '0',
         right: 0,
-        width: widthValue
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
       }}
     >
       <div className="max-w-5xl mx-auto space-y-4 px-6 pb-6">
-        {isExpanded && (
+        {isChatExpanded && (
           <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
               <div className="flex items-center gap-3">
@@ -222,7 +199,7 @@ strategy:
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={handleCollapse}
+                onClick={collapseChat}
                 className="h-8 w-8 rounded-lg"
               >
                 <X className="h-4 w-4" />
@@ -278,7 +255,7 @@ strategy:
           <textarea
             value={inputValue}
             onChange={handleInputChange}
-            onClick={handleExpand}
+            onClick={expandChat}
             onKeyDown={handleKeyDown}
             placeholder="How can I help you today?"
             rows={3}

@@ -1,9 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Sparkles } from "lucide-react"
-import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
+import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -14,46 +13,22 @@ const examplePrompts = [
   "Copy a successful whale wallet's trades",
 ]
 
-interface CreatePageProps {
-  isSidebarOpen?: boolean
-}
-
-export default function CreatePage({ isSidebarOpen = true }: CreatePageProps) {
+export default function CreatePage() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
-  const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
-  const [isChatExpanded, setIsChatExpanded] = useState(false)
-
-  useEffect(() => {
-    console.log('[CreatePage] isSidebarOpen prop:', isSidebarOpen)
-  }, [isSidebarOpen])
-
-  const handleStrategyGenerated = (strategy: any) => {
-    log.info('Strategy generated and received', { strategy })
-    setGeneratedStrategy(strategy)
-  }
-
-  const handleChatExpand = () => {
-    setIsChatExpanded(true)
-  }
-
-  const handleChatCollapse = () => {
-    setIsChatExpanded(false)
-  }
+  const { isChatExpanded, generatedStrategy, collapseChat } = useCreateChat()
 
   const handlePageClick = () => {
     if (isChatExpanded) {
-      handleChatCollapse()
+      collapseChat()
     }
   }
-
-  console.log('[CreatePage] Rendering with isSidebarOpen:', isSidebarOpen)
 
   return (
     <>
       {isChatExpanded && (
         <div
           className="fixed inset-0 bg-black/50 z-40"
-          onClick={handleChatCollapse}
+          onClick={collapseChat}
         />
       )}
 
@@ -100,14 +75,6 @@ export default function CreatePage({ isSidebarOpen = true }: CreatePageProps) {
             </div>
           )}
         </div>
-
-        <ChatPanel
-          isSidebarOpen={isSidebarOpen}
-          onStrategyGenerated={handleStrategyGenerated}
-          isExpanded={isChatExpanded}
-          onExpand={handleChatExpand}
-          onCollapse={handleChatCollapse}
-        />
       </div>
     </>
   )

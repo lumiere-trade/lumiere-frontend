@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect, cloneElement, isValidElement } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
+import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { Footer } from "@lumiere/shared/components"
+import { CreateChatProvider } from "@/contexts/CreateChatContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"
@@ -20,10 +22,7 @@ export default function AuthenticatedLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
-
-  useEffect(() => {
-    console.log('[Layout] isSidebarOpen changed:', isSidebarOpen)
-  }, [isSidebarOpen])
+  const isCreatePage = pathname === '/create'
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
@@ -44,15 +43,7 @@ export default function AuthenticatedLayout({
     return null
   }
 
-  // Pass isSidebarOpen to children
-  const childrenWithProps = isValidElement(children)
-    ? cloneElement(children, { isSidebarOpen } as any)
-    : children
-
-  console.log('[Layout] Rendering with isSidebarOpen:', isSidebarOpen)
-  console.log('[Layout] Children is valid element:', isValidElement(children))
-
-  return (
+  const content = (
     <div className="min-h-screen bg-background">
       <NavigationHeader currentPage={currentPage} isSidebarOpen={isSidebarOpen} />
 
@@ -65,10 +56,18 @@ export default function AuthenticatedLayout({
           width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
         }}
       >
-        {childrenWithProps}
+        {children}
       </main>
+
+      {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
 
       <Footer isSidebarOpen={isSidebarOpen} />
     </div>
+  )
+
+  return isCreatePage ? (
+    <CreateChatProvider>{content}</CreateChatProvider>
+  ) : (
+    content
   )
 }
