@@ -32,6 +32,12 @@ export default function CreatePage() {
     setIsChatExpanded(false)
   }
 
+  const handlePageClick = () => {
+    if (isChatExpanded) {
+      handleChatCollapse()
+    }
+  }
+
   return (
     <>
       {isChatExpanded && (
@@ -41,7 +47,10 @@ export default function CreatePage() {
         />
       )}
 
-      <div className="relative min-h-[calc(100vh-120px)] pb-16">
+      <div 
+        className="relative min-h-[calc(100vh-120px)] pb-16"
+        onClick={handlePageClick}
+      >
         <div className={isChatExpanded ? 'pointer-events-none' : ''}>
           {generatedStrategy && (
             <div className="px-6 py-8">
