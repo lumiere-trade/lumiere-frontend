@@ -1,14 +1,14 @@
 "use client"
 
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@lumiere/shared/components/ui/dialog'
 import Link from "next/link"
 import { useState, useEffect } from "react"
-import { Settings, Copy, Wallet, ArrowDownToLine, LogOut } from "lucide-react"
+import { Wallet, ArrowDownToLine, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useWallet } from "@solana/wallet-adapter-react"
 import { WalletPanel } from "@/components/wallet/WalletPanel"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
+import { UserProfileModal } from "@/components/navigation/UserProfileModal"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -24,7 +24,6 @@ export function NavigationHeader({ currentPage, isSidebarOpen = true }: Navigati
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
-  const walletType = user?.walletType || "Unknown"
 
   useEffect(() => {
     if (user) {
@@ -45,13 +44,6 @@ export function NavigationHeader({ currentPage, isSidebarOpen = true }: Navigati
     setIsDepositModalOpen(false)
   }
 
-  const handleCopyAddress = () => {
-    if (user?.walletAddress) {
-      navigator.clipboard.writeText(user.walletAddress)
-      log.info('Wallet address copied to clipboard')
-    }
-  }
-
   const handleDisconnect = async () => {
     log.info('Disconnect initiated')
     log.time('disconnect')
@@ -70,7 +62,7 @@ export function NavigationHeader({ currentPage, isSidebarOpen = true }: Navigati
 
   return (
     <>
-      <header 
+      <header
         className="fixed top-0 z-40 border-b border-primary/20 bg-background transition-all duration-300"
         style={{
           left: isSidebarOpen ? '300px' : '0',
@@ -108,50 +100,7 @@ export function NavigationHeader({ currentPage, isSidebarOpen = true }: Navigati
               DEPOSIT
             </Button>
 
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                  onClick={() => log.info('Settings dialog opened')}
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md bg-card border border-primary/30 rounded-2xl shadow-2xl">
-                <DialogHeader>
-                  <DialogTitle className="text-2xl font-bold text-primary">User Profile</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-muted-foreground">Wallet Address</label>
-                    <div className="flex items-center gap-2 rounded-lg border border-border bg-background p-3">
-                      <span className="flex-1 font-mono text-sm">{user?.walletAddress || "Not connected"}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={handleCopyAddress}
-                        disabled={!user?.walletAddress}
-                      >
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-muted-foreground">Wallet Type</label>
-                    <div className="rounded-lg border border-border bg-background p-3 capitalize">{walletType}</div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-muted-foreground">Member Since</label>
-                    <div className="rounded-lg border border-border bg-background p-3">
-                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : "Not available"}
-                    </div>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <UserProfileModal />
 
             <WalletPanel
               trigger={
