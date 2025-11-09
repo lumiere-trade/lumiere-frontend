@@ -174,18 +174,25 @@ strategy:
     }
   }
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (isChatExpanded && e.target === e.currentTarget) {
+      collapseChat()
+    }
+  }
+
   return (
     <div
-      className="fixed bottom-0 z-50 pointer-events-auto transition-all duration-300"
+      className="fixed bottom-0 z-50 transition-all duration-300"
       style={{
         left: isSidebarOpen ? '300px' : '0',
         right: 0,
         width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
       }}
+      onClick={handleBackdropClick}
     >
-      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-6">
+      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-10">
         {isChatExpanded && (
-          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
@@ -250,7 +257,7 @@ strategy:
           </div>
         )}
 
-        <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <div className="relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
           <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
           <textarea
             value={inputValue}
