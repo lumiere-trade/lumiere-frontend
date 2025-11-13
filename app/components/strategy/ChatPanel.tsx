@@ -180,138 +180,104 @@ strategy:
   }
 
   return (
-    <>
-      {isChatExpanded && (
-        <div
-          className="fixed inset-0 z-60 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6"
-          onClick={handleBackdropClick}
-        >
-          <div 
-            className="w-full max-w-5xl space-y-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden">
-              <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
-                    <p className="text-sm text-muted-foreground">Strategy Creation Assistant</p>
+    <div
+      className="fixed bottom-0 z-50 transition-all duration-300"
+      style={{
+        left: isSidebarOpen ? '300px' : '0',
+        right: 0,
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
+        {isChatExpanded && (
+          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
+                  <p className="text-sm text-muted-foreground">Strategy Creation Assistant</p>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={collapseChat}
+                className="h-8 w-8 rounded-lg"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="h-[460px] px-6 py-4 space-y-4 overflow-y-auto">
+              {messages.length === 0 && (
+                <div className="flex items-center justify-center h-full text-center">
+                  <div className="space-y-2">
+                    <p className="text-muted-foreground">
+                      Start by describing your trading strategy idea.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Try: "Generate strategy using RSI"
+                    </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={collapseChat}
-                  className="h-8 w-8 rounded-lg"
+              )}
+
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-
-              <div className="h-[460px] px-6 py-4 space-y-4 overflow-y-auto">
-                {messages.length === 0 && (
-                  <div className="flex items-center justify-center h-full text-center">
-                    <div className="space-y-2">
-                      <p className="text-muted-foreground">
-                        Start by describing your trading strategy idea.
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Try: "Generate strategy using RSI"
-                      </p>
+                  {message.role === "assistant" && (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0">
+                      <Sparkles className="h-4 w-4 text-primary" />
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {messages.map((message, index) => (
                   <div
-                    key={index}
-                    className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : message.isThinking
+                        ? "bg-primary/10 border border-primary/20"
+                        : "bg-background border border-primary/20"
+                    }`}
                   >
-                    {message.role === "assistant" && (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                      </div>
-                    )}
-
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : message.isThinking
-                          ? "bg-primary/10 border border-primary/20"
-                          : "bg-background border border-primary/20"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed whitespace-pre-line">
-                        {message.content}
-                      </p>
-                    </div>
+                    <p className="text-sm leading-relaxed whitespace-pre-line">
+                      {message.content}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-              <textarea
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="How can I help you today?"
-                rows={3}
-                disabled={isGenerating}
-                className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isGenerating}
-                className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!isChatExpanded && (
-        <div
-          className="fixed bottom-0 z-50 transition-all duration-300"
-          style={{
-            left: isSidebarOpen ? '300px' : '0',
-            right: 0,
-            width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
-          }}
-        >
-          <div className="max-w-5xl mx-auto px-6 pb-20">
-            <div className="relative">
-              <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-              <textarea
-                value={inputValue}
-                onChange={handleInputChange}
-                onClick={expandChat}
-                onKeyDown={handleKeyDown}
-                placeholder="How can I help you today?"
-                rows={3}
-                disabled={isGenerating}
-                className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!inputValue.trim() || isGenerating}
-                className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+        <div className="relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+          <textarea
+            value={inputValue}
+            onChange={handleInputChange}
+            onClick={expandChat}
+            onKeyDown={handleKeyDown}
+            placeholder="How can I help you today?"
+            rows={3}
+            disabled={isGenerating}
+            className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
+          />
+          <Button
+            size="icon"
+            onClick={handleSend}
+            disabled={!inputValue.trim() || isGenerating}
+            className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   )
 }
