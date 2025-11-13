@@ -30,7 +30,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     <>
       {/* Collapsed state - thin strip */}
       <div
-        className={`fixed left-0 top-0 h-screen w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-8 z-30 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
           isOpen ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
@@ -47,7 +47,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
       {/* Expanded state - full panel */}
       <div
-        className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-30 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
