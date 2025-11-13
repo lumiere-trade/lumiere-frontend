@@ -198,7 +198,7 @@ strategy:
           width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
         }}
       >
-        <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
+        <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20 bg-transparent">
           {isChatExpanded && (
             <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
