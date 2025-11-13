@@ -50,23 +50,28 @@ export default function AuthenticatedLayout({
       {/* Header Row */}
       <NavigationHeader currentPage={currentPage} />
 
-      {/* Content Row - Grid with Sidebar + Main */}
-      <div 
-        className="grid overflow-hidden"
+      {/* Sidebar - Fixed positioning */}
+      <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+
+      {/* Main Content with padding for sidebar */}
+      <main 
+        className="overflow-y-auto bg-background transition-all duration-300"
         style={{
-          gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '32px 1fr',
-          transition: 'grid-template-columns 300ms ease-in-out'
+          paddingLeft: isSidebarOpen ? '300px' : '32px'
         }}
       >
-        <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        
-        <main className="overflow-y-auto bg-background">
-          {children}
-        </main>
-      </div>
+        {children}
+      </main>
 
-      {/* Footer Row */}
-      <Footer isSidebarOpen={isSidebarOpen} />
+      {/* Footer with padding for sidebar */}
+      <div
+        className="transition-all duration-300"
+        style={{
+          paddingLeft: isSidebarOpen ? '300px' : '32px'
+        }}
+      >
+        <Footer isSidebarOpen={isSidebarOpen} />
+      </div>
 
       {/* Chat Overlay */}
       {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
