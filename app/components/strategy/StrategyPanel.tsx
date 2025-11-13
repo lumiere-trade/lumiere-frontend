@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -48,27 +49,28 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Close button at top */}
-        <div className="border-b border-primary/20 px-4 py-3 flex justify-end shrink-0">
-          <button
-            onClick={onToggle}
-            className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
-            title="Close sidebar"
-          >
-            <PanelLeftClose className="h-5 w-5 text-primary" />
-          </button>
-        </div>
-
         {/* Scrollable Sections */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          {/* New Strategy Section */}
+          {/* New Strategy Section with Close Button */}
           <div className="border-b border-primary/20">
-            <button className="w-full flex items-center gap-3 px-4 py-4 hover:bg-card/30 transition-colors">
-              <Plus className="h-5 w-5 text-primary shrink-0" />
-              <span className="text-base text-primary whitespace-nowrap">
-                New Strategy
-              </span>
-            </button>
+            <div className="flex items-center justify-between px-4 py-4">
+              <Link 
+                href="/create"
+                className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
+              >
+                <Plus className="h-5 w-5 text-primary shrink-0" />
+                <span className="text-base text-primary whitespace-nowrap">
+                  New Strategy
+                </span>
+              </Link>
+              <button
+                onClick={onToggle}
+                className="p-1 rounded-lg hover:bg-primary/10 transition-colors ml-2 shrink-0"
+                title="Close sidebar"
+              >
+                <PanelLeftClose className="h-5 w-5 text-primary" />
+              </button>
+            </div>
           </div>
 
           {/* Strategies Section */}
