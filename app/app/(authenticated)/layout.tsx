@@ -44,26 +44,28 @@ export default function AuthenticatedLayout({
   }
 
   const content = (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen grid bg-background overflow-hidden" style={{
+      gridTemplateRows: 'auto 1fr auto'
+    }}>
+      {/* Header Row */}
       <NavigationHeader currentPage={currentPage} />
 
-      <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      {/* Content Row - Grid with Sidebar + Main */}
+      <div className="grid overflow-hidden transition-all duration-300" style={{
+        gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '0 1fr'
+      }}>
+        <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        
+        <main className="overflow-y-auto bg-background">
+          {children}
+        </main>
+      </div>
 
-      <main
-        className="flex-1 overflow-y-auto transition-all duration-300"
-        style={{
-          marginLeft: isSidebarOpen ? '300px' : '0',
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
-          marginTop: '54px',
-          marginBottom: '80px'
-        }}
-      >
-        {children}
-      </main>
-
-      {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
-
+      {/* Footer Row */}
       <Footer isSidebarOpen={isSidebarOpen} />
+
+      {/* Chat Overlay */}
+      {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
     </div>
   )
 
