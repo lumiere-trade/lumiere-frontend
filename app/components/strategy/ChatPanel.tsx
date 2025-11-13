@@ -184,19 +184,19 @@ strategy:
       {/* Backdrop overlay - затъмнява header и footer */}
       {isChatExpanded && (
         <div
-          className="fixed inset-0 z-55 bg-black/40 pointer-events-none"
+          className="fixed inset-0 z-55 bg-black/40"
+          onClick={handleBackdropClick}
         />
       )}
 
       {/* Chat panel - в долната секция */}
       <div
-        className="fixed bottom-0 z-60 transition-all duration-300"
+        className="fixed bottom-0 z-60 transition-all duration-300 pointer-events-none"
         style={{
           left: isSidebarOpen ? '300px' : '0',
           right: 0,
           width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
         }}
-        onClick={handleBackdropClick}
       >
         <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
           {isChatExpanded && (
