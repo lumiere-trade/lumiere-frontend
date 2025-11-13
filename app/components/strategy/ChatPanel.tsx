@@ -191,7 +191,7 @@ strategy:
 
       {/* Chat panel - в долната секция */}
       <div
-        className="fixed bottom-0 z-60 transition-all duration-300 pointer-events-none"
+        className="fixed bottom-0 z-60 transition-all duration-300 pointer-events-none bg-transparent"
         style={{
           left: isSidebarOpen ? '300px' : '0',
           right: 0,
