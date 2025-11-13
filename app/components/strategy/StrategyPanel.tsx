@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import {
   PanelLeftClose,
   PanelLeftOpen,
@@ -30,7 +29,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     <>
       {/* Collapsed state - thin strip */}
       <div
-        className={`fixed left-0 top-0 h-screen w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-[54px] h-[calc(100vh-54px)] w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
           isOpen ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
@@ -45,35 +44,26 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
       {/* Expanded state - full panel */}
       <div
-        className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-[54px] h-[calc(100vh-54px)] w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Header with text logo and close button */}
-        <div className="border-b border-primary/20 h-[54px] flex items-center shrink-0">
-          <div className="flex items-center justify-between px-4 md:px-6 w-full">
-            <Link href="/dashboard" className="transition-all hover:brightness-110">
-              <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none whitespace-nowrap">
-                LUMIÈRE
-              </div>
-            </Link>
-            <button
-              onClick={onToggle}
-              className="p-1 rounded-lg hover:bg-primary/10 transition-colors shrink-0"
-              title="Close sidebar"
-            >
-              <PanelLeftClose className="h-5 w-5 text-primary" />
-            </button>
-          </div>
+        {/* Close button at top */}
+        <div className="border-b border-primary/20 px-4 py-3 flex justify-end shrink-0">
+          <button
+            onClick={onToggle}
+            className="p-1 rounded-lg hover:bg-primary/10 transition-colors"
+            title="Close sidebar"
+          >
+            <PanelLeftClose className="h-5 w-5 text-primary" />
+          </button>
         </div>
 
         {/* Scrollable Sections */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {/* New Strategy Section */}
           <div className="border-b border-primary/20">
-            <button
-              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-card/30 transition-colors"
-            >
+            <button className="w-full flex items-center gap-3 px-4 py-4 hover:bg-card/30 transition-colors">
               <Plus className="h-5 w-5 text-primary shrink-0" />
               <span className="text-base text-primary whitespace-nowrap">
                 New Strategy

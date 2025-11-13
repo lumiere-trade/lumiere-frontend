@@ -45,7 +45,7 @@ export default function AuthenticatedLayout({
 
   const content = (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      <NavigationHeader currentPage={currentPage} isSidebarOpen={isSidebarOpen} />
+      <NavigationHeader currentPage={currentPage} />
 
       <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
