@@ -51,9 +51,13 @@ export default function AuthenticatedLayout({
       <NavigationHeader currentPage={currentPage} />
 
       {/* Content Row - Grid with Sidebar + Main */}
-      <div className="grid overflow-hidden transition-all duration-300" style={{
-        gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '8px 1fr'
-      }}>
+      <div 
+        className="grid overflow-hidden"
+        style={{
+          gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '32px 1fr',
+          transition: 'grid-template-columns 300ms ease-in-out'
+        }}
+      >
         <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
         
         <main className="overflow-y-auto bg-background">
