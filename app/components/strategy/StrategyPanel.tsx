@@ -27,28 +27,33 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
 
   return (
-    <div className="relative overflow-hidden">
+    <>
       {/* Collapsed state - thin strip */}
       <div
-        className={`absolute inset-0 w-8 bg-card border-r border-primary/20 flex items-center justify-center transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-8 z-40 bg-card border-r border-primary/20 transition-transform duration-300 ease-in-out ${
           isOpen ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
-        <button
-          onClick={onToggle}
-          className="h-full w-full px-2 hover:bg-card/80 transition-colors"
-          title="Open sidebar"
-        >
-          <PanelLeftOpen className="h-5 w-5 text-primary" />
-        </button>
+        <div className="h-full flex items-center justify-center" style={{ marginTop: '54px' }}>
+          <button
+            onClick={onToggle}
+            className="h-full w-full px-2 hover:bg-card/80 transition-colors"
+            title="Open sidebar"
+          >
+            <PanelLeftOpen className="h-5 w-5 text-primary" />
+          </button>
+        </div>
       </div>
 
       {/* Expanded state - full panel */}
       <div
-        className={`absolute inset-0 w-[300px] bg-background border-r border-primary/20 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed left-0 top-0 h-screen w-[300px] bg-background border-r border-primary/20 z-40 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
+        {/* Spacer for header */}
+        <div className="h-[54px] shrink-0" />
+
         {/* Scrollable Sections */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {/* New Strategy Section with Close Button */}
@@ -136,6 +141,6 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
