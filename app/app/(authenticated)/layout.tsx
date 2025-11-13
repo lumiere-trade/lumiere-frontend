@@ -63,13 +63,8 @@ export default function AuthenticatedLayout({
         {children}
       </main>
 
-      {/* Footer with padding for sidebar */}
-      <div
-        className="transition-all duration-300"
-        style={{
-          paddingLeft: isSidebarOpen ? '300px' : '32px'
-        }}
-      >
+      {/* Footer Row - direct grid item with padding */}
+      <div style={{ paddingLeft: isSidebarOpen ? '300px' : '32px' }}>
         <Footer isSidebarOpen={isSidebarOpen} />
       </div>
 
