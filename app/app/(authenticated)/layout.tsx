@@ -64,7 +64,7 @@ export default function AuthenticatedLayout({
       </main>
 
       {/* Footer Row - direct grid item with padding */}
-      <div style={{ paddingLeft: isSidebarOpen ? '300px' : '32px' }}>
+      <div className="z-40 relative" style={{ paddingLeft: isSidebarOpen ? '300px' : '32px' }}>
         <Footer isSidebarOpen={isSidebarOpen} />
       </div>
 
