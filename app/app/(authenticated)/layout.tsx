@@ -52,7 +52,7 @@ export default function AuthenticatedLayout({
 
       {/* Content Row - Grid with Sidebar + Main */}
       <div className="grid overflow-hidden transition-all duration-300" style={{
-        gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '0 1fr'
+        gridTemplateColumns: isSidebarOpen ? '300px 1fr' : '8px 1fr'
       }}>
         <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
         
