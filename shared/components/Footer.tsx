@@ -7,7 +7,7 @@ interface FooterProps {
 
 export function Footer({ isSidebarOpen = false }: FooterProps) {
   return (
-    <footer className="border-t border-primary/20 bg-background z-50 relative">
+    <footer className="border-t border-primary/20 bg-background z-40 relative">
       <div className="px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Center: Links */}
