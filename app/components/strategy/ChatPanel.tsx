@@ -181,7 +181,7 @@ strategy:
 
   return (
     <div
-      className="fixed bottom-0 z-50 transition-all duration-300"
+      className="fixed bottom-0 z-60 transition-all duration-300"
       style={{
         left: isSidebarOpen ? '300px' : '0',
         right: 0,
