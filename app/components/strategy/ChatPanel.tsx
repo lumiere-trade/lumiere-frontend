@@ -184,7 +184,7 @@ strategy:
       {/* Backdrop overlay - затъмнява header и footer */}
       {isChatExpanded && (
         <div
-          className="fixed inset-0 z-55 bg-black/60 backdrop-blur-sm pointer-events-none"
+          className="fixed inset-0 z-55 bg-black/40 pointer-events-none"
         />
       )}
 
