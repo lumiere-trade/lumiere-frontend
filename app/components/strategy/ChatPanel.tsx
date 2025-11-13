@@ -173,15 +173,15 @@ strategy:
     }
   }
 
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (isChatExpanded && e.target === e.currentTarget) {
+  const handleBackdropClick = () => {
+    if (isChatExpanded) {
       collapseChat()
     }
   }
 
   return (
     <>
-      {/* Backdrop overlay - затъмнява header и footer */}
+      {/* Backdrop overlay - fullscreen clickable */}
       {isChatExpanded && (
         <div
           className="fixed inset-0 z-55 bg-black/40"
@@ -189,17 +189,16 @@ strategy:
         />
       )}
 
-      {/* Chat panel - в долната секция */}
-      <div
-        className="fixed bottom-0 z-60 transition-all duration-300 pointer-events-none"
-        style={{
-          left: isSidebarOpen ? '300px' : '0',
-          right: 0,
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
-        }}
-      >
-        <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
-          {isChatExpanded && (
+      {/* Chat content - над backdrop-а */}
+      {isChatExpanded && (
+        <div
+          className="fixed bottom-0 z-60 pointer-events-none"
+          style={{
+            left: isSidebarOpen ? '300px' : '0',
+            right: 0,
+          }}
+        >
+          <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
             <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
                 <div className="flex items-center gap-3">
@@ -263,9 +262,20 @@ strategy:
                 ))}
               </div>
             </div>
-          )}
+          </div>
+        </div>
+      )}
 
-          <div className="relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+      {/* Input - винаги показан */}
+      <div
+        className="fixed bottom-0 z-60 pointer-events-none"
+        style={{
+          left: isSidebarOpen ? '300px' : '0',
+          right: 0,
+        }}
+      >
+        <div className="max-w-5xl mx-auto px-6 pb-20">
+          <div className="relative pointer-events-auto">
             <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
             <textarea
               value={inputValue}
