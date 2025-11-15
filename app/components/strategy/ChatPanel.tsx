@@ -130,6 +130,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }
 
+  // Filter out empty streaming messages
+  const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
+
   return (
     <div
       className="fixed bottom-0 z-60 transition-all duration-300"
@@ -171,7 +174,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             </div>
 
             <div className="h-[460px] px-6 py-4 space-y-4 overflow-y-auto">
-              {messages.length === 0 && (
+              {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
                     <p className="text-base text-muted-foreground">
@@ -189,7 +192,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 </div>
               )}
 
-              {messages.map((message) => (
+              {visibleMessages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
