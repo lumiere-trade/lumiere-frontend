@@ -10,12 +10,6 @@ export interface ProphetChatRequest {
   user_id?: string;
 }
 
-export interface ProphetChatResponse {
-  message: string;
-  conversation_id: string;
-  state: string;
-}
-
 export interface ProphetHealthResponse {
   status: string;
   service: string;
@@ -40,10 +34,11 @@ export type SSEEvent =
 
 /**
  * Send chat message to Prophet AI with SSE streaming
+ * Throttles token updates for smoother visual display
  */
 export async function sendChatMessageStream(
   request: ProphetChatRequest,
-  onEvent: (event: SSEEvent) => void,
+  onToken: (token: string) => void,
   onComplete: (fullMessage: string, conversationId: string, state: string) => void,
   onError: (error: Error) => void
 ): Promise<void> {
@@ -71,6 +66,36 @@ export async function sendChatMessageStream(
     let conversationId = '';
     let state = '';
 
+    // Throttling for smoother display
+    let pendingTokens: string[] = [];
+    let isProcessingTokens = false;
+
+    const processPendingTokens = () => {
+      if (pendingTokens.length === 0 || isProcessingTokens) return;
+      
+      isProcessingTokens = true;
+      const batchSize = 5; // Characters per update
+      const delay = 15; // ms between updates
+
+      const processNextBatch = () => {
+        if (pendingTokens.length === 0) {
+          isProcessingTokens = false;
+          return;
+        }
+
+        const batch = pendingTokens.splice(0, batchSize);
+        onToken(batch.join(''));
+
+        if (pendingTokens.length > 0) {
+          setTimeout(processNextBatch, delay);
+        } else {
+          isProcessingTokens = false;
+        }
+      };
+
+      processNextBatch();
+    };
+
     while (true) {
       const { done, value } = await reader.read();
       
@@ -80,7 +105,7 @@ export async function sendChatMessageStream(
       
       // Process complete SSE messages
       const lines = buffer.split('\n\n');
-      buffer = lines.pop() || ''; // Keep incomplete message in buffer
+      buffer = lines.pop() || '';
 
       for (const line of lines) {
         if (!line.trim()) continue;
@@ -95,15 +120,21 @@ export async function sendChatMessageStream(
           if (eventType === 'metadata') {
             conversationId = eventData.conversation_id;
             state = eventData.state;
-            onEvent({ type: 'metadata', data: eventData });
           } else if (eventType === 'token') {
             fullMessage += eventData.token;
-            onEvent({ type: 'token', data: eventData });
+            pendingTokens.push(eventData.token);
+            processPendingTokens();
           } else if (eventType === 'done') {
-            onEvent({ type: 'done', data: eventData });
-            onComplete(fullMessage, conversationId, state);
+            // Wait for pending tokens to finish
+            const waitForCompletion = () => {
+              if (isProcessingTokens || pendingTokens.length > 0) {
+                setTimeout(waitForCompletion, 50);
+              } else {
+                onComplete(fullMessage, conversationId, state);
+              }
+            };
+            waitForCompletion();
           } else if (eventType === 'error') {
-            onEvent({ type: 'error', data: eventData });
             onError(new Error(eventData.error));
           }
         }
