@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, MessageSquare, Send, X } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
@@ -15,6 +15,7 @@ interface ChatPanelProps {
 export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   
   const {
     messages,
@@ -26,6 +27,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     pluginsLoaded,
     error,
   } = useProphet()
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isSending])
 
   useEffect(() => {
     if (isChatExpanded) {
@@ -239,6 +245,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                   </div>
                 </div>
               )}
+
+              {/* Auto-scroll anchor */}
+              <div ref={messagesEndRef} />
             </div>
           </div>
         )}
