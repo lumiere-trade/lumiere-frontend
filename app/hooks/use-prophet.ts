@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { sendChatMessageStream, SSEEvent } from '@/lib/api/prophet';
+import { sendChatMessageStream } from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 
 export interface ChatMessage {
@@ -57,23 +57,15 @@ export function useProphet() {
               message: content,
               conversation_id: conversationId || undefined,
             },
-            // onEvent
-            (event: SSEEvent) => {
-              if (event.type === 'token') {
-                // Update message content char by char
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: msg.content + event.data.token }
-                      : msg
-                  )
-                );
-              } else if (event.type === 'metadata') {
-                // Update conversation ID from first metadata
-                if (!conversationId) {
-                  setConversationId(event.data.conversation_id);
-                }
-              }
+            // onToken - append batch of characters
+            (tokenBatch: string) => {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: msg.content + tokenBatch }
+                    : msg
+                )
+              );
             },
             // onComplete
             (fullMessage, convId, state) => {
