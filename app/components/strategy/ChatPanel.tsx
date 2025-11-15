@@ -210,9 +210,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     <p className="text-base leading-relaxed whitespace-pre-line">
                       {message.content}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
                   </div>
                 </div>
               ))}
