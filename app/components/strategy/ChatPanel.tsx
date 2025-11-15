@@ -16,7 +16,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
   
-  // Use Prophet hook
   const {
     messages,
     sendMessage,
@@ -74,21 +73,17 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       if (response.message.includes('```tsdl')) {
         log.info('TSDL code detected in response - extracting strategy')
         
-        // Extract TSDL code from response
         const tsdlMatch = response.message.match(/```tsdl\n([\s\S]*?)```/)
         if (tsdlMatch) {
           const tsdlCode = tsdlMatch[1]
           
-          // Extract strategy name
           const nameMatch = tsdlCode.match(/STRATEGY ["']([^"']+)["']/)
           const strategyName = nameMatch ? nameMatch[1] : 'Generated Strategy'
           
           const mockStrategy = {
             name: strategyName,
             type: "indicator_based",
-            parameters: {
-              // TODO: Parse from TSDL
-            },
+            parameters: {},
             tsdl_code: tsdlCode
           }
 
@@ -99,7 +94,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
           setGeneratedStrategy(mockStrategy)
           
-          // Clear chat and close
           setTimeout(() => {
             clearMessages()
             collapseChat()
@@ -180,7 +174,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               {messages.length === 0 && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
-                    <p className="text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       Start by describing your trading strategy idea.
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -213,7 +207,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                         : "bg-background border border-primary/20"
                     }`}
                   >
-                    <p className="text-sm leading-relaxed whitespace-pre-line">
+                    <p className="text-base leading-relaxed whitespace-pre-line">
                       {message.content}
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -229,7 +223,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                   </div>
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-base text-muted-foreground">
                       Prophet is thinking...
                     </p>
                   </div>
@@ -239,7 +233,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               {error && (
                 <div className="flex justify-center">
                   <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
-                    <p className="text-sm text-destructive">
+                    <p className="text-base text-destructive">
                       Error: {error.message}
                     </p>
                   </div>
