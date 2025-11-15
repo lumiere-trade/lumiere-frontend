@@ -1,17 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, MessageSquare, Send, X } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-
-interface Message {
-  role: "user" | "assistant"
-  content: string
-  isThinking?: boolean
-}
+import { useProphet } from "@/hooks/use-prophet"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
@@ -20,21 +15,36 @@ interface ChatPanelProps {
 export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
-  const [messages, setMessages] = useState<Message[]>([])
-  const [isGenerating, setIsGenerating] = useState(false)
+  
+  // Use Prophet hook
+  const {
+    messages,
+    sendMessage,
+    clearMessages,
+    isSending,
+    isHealthy,
+    tsdlVersion,
+    pluginsLoaded,
+    error,
+  } = useProphet()
 
   useEffect(() => {
     if (isChatExpanded) {
-      log.info('Chat panel opened', { messagesCount: messages.length })
+      log.info('Chat panel opened', { 
+        messagesCount: messages.length,
+        prophetHealthy: isHealthy,
+        tsdlVersion,
+        plugins: pluginsLoaded,
+      })
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded])
+  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded])
 
   const handleSend = async () => {
-    if (!inputValue.trim() || isGenerating) {
+    if (!inputValue.trim() || isSending) {
       log.warn('Send blocked', {
-        reason: !inputValue.trim() ? 'empty input' : 'already generating',
+        reason: !inputValue.trim() ? 'empty input' : 'already sending',
         inputLength: inputValue.length
       })
       return
@@ -43,118 +53,65 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     const userMessage = inputValue.trim()
     setInputValue("")
 
-    log.info('User sent message', {
+    log.info('Sending message to Prophet', {
       message: userMessage,
       messageLength: userMessage.length,
       messagePreview: userMessage.substring(0, 50)
     })
 
-    setMessages(prev => {
-      const newMessages = [...prev, { role: "user" as const, content: userMessage }]
-      log.debug('Messages state updated', {
-        totalMessages: newMessages.length,
-        userMessages: newMessages.filter(m => m.role === 'user').length
+    try {
+      log.time('prophet-response')
+      const response = await sendMessage(userMessage)
+      log.timeEnd('prophet-response')
+
+      log.info('Prophet response received', {
+        conversationId: response.conversation_id,
+        state: response.state,
+        responseLength: response.message.length,
       })
-      return newMessages
-    })
 
-    if (userMessage.toLowerCase().includes("generate strategy")) {
-      log.info('Strategy generation triggered')
-      log.time('strategy-generation')
-      setIsGenerating(true)
+      // Check if Prophet generated TSDL code
+      if (response.message.includes('```tsdl')) {
+        log.info('TSDL code detected in response - extracting strategy')
+        
+        // Extract TSDL code from response
+        const tsdlMatch = response.message.match(/```tsdl\n([\s\S]*?)```/)
+        if (tsdlMatch) {
+          const tsdlCode = tsdlMatch[1]
+          
+          // Extract strategy name
+          const nameMatch = tsdlCode.match(/STRATEGY ["']([^"']+)["']/)
+          const strategyName = nameMatch ? nameMatch[1] : 'Generated Strategy'
+          
+          const mockStrategy = {
+            name: strategyName,
+            type: "indicator_based",
+            parameters: {
+              // TODO: Parse from TSDL
+            },
+            tsdl_code: tsdlCode
+          }
 
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "Generating your strategy...",
-        isThinking: true
-      }])
+          log.info('Strategy extracted successfully', {
+            strategyName: mockStrategy.name,
+            tsdlLength: tsdlCode.length
+          })
 
-      setTimeout(() => {
-        setMessages(prev => {
-          const filtered = prev.filter(m => !m.isThinking)
-          log.debug('Removed thinking message', { remainingMessages: filtered.length })
-          return filtered
-        })
-
-        const strategyMessage = `I've created an RSI-based momentum strategy for you. Here's what I've set up:
-
-- **Strategy Name**: RSI Momentum Strategy
-- **Buy Signal**: When RSI falls below 30 (oversold)
-- **Sell Signal**: When RSI rises above 70 (overbought)
-- **Take Profit**: 5% gain target
-- **Stop Loss**: 2% maximum loss
-- **Position Size**: 10% of available capital per trade
-
-The strategy is ready for you to review and customize. You can adjust any parameters below.`
-
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: strategyMessage
-        }])
-
-        const mockStrategy = {
-          name: "RSI Momentum Strategy",
-          type: "indicator_based",
-          parameters: {
-            rsi_buy_threshold: 30,
-            rsi_sell_threshold: 70,
-            take_profit_percent: 5,
-            stop_loss_percent: 2,
-            position_size_percent: 10,
-          },
-          tsdl_code: `metadata:
-  name: "RSI Momentum Strategy"
-  strategy_composition:
-    base_strategies:
-      - indicator_based
-
-strategy:
-  entry:
-    conditions:
-      - indicator: RSI
-        comparison: lt
-        threshold: 30
-  exit:
-    conditions:
-      - indicator: RSI
-        comparison: gt
-        threshold: 70
-  risk:
-    take_profit: 5%
-    stop_loss: 2%
-    position_size: 10%`
+          setGeneratedStrategy(mockStrategy)
+          
+          // Clear chat and close
+          setTimeout(() => {
+            clearMessages()
+            collapseChat()
+            log.info('Chat cleared and closed after strategy generation')
+          }, 2000)
         }
-
-        log.timeEnd('strategy-generation')
-        log.info('Strategy generated successfully', {
-          strategyName: mockStrategy.name,
-          strategyType: mockStrategy.type,
-          parameters: mockStrategy.parameters
-        })
-
-        setGeneratedStrategy(mockStrategy)
-        setIsGenerating(false)
-        collapseChat()
-        setMessages([])
-        log.info('Chat cleared and closed after strategy generation')
-      }, 3000)
-    } else {
-      log.info('Regular conversation message - generating AI response')
-      setTimeout(() => {
-        const responses = [
-          "I understand. Could you tell me more about your trading preferences?",
-          "That's interesting. What timeframe are you targeting for this strategy?",
-          "Great! What risk level are you comfortable with?",
-        ]
-        const response = responses[Math.floor(Math.random() * responses.length)]
-
-        log.debug('AI response generated', { responsePreview: response.substring(0, 50) })
-
-        setMessages(prev => [...prev, {
-          role: "assistant",
-          content: response
-        }])
-      }, 1000)
+      }
+    } catch (err) {
+      log.error('Failed to send message to Prophet', {
+        error: err instanceof Error ? err.message : 'Unknown error',
+        userMessage: userMessage.substring(0, 50)
+      })
     }
   }
 
@@ -199,7 +156,14 @@ strategy:
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
-                  <p className="text-sm text-muted-foreground">Strategy Creation Assistant</p>
+                  <p className="text-sm text-muted-foreground">
+                    Strategy Creation Assistant
+                    {isHealthy && tsdlVersion && (
+                      <span className="ml-2 text-xs text-primary">
+                        • TSDL {tsdlVersion} • {pluginsLoaded.length} plugins
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
               <Button
@@ -220,15 +184,20 @@ strategy:
                       Start by describing your trading strategy idea.
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Try: "Generate strategy using RSI"
+                      Try: "Create an RSI strategy that buys when oversold"
                     </p>
+                    {!isHealthy && (
+                      <p className="text-xs text-destructive">
+                        Warning: Prophet AI is not responding
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
 
-              {messages.map((message, index) => (
+              {messages.map((message) => (
                 <div
-                  key={index}
+                  key={message.id}
                   className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {message.role === "assistant" && (
@@ -241,17 +210,41 @@ strategy:
                     className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
-                        : message.isThinking
-                        ? "bg-primary/10 border border-primary/20"
                         : "bg-background border border-primary/20"
                     }`}
                   >
                     <p className="text-sm leading-relaxed whitespace-pre-line">
                       {message.content}
                     </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {message.timestamp.toLocaleTimeString()}
+                    </p>
                   </div>
                 </div>
               ))}
+
+              {isSending && (
+                <div className="flex gap-3 justify-start">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0">
+                    <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  </div>
+                  <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                    <p className="text-sm text-muted-foreground">
+                      Prophet is thinking...
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {error && (
+                <div className="flex justify-center">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
+                    <p className="text-sm text-destructive">
+                      Error: {error.message}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -265,13 +258,13 @@ strategy:
             onKeyDown={handleKeyDown}
             placeholder="How can I help you today?"
             rows={3}
-            disabled={isGenerating}
+            disabled={isSending || !isHealthy}
             className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
           />
           <Button
             size="icon"
             onClick={handleSend}
-            disabled={!inputValue.trim() || isGenerating}
+            disabled={!inputValue.trim() || isSending || !isHealthy}
             className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
