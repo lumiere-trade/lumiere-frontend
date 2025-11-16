@@ -28,7 +28,7 @@ interface StrategyParametersProps {
 export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategyMetadata } = useCreateChat()
-  
+
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
   const [paramValues, setParamValues] = useState<Record<string, any>>({})
@@ -73,7 +73,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       indicatorCount: strategyMetadata.indicators?.length || 0,
       paramCount: Object.keys(initialValues).length
     })
-  }, [strategyMetadata, log])
+  }, [strategyMetadata])
 
   const handleParamChange = (key: string, value: any) => {
     setParamValues(prev => ({ ...prev, [key]: value }))
