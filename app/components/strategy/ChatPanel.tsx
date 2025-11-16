@@ -34,6 +34,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSending])
 
+  // Auto-scroll to bottom when chat opens
   useEffect(() => {
     if (isChatExpanded) {
       log.info('Chat panel opened', {
@@ -42,6 +43,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         tsdlVersion,
         plugins: pluginsLoaded,
       })
+      
+      // Scroll to bottom after chat opens (small delay for render)
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
     } else {
       log.info('Chat panel closed')
     }
