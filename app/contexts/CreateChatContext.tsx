@@ -1,14 +1,17 @@
 "use client"
 
 import { createContext, useContext, useState, ReactNode } from 'react'
+import { StrategyMetadata } from '@/lib/api/prophet'
 
 interface CreateChatContextType {
   isChatExpanded: boolean
   generatedStrategy: any | null
+  strategyMetadata: StrategyMetadata | null
   inputValue: string
   expandChat: () => void
   collapseChat: () => void
   setGeneratedStrategy: (strategy: any) => void
+  setStrategyMetadata: (metadata: StrategyMetadata | null) => void
   setInputValue: (value: string) => void
 }
 
@@ -17,6 +20,7 @@ const CreateChatContext = createContext<CreateChatContextType | undefined>(undef
 export function CreateChatProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
+  const [strategyMetadata, setStrategyMetadata] = useState<StrategyMetadata | null>(null)
   const [inputValue, setInputValue] = useState("")
 
   const expandChat = () => setIsChatExpanded(true)
@@ -27,10 +31,12 @@ export function CreateChatProvider({ children }: { children: ReactNode }) {
       value={{
         isChatExpanded,
         generatedStrategy,
+        strategyMetadata,
         inputValue,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
+        setStrategyMetadata,
         setInputValue,
       }}
     >

@@ -4,10 +4,11 @@
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { sendChatMessageStream } from '@/lib/api/prophet';
+import { sendChatMessageStream, StrategyMetadata } from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
 import { LogCategory } from '@/lib/debug';
+import { useCreateChat } from '@/contexts/CreateChatContext';
 
 export interface ChatMessage {
   id: string;
@@ -19,7 +20,8 @@ export interface ChatMessage {
 
 export function useProphet() {
   const log = useLogger('ProphetHook', LogCategory.API);
-  
+  const { setStrategyMetadata } = useCreateChat();
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversationState, setConversationState] = useState<string>('greeting');
@@ -37,7 +39,7 @@ export function useProphet() {
         currentState: conversationState,
         conversationId: conversationId || 'NEW_CONVERSATION',
         historyLength: messages.length,
-        messageCount: messages.length + 1, // +1 for current message
+        messageCount: messages.length + 1,
       });
 
       // Add user message immediately
@@ -104,7 +106,7 @@ export function useProphet() {
             // onComplete
             (fullMessage, convId, newState) => {
               log.timeEnd('Prophet Response Time');
-              
+
               setIsSending(false);
 
               // Mark streaming complete
@@ -178,12 +180,30 @@ export function useProphet() {
 
               streamingMessageIdRef.current = null;
               reject(err);
+            },
+            // onStrategyMetadata - NEW callback
+            (metadata: StrategyMetadata) => {
+              log.info('Strategy metadata received', {
+                indicatorsCount: metadata.indicators?.length || 0,
+                hasAsset: !!metadata.asset,
+                hasExitConditions: !!metadata.exit_conditions,
+                hasRiskManagement: !!metadata.risk_management,
+                hasPositionSizing: !!metadata.position_sizing,
+                indicators: metadata.indicators?.map(ind => ({
+                  name: ind.name,
+                  type: ind.type,
+                  paramsCount: Object.keys(ind.params || {}).length
+                }))
+              });
+
+              // Store metadata in context
+              setStrategyMetadata(metadata);
             }
           );
         }
       );
     },
-    [conversationId, conversationState, messages, log]
+    [conversationId, conversationState, messages, log, setStrategyMetadata]
   );
 
   const clearMessages = useCallback(() => {
@@ -197,8 +217,9 @@ export function useProphet() {
     setConversationId(null);
     setConversationState('greeting');
     setError(null);
+    setStrategyMetadata(null);
     streamingMessageIdRef.current = null;
-  }, [conversationState, messages, conversationId, log]);
+  }, [conversationState, messages, conversationId, log, setStrategyMetadata]);
 
   return {
     // State

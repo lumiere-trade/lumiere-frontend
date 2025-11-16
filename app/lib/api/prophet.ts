@@ -13,8 +13,8 @@ export interface ProphetChatRequest {
   message: string;
   conversation_id?: string;
   user_id?: string;
-  state?: string;  // NEW: current conversation state
-  history?: ProphetMessage[];  // NEW: previous messages
+  state?: string;
+  history?: ProphetMessage[];
 }
 
 export interface ProphetHealthResponse {
@@ -31,11 +31,47 @@ export interface ProphetHealthResponse {
 }
 
 /**
+ * Parameter metadata types from Prophet
+ */
+export interface ParamMetadata {
+  type: 'int' | 'float' | 'enum' | 'string' | 'boolean';
+  min?: number;
+  max?: number;
+  default?: any;
+  step?: number;
+  unit?: string;
+  values?: string[];
+  description?: string;
+}
+
+export interface FieldParam extends ParamMetadata {
+  value: any;
+}
+
+export interface IndicatorParam {
+  name: string;
+  type: string;
+  display_name?: string;
+  category?: string;
+  description?: string;
+  params: Record<string, FieldParam>;
+}
+
+export interface StrategyMetadata {
+  indicators: IndicatorParam[];
+  asset: Record<string, FieldParam>;
+  exit_conditions: Record<string, FieldParam>;
+  risk_management: Record<string, FieldParam>;
+  position_sizing: Record<string, FieldParam>;
+}
+
+/**
  * SSE Event types
  */
 export type SSEEvent =
   | { type: 'metadata'; data: { conversation_id: string; state: string } }
   | { type: 'token'; data: { token: string } }
+  | { type: 'strategy_metadata'; data: StrategyMetadata }
   | { type: 'done'; data: { conversation_id: string; state: string; message_count?: number } }
   | { type: 'error'; data: { error: string } };
 
@@ -47,7 +83,8 @@ export async function sendChatMessageStream(
   request: ProphetChatRequest,
   onToken: (token: string) => void,
   onComplete: (fullMessage: string, conversationId: string, state: string) => void,
-  onError: (error: Error) => void
+  onError: (error: Error) => void,
+  onStrategyMetadata?: (metadata: StrategyMetadata) => void
 ): Promise<void> {
   try {
     const response = await fetch(`${PROPHET_URL}/chat`, {
@@ -81,8 +118,8 @@ export async function sendChatMessageStream(
       if (pendingTokens.length === 0 || isProcessingTokens) return;
 
       isProcessingTokens = true;
-      const batchSize = 5; // Characters per update
-      const delay = 15; // ms between updates
+      const batchSize = 5;
+      const delay = 15;
 
       const processNextBatch = () => {
         if (pendingTokens.length === 0) {
@@ -131,10 +168,14 @@ export async function sendChatMessageStream(
             fullMessage += eventData.token;
             pendingTokens.push(eventData.token);
             processPendingTokens();
+          } else if (eventType === 'strategy_metadata') {
+            // NEW: Handle strategy metadata from Prophet
+            if (onStrategyMetadata) {
+              onStrategyMetadata(eventData as StrategyMetadata);
+            }
           } else if (eventType === 'done') {
-            // Update state from done event
             state = eventData.state || state;
-            
+
             // Wait for pending tokens to finish
             const waitForCompletion = () => {
               if (isProcessingTokens || pendingTokens.length > 0) {

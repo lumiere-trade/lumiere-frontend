@@ -1,45 +1,88 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
+import { useCreateChat } from "@/contexts/CreateChatContext"
+import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface StrategyParametersProps {
   strategy: {
     name: string
     type: string
-    parameters: {
-      rsi_buy_threshold: number
-      rsi_sell_threshold: number
-      take_profit_percent: number
-      stop_loss_percent: number
-      position_size_percent: number
-    }
+    parameters: Record<string, any>
     tsdl_code: string
   }
 }
 
 export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
+  const { strategyMetadata } = useCreateChat()
+  
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
-  const [rsiBuy, setRsiBuy] = useState(strategy.parameters.rsi_buy_threshold)
-  const [rsiSell, setRsiSell] = useState(strategy.parameters.rsi_sell_threshold)
-  const [takeProfit, setTakeProfit] = useState(strategy.parameters.take_profit_percent)
-  const [stopLoss, setStopLoss] = useState(strategy.parameters.stop_loss_percent)
-  const [positionSize, setPositionSize] = useState(strategy.parameters.position_size_percent)
+  const [paramValues, setParamValues] = useState<Record<string, any>>({})
+
+  // Initialize param values from metadata
+  useEffect(() => {
+    if (!strategyMetadata) return
+
+    const initialValues: Record<string, any> = {}
+
+    // Indicators
+    strategyMetadata.indicators?.forEach((indicator) => {
+      Object.entries(indicator.params).forEach(([paramName, paramData]) => {
+        const key = `indicator_${indicator.name}_${paramName}`
+        initialValues[key] = paramData.value
+      })
+    })
+
+    // Asset fields
+    Object.entries(strategyMetadata.asset || {}).forEach(([fieldName, fieldData]) => {
+      initialValues[`asset_${fieldName}`] = fieldData.value
+    })
+
+    // Exit conditions
+    Object.entries(strategyMetadata.exit_conditions || {}).forEach(([fieldName, fieldData]) => {
+      initialValues[`exit_${fieldName}`] = fieldData.value
+    })
+
+    // Risk management
+    Object.entries(strategyMetadata.risk_management || {}).forEach(([fieldName, fieldData]) => {
+      initialValues[`risk_${fieldName}`] = fieldData.value
+    })
+
+    // Position sizing
+    Object.entries(strategyMetadata.position_sizing || {}).forEach(([fieldName, fieldData]) => {
+      initialValues[`position_${fieldName}`] = fieldData.value
+    })
+
+    setParamValues(initialValues)
+
+    log.info('Initialized parameter values from metadata', {
+      indicatorCount: strategyMetadata.indicators?.length || 0,
+      paramCount: Object.keys(initialValues).length
+    })
+  }, [strategyMetadata, log])
+
+  const handleParamChange = (key: string, value: any) => {
+    setParamValues(prev => ({ ...prev, [key]: value }))
+  }
 
   const handleSave = () => {
     log.info('Strategy saved', {
       name,
-      rsiBuy,
-      rsiSell,
-      takeProfit,
-      stopLoss,
-      positionSize
+      paramValues
     })
     alert('Strategy saved! (Mock implementation)')
   }
@@ -47,6 +90,103 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const handleBacktest = () => {
     log.info('Backtest started', { name })
     alert('Starting backtest... (Mock implementation)')
+  }
+
+  const renderParamField = (
+    key: string,
+    label: string,
+    paramData: FieldParam,
+    description?: string
+  ) => {
+    const currentValue = paramValues[key] ?? paramData.value
+
+    // Enum type - render select dropdown
+    if (paramData.type === 'enum' && paramData.values) {
+      return (
+        <div key={key} className="bg-card border border-primary/20 rounded-2xl p-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-foreground">{label}</label>
+              <span className="text-sm font-mono text-primary">{currentValue}</span>
+            </div>
+            <Select
+              value={currentValue}
+              onValueChange={(value) => handleParamChange(key, value)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {paramData.values.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {(description || paramData.description) && (
+              <p className="text-xs text-muted-foreground">
+                {description || paramData.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // Number types (int/float) - render slider
+    if (paramData.type === 'int' || paramData.type === 'float') {
+      const min = paramData.min ?? 0
+      const max = paramData.max ?? 100
+      const step = paramData.step ?? (paramData.type === 'int' ? 1 : 0.1)
+      const unit = paramData.unit || ''
+
+      return (
+        <div key={key} className="bg-card border border-primary/20 rounded-2xl p-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-semibold text-foreground">{label}</label>
+              <span className="text-sm font-mono text-primary">
+                {currentValue}{unit}
+              </span>
+            </div>
+            <Slider
+              value={[Number(currentValue)]}
+              onValueChange={(value) => handleParamChange(key, value[0])}
+              min={min}
+              max={max}
+              step={step}
+              className="w-full"
+            />
+            {(description || paramData.description) && (
+              <p className="text-xs text-muted-foreground">
+                {description || paramData.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )
+    }
+
+    // Fallback for other types
+    return null
+  }
+
+  const renderIndicatorParams = (indicator: IndicatorParam) => {
+    return (
+      <div key={indicator.name} className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">
+          {indicator.display_name || indicator.type} ({indicator.name})
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Object.entries(indicator.params).map(([paramName, paramData]) => {
+            const key = `indicator_${indicator.name}_${paramName}`
+            const label = paramName.charAt(0).toUpperCase() + paramName.slice(1).replace(/_/g, ' ')
+            return renderParamField(key, label, paramData)
+          })}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -106,107 +246,81 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {!strategyMetadata && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">RSI Buy Threshold</label>
-              <span className="text-sm font-mono text-primary">{rsiBuy}</span>
-            </div>
-            <Slider
-              value={[rsiBuy]}
-              onValueChange={(value) => setRsiBuy(value[0])}
-              min={10}
-              max={50}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Buy when RSI &lt; {rsiBuy} (oversold condition)
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">RSI Sell Threshold</label>
-              <span className="text-sm font-mono text-primary">{rsiSell}</span>
-            </div>
-            <Slider
-              value={[rsiSell]}
-              onValueChange={(value) => setRsiSell(value[0])}
-              min={50}
-              max={90}
-              step={1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Sell when RSI &gt; {rsiSell} (overbought condition)
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Take Profit</label>
-              <span className="text-sm font-mono text-primary">{takeProfit}%</span>
-            </div>
-            <Slider
-              value={[takeProfit]}
-              onValueChange={(value) => setTakeProfit(value[0])}
-              min={1}
-              max={20}
-              step={0.5}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Close position at {takeProfit}% profit
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">Stop Loss</label>
-              <span className="text-sm font-mono text-primary">{stopLoss}%</span>
-            </div>
-            <Slider
-              value={[stopLoss]}
-              onValueChange={(value) => setStopLoss(value[0])}
-              min={0.5}
-              max={10}
-              step={0.5}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">
-              Maximum loss per trade: {stopLoss}%
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-card border border-primary/20 rounded-2xl p-6">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-semibold text-foreground">Position Size</label>
-            <span className="text-sm font-mono text-primary">{positionSize}%</span>
-          </div>
-          <Slider
-            value={[positionSize]}
-            onValueChange={(value) => setPositionSize(value[0])}
-            min={1}
-            max={100}
-            step={1}
-            className="w-full"
-          />
-          <p className="text-xs text-muted-foreground">
-            Allocate {positionSize}% of available capital per trade
+          <p className="text-sm text-muted-foreground text-center">
+            No parameter metadata available. Parameters will appear after Prophet generates a strategy.
           </p>
         </div>
-      </div>
+      )}
+
+      {strategyMetadata && (
+        <>
+          {/* Indicators Section */}
+          {strategyMetadata.indicators && strategyMetadata.indicators.length > 0 && (
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-foreground">Indicators</h3>
+              {strategyMetadata.indicators.map(renderIndicatorParams)}
+            </div>
+          )}
+
+          {/* Asset Section */}
+          {strategyMetadata.asset && Object.keys(strategyMetadata.asset).length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground">Asset Configuration</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(strategyMetadata.asset).map(([fieldName, fieldData]) => {
+                  const key = `asset_${fieldName}`
+                  const label = fieldName.replace(/_/g, ' ')
+                  return renderParamField(key, label, fieldData)
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Exit Conditions Section */}
+          {strategyMetadata.exit_conditions && Object.keys(strategyMetadata.exit_conditions).length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground">Exit Conditions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(strategyMetadata.exit_conditions).map(([fieldName, fieldData]) => {
+                  const key = `exit_${fieldName}`
+                  const label = fieldName.replace(/_/g, ' ')
+                  return renderParamField(key, label, fieldData)
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Risk Management Section */}
+          {strategyMetadata.risk_management && Object.keys(strategyMetadata.risk_management).length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground">Risk Management</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(strategyMetadata.risk_management).map(([fieldName, fieldData]) => {
+                  const key = `risk_${fieldName}`
+                  const label = fieldName.replace(/_/g, ' ')
+                  return renderParamField(key, label, fieldData)
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Position Sizing Section */}
+          {strategyMetadata.position_sizing && Object.keys(strategyMetadata.position_sizing).length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground">Position Sizing</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {Object.entries(strategyMetadata.position_sizing).map(([fieldName, fieldData]) => {
+                  const key = `position_${fieldName}`
+                  const label = fieldName.replace(/_/g, ' ')
+                  return renderParamField(key, label, fieldData)
+                })}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
