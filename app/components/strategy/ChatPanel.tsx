@@ -295,7 +295,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
-          />
+          </Button>
         </div>
       </div>
     </div>
