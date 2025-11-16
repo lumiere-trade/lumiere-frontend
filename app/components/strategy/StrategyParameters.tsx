@@ -190,7 +190,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-6 pb-32">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Strategy Parameters</h2>
         <div className="flex gap-2">
