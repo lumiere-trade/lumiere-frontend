@@ -16,7 +16,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  
+
   const {
     messages,
     sendMessage,
@@ -25,6 +25,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     isHealthy,
     tsdlVersion,
     pluginsLoaded,
+    conversationState,
     error,
   } = useProphet()
 
@@ -35,7 +36,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   useEffect(() => {
     if (isChatExpanded) {
-      log.info('Chat panel opened', { 
+      log.info('Chat panel opened', {
         messagesCount: messages.length,
         prophetHealthy: isHealthy,
         tsdlVersion,
@@ -78,14 +79,14 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       // Check if Prophet generated TSDL code
       if (response.message.includes('```tsdl')) {
         log.info('TSDL code detected in response - extracting strategy')
-        
+
         const tsdlMatch = response.message.match(/```tsdl\n([\s\S]*?)```/)
         if (tsdlMatch) {
           const tsdlCode = tsdlMatch[1]
-          
+
           const nameMatch = tsdlCode.match(/STRATEGY ["']([^"']+)["']/)
           const strategyName = nameMatch ? nameMatch[1] : 'Generated Strategy'
-          
+
           const mockStrategy = {
             name: strategyName,
             type: "indicator_based",
@@ -99,12 +100,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           })
 
           setGeneratedStrategy(mockStrategy)
-          
+
+          // Just collapse the chat, keep the history
           setTimeout(() => {
-            clearMessages()
             collapseChat()
-            log.info('Chat cleared and closed after strategy generation')
-          }, 2000)
+            log.info('Chat collapsed after strategy generation - history preserved')
+          }, 1000)
         }
       }
     } catch (err) {
@@ -134,6 +135,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     if (isChatExpanded && e.target === e.currentTarget) {
       collapseChat()
     }
+  }
+
+  const handleNewChat = () => {
+    log.info('Starting new chat - clearing previous conversation')
+    clearMessages()
+    setInputValue("")
   }
 
   // Filter out empty streaming messages
@@ -166,17 +173,34 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                         • TSDL {tsdlVersion} • {pluginsLoaded.length} plugins
                       </span>
                     )}
+                    {conversationState && conversationState !== 'greeting' && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        • {conversationState}
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={collapseChat}
-                className="h-8 w-8 rounded-lg"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleNewChat}
+                    className="text-xs"
+                  >
+                    New Chat
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={collapseChat}
+                  className="h-8 w-8 rounded-lg"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="h-[460px] px-6 py-4 space-y-4 overflow-y-auto">
@@ -271,7 +295,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
-          </Button>
+          />
         </div>
       </div>
     </div>
