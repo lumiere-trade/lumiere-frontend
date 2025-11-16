@@ -4,10 +4,17 @@
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
 
+export interface ProphetMessage {
+  role: string;
+  content: string;
+}
+
 export interface ProphetChatRequest {
   message: string;
   conversation_id?: string;
   user_id?: string;
+  state?: string;  // NEW: current conversation state
+  history?: ProphetMessage[];  // NEW: previous messages
 }
 
 export interface ProphetHealthResponse {
@@ -26,10 +33,10 @@ export interface ProphetHealthResponse {
 /**
  * SSE Event types
  */
-export type SSEEvent = 
+export type SSEEvent =
   | { type: 'metadata'; data: { conversation_id: string; state: string } }
   | { type: 'token'; data: { token: string } }
-  | { type: 'done'; data: { conversation_id: string; state: string } }
+  | { type: 'done'; data: { conversation_id: string; state: string; message_count?: number } }
   | { type: 'error'; data: { error: string } };
 
 /**
@@ -72,7 +79,7 @@ export async function sendChatMessageStream(
 
     const processPendingTokens = () => {
       if (pendingTokens.length === 0 || isProcessingTokens) return;
-      
+
       isProcessingTokens = true;
       const batchSize = 5; // Characters per update
       const delay = 15; // ms between updates
@@ -98,11 +105,11 @@ export async function sendChatMessageStream(
 
     while (true) {
       const { done, value } = await reader.read();
-      
+
       if (done) break;
 
       buffer += decoder.decode(value, { stream: true });
-      
+
       // Process complete SSE messages
       const lines = buffer.split('\n\n');
       buffer = lines.pop() || '';
@@ -125,6 +132,9 @@ export async function sendChatMessageStream(
             pendingTokens.push(eventData.token);
             processPendingTokens();
           } else if (eventType === 'done') {
+            // Update state from done event
+            state = eventData.state || state;
+            
             // Wait for pending tokens to finish
             const waitForCompletion = () => {
               if (isProcessingTokens || pendingTokens.length > 0) {
