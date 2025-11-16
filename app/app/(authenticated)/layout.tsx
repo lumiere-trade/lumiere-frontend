@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
@@ -44,18 +43,16 @@ export default function AuthenticatedLayout({
   }
 
   const content = (
-    <div className="h-screen grid bg-background overflow-hidden" style={{
-      gridTemplateRows: 'auto 1fr auto'
-    }}>
-      {/* Header Row */}
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Header - Fixed at top */}
       <NavigationHeader currentPage={currentPage} />
 
       {/* Sidebar - Fixed positioning */}
       <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-      {/* Main Content with padding for sidebar */}
-      <main 
-        className="overflow-y-auto bg-background transition-all duration-300"
+      {/* Main Content - Flex grow, scrollable */}
+      <main
+        className="flex-1 overflow-y-auto bg-background transition-all duration-300"
         style={{
           paddingLeft: isSidebarOpen ? '300px' : '32px'
         }}
@@ -63,12 +60,18 @@ export default function AuthenticatedLayout({
         {children}
       </main>
 
-      {/* Footer Row - direct grid item with padding */}
-      <div className="" style={{ paddingLeft: isSidebarOpen ? '300px' : '32px' }}>
+      {/* Footer - Fixed at bottom */}
+      <div
+        className="fixed bottom-0 right-0 z-40 transition-all duration-300"
+        style={{
+          left: isSidebarOpen ? '300px' : '0',
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+        }}
+      >
         <Footer isSidebarOpen={isSidebarOpen} />
       </div>
 
-      {/* Chat Overlay */}
+      {/* Chat Overlay - Higher z-index */}
       {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
     </div>
   )
