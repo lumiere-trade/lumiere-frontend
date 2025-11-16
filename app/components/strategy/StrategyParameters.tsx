@@ -225,7 +225,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
       {showCode && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <pre className="text-xs text-muted-foreground overflow-x-auto">
+          <pre className="text-base text-muted-foreground whitespace-pre-wrap break-words">
             <code>{strategy.tsdl_code}</code>
           </pre>
         </div>
