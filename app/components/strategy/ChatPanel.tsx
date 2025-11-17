@@ -237,7 +237,13 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             </div>
 
             {/* Messages area - flex-1 takes remaining space */}
-            <div className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+            <div 
+              className="flex-1 px-6 py-4 space-y-4 overflow-y-auto min-h-0"
+              style={{
+                scrollbarWidth: visibleMessages.length === 0 && !isSending ? 'none' : 'auto',
+                msOverflowStyle: visibleMessages.length === 0 && !isSending ? 'none' : 'auto'
+              }}
+            >
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
