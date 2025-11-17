@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X, ArrowRight } from "lucide-react"
+import { Sparkles, MessageSquare, Send, X } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useProphet } from "@/hooks/use-prophet"
+import { StrategyPreview } from "./StrategyPreview"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
@@ -160,7 +161,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
           setGeneratedStrategy(mockStrategy)
 
-          // Scroll to show the View Strategy button
+          // Scroll to show the strategy preview
           setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
           }, 100)
@@ -208,6 +209,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   // Filter out empty streaming messages
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
+  
+  // Extract TSDL code from message
+  const extractTSDL = (content: string) => {
+    const match = content.match(/```tsdl\n([\s\S]*?)```/)
+    return match ? match[1] : null
+  }
 
   return (
     <div
@@ -320,43 +327,46 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 </div>
               )}
 
-              {visibleMessages.map((message) => (
-                <div key={message.id}>
-                  <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {message.role === "assistant" && (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                      </div>
-                    )}
+              {visibleMessages.map((message) => {
+                const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
+                const contentWithoutTSDL = tsdlCode 
+                  ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
+                  : message.content
 
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                        message.role === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-background border border-primary/20"
-                      }`}
-                    >
-                      <p className="text-base leading-relaxed whitespace-pre-line">
-                        {message.content}
-                      </p>
+                return (
+                  <div key={message.id}>
+                    <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                      {message.role === "assistant" && (
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                          <Sparkles className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+
+                      <div
+                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background border border-primary/20"
+                        }`}
+                      >
+                        {contentWithoutTSDL && (
+                          <p className="text-base leading-relaxed whitespace-pre-line mb-3">
+                            {contentWithoutTSDL}
+                          </p>
+                        )}
+                        
+                        {/* Show strategy preview instead of raw TSDL */}
+                        {tsdlCode && (
+                          <StrategyPreview 
+                            tsdlCode={tsdlCode} 
+                            onViewStrategy={handleViewStrategy}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  {/* View Strategy button - shown below message if it contains TSDL */}
-                  {message.role === "assistant" && message.content.includes('```tsdl') && (
-                    <div className="flex gap-3 justify-start mt-3">
-                      <div className="w-8 flex-shrink-0"></div>
-                      <Button
-                        onClick={handleViewStrategy}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                      >
-                        View Strategy
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                )
+              })}
 
               {isSending && (
                 <div className="flex gap-3 justify-start">
