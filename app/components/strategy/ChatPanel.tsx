@@ -163,7 +163,31 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       }}
       onClick={handleBackdropClick}
     >
-      <div className="h-full flex flex-col max-w-5xl mx-auto px-6 pb-6 gap-4">
+      <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
+        {/* Message box - always visible at bottom */}
+        <div className="flex-shrink-0 relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+          <textarea
+            value={inputValue}
+            onChange={handleInputChange}
+            onClick={expandChat}
+            onKeyDown={handleKeyDown}
+            placeholder="How can I help you today?"
+            rows={3}
+            disabled={isSending || !isHealthy}
+            className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
+          />
+          <Button
+            size="icon"
+            onClick={handleSend}
+            disabled={!inputValue.trim() || isSending || !isHealthy}
+            className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Chat history - above message box, only when expanded */}
         {isChatExpanded && (
           <div className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0" onClick={(e) => e.stopPropagation()}>
             {/* Header - fixed size */}
@@ -284,29 +308,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             </div>
           </div>
         )}
-
-        {/* Message box - fixed size */}
-        <div className="flex-shrink-0 relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-          <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-          <textarea
-            value={inputValue}
-            onChange={handleInputChange}
-            onClick={expandChat}
-            onKeyDown={handleKeyDown}
-            placeholder="How can I help you today?"
-            rows={3}
-            disabled={isSending || !isHealthy}
-            className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!inputValue.trim() || isSending || !isHealthy}
-            className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     </div>
   )
