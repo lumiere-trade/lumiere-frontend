@@ -156,7 +156,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     <div
       className="fixed z-60 transition-all duration-300"
       style={{
-        left: isSidebarOpen ? '300px' : '0',
+        left: isSidebarOpen ? '300px' : '32px',
         right: 0,
         width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
         top: '80px',
