@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X } from "lucide-react"
+import { Sparkles, MessageSquare, Send, X, ArrowRight } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -18,6 +18,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
+  const [strategyGenerated, setStrategyGenerated] = useState(false)
 
   const {
     messages,
@@ -36,9 +37,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     if (isChatExpanded) {
       setIsVisible(true)
     } else {
-      // Delay removal to allow fade-out animation
       setIsVisible(false)
-      
     }
   }, [isChatExpanded])
 
@@ -119,6 +118,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const userMessage = inputValue.trim()
     setInputValue("")
+    setStrategyGenerated(false)
 
     log.info('Sending message to Prophet', {
       message: userMessage,
@@ -161,12 +161,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           })
 
           setGeneratedStrategy(mockStrategy)
+          setStrategyGenerated(true)
 
-          // Just collapse the chat, keep the history
+          // Scroll to show the View Strategy button
           setTimeout(() => {
-            collapseChat()
-            log.info('Chat collapsed after strategy generation - history preserved')
-          }, 1000)
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+          }, 100)
         }
       }
     } catch (err) {
@@ -175,6 +175,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         userMessage: userMessage.substring(0, 50)
       })
     }
+  }
+
+  const handleViewStrategy = () => {
+    log.info('View Strategy button clicked - closing chat')
+    collapseChat()
+    setStrategyGenerated(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -202,10 +208,15 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
     setInputValue("")
+    setStrategyGenerated(false)
   }
 
   // Filter out empty streaming messages
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
+  
+  // Check if last message contains TSDL
+  const lastMessage = visibleMessages[visibleMessages.length - 1]
+  const showViewButton = strategyGenerated && lastMessage?.role === 'assistant' && lastMessage?.content.includes('```tsdl')
 
   return (
     <div
@@ -243,7 +254,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           </Button>
         </div>
 
-        {/* Chat history - above message box, with fade in/out animation */}
+        {/* Chat history - above message box, with fade in animation */}
         {isVisible && (
           <div 
             className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
@@ -318,28 +329,41 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 </div>
               )}
 
-              {visibleMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  {message.role === "assistant" && (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                      <Sparkles className="h-4 w-4 text-primary" />
+              {visibleMessages.map((message, index) => (
+                <div key={message.id}>
+                  <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {message.role === "assistant" && (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                        <Sparkles className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
+
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background border border-primary/20"
+                      }`}
+                    >
+                      <p className="text-base leading-relaxed whitespace-pre-line">
+                        {message.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* View Strategy button - shown below last message with TSDL */}
+                  {showViewButton && index === visibleMessages.length - 1 && (
+                    <div className="flex gap-3 justify-start mt-3">
+                      <div className="w-8 flex-shrink-0"></div>
+                      <Button
+                        onClick={handleViewStrategy}
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        View Strategy
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </div>
                   )}
-
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-background border border-primary/20"
-                    }`}
-                  >
-                    <p className="text-base leading-relaxed whitespace-pre-line">
-                      {message.content}
-                    </p>
-                  </div>
                 </div>
               ))}
 
