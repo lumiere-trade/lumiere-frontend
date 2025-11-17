@@ -154,12 +154,13 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   return (
     <div
-      className="fixed bottom-0 z-60 transition-all duration-300"
+      className="fixed z-60 transition-all duration-300"
       style={{
         left: isSidebarOpen ? '300px' : '0',
         right: 0,
         width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
-        top: '80px'
+        top: '80px',
+        bottom: '64px'
       }}
       onClick={handleBackdropClick}
     >
