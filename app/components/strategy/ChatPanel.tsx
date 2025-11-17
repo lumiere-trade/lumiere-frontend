@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X } from "lucide-react"
+import { Sparkles, MessageSquare, Send, X, ArrowRight } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -342,25 +342,40 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                         </div>
                       )}
 
-                      <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                          message.role === "user"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-background border border-primary/20"
-                        }`}
-                      >
-                        {contentWithoutTSDL && (
-                          <p className="text-base leading-relaxed whitespace-pre-line mb-3">
-                            {contentWithoutTSDL}
-                          </p>
-                        )}
-                        
-                        {/* Show strategy preview instead of raw TSDL */}
+                      <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
+                        <div
+                          className={`rounded-2xl px-4 py-3 ${
+                            message.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background border border-primary/20"
+                          }`}
+                        >
+                          {contentWithoutTSDL && (
+                            <p className="text-base leading-relaxed whitespace-pre-line">
+                              {contentWithoutTSDL}
+                            </p>
+                          )}
+                          
+                          {/* Show strategy preview instead of raw TSDL */}
+                          {tsdlCode && (
+                            <>
+                              {contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />}
+                              <StrategyPreview tsdlCode={tsdlCode} />
+                            </>
+                          )}
+                        </div>
+
+                        {/* View Strategy button - shown below bubble if TSDL exists */}
                         {tsdlCode && (
-                          <StrategyPreview 
-                            tsdlCode={tsdlCode} 
-                            onViewStrategy={handleViewStrategy}
-                          />
+                          <div className="mt-3">
+                            <Button
+                              onClick={handleViewStrategy}
+                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                            >
+                              View Strategy
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </div>
                         )}
                       </div>
                     </div>

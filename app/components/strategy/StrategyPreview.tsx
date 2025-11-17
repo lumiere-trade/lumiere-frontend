@@ -1,23 +1,16 @@
 "use client"
 
 import { useMemo } from "react"
-import { Button } from '@lumiere/shared/components/ui/button'
-import { ArrowRight } from "lucide-react"
 
 interface StrategyPreviewProps {
   tsdlCode: string
-  onViewStrategy: () => void
 }
 
-export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewProps) {
+export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
   // Parse TSDL to extract parameters
   const parsedStrategy = useMemo(() => {
     const lines = tsdlCode.split('\n')
     const params: Record<string, any> = {}
-    
-    // Extract strategy name
-    const nameMatch = tsdlCode.match(/STRATEGY ["']([^"']+)["']/)
-    const name = nameMatch ? nameMatch[1] : 'Trading Strategy'
     
     // Extract trading pair
     const pairMatch = tsdlCode.match(/PAIR ["']([^"']+)["']/)
@@ -68,22 +61,22 @@ export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewPro
     const sizeMatch = tsdlCode.match(/SIZE:\s*([\w.]+)/)
     params.positionSize = sizeMatch ? sizeMatch[1] : null
     
-    return { name, params }
+    return { params }
   }, [tsdlCode])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-sm">
       {/* Strategy Overview */}
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-muted-foreground">Strategy Overview</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-muted-foreground">Trading Pair</p>
-            <p className="text-sm font-medium">{parsedStrategy.params.pair}</p>
+            <p className="text-sm font-medium text-foreground">{parsedStrategy.params.pair}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Timeframe</p>
-            <p className="text-sm font-medium">{parsedStrategy.params.timeframe}</p>
+            <p className="text-sm font-medium text-foreground">{parsedStrategy.params.timeframe}</p>
           </div>
         </div>
       </div>
@@ -94,12 +87,12 @@ export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewPro
           <h3 className="text-sm font-medium text-muted-foreground">Indicators</h3>
           <div className="space-y-2">
             {parsedStrategy.params.indicators.map((indicator: any, idx: number) => (
-              <div key={idx} className="bg-primary/5 rounded-lg p-3 space-y-1">
-                <p className="text-sm font-medium">{indicator.name}</p>
+              <div key={idx} className="border border-primary/20 bg-background rounded-lg p-3 space-y-1">
+                <p className="text-sm font-medium text-foreground">{indicator.name}</p>
                 {Object.entries(indicator).filter(([key]) => key !== 'name').map(([key, value]) => (
                   <div key={key} className="flex justify-between text-xs">
                     <span className="text-muted-foreground capitalize">{key}:</span>
-                    <span>{String(value)}</span>
+                    <span className="text-foreground">{String(value)}</span>
                   </div>
                 ))}
               </div>
@@ -112,13 +105,13 @@ export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewPro
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-muted-foreground">Conditions</h3>
         <div className="space-y-2">
-          <div className="bg-green-500/10 rounded-lg p-3">
+          <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-xs text-muted-foreground mb-1">Buy When</p>
-            <p className="text-sm font-mono">{parsedStrategy.params.buyCondition}</p>
+            <p className="text-sm font-mono text-foreground">{parsedStrategy.params.buyCondition}</p>
           </div>
-          <div className="bg-red-500/10 rounded-lg p-3">
+          <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-xs text-muted-foreground mb-1">Sell When</p>
-            <p className="text-sm font-mono">{parsedStrategy.params.sellCondition}</p>
+            <p className="text-sm font-mono text-foreground">{parsedStrategy.params.sellCondition}</p>
           </div>
         </div>
       </div>
@@ -126,29 +119,29 @@ export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewPro
       {/* Risk Management */}
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-muted-foreground">Risk Management</h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {parsedStrategy.params.stopLoss && (
             <div>
               <p className="text-xs text-muted-foreground">Stop Loss</p>
-              <p className="text-sm font-medium">{parsedStrategy.params.stopLoss}%</p>
+              <p className="text-sm font-medium text-foreground">{parsedStrategy.params.stopLoss}%</p>
             </div>
           )}
           {parsedStrategy.params.takeProfit && (
             <div>
               <p className="text-xs text-muted-foreground">Take Profit</p>
-              <p className="text-sm font-medium">{parsedStrategy.params.takeProfit}%</p>
+              <p className="text-sm font-medium text-foreground">{parsedStrategy.params.takeProfit}%</p>
             </div>
           )}
           {parsedStrategy.params.maxPosition && (
             <div>
               <p className="text-xs text-muted-foreground">Max Position</p>
-              <p className="text-sm font-medium">{(parsedStrategy.params.maxPosition * 100).toFixed(0)}%</p>
+              <p className="text-sm font-medium text-foreground">{(parsedStrategy.params.maxPosition * 100).toFixed(0)}%</p>
             </div>
           )}
           {parsedStrategy.params.maxTrades && (
             <div>
               <p className="text-xs text-muted-foreground">Max Trades/Day</p>
-              <p className="text-sm font-medium">{parsedStrategy.params.maxTrades}</p>
+              <p className="text-sm font-medium text-foreground">{parsedStrategy.params.maxTrades}</p>
             </div>
           )}
         </div>
@@ -158,29 +151,20 @@ export function StrategyPreview({ tsdlCode, onViewStrategy }: StrategyPreviewPro
       {parsedStrategy.params.positionMethod && (
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-muted-foreground">Position Sizing</h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Method</p>
-              <p className="text-sm font-medium capitalize">{parsedStrategy.params.positionMethod}</p>
+              <p className="text-sm font-medium text-foreground capitalize">{parsedStrategy.params.positionMethod}</p>
             </div>
             {parsedStrategy.params.positionSize && (
               <div>
                 <p className="text-xs text-muted-foreground">Size</p>
-                <p className="text-sm font-medium">{parsedStrategy.params.positionSize}</p>
+                <p className="text-sm font-medium text-foreground">{parsedStrategy.params.positionSize}</p>
               </div>
             )}
           </div>
         </div>
       )}
-
-      {/* View Strategy Button */}
-      <Button
-        onClick={onViewStrategy}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-      >
-        View Strategy
-        <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
     </div>
   )
 }
