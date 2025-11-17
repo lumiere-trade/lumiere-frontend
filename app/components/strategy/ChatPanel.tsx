@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
 import { Sparkles, MessageSquare, Send, X } from "lucide-react"
 import { useCreateChat } from "@/contexts/CreateChatContext"
@@ -16,6 +16,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [thinkingText, setThinkingText] = useState("")
 
   const {
     messages,
@@ -28,6 +29,44 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     conversationState,
     error,
   } = useProphet()
+
+  // Typing animation for "Thinking..."
+  useEffect(() => {
+    if (!isSending) {
+      setThinkingText("")
+      return
+    }
+
+    const fullText = "Thinking..."
+    let currentIndex = 0
+    let isDeleting = false
+
+    const interval = setInterval(() => {
+      if (!isDeleting) {
+        // Typing
+        if (currentIndex <= fullText.length) {
+          setThinkingText(fullText.substring(0, currentIndex))
+          currentIndex++
+        } else {
+          // Pause before deleting
+          setTimeout(() => {
+            isDeleting = true
+          }, 500)
+        }
+      } else {
+        // Deleting
+        if (currentIndex > 0) {
+          currentIndex--
+          setThinkingText(fullText.substring(0, currentIndex))
+        } else {
+          // Start over
+          isDeleting = false
+        }
+      }
+    }, isDeleting ? 50 : 100)
+
+    return () => clearInterval(interval)
+  }, [isSending])
 
   // Auto-scroll to bottom when messages change - ONLY when there are messages
   useEffect(() => {
@@ -291,8 +330,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                   </div>
                   <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
-                    <p className="text-base text-muted-foreground">
-                      Prophet is thinking...
+                    <p className="text-base text-muted-foreground min-w-[80px]">
+                      {thinkingText}
                     </p>
                   </div>
                 </div>
