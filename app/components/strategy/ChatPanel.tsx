@@ -18,7 +18,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
-  const [strategyGenerated, setStrategyGenerated] = useState(false)
 
   const {
     messages,
@@ -118,7 +117,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const userMessage = inputValue.trim()
     setInputValue("")
-    setStrategyGenerated(false)
 
     log.info('Sending message to Prophet', {
       message: userMessage,
@@ -161,7 +159,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           })
 
           setGeneratedStrategy(mockStrategy)
-          setStrategyGenerated(true)
 
           // Scroll to show the View Strategy button
           setTimeout(() => {
@@ -180,7 +177,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const handleViewStrategy = () => {
     log.info('View Strategy button clicked - closing chat')
     collapseChat()
-    setStrategyGenerated(false)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -208,15 +204,10 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
     setInputValue("")
-    setStrategyGenerated(false)
   }
 
   // Filter out empty streaming messages
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
-  
-  // Check if last message contains TSDL
-  const lastMessage = visibleMessages[visibleMessages.length - 1]
-  const showViewButton = strategyGenerated && lastMessage?.role === 'assistant' && lastMessage?.content.includes('```tsdl')
 
   return (
     <div
@@ -329,7 +320,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 </div>
               )}
 
-              {visibleMessages.map((message, index) => (
+              {visibleMessages.map((message) => (
                 <div key={message.id}>
                   <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                     {message.role === "assistant" && (
@@ -351,8 +342,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     </div>
                   </div>
 
-                  {/* View Strategy button - shown below last message with TSDL */}
-                  {showViewButton && index === visibleMessages.length - 1 && (
+                  {/* View Strategy button - shown below message if it contains TSDL */}
+                  {message.role === "assistant" && message.content.includes('```tsdl') && (
                     <div className="flex gap-3 justify-start mt-3">
                       <div className="w-8 flex-shrink-0"></div>
                       <Button
