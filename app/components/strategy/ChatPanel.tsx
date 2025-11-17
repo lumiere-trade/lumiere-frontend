@@ -8,6 +8,7 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useProphet } from "@/hooks/use-prophet"
 import { StrategyPreview } from "./StrategyPreview"
+import { MarkdownMessage } from "./MarkdownMessage"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
@@ -32,7 +33,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     error,
   } = useProphet()
 
-  // Handle animation when chat opens/closes
   useEffect(() => {
     if (isChatExpanded) {
       setIsVisible(true)
@@ -41,7 +41,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }, [isChatExpanded])
 
-  // Typing animation for "Thinking..."
   useEffect(() => {
     if (!isSending) {
       setThinkingText("")
@@ -75,14 +74,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     return () => clearInterval(interval)
   }, [isSending])
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0 || isSending) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, isSending])
 
-  // Auto-scroll to bottom when chat opens
   useEffect(() => {
     if (isChatExpanded) {
       log.info('Chat panel opened', {
@@ -335,16 +332,22 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                               : "bg-background border border-primary/20"
                           }`}
                         >
-                          {contentWithoutTSDL && (
+                          {message.role === "user" ? (
                             <p className="text-base leading-relaxed whitespace-pre-line">
-                              {contentWithoutTSDL}
+                              {message.content}
                             </p>
-                          )}
-                          
-                          {tsdlCode && (
+                          ) : (
                             <>
-                              {contentWithoutTSDL && <div className="my-2 border-t border-primary/20" />}
-                              <StrategyPreview tsdlCode={tsdlCode} />
+                              {contentWithoutTSDL && (
+                                <MarkdownMessage content={contentWithoutTSDL} />
+                              )}
+                              
+                              {tsdlCode && (
+                                <>
+                                  {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
+                                  <StrategyPreview tsdlCode={tsdlCode} />
+                                </>
+                              )}
                             </>
                           )}
                         </div>
