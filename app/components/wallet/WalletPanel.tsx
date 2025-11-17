@@ -133,7 +133,7 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
             </Button>
           )}
         </SheetTrigger>
-        <SheetContent className="w-[320px] max-w-[75vw] sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[360px] 2xl:w-[500px] bg-background border-l border-primary/20 [&>button]:hidden z-[70]">
+        <SheetContent className="w-[320px] max-w-[75vw] sm:w-[320px] md:w-[340px] lg:w-[360px] xl:w-[360px] 2xl:w-[500px] bg-background border-l border-primary/20 [&>button]:hidden z-[80]">
           <SheetHeader className="border-b border-border pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
