@@ -29,9 +29,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     error,
   } = useProphet()
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change - ONLY when there are messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messages.length > 0 || isSending) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages, isSending])
 
   // Auto-scroll to bottom when chat opens
@@ -44,14 +46,16 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         plugins: pluginsLoaded,
       })
 
-      // Scroll to bottom after chat opens (small delay for render)
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }, 100)
+      // Scroll to bottom after chat opens (small delay for render) - ONLY if messages exist
+      if (messages.length > 0) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+        }, 100)
+      }
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded])
+  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded, messages.length])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) {
@@ -237,13 +241,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             </div>
 
             {/* Messages area - flex-1 takes remaining space */}
-            <div 
-              className="flex-1 px-6 py-4 space-y-4 overflow-y-auto min-h-0"
-              style={{
-                scrollbarWidth: visibleMessages.length === 0 && !isSending ? 'none' : 'auto',
-                msOverflowStyle: visibleMessages.length === 0 && !isSending ? 'none' : 'auto'
-              }}
-            >
+            <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto min-h-0">
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
