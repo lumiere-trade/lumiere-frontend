@@ -154,11 +154,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   return (
     <div
-      className="fixed z-60 transition-all duration-300"
+      className={`fixed z-60 transition-all duration-300 ${!isChatExpanded ? 'pointer-events-none' : ''}`}
       style={{
         left: isSidebarOpen ? '300px' : '32px',
         right: 0,
-        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
         top: '80px',
         bottom: '64px'
       }}
