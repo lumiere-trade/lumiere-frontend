@@ -37,7 +37,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       setIsVisible(true)
     } else {
       // Delay removal to allow fade-out animation
-      const timeout = setTimeout(() => setIsVisible(false), 300)
+      const timeout = setTimeout(() => setIsVisible(false), 200)
       return () => clearTimeout(timeout)
     }
   }, [isChatExpanded])
@@ -246,7 +246,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         {/* Chat history - above message box, with fade in/out animation */}
         {isVisible && (
           <div 
-            className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-300 ease-out ${
+            className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
               isChatExpanded 
                 ? 'opacity-100 translate-y-0' 
                 : 'opacity-0 translate-y-4'
