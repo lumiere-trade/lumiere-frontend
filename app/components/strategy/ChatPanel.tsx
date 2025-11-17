@@ -37,8 +37,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       setIsVisible(true)
     } else {
       // Delay removal to allow fade-out animation
-      const timeout = setTimeout(() => setIsVisible(false), 200)
-      return () => clearTimeout(timeout)
+      setIsVisible(false)
+      
     }
   }, [isChatExpanded])
 
