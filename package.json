@@ -27,5 +27,8 @@
     "url": "https://github.com/lumiere-trade/lumiere-frontend"
   },
   "author": "Lumiere Team",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "react-markdown": "^10.1.0"
+  }
 }
