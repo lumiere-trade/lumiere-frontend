@@ -232,8 +232,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         </div>
 
         {/* Chat history - above message box, only when expanded */}
-        {isChatExpanded {isChatExpanded && ({isChatExpanded && ( (
-          <div className="flex-1 flex flex-col bg-card animate-in fade-in slide-in-from-bottom-4 duration-300 border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0" onClick={(e) => e.stopPropagation()}>
+        {isChatExpanded && (
+          <div 
+            className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-4" 
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header - fixed size */}
             <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
               <div className="flex items-center gap-3">
