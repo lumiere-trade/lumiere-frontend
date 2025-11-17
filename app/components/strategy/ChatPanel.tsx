@@ -17,6 +17,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useCreateChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
+  const [isVisible, setIsVisible] = useState(false)
 
   const {
     messages,
@@ -29,6 +30,17 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     conversationState,
     error,
   } = useProphet()
+
+  // Handle animation when chat opens/closes
+  useEffect(() => {
+    if (isChatExpanded) {
+      setIsVisible(true)
+    } else {
+      // Delay removal to allow fade-out animation
+      const timeout = setTimeout(() => setIsVisible(false), 300)
+      return () => clearTimeout(timeout)
+    }
+  }, [isChatExpanded])
 
   // Typing animation for "Thinking..."
   useEffect(() => {
@@ -231,10 +243,14 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           </Button>
         </div>
 
-        {/* Chat history - above message box, only when expanded */}
-        {isChatExpanded && (
+        {/* Chat history - above message box, with fade in/out animation */}
+        {isVisible && (
           <div 
-            className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-300 ease-out animate-in fade-in slide-in-from-bottom-4" 
+            className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-300 ease-out ${
+              isChatExpanded 
+                ? 'opacity-100 translate-y-0' 
+                : 'opacity-0 translate-y-4'
+            }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header - fixed size */}
