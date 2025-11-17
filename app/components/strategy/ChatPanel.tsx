@@ -359,7 +359,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                           {/* Show strategy preview instead of raw TSDL */}
                           {tsdlCode && (
                             <>
-                              {contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />}
+                              {contentWithoutTSDL {contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />}{contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />} <div className="my-2 border-t border-primary/20" />}
                               <StrategyPreview tsdlCode={tsdlCode} />
                             </>
                           )}
