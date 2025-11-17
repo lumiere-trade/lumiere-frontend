@@ -170,7 +170,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     >
       <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
         {/* Message box - always visible at bottom */}
-        <div className="flex-shrink-0 relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl shadow-lg" onClick={(e) => e.stopPropagation()}>
           <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
           <textarea
             value={inputValue}
