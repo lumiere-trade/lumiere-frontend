@@ -54,23 +54,19 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const interval = setInterval(() => {
       if (!isDeleting) {
-        // Typing
         if (currentIndex <= fullText.length) {
           setThinkingText(fullText.substring(0, currentIndex))
           currentIndex++
         } else {
-          // Pause before deleting
           setTimeout(() => {
             isDeleting = true
           }, 500)
         }
       } else {
-        // Deleting
         if (currentIndex > 0) {
           currentIndex--
           setThinkingText(fullText.substring(0, currentIndex))
         } else {
-          // Start over
           isDeleting = false
         }
       }
@@ -79,7 +75,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     return () => clearInterval(interval)
   }, [isSending])
 
-  // Auto-scroll to bottom when messages change - ONLY when there are messages
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0 || isSending) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -96,7 +92,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         plugins: pluginsLoaded,
       })
 
-      // Scroll to bottom after chat opens (small delay for render) - ONLY if messages exist
       if (messages.length > 0) {
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -136,7 +131,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         responseLength: response.message.length,
       })
 
-      // Check if Prophet generated TSDL code
       if (response.message.includes('```tsdl')) {
         log.info('TSDL code detected in response - extracting strategy')
 
@@ -161,7 +155,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
           setGeneratedStrategy(mockStrategy)
 
-          // Scroll to show the strategy preview
           setTimeout(() => {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
           }, 100)
@@ -207,10 +200,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     setInputValue("")
   }
 
-  // Filter out empty streaming messages
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
   
-  // Extract TSDL code from message
   const extractTSDL = (content: string) => {
     const match = content.match(/```tsdl\n([\s\S]*?)```/)
     return match ? match[1] : null
@@ -229,7 +220,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       onClick={handleBackdropClick}
     >
       <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
-        {/* Message box - always visible at bottom */}
         <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl shadow-lg" onClick={(e) => e.stopPropagation()}>
           <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
           <textarea
@@ -252,17 +242,13 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           </Button>
         </div>
 
-        {/* Chat history - above message box, with fade in animation */}
         {isVisible && (
           <div 
             className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
-              isChatExpanded 
-                ? 'opacity-100 translate-y-0' 
-                : 'opacity-0 translate-y-4'
+              isChatExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header - fixed size */}
             <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
@@ -307,7 +293,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               </div>
             </div>
 
-            {/* Messages area - flex-1 takes remaining space */}
             <div className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}>
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
@@ -356,16 +341,14 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                             </p>
                           )}
                           
-                          {/* Show strategy preview instead of raw TSDL */}
                           {tsdlCode && (
                             <>
-                              {contentWithoutTSDL {contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />}{contentWithoutTSDL && <div className="my-4 border-t border-primary/20" />} <div className="my-2 border-t border-primary/20" />}
+                              {contentWithoutTSDL && <div className="my-2 border-t border-primary/20" />}
                               <StrategyPreview tsdlCode={tsdlCode} />
                             </>
                           )}
                         </div>
 
-                        {/* View Strategy button - shown below bubble if TSDL exists */}
                         {tsdlCode && (
                           <div className="mt-3">
                             <Button
@@ -406,7 +389,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 </div>
               )}
 
-              {/* Auto-scroll anchor */}
               <div ref={messagesEndRef} />
             </div>
           </div>
