@@ -43,7 +43,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         tsdlVersion,
         plugins: pluginsLoaded,
       })
-      
+
       // Scroll to bottom after chat opens (small delay for render)
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -158,14 +158,16 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       style={{
         left: isSidebarOpen ? '300px' : '0',
         right: 0,
-        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw',
+        top: '80px'
       }}
       onClick={handleBackdropClick}
     >
-      <div className="max-w-5xl mx-auto space-y-4 px-6 pb-20">
+      <div className="h-full flex flex-col max-w-5xl mx-auto px-6 pb-6 gap-4">
         {isChatExpanded && (
-          <div className="bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-primary/20 px-6 py-4">
+          <div className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0" onClick={(e) => e.stopPropagation()}>
+            {/* Header - fixed size */}
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
                   <Sparkles className="h-5 w-5 text-primary" />
@@ -209,7 +211,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               </div>
             </div>
 
-            <div className="max-h-[calc(100vh-80px)] px-6 py-4 space-y-4 overflow-y-auto">
+            {/* Messages area - flex-1 takes remaining space */}
+            <div className="flex-1 px-6 py-4 space-y-4 overflow-y-auto min-h-0">
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
@@ -282,7 +285,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           </div>
         )}
 
-        <div className="relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+        {/* Message box - fixed size */}
+        <div className="flex-shrink-0 relative pointer-events-auto" onClick={(e) => e.stopPropagation()}>
           <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
           <textarea
             value={inputValue}
