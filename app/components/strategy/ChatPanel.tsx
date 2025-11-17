@@ -218,13 +218,13 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             onKeyDown={handleKeyDown}
             placeholder="How can I help you today?"
             rows={3}
-            disabled={isSending || !isHealthy}
+            disabled={!isHealthy}
             className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
           />
           <Button
             size="icon"
             onClick={handleSend}
-            disabled={!inputValue.trim() || isSending || !isHealthy}
+            disabled={!inputValue.trim() || !isHealthy}
             className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
           >
             <Send className="h-4 w-4" />
