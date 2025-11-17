@@ -329,7 +329,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0">
                     <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                   </div>
-                  <div className="bg-primary/10 border border-primary/20 rounded-2xl px-4 py-3">
+                  <div className="px-4 py-3">
                     <p className="text-base text-muted-foreground min-w-[80px]">
                       {thinkingText}
                     </p>
