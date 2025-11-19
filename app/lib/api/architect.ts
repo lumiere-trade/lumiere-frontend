@@ -5,6 +5,7 @@
  */
 
 import { get, post, patch, del } from './client';
+import { logger, LogCategory } from '@/lib/debug';
 
 // ============================================================================
 // TYPES
@@ -93,6 +94,7 @@ export interface StrategyListResponse {
 // ============================================================================
 
 const ARCHITECT_PREFIX = '/api/architect';
+const LOG_CATEGORY = LogCategory.API;
 
 /**
  * Create a new strategy
@@ -100,7 +102,16 @@ const ARCHITECT_PREFIX = '/api/architect';
 export const createStrategy = async (
   data: CreateStrategyRequest
 ): Promise<{ strategy_id: string; created_at: string }> => {
-  return post(`${ARCHITECT_PREFIX}/strategies`, data);
+  logger.info(LOG_CATEGORY, 'Creating strategy', { name: data.name, plugins: data.base_plugins });
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/strategies`, data);
+    logger.info(LOG_CATEGORY, 'Strategy created successfully', { strategy_id: result.strategy_id });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to create strategy', { error, name: data.name });
+    throw error;
+  }
 };
 
 /**
@@ -111,24 +122,42 @@ export const getStrategies = async (params?: {
   limit?: number;
   offset?: number;
 }): Promise<StrategyListResponse> => {
-  const query = new URLSearchParams();
-  if (params?.status) query.append('status', params.status);
-  if (params?.limit) query.append('limit', params.limit.toString());
-  if (params?.offset) query.append('offset', params.offset.toString());
+  logger.debug(LOG_CATEGORY, 'Fetching strategies', params);
 
-  const queryString = query.toString();
-  const endpoint = queryString
-    ? `${ARCHITECT_PREFIX}/strategies?${queryString}`
-    : `${ARCHITECT_PREFIX}/strategies`;
+  try {
+    const query = new URLSearchParams();
+    if (params?.status) query.append('status', params.status);
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.offset) query.append('offset', params.offset.toString());
 
-  return get(endpoint);
+    const queryString = query.toString();
+    const endpoint = queryString
+      ? `${ARCHITECT_PREFIX}/strategies?${queryString}`
+      : `${ARCHITECT_PREFIX}/strategies`;
+
+    const result = await get(endpoint);
+    logger.info(LOG_CATEGORY, 'Strategies fetched', { count: result.total, params });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch strategies', { error, params });
+    throw error;
+  }
 };
 
 /**
  * Get single strategy by ID
  */
 export const getStrategy = async (strategyId: string): Promise<Strategy> => {
-  return get(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
+  logger.debug(LOG_CATEGORY, 'Fetching strategy', { strategyId });
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
+    logger.info(LOG_CATEGORY, 'Strategy fetched', { strategyId, name: result.name });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -138,14 +167,31 @@ export const updateStrategy = async (
   strategyId: string,
   updates: UpdateStrategyRequest
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  return patch(`${ARCHITECT_PREFIX}/strategies/${strategyId}`, updates);
+  logger.info(LOG_CATEGORY, 'Updating strategy', { strategyId, updates });
+
+  try {
+    const result = await patch(`${ARCHITECT_PREFIX}/strategies/${strategyId}`, updates);
+    logger.info(LOG_CATEGORY, 'Strategy updated successfully', { strategyId });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to update strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
  * Delete strategy
  */
 export const deleteStrategy = async (strategyId: string): Promise<void> => {
-  return del(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
+  logger.info(LOG_CATEGORY, 'Deleting strategy', { strategyId });
+
+  try {
+    await del(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
+    logger.info(LOG_CATEGORY, 'Strategy deleted successfully', { strategyId });
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to delete strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -154,7 +200,16 @@ export const deleteStrategy = async (strategyId: string): Promise<void> => {
 export const activateStrategy = async (
   strategyId: string
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/activate`);
+  logger.info(LOG_CATEGORY, 'Activating strategy', { strategyId });
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/activate`);
+    logger.info(LOG_CATEGORY, 'Strategy activated successfully', { strategyId });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to activate strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -163,7 +218,16 @@ export const activateStrategy = async (
 export const pauseStrategy = async (
   strategyId: string
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/pause`);
+  logger.info(LOG_CATEGORY, 'Pausing strategy', { strategyId });
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/pause`);
+    logger.info(LOG_CATEGORY, 'Strategy paused successfully', { strategyId });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to pause strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -172,7 +236,16 @@ export const pauseStrategy = async (
 export const archiveStrategy = async (
   strategyId: string
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/archive`);
+  logger.info(LOG_CATEGORY, 'Archiving strategy', { strategyId });
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/archive`);
+    logger.info(LOG_CATEGORY, 'Strategy archived successfully', { strategyId });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to archive strategy', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -181,7 +254,16 @@ export const archiveStrategy = async (
 export const searchStrategiesByPlugin = async (
   plugin: string
 ): Promise<StrategyListResponse> => {
-  return get(`${ARCHITECT_PREFIX}/strategies?plugin=${plugin}`);
+  logger.debug(LOG_CATEGORY, 'Searching strategies by plugin', { plugin });
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/strategies?plugin=${plugin}`);
+    logger.info(LOG_CATEGORY, 'Plugin search completed', { plugin, count: result.total });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to search strategies by plugin', { error, plugin });
+    throw error;
+  }
 };
 
 // ============================================================================
@@ -194,7 +276,16 @@ export const searchStrategiesByPlugin = async (
 export const createConversation = async (
   data: CreateConversationRequest
 ): Promise<{ conversation_id: string; created_at: string }> => {
-  return post(`${ARCHITECT_PREFIX}/conversations`, data);
+  logger.info(LOG_CATEGORY, 'Creating conversation', { strategy_id: data.strategy_id });
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/conversations`, data);
+    logger.info(LOG_CATEGORY, 'Conversation created successfully', { conversation_id: result.conversation_id });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to create conversation', { error, strategy_id: data.strategy_id });
+    throw error;
+  }
 };
 
 /**
@@ -203,7 +294,16 @@ export const createConversation = async (
 export const getConversation = async (
   conversationId: string
 ): Promise<Conversation> => {
-  return get(`${ARCHITECT_PREFIX}/conversations/${conversationId}`);
+  logger.debug(LOG_CATEGORY, 'Fetching conversation', { conversationId });
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/conversations/${conversationId}`);
+    logger.info(LOG_CATEGORY, 'Conversation fetched', { conversationId, messageCount: result.message_count });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch conversation', { error, conversationId });
+    throw error;
+  }
 };
 
 /**
@@ -212,7 +312,16 @@ export const getConversation = async (
 export const getStrategyConversations = async (
   strategyId: string
 ): Promise<{ conversations: Conversation[] }> => {
-  return get(`${ARCHITECT_PREFIX}/strategies/${strategyId}/conversations`);
+  logger.debug(LOG_CATEGORY, 'Fetching strategy conversations', { strategyId });
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/strategies/${strategyId}/conversations`);
+    logger.info(LOG_CATEGORY, 'Strategy conversations fetched', { strategyId, count: result.conversations.length });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch strategy conversations', { error, strategyId });
+    throw error;
+  }
 };
 
 /**
@@ -222,10 +331,19 @@ export const addMessage = async (
   conversationId: string,
   message: AddMessageRequest
 ): Promise<{ message_id: string; timestamp: string }> => {
-  return post(
-    `${ARCHITECT_PREFIX}/conversations/${conversationId}/messages`,
-    message
-  );
+  logger.debug(LOG_CATEGORY, 'Adding message to conversation', { conversationId, role: message.role });
+
+  try {
+    const result = await post(
+      `${ARCHITECT_PREFIX}/conversations/${conversationId}/messages`,
+      message
+    );
+    logger.info(LOG_CATEGORY, 'Message added successfully', { conversationId, message_id: result.message_id });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to add message', { error, conversationId });
+    throw error;
+  }
 };
 
 /**
@@ -238,5 +356,14 @@ export const getUserAnalytics = async (): Promise<{
   avg_messages_per_conversation: number;
   most_used_plugins: Array<{ plugin: string; count: number }>;
 }> => {
-  return get(`${ARCHITECT_PREFIX}/analytics/me`);
+  logger.debug(LOG_CATEGORY, 'Fetching user analytics');
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/analytics/me`);
+    logger.info(LOG_CATEGORY, 'User analytics fetched', { totalStrategies: result.total_strategies });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch user analytics', { error });
+    throw error;
+  }
 };
