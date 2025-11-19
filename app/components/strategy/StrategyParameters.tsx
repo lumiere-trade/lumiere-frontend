@@ -8,6 +8,8 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
+import { useCreateStrategy } from "@/hooks/mutations/use-architect-mutations"
+import { toast } from "sonner"
 import {
   Select,
   SelectContent,
@@ -28,6 +30,7 @@ interface StrategyParametersProps {
 export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategyMetadata } = useCreateChat()
+  const createStrategyMutation = useCreateStrategy()
 
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
@@ -79,17 +82,54 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     setParamValues(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleSave = () => {
-    log.info('Strategy saved', {
-      name,
-      paramValues
-    })
-    alert('Strategy saved! (Mock implementation)')
+  const handleSave = async () => {
+    try {
+      log.info('Saving strategy to Architect', {
+        name,
+        paramCount: Object.keys(paramValues).length
+      })
+
+      // Extract base plugins from metadata
+      const basePlugins: string[] = []
+      if (strategyMetadata?.indicators && strategyMetadata.indicators.length > 0) {
+        basePlugins.push('indicator_based')
+      }
+
+      // Prepare parameters object
+      const parameters = {
+        indicators: strategyMetadata?.indicators || [],
+        asset: strategyMetadata?.asset || {},
+        exit_conditions: strategyMetadata?.exit_conditions || {},
+        risk_management: strategyMetadata?.risk_management || {},
+        position_sizing: strategyMetadata?.position_sizing || {},
+        // Include current parameter values
+        values: paramValues
+      }
+
+      // Create strategy via Architect API
+      await createStrategyMutation.mutateAsync({
+        name: name || strategy.name,
+        description: `AI-generated ${strategy.type} strategy`,
+        tsdl_code: strategy.tsdl_code,
+        version: '1.0.0',
+        base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
+        parameters
+      })
+
+      log.info('Strategy saved successfully', {
+        name: name || strategy.name
+      })
+
+      // Success is handled by mutation (toast in use-architect-mutations)
+    } catch (error) {
+      log.error('Failed to save strategy', { error })
+      // Error is handled by mutation
+    }
   }
 
   const handleBacktest = () => {
     log.info('Backtest started', { name })
-    alert('Starting backtest... (Mock implementation)')
+    toast.info('Backtest feature coming soon!')
   }
 
   const renderParamField = (
@@ -215,10 +255,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
           <Button
             size="sm"
             onClick={handleSave}
+            disabled={createStrategyMutation.isPending}
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            Save Strategy
+            {createStrategyMutation.isPending ? 'Saving...' : 'Save Strategy'}
           </Button>
         </div>
       </div>
