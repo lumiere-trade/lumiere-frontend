@@ -21,10 +21,9 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
-  
-  // Fetch real strategies from Architect
+
+  // Fetch all strategies (draft, active, paused) - no status filter
   const { strategies, isLoading, deleteStrategy } = useStrategies({
-    status: 'active',
     limit: 50
   })
 
