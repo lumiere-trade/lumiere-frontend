@@ -1,10 +1,14 @@
 "use client"
 
+import { useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
+import { getStrategy } from "@/lib/api/architect"
+import { toast } from "sonner"
 
 const examplePrompts = [
   "Create a momentum strategy for SOL/USD",
@@ -15,7 +19,46 @@ const examplePrompts = [
 
 export default function CreatePage() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
-  const { isChatExpanded, generatedStrategy, collapseChat, expandChat, setInputValue } = useCreateChat()
+  const searchParams = useSearchParams()
+  const strategyId = searchParams.get('strategy')
+  
+  const { 
+    isChatExpanded, 
+    generatedStrategy, 
+    collapseChat, 
+    expandChat, 
+    setInputValue,
+    setGeneratedStrategy 
+  } = useCreateChat()
+
+  // Load strategy on mount if strategyId is present
+  useEffect(() => {
+    if (strategyId && !generatedStrategy) {
+      loadStrategy(strategyId)
+    }
+  }, [strategyId])
+
+  const loadStrategy = async (id: string) => {
+    try {
+      log('Loading strategy', { strategyId: id })
+      const strategy = await getStrategy(id)
+      
+      // Set the loaded strategy in context
+      setGeneratedStrategy({
+        name: strategy.name,
+        description: strategy.description,
+        tsdl_code: strategy.tsdl_code,
+        metadata: strategy.parameters
+      })
+      
+      log('Strategy loaded successfully', { strategy })
+      toast.success('Strategy loaded')
+    } catch (error) {
+      log('Failed to load strategy', { error })
+      toast.error('Failed to load strategy')
+      console.error('Load strategy error:', error)
+    }
+  }
 
   const handlePageClick = () => {
     if (isChatExpanded) {
@@ -56,9 +99,11 @@ export default function CreatePage() {
                     <Sparkles className="h-7 w-7 text-primary" />
                   </div>
                 </div>
+
                 <h1 className="text-3xl font-bold text-foreground">
                   Ready to create your strategy?
                 </h1>
+
                 <p className="text-lg text-muted-foreground">
                   Describe your trading idea in natural language
                 </p>
