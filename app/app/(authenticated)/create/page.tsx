@@ -36,7 +36,8 @@ export default function CreatePage() {
     if (strategyId && !generatedStrategy) {
       loadStrategy(strategyId)
     }
-  }, [strategyId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [strategyId]) // Only depend on strategyId, not generatedStrategy
 
   const loadStrategy = async (id: string) => {
     try {
