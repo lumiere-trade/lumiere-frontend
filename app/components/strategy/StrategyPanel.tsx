@@ -12,19 +12,31 @@ import {
   Pencil,
   Trash2
 } from "lucide-react"
+import { useStrategies } from "@/hooks/use-strategies"
 
 interface StrategyPanelProps {
   isOpen: boolean
   onToggle: () => void
 }
 
-const mockStrategies = [
-  { id: 1, name: "SOL Momentum", status: "Active" },
-  { id: 2, name: "RSI Reversion", status: "Backtesting" },
-]
-
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
+  
+  // Fetch real strategies from Architect
+  const { strategies, isLoading, deleteStrategy } = useStrategies({
+    status: 'active',
+    limit: 50
+  })
+
+  const handleDelete = async (strategyId: string, strategyName: string) => {
+    if (confirm(`Delete "${strategyName}"? This cannot be undone.`)) {
+      try {
+        await deleteStrategy(strategyId)
+      } catch (error) {
+        console.error('Delete failed:', error)
+      }
+    }
+  }
 
   return (
     <>
@@ -59,7 +71,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           {/* New Strategy Section with Close Button */}
           <div className="border-b border-primary/20">
             <div className="flex items-center justify-between px-4 py-4">
-              <Link 
+              <Link
                 href="/create"
                 className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
               >
@@ -89,6 +101,11 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 <h3 className="text-base text-primary whitespace-nowrap">
                   Strategies
                 </h3>
+                {!isLoading && strategies.length > 0 && (
+                  <span className="text-xs text-muted-foreground">
+                    ({strategies.length})
+                  </span>
+                )}
               </div>
               {strategiesExpanded ? (
                 <ChevronDown className="h-4 w-4 text-primary shrink-0" />
@@ -99,43 +116,74 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
             {strategiesExpanded && (
               <div className="px-4 pb-4 space-y-2">
-                {mockStrategies.map((strategy) => (
-                  <div
-                    key={strategy.id}
-                    className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
-                  >
-                    <div className="text-base font-medium text-foreground truncate">
-                      {strategy.name}
-                    </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-sm text-muted-foreground">
-                        {strategy.status}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            console.log('Edit strategy', strategy.id)
-                          }}
-                          className="p-1 rounded hover:bg-primary/10 transition-colors"
-                          title="Edit strategy"
-                        >
-                          <Pencil className="h-4 w-4 text-primary" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            console.log('Delete strategy', strategy.id)
-                          }}
-                          className="p-1 rounded hover:bg-primary/10 transition-colors"
-                          title="Delete strategy"
-                        >
-                          <Trash2 className="h-4 w-4 text-primary" />
-                        </button>
+                {isLoading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="w-full p-3 rounded-lg border border-primary/20 bg-card animate-pulse"
+                      >
+                        <div className="h-4 bg-muted rounded w-2/3 mb-2" />
+                        <div className="h-3 bg-muted rounded w-1/3" />
+                      </div>
+                    ))}
+                  </>
+                ) : strategies.length === 0 ? (
+                  // Empty state
+                  <div className="text-center py-8 px-2">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      No strategies yet
+                    </p>
+                    <Link
+                      href="/create"
+                      className="inline-flex items-center gap-2 text-sm text-primary hover:opacity-80 transition-opacity"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create your first strategy
+                    </Link>
+                  </div>
+                ) : (
+                  // Strategy list
+                  strategies.map((strategy) => (
+                    <div
+                      key={strategy.id}
+                      className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                    >
+                      <div className="text-base font-medium text-foreground truncate">
+                        {strategy.name}
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-sm text-muted-foreground capitalize">
+                          {strategy.status}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              // TODO: Navigate to edit page
+                              console.log('Edit strategy', strategy.id)
+                            }}
+                            className="p-1 rounded hover:bg-primary/10 transition-colors"
+                            title="Edit strategy"
+                          >
+                            <Pencil className="h-4 w-4 text-primary" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(strategy.id, strategy.name)
+                            }}
+                            className="p-1 rounded hover:bg-primary/10 transition-colors"
+                            title="Delete strategy"
+                          >
+                            <Trash2 className="h-4 w-4 text-primary" />
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
           </div>
