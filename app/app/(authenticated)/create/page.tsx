@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { Suspense, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
@@ -17,7 +17,7 @@ const examplePrompts = [
   "Copy a successful whale wallet's trades",
 ]
 
-export default function CreatePage() {
+function CreatePageContent() {
   const log = useLogger('CreatePage', LogCategory.COMPONENT)
   const searchParams = useSearchParams()
   const strategyId = searchParams.get('strategy')
@@ -37,7 +37,7 @@ export default function CreatePage() {
       loadStrategy(strategyId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [strategyId]) // Only depend on strategyId, not generatedStrategy
+  }, [strategyId])
 
   const loadStrategy = async (id: string) => {
     try {
@@ -129,5 +129,13 @@ export default function CreatePage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function CreatePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <CreatePageContent />
+    </Suspense>
   )
 }
