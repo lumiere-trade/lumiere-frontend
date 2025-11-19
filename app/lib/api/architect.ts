@@ -1,10 +1,10 @@
 /**
  * Architect API Client
  * Strategy and Conversation management
- * Communicates directly with Architect microservice
+ * NOW: Communicates through Pourtier proxy (/api/architect/*)
  */
 
-import architectClient from './architect-client';
+import { get, post, patch, del } from './client';
 
 // ============================================================================
 // TYPES
@@ -89,8 +89,10 @@ export interface StrategyListResponse {
 }
 
 // ============================================================================
-// STRATEGY API
+// STRATEGY API (through Pourtier proxy)
 // ============================================================================
+
+const ARCHITECT_PREFIX = '/api/architect';
 
 /**
  * Create a new strategy
@@ -98,7 +100,7 @@ export interface StrategyListResponse {
 export const createStrategy = async (
   data: CreateStrategyRequest
 ): Promise<{ strategy_id: string; created_at: string }> => {
-  return architectClient.post('/strategies', data);
+  return post(`${ARCHITECT_PREFIX}/strategies`, data);
 };
 
 /**
@@ -113,18 +115,20 @@ export const getStrategies = async (params?: {
   if (params?.status) query.append('status', params.status);
   if (params?.limit) query.append('limit', params.limit.toString());
   if (params?.offset) query.append('offset', params.offset.toString());
-  
+
   const queryString = query.toString();
-  const endpoint = queryString ? `/strategies?${queryString}` : '/strategies';
-  
-  return architectClient.get(endpoint);
+  const endpoint = queryString
+    ? `${ARCHITECT_PREFIX}/strategies?${queryString}`
+    : `${ARCHITECT_PREFIX}/strategies`;
+
+  return get(endpoint);
 };
 
 /**
  * Get single strategy by ID
  */
 export const getStrategy = async (strategyId: string): Promise<Strategy> => {
-  return architectClient.get(`/strategies/${strategyId}`);
+  return get(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
 };
 
 /**
@@ -134,14 +138,41 @@ export const updateStrategy = async (
   strategyId: string,
   updates: UpdateStrategyRequest
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  return architectClient.patch(`/strategies/${strategyId}`, updates);
+  return patch(`${ARCHITECT_PREFIX}/strategies/${strategyId}`, updates);
 };
 
 /**
  * Delete strategy
  */
 export const deleteStrategy = async (strategyId: string): Promise<void> => {
-  return architectClient.del(`/strategies/${strategyId}`);
+  return del(`${ARCHITECT_PREFIX}/strategies/${strategyId}`);
+};
+
+/**
+ * Activate strategy
+ */
+export const activateStrategy = async (
+  strategyId: string
+): Promise<{ strategy_id: string; updated_at: string }> => {
+  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/activate`);
+};
+
+/**
+ * Pause strategy
+ */
+export const pauseStrategy = async (
+  strategyId: string
+): Promise<{ strategy_id: string; updated_at: string }> => {
+  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/pause`);
+};
+
+/**
+ * Archive strategy
+ */
+export const archiveStrategy = async (
+  strategyId: string
+): Promise<{ strategy_id: string; updated_at: string }> => {
+  return post(`${ARCHITECT_PREFIX}/strategies/${strategyId}/archive`);
 };
 
 /**
@@ -150,11 +181,11 @@ export const deleteStrategy = async (strategyId: string): Promise<void> => {
 export const searchStrategiesByPlugin = async (
   plugin: string
 ): Promise<StrategyListResponse> => {
-  return architectClient.get(`/strategies?plugin=${plugin}`);
+  return get(`${ARCHITECT_PREFIX}/strategies?plugin=${plugin}`);
 };
 
 // ============================================================================
-// CONVERSATION API
+// CONVERSATION API (through Pourtier proxy)
 // ============================================================================
 
 /**
@@ -163,7 +194,7 @@ export const searchStrategiesByPlugin = async (
 export const createConversation = async (
   data: CreateConversationRequest
 ): Promise<{ conversation_id: string; created_at: string }> => {
-  return architectClient.post('/conversations', data);
+  return post(`${ARCHITECT_PREFIX}/conversations`, data);
 };
 
 /**
@@ -172,7 +203,7 @@ export const createConversation = async (
 export const getConversation = async (
   conversationId: string
 ): Promise<Conversation> => {
-  return architectClient.get(`/conversations/${conversationId}`);
+  return get(`${ARCHITECT_PREFIX}/conversations/${conversationId}`);
 };
 
 /**
@@ -181,7 +212,7 @@ export const getConversation = async (
 export const getStrategyConversations = async (
   strategyId: string
 ): Promise<{ conversations: Conversation[] }> => {
-  return architectClient.get(`/strategies/${strategyId}/conversations`);
+  return get(`${ARCHITECT_PREFIX}/strategies/${strategyId}/conversations`);
 };
 
 /**
@@ -191,7 +222,10 @@ export const addMessage = async (
   conversationId: string,
   message: AddMessageRequest
 ): Promise<{ message_id: string; timestamp: string }> => {
-  return architectClient.post(`/conversations/${conversationId}/messages`, message);
+  return post(
+    `${ARCHITECT_PREFIX}/conversations/${conversationId}/messages`,
+    message
+  );
 };
 
 /**
@@ -204,5 +238,5 @@ export const getUserAnalytics = async (): Promise<{
   avg_messages_per_conversation: number;
   most_used_plugins: Array<{ plugin: string; count: number }>;
 }> => {
-  return architectClient.get('/analytics/me');
+  return get(`${ARCHITECT_PREFIX}/analytics/me`);
 };
