@@ -21,18 +21,25 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   // Fetch all strategies (draft, active, paused) - no status filter
-  const { strategies, isLoading, deleteStrategy } = useStrategies({
+  const { strategies, isLoading, deleteStrategy, isDeleting } = useStrategies({
     limit: 50
   })
 
   const handleDelete = async (strategyId: string, strategyName: string) => {
+    // Prevent double-click
+    if (deletingId || isDeleting) return
+    
     if (confirm(`Delete "${strategyName}"? This cannot be undone.`)) {
+      setDeletingId(strategyId)
       try {
         await deleteStrategy(strategyId)
       } catch (error) {
         console.error('Delete failed:', error)
+      } finally {
+        setDeletingId(null)
       }
     }
   }
@@ -144,44 +151,50 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                   </div>
                 ) : (
                   // Strategy list
-                  strategies.map((strategy) => (
-                    <div
-                      key={strategy.id}
-                      className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
-                    >
-                      <div className="text-base font-medium text-foreground truncate">
-                        {strategy.name}
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-sm text-muted-foreground capitalize">
-                          {strategy.status}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              // TODO: Navigate to edit page
-                              console.log('Edit strategy', strategy.id)
-                            }}
-                            className="p-1 rounded hover:bg-primary/10 transition-colors"
-                            title="Edit strategy"
-                          >
-                            <Pencil className="h-4 w-4 text-primary" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(strategy.id, strategy.name)
-                            }}
-                            className="p-1 rounded hover:bg-primary/10 transition-colors"
-                            title="Delete strategy"
-                          >
-                            <Trash2 className="h-4 w-4 text-primary" />
-                          </button>
+                  strategies.map((strategy) => {
+                    const isThisDeleting = deletingId === strategy.id
+                    
+                    return (
+                      <div
+                        key={strategy.id}
+                        className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                      >
+                        <div className="text-base font-medium text-foreground truncate">
+                          {strategy.name}
+                        </div>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-sm text-muted-foreground capitalize">
+                            {strategy.status}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                // TODO: Navigate to edit page
+                                console.log('Edit strategy', strategy.id)
+                              }}
+                              disabled={isDeleting}
+                              className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Edit strategy"
+                            >
+                              <Pencil className="h-4 w-4 text-primary" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(strategy.id, strategy.name)
+                              }}
+                              disabled={isDeleting || isThisDeleting}
+                              className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={isThisDeleting ? "Deleting..." : "Delete strategy"}
+                            >
+                              <Trash2 className={`h-4 w-4 text-primary ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
               </div>
             )}
