@@ -50,7 +50,6 @@ export function clearAuthToken(): void {
 
 function getHeaders(additionalHeaders?: HeadersInit): HeadersInit {
   const token = getAuthToken()
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   }
@@ -106,7 +105,19 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new ApiError(errorMessage, response.status, errorCode)
   }
 
-  return response.json()
+  // Handle 204 No Content - no body to parse
+  if (response.status === 204) {
+    return undefined as T
+  }
+
+  // Check if response has content
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return response.json()
+  }
+
+  // For non-JSON responses with content, return as-is
+  return undefined as T
 }
 
 export async function apiRequest<T>(
@@ -136,6 +147,16 @@ export async function post<T>(
 ): Promise<T> {
   return apiRequest<T>(endpoint, {
     method: 'POST',
+    body: data ? JSON.stringify(data) : undefined,
+  })
+}
+
+export async function patch<T>(
+  endpoint: string,
+  data?: unknown
+): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'PATCH',
     body: data ? JSON.stringify(data) : undefined,
   })
 }
