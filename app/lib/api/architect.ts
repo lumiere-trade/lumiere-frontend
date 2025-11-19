@@ -1,9 +1,10 @@
 /**
  * Architect API Client
  * Strategy and Conversation management
+ * Communicates directly with Architect microservice
  */
 
-import apiClient from './client';
+import architectClient from './architect-client';
 
 // ============================================================================
 // TYPES
@@ -97,8 +98,7 @@ export interface StrategyListResponse {
 export const createStrategy = async (
   data: CreateStrategyRequest
 ): Promise<{ strategy_id: string; created_at: string }> => {
-  const response = await apiClient.post('/api/v1/strategies', data);
-  return response.data;
+  return architectClient.post('/strategies', data);
 };
 
 /**
@@ -109,16 +109,22 @@ export const getStrategies = async (params?: {
   limit?: number;
   offset?: number;
 }): Promise<StrategyListResponse> => {
-  const response = await apiClient.get('/api/v1/strategies', { params });
-  return response.data;
+  const query = new URLSearchParams();
+  if (params?.status) query.append('status', params.status);
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (params?.offset) query.append('offset', params.offset.toString());
+  
+  const queryString = query.toString();
+  const endpoint = queryString ? `/strategies?${queryString}` : '/strategies';
+  
+  return architectClient.get(endpoint);
 };
 
 /**
  * Get single strategy by ID
  */
 export const getStrategy = async (strategyId: string): Promise<Strategy> => {
-  const response = await apiClient.get(`/api/v1/strategies/${strategyId}`);
-  return response.data;
+  return architectClient.get(`/strategies/${strategyId}`);
 };
 
 /**
@@ -128,18 +134,14 @@ export const updateStrategy = async (
   strategyId: string,
   updates: UpdateStrategyRequest
 ): Promise<{ strategy_id: string; updated_at: string }> => {
-  const response = await apiClient.patch(
-    `/api/v1/strategies/${strategyId}`,
-    updates
-  );
-  return response.data;
+  return architectClient.patch(`/strategies/${strategyId}`, updates);
 };
 
 /**
  * Delete strategy
  */
 export const deleteStrategy = async (strategyId: string): Promise<void> => {
-  await apiClient.delete(`/api/v1/strategies/${strategyId}`);
+  return architectClient.del(`/strategies/${strategyId}`);
 };
 
 /**
@@ -148,10 +150,7 @@ export const deleteStrategy = async (strategyId: string): Promise<void> => {
 export const searchStrategiesByPlugin = async (
   plugin: string
 ): Promise<StrategyListResponse> => {
-  const response = await apiClient.get('/api/v1/strategies', {
-    params: { plugin },
-  });
-  return response.data;
+  return architectClient.get(`/strategies?plugin=${plugin}`);
 };
 
 // ============================================================================
@@ -164,8 +163,7 @@ export const searchStrategiesByPlugin = async (
 export const createConversation = async (
   data: CreateConversationRequest
 ): Promise<{ conversation_id: string; created_at: string }> => {
-  const response = await apiClient.post('/api/v1/conversations', data);
-  return response.data;
+  return architectClient.post('/conversations', data);
 };
 
 /**
@@ -174,8 +172,7 @@ export const createConversation = async (
 export const getConversation = async (
   conversationId: string
 ): Promise<Conversation> => {
-  const response = await apiClient.get(`/api/v1/conversations/${conversationId}`);
-  return response.data;
+  return architectClient.get(`/conversations/${conversationId}`);
 };
 
 /**
@@ -184,10 +181,7 @@ export const getConversation = async (
 export const getStrategyConversations = async (
   strategyId: string
 ): Promise<{ conversations: Conversation[] }> => {
-  const response = await apiClient.get(
-    `/api/v1/strategies/${strategyId}/conversations`
-  );
-  return response.data;
+  return architectClient.get(`/strategies/${strategyId}/conversations`);
 };
 
 /**
@@ -197,11 +191,7 @@ export const addMessage = async (
   conversationId: string,
   message: AddMessageRequest
 ): Promise<{ message_id: string; timestamp: string }> => {
-  const response = await apiClient.post(
-    `/api/v1/conversations/${conversationId}/messages`,
-    message
-  );
-  return response.data;
+  return architectClient.post(`/conversations/${conversationId}/messages`, message);
 };
 
 /**
@@ -214,6 +204,5 @@ export const getUserAnalytics = async (): Promise<{
   avg_messages_per_conversation: number;
   most_used_plugins: Array<{ plugin: string; count: number }>;
 }> => {
-  const response = await apiClient.get('/api/v1/users/me/analytics');
-  return response.data;
+  return architectClient.get('/analytics/me');
 };
