@@ -30,9 +30,9 @@ export const useCreateStrategy = () => {
 
   return useMutation({
     mutationFn: (data: CreateStrategyRequest) => createStrategy(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
+      await queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
       toast.success('Strategy created successfully!');
     },
     onError: (error: any) => {
@@ -57,9 +57,9 @@ export const useUpdateStrategy = () => {
       strategyId: string;
       updates: UpdateStrategyRequest;
     }) => updateStrategy(strategyId, updates),
-    onSuccess: (_, { strategyId }) => {
-      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      queryClient.invalidateQueries({ queryKey: architectKeys.strategyDetail(strategyId) });
+    onSuccess: async (_, { strategyId }) => {
+      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
+      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyDetail(strategyId) });
       toast.success('Strategy updated successfully!');
     },
     onError: (error: any) => {
@@ -78,9 +78,13 @@ export const useDeleteStrategy = () => {
 
   return useMutation({
     mutationFn: (strategyId: string) => deleteStrategy(strategyId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
+    onSuccess: async () => {
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ 
+        queryKey: architectKeys.strategyLists(),
+        refetchType: 'active' 
+      });
+      await queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
       toast.success('Strategy deleted successfully!');
     },
     onError: (error: any) => {
@@ -103,8 +107,8 @@ export const useCreateConversation = () => {
 
   return useMutation({
     mutationFn: (data: CreateConversationRequest) => createConversation(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
         queryKey: architectKeys.strategyConversations(variables.strategy_id),
       });
       toast.success('Conversation saved!');
@@ -131,8 +135,8 @@ export const useAddMessage = () => {
       conversationId: string;
       message: AddMessageRequest;
     }) => addMessage(conversationId, message),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_, { conversationId }) => {
+      await queryClient.invalidateQueries({
         queryKey: architectKeys.conversationDetail(conversationId),
       });
     },
