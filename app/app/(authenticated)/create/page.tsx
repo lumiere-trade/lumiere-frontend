@@ -18,7 +18,7 @@ const examplePrompts = [
 ]
 
 function CreatePageContent() {
-  const log = useLogger('CreatePage', LogCategory.COMPONENT)
+  const logger = useLogger('CreatePage', LogCategory.COMPONENT)
   const searchParams = useSearchParams()
   const strategyId = searchParams.get('strategy')
   
@@ -41,7 +41,7 @@ function CreatePageContent() {
 
   const loadStrategy = async (id: string) => {
     try {
-      log('Loading strategy', { strategyId: id })
+      logger.info('Loading strategy', { strategyId: id })
       const strategy = await getStrategy(id)
       
       // Set the loaded strategy in context
@@ -52,10 +52,10 @@ function CreatePageContent() {
         metadata: strategy.parameters
       })
       
-      log('Strategy loaded successfully', { strategy })
+      logger.info('Strategy loaded successfully', { strategy })
       toast.success('Strategy loaded')
     } catch (error) {
-      log('Failed to load strategy', { error })
+      logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
       console.error('Load strategy error:', error)
     }
