@@ -4,6 +4,7 @@
  */
 
 const ARCHITECT_URL = process.env.NEXT_PUBLIC_ARCHITECT_URL || 'http://localhost:9082'
+const API_PREFIX = '/api'
 const DEFAULT_TIMEOUT = 10000
 
 export class ArchitectApiError extends Error {
@@ -104,7 +105,9 @@ export async function architectRequest<T>(
   options: RequestInit = {},
   timeout: number = DEFAULT_TIMEOUT
 ): Promise<T> {
-  const url = `${ARCHITECT_URL}${endpoint}`
+  // Add API prefix to endpoint
+  const fullEndpoint = `${API_PREFIX}${endpoint}`
+  const url = `${ARCHITECT_URL}${fullEndpoint}`
   const headers = getHeaders(options.headers)
 
   const response = await fetchWithTimeout(
