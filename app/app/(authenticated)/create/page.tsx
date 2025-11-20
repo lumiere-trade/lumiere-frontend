@@ -7,7 +7,7 @@ import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-import { getStrategy } from "@/lib/api/architect"
+import { getStrategy, getStrategyConversations } from "@/lib/api/architect"
 import { toast } from "sonner"
 
 const examplePrompts = [
@@ -54,7 +54,6 @@ function CreatePageContent() {
       })
 
       // Set strategy metadata for parameter rendering
-      // Extract metadata from strategy.parameters if it exists
       if (strategy.parameters) {
         setStrategyMetadata({
           indicators: strategy.parameters.indicators || [],
@@ -66,11 +65,48 @@ function CreatePageContent() {
       }
       
       logger.info('Strategy loaded successfully', { strategy })
+      
+      // TODO Phase 3: Load conversation history
+      // await loadConversationHistory(id)
+      
       toast.success('Strategy loaded')
     } catch (error) {
       logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
       console.error('Load strategy error:', error)
+    }
+  }
+
+  const loadConversationHistory = async (strategyId: string) => {
+    try {
+      logger.info('Loading conversation history', { strategyId })
+      
+      const { conversations } = await getStrategyConversations(strategyId)
+      
+      if (conversations.length === 0) {
+        logger.info('No conversation history found')
+        return
+      }
+
+      // Get the most recent conversation
+      const latestConversation = conversations.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0]
+
+      logger.info('Found conversation history', {
+        conversationId: latestConversation.id,
+        messageCount: latestConversation.message_count,
+        state: latestConversation.state
+      })
+
+      // TODO: Populate chat with conversation messages
+      // This requires adding a method to useProphet to load history
+      // For now, just log that we found it
+      
+      toast.success(`Found ${latestConversation.message_count} messages in history`)
+    } catch (error) {
+      logger.error('Failed to load conversation history', { error })
+      // Don't show error toast - history is optional
     }
   }
 
