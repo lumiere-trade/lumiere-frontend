@@ -8,7 +8,7 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useCreateChat } from "@/contexts/CreateChatContext"
 import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
-import { useCreateStrategy } from "@/hooks/mutations/use-architect-mutations"
+import { useCreateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { toast } from "sonner"
 import {
   Select,
@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useProphet } from "@/hooks/use-prophet"
 
 interface StrategyParametersProps {
   strategy: {
@@ -31,6 +32,10 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategyMetadata } = useCreateChat()
   const createStrategyMutation = useCreateStrategy()
+  const createConversationMutation = useCreateConversation()
+  
+  // Get messages from Prophet hook
+  const { messages } = useProphet()
 
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
@@ -86,7 +91,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     try {
       log.info('Saving strategy to Architect', {
         name,
-        paramCount: Object.keys(paramValues).length
+        paramCount: Object.keys(paramValues).length,
+        messageCount: messages.length
       })
 
       // Extract base plugins from metadata
@@ -107,7 +113,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       }
 
       // Create strategy via Architect API
-      await createStrategyMutation.mutateAsync({
+      const strategyResponse = await createStrategyMutation.mutateAsync({
         name: name || strategy.name,
         description: `AI-generated ${strategy.type} strategy`,
         tsdl_code: strategy.tsdl_code,
@@ -117,13 +123,42 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       })
 
       log.info('Strategy saved successfully', {
+        strategyId: strategyResponse.strategy_id,
         name: name || strategy.name
       })
 
-      // Success is handled by mutation (toast in use-architect-mutations)
+      // Save conversation history if messages exist
+      if (messages.length > 0) {
+        log.info('Saving conversation history', {
+          strategyId: strategyResponse.strategy_id,
+          messageCount: messages.length
+        })
+
+        await createConversationMutation.mutateAsync({
+          strategy_id: strategyResponse.strategy_id,
+          state: 'completed', // Conversation is complete
+          messages: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            conversation_state: 'completed',
+            timestamp: msg.timestamp.toISOString()
+          }))
+        })
+
+        log.info('Conversation history saved successfully', {
+          strategyId: strategyResponse.strategy_id,
+          messageCount: messages.length
+        })
+      } else {
+        log.warn('No conversation history to save', {
+          strategyId: strategyResponse.strategy_id
+        })
+      }
+
+      // Success is handled by mutations (toasts)
     } catch (error) {
       log.error('Failed to save strategy', { error })
-      // Error is handled by mutation
+      // Error is handled by mutations
     }
   }
 
@@ -229,6 +264,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     )
   }
 
+  const isSaving = createStrategyMutation.isPending || createConversationMutation.isPending
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-24">
       <div className="flex items-center justify-between">
@@ -255,11 +292,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={createStrategyMutation.isPending}
+            disabled={isSaving}
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            {createStrategyMutation.isPending ? 'Saving...' : 'Save Strategy'}
+            {isSaving ? 'Saving...' : 'Save Strategy'}
           </Button>
         </div>
       </div>
