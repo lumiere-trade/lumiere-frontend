@@ -28,7 +28,8 @@ function CreatePageContent() {
     collapseChat, 
     expandChat, 
     setInputValue,
-    setGeneratedStrategy 
+    setGeneratedStrategy,
+    setStrategyMetadata
   } = useCreateChat()
 
   // Load strategy on mount if strategyId is present
@@ -51,6 +52,18 @@ function CreatePageContent() {
         tsdl_code: strategy.tsdl_code,
         metadata: strategy.parameters
       })
+
+      // Set strategy metadata for parameter rendering
+      // Extract metadata from strategy.parameters if it exists
+      if (strategy.parameters) {
+        setStrategyMetadata({
+          indicators: strategy.parameters.indicators || [],
+          asset: strategy.parameters.asset || {},
+          exit_conditions: strategy.parameters.exit_conditions || {},
+          risk_management: strategy.parameters.risk_management || {},
+          position_sizing: strategy.parameters.position_sizing || {}
+        })
+      }
       
       logger.info('Strategy loaded successfully', { strategy })
       toast.success('Strategy loaded')
