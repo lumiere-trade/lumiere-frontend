@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-import { useCreateChat } from "@/contexts/CreateChatContext"
+import { useChat } from "@/contexts/ChatContext"
 import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
 import { useCreateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { toast } from "sonner"
@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useProphet } from "@/hooks/use-prophet"
 
 interface StrategyParametersProps {
   strategy: {
@@ -30,12 +29,9 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategyMetadata } = useCreateChat()
+  const { strategyMetadata, messages } = useChat()
   const createStrategyMutation = useCreateStrategy()
   const createConversationMutation = useCreateConversation()
-  
-  // Get messages from Prophet hook
-  const { messages } = useProphet()
 
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)

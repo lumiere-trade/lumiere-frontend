@@ -5,7 +5,7 @@ import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
 import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { Footer } from "@lumiere/shared/components"
-import { CreateChatProvider } from "@/contexts/CreateChatContext"
+import { ChatProvider } from "@/contexts/ChatContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"
@@ -77,7 +77,7 @@ export default function AuthenticatedLayout({
   )
 
   return isCreatePage ? (
-    <CreateChatProvider>{content}</CreateChatProvider>
+    <ChatProvider>{content}</ChatProvider>
   ) : (
     content
   )

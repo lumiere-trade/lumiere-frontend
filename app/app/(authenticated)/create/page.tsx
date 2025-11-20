@@ -4,7 +4,7 @@ import { Suspense, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Sparkles } from "lucide-react"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
-import { useCreateChat } from "@/contexts/CreateChatContext"
+import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { getStrategy, getStrategyConversations } from "@/lib/api/architect"
@@ -31,7 +31,7 @@ function CreatePageContent() {
     setInputValue,
     setGeneratedStrategy,
     setStrategyMetadata
-  } = useCreateChat()
+  } = useChat()
 
   const { loadHistory } = useProphet()
 
