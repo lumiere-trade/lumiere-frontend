@@ -7,7 +7,7 @@ import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-import { getStrategy, getStrategyConversations } from "@/lib/api/architect"
+import { getStrategy, getStrategyConversations, getConversation } from "@/lib/api/architect"
 import { useProphet } from "@/hooks/use-prophet"
 import { toast } from "sonner"
 
@@ -22,12 +22,12 @@ function CreatePageContent() {
   const logger = useLogger('CreatePage', LogCategory.COMPONENT)
   const searchParams = useSearchParams()
   const strategyId = searchParams.get('strategy')
-  
-  const { 
-    isChatExpanded, 
-    generatedStrategy, 
-    collapseChat, 
-    expandChat, 
+
+  const {
+    isChatExpanded,
+    generatedStrategy,
+    collapseChat,
+    expandChat,
     setInputValue,
     setGeneratedStrategy,
     setStrategyMetadata
@@ -47,7 +47,7 @@ function CreatePageContent() {
     try {
       logger.info('Loading strategy', { strategyId: id })
       const strategy = await getStrategy(id)
-      
+
       // Set the loaded strategy in context
       setGeneratedStrategy({
         name: strategy.name,
@@ -66,12 +66,12 @@ function CreatePageContent() {
           position_sizing: strategy.parameters.position_sizing || {}
         })
       }
-      
+
       logger.info('Strategy loaded successfully', { strategy })
 
       // Load conversation history
       await loadConversationHistory(id)
-      
+
       toast.success('Strategy loaded')
     } catch (error) {
       logger.error('Failed to load strategy', { error })
@@ -83,30 +83,38 @@ function CreatePageContent() {
   const loadConversationHistory = async (strategyId: string) => {
     try {
       logger.info('Loading conversation history', { strategyId })
-      
+
       const { conversations } = await getStrategyConversations(strategyId)
-      
+
       if (conversations.length === 0) {
         logger.info('No conversation history found')
         return
       }
 
       // Get the most recent conversation
-      const latestConversation = conversations.sort((a, b) => 
+      const latestConversation = conversations.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0]
 
-      logger.info('Found conversation history', {
+      logger.info('Found conversation, fetching full details', {
         conversationId: latestConversation.id,
         messageCount: latestConversation.message_count,
-        state: latestConversation.state
+      })
+
+      // Fetch full conversation with messages
+      const fullConversation = await getConversation(latestConversation.id)
+
+      logger.info('Fetched full conversation', {
+        conversationId: fullConversation.id,
+        messagesCount: fullConversation.messages.length,
+        state: fullConversation.state
       })
 
       // Load conversation history into Prophet hook
-      loadHistory(latestConversation)
-      
+      loadHistory(fullConversation)
+
       logger.info('Conversation history loaded into chat', {
-        messageCount: latestConversation.messages.length
+        messageCount: fullConversation.messages.length
       })
     } catch (error) {
       logger.error('Failed to load conversation history', { error })
