@@ -8,6 +8,7 @@ import { useCreateChat } from "@/contexts/CreateChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { getStrategy, getStrategyConversations } from "@/lib/api/architect"
+import { useProphet } from "@/hooks/use-prophet"
 import { toast } from "sonner"
 
 const examplePrompts = [
@@ -31,6 +32,8 @@ function CreatePageContent() {
     setGeneratedStrategy,
     setStrategyMetadata
   } = useCreateChat()
+
+  const { loadHistory } = useProphet()
 
   // Load strategy on mount if strategyId is present
   useEffect(() => {
@@ -65,9 +68,9 @@ function CreatePageContent() {
       }
       
       logger.info('Strategy loaded successfully', { strategy })
-      
-      // TODO Phase 3: Load conversation history
-      // await loadConversationHistory(id)
+
+      // Load conversation history
+      await loadConversationHistory(id)
       
       toast.success('Strategy loaded')
     } catch (error) {
@@ -99,11 +102,12 @@ function CreatePageContent() {
         state: latestConversation.state
       })
 
-      // TODO: Populate chat with conversation messages
-      // This requires adding a method to useProphet to load history
-      // For now, just log that we found it
+      // Load conversation history into Prophet hook
+      loadHistory(latestConversation)
       
-      toast.success(`Found ${latestConversation.message_count} messages in history`)
+      logger.info('Conversation history loaded into chat', {
+        messageCount: latestConversation.messages.length
+      })
     } catch (error) {
       logger.error('Failed to load conversation history', { error })
       // Don't show error toast - history is optional

@@ -9,6 +9,7 @@ import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
 import { LogCategory } from '@/lib/debug';
 import { useCreateChat } from '@/contexts/CreateChatContext';
+import { Conversation } from '@/lib/api/architect';
 
 export interface ChatMessage {
   id: string;
@@ -30,6 +31,40 @@ export function useProphet() {
   const streamingMessageIdRef = useRef<string | null>(null);
 
   const { data: health } = useProphetHealthQuery();
+
+  /**
+   * Load conversation history from Architect API
+   */
+  const loadHistory = useCallback(
+    (conversation: Conversation) => {
+      log.info('Loading conversation history', {
+        conversationId: conversation.id,
+        messageCount: conversation.message_count,
+        state: conversation.state,
+      });
+
+      // Convert Architect messages to ChatMessage format
+      const chatMessages: ChatMessage[] = conversation.messages.map((msg) => ({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+        isStreaming: false,
+      }));
+
+      // Set messages and conversation state
+      setMessages(chatMessages);
+      setConversationId(conversation.id);
+      setConversationState(conversation.state);
+
+      log.info('Conversation history loaded', {
+        messagesLoaded: chatMessages.length,
+        conversationId: conversation.id,
+        state: conversation.state,
+      });
+    },
+    [log]
+  );
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -233,6 +268,7 @@ export function useProphet() {
     // Actions
     sendMessage,
     clearMessages,
+    loadHistory, // NEW: Load conversation history
 
     // Loading states
     isSending,
