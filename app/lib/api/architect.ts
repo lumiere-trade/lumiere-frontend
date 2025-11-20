@@ -308,6 +308,7 @@ export const getConversation = async (
 
 /**
  * Get conversations for strategy
+ * FIXED: Use correct endpoint /conversations?strategy_id={id}
  */
 export const getStrategyConversations = async (
   strategyId: string
@@ -315,7 +316,7 @@ export const getStrategyConversations = async (
   logger.debug(LOG_CATEGORY, 'Fetching strategy conversations', { strategyId });
 
   try {
-    const result = await get(`${ARCHITECT_PREFIX}/strategies/${strategyId}/conversations`);
+    const result = await get(`${ARCHITECT_PREFIX}/conversations?strategy_id=${strategyId}`);
     logger.info(LOG_CATEGORY, 'Strategy conversations fetched', { strategyId, count: result.conversations.length });
     return result;
   } catch (error) {
