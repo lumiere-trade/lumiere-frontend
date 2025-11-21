@@ -8,10 +8,10 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
 import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
-import { 
-  useCreateStrategy, 
+import {
+  useCreateStrategy,
   useUpdateStrategy,
-  useCreateConversation 
+  useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
 import { toast } from "sonner"
 import {
@@ -91,7 +91,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const handleSave = async () => {
     try {
       const isEditing = !!currentStrategy?.id
-      
+
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
         strategyId: currentStrategy?.id,
         name,
@@ -130,7 +130,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
           }
         })
         strategyId = currentStrategy.id
-        
+
         log.info('Strategy updated successfully', {
           strategyId,
           name: name || strategy.name
@@ -146,7 +146,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
           parameters
         })
         strategyId = strategyResponse.strategy_id
-        
+
         log.info('Strategy created successfully', {
           strategyId,
           name: name || strategy.name
@@ -291,12 +291,12 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   }
 
   const isEditing = !!currentStrategy?.id
-  const isSaving = createStrategyMutation.isPending || 
-                   updateStrategyMutation.isPending || 
+  const isSaving = createStrategyMutation.isPending ||
+                   updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-24">
+    <div className="w-full max-w-4xl mx-auto space-y-6 pb-40">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Strategy Parameters</h2>
         <div className="flex gap-2">
