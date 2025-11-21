@@ -126,6 +126,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             name: name || strategy.name,
             description: `AI-generated ${strategy.type} strategy`,
             tsdl_code: strategy.tsdl_code,
+            base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
             parameters
           }
         })
@@ -162,7 +163,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
-          state: 'completed', // Conversation is complete
+          state: 'completed',
           messages: messages.map(msg => ({
             role: msg.role,
             content: msg.content,
