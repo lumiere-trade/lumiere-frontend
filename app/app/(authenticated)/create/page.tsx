@@ -62,16 +62,11 @@ function CreatePageContent() {
         metadata: strategy.parameters
       })
 
+      // Merge updated parameter values back into metadata structures
+      const updatedMetadata = mergeParameterValues(strategy.parameters)
+
       // Set strategy metadata for parameter rendering
-      if (strategy.parameters) {
-        setStrategyMetadata({
-          indicators: strategy.parameters.indicators || [],
-          asset: strategy.parameters.asset || {},
-          exit_conditions: strategy.parameters.exit_conditions || {},
-          risk_management: strategy.parameters.risk_management || {},
-          position_sizing: strategy.parameters.position_sizing || {}
-        })
-      }
+      setStrategyMetadata(updatedMetadata)
 
       // Set current strategy for Prophet context
       setCurrentStrategy({
@@ -83,7 +78,8 @@ function CreatePageContent() {
 
       logger.info('Strategy loaded successfully', {
         strategy,
-        contextSet: true
+        contextSet: true,
+        hasUpdatedValues: !!strategy.parameters?.values
       })
 
       // Load conversation history
@@ -95,6 +91,65 @@ function CreatePageContent() {
       toast.error('Failed to load strategy')
       console.error('Load strategy error:', error)
     }
+  }
+
+  const mergeParameterValues = (parameters: any) => {
+    if (!parameters) return null
+
+    const updatedValues = parameters.values || {}
+
+    // Deep clone to avoid mutations
+    const metadata = {
+      indicators: JSON.parse(JSON.stringify(parameters.indicators || [])),
+      asset: JSON.parse(JSON.stringify(parameters.asset || {})),
+      exit_conditions: JSON.parse(JSON.stringify(parameters.exit_conditions || {})),
+      risk_management: JSON.parse(JSON.stringify(parameters.risk_management || {})),
+      position_sizing: JSON.parse(JSON.stringify(parameters.position_sizing || {}))
+    }
+
+    // Merge indicator values
+    metadata.indicators?.forEach((indicator: any) => {
+      Object.keys(indicator.params || {}).forEach((paramName) => {
+        const key = `indicator_${indicator.name}_${paramName}`
+        if (key in updatedValues) {
+          indicator.params[paramName].value = updatedValues[key]
+        }
+      })
+    })
+
+    // Merge asset values
+    Object.keys(metadata.asset).forEach((fieldName) => {
+      const key = `asset_${fieldName}`
+      if (key in updatedValues) {
+        metadata.asset[fieldName].value = updatedValues[key]
+      }
+    })
+
+    // Merge exit conditions values
+    Object.keys(metadata.exit_conditions).forEach((fieldName) => {
+      const key = `exit_${fieldName}`
+      if (key in updatedValues) {
+        metadata.exit_conditions[fieldName].value = updatedValues[key]
+      }
+    })
+
+    // Merge risk management values
+    Object.keys(metadata.risk_management).forEach((fieldName) => {
+      const key = `risk_${fieldName}`
+      if (key in updatedValues) {
+        metadata.risk_management[fieldName].value = updatedValues[key]
+      }
+    })
+
+    // Merge position sizing values
+    Object.keys(metadata.position_sizing).forEach((fieldName) => {
+      const key = `position_${fieldName}`
+      if (key in updatedValues) {
+        metadata.position_sizing[fieldName].value = updatedValues[key]
+      }
+    })
+
+    return metadata
   }
 
   const loadConversationHistory = async (strategyId: string) => {
