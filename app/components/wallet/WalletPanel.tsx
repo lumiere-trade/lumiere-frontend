@@ -159,9 +159,9 @@ export function WalletPanel({ trigger }: WalletPanelProps) {
           <div className="mt-6 px-2">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1">
-                <TabsTrigger value="balances" className="hover:bg-accent hover:text-accent-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Balances</TabsTrigger>
-                <TabsTrigger value="positions" className="hover:bg-accent hover:text-accent-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Positions</TabsTrigger>
-                <TabsTrigger value="activity" className="hover:bg-accent hover:text-accent-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Activity</TabsTrigger>
+                <TabsTrigger value="balances">Balances</TabsTrigger>
+                <TabsTrigger value="positions">Positions</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
               </TabsList>
 
               <TabsContent value="balances" className="mt-6 space-y-6 px-1">
