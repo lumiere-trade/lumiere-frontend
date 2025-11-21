@@ -1,5 +1,7 @@
 /**
  * Prophet API Client with SSE streaming support
+ * OPTIMIZED: Uses Redis cache, sends minimal data
+ * NEW: Supports strategy_context for editing workflows
  */
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
@@ -9,12 +11,20 @@ export interface ProphetMessage {
   content: string;
 }
 
+export interface StrategyContext {
+  strategy_id: string;
+  current_tsdl: string;
+  strategy_name?: string;
+  last_updated?: string;
+}
+
 export interface ProphetChatRequest {
   message: string;
   conversation_id?: string;
   user_id?: string;
   state?: string;
   history?: ProphetMessage[];
+  strategy_context?: StrategyContext; // NEW!
 }
 
 export interface ProphetHealthResponse {
@@ -23,6 +33,7 @@ export interface ProphetHealthResponse {
   version: string;
   mode?: string;
   tsdl_syntax_loaded?: boolean;
+  redis_cache?: string; // NEW: Redis status
   tsdl_version?: string;
   plugins_loaded?: string[];
   plugin_count?: number;
@@ -78,6 +89,7 @@ export type SSEEvent =
 /**
  * Send chat message to Prophet AI with SSE streaming
  * Throttles token updates for smoother visual display
+ * NEW: Supports optional strategy_context for editing workflows
  */
 export async function sendChatMessageStream(
   request: ProphetChatRequest,
@@ -169,7 +181,7 @@ export async function sendChatMessageStream(
             pendingTokens.push(eventData.token);
             processPendingTokens();
           } else if (eventType === 'strategy_metadata') {
-            // NEW: Handle strategy metadata from Prophet
+            // Handle strategy metadata from Prophet
             if (onStrategyMetadata) {
               onStrategyMetadata(eventData as StrategyMetadata);
             }

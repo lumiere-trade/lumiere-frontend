@@ -10,10 +10,18 @@ export interface ChatMessage {
   isStreaming?: boolean
 }
 
+export interface CurrentStrategy {
+  id: string
+  name: string
+  tsdl_code: string
+  updated_at?: string
+}
+
 interface ChatContextType {
   isChatExpanded: boolean
   generatedStrategy: any | null
   strategyMetadata: StrategyMetadata | null
+  currentStrategy: CurrentStrategy | null
   inputValue: string
   messages: ChatMessage[]
   conversationId: string | null
@@ -22,6 +30,7 @@ interface ChatContextType {
   collapseChat: () => void
   setGeneratedStrategy: (strategy: any) => void
   setStrategyMetadata: (metadata: StrategyMetadata | null) => void
+  setCurrentStrategy: (strategy: CurrentStrategy | null) => void
   setInputValue: (value: string) => void
   setMessages: (messages: ChatMessage[]) => void
   setConversationId: (id: string | null) => void
@@ -35,6 +44,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
   const [strategyMetadata, setStrategyMetadata] = useState<StrategyMetadata | null>(null)
+  const [currentStrategy, setCurrentStrategy] = useState<CurrentStrategy | null>(null)
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -42,13 +52,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
-  
+
   const clearChat = () => {
     setMessages([])
     setConversationId(null)
     setConversationState('greeting')
     setGeneratedStrategy(null)
     setStrategyMetadata(null)
+    setCurrentStrategy(null)
     setInputValue("")
   }
 
@@ -58,6 +69,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         isChatExpanded,
         generatedStrategy,
         strategyMetadata,
+        currentStrategy,
         inputValue,
         messages,
         conversationId,
@@ -66,6 +78,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         collapseChat,
         setGeneratedStrategy,
         setStrategyMetadata,
+        setCurrentStrategy,
         setInputValue,
         setMessages,
         setConversationId,

@@ -1,10 +1,11 @@
 /**
  * Unified Prophet Hook with real SSE streaming
- * Uses ChatContext for shared message state
+ * OPTIMIZED: Uses Redis cache, sends minimal data
+ * NEW: Supports strategy_context for editing workflows
  */
 
 import { useCallback, useRef } from 'react';
-import { sendChatMessageStream, StrategyMetadata } from '@/lib/api/prophet';
+import { sendChatMessageStream, StrategyMetadata, StrategyContext } from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
 import { LogCategory } from '@/lib/debug';
@@ -29,6 +30,7 @@ export function useProphet() {
     conversationState,
     setConversationState,
     setStrategyMetadata,
+    currentStrategy,
   } = useChat();
 
   const streamingMessageIdRef = useRef<string | null>(null);
@@ -70,13 +72,14 @@ export function useProphet() {
 
   const sendMessage = useCallback(
     async (content: string) => {
-      log.group('Prophet Message Send');
+      log.group('Prophet Message Send (Redis-Optimized + Strategy Context)');
       log.info('Request details', {
         messagePreview: content.substring(0, 100),
         currentState: conversationState,
         conversationId: conversationId || 'NEW_CONVERSATION',
-        historyLength: messages.length,
         messageCount: messages.length + 1,
+        redisCache: health?.redis_cache || 'unknown',
+        hasStrategyContext: !!currentStrategy,
       });
 
       // Add user message immediately
@@ -101,18 +104,56 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage, assistantMessage]);
 
-      // Build history for Prophet (all messages BEFORE the current one)
-      const history = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      // Build OPTIONAL fallback history
+      // Prophet will try Redis first, use this only if cache miss
+      let fallbackHistory: Array<{ role: string; content: string }> | undefined;
+
+      // Only send history if Redis is disconnected OR this is first message
+      const redisConnected = health?.redis_cache === 'connected';
+
+      if (!redisConnected || !conversationId) {
+        fallbackHistory = messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
+
+        log.warn('Including fallback history', {
+          reason: !redisConnected ? 'Redis disconnected' : 'New conversation',
+          historyLength: fallbackHistory.length,
+        });
+      } else {
+        log.info('Skipping history (Redis cache available)', {
+          conversationId,
+          redisStatus: health?.redis_cache,
+          savedBandwidth: `~${messages.length * 0.5}KB`,
+        });
+      }
+
+      // Build strategy_context if editing existing strategy
+      let strategyContext: StrategyContext | undefined;
+      if (currentStrategy) {
+        strategyContext = {
+          strategy_id: currentStrategy.id,
+          current_tsdl: currentStrategy.tsdl_code,
+          strategy_name: currentStrategy.name,
+          last_updated: currentStrategy.updated_at,
+        };
+
+        log.info('Including strategy context', {
+          strategyId: currentStrategy.id,
+          strategyName: currentStrategy.name,
+          tsdlLength: currentStrategy.tsdl_code.length,
+        });
+      }
 
       log.debug('Sending to Prophet API', {
         request: {
           message: content.substring(0, 50) + '...',
           conversation_id: conversationId || 'undefined',
           state: conversationState,
-          history_length: history.length,
+          history_included: !!fallbackHistory,
+          history_length: fallbackHistory?.length || 0,
+          strategy_context_included: !!strategyContext,
         },
       });
 
@@ -128,7 +169,8 @@ export function useProphet() {
             message: content,
             conversation_id: conversationId || undefined,
             state: conversationState,
-            history: history,
+            history: fallbackHistory,
+            strategy_context: strategyContext, // NEW!
           },
           // onToken - append batch of characters
           (tokenBatch: string) => {
@@ -222,7 +264,7 @@ export function useProphet() {
             streamingMessageIdRef.current = null;
             reject(err);
           },
-          // onStrategyMetadata - NEW callback
+          // onStrategyMetadata - callback for strategy parameters
           (metadata: StrategyMetadata) => {
             log.info('Strategy metadata received', {
               indicatorsCount: metadata.indicators?.length || 0,
@@ -247,6 +289,8 @@ export function useProphet() {
       conversationId,
       conversationState,
       messages,
+      currentStrategy,
+      health,
       log,
       setStrategyMetadata,
       setMessages,
@@ -286,6 +330,7 @@ export function useProphet() {
     isHealthy: health?.status === 'healthy',
     tsdlVersion: health?.tsdl_version,
     pluginsLoaded: health?.plugins_loaded || [],
+    redisCache: health?.redis_cache || 'unknown',
 
     // Actions
     sendMessage,

@@ -30,7 +30,8 @@ function CreatePageContent() {
     expandChat,
     setInputValue,
     setGeneratedStrategy,
-    setStrategyMetadata
+    setStrategyMetadata,
+    setCurrentStrategy,
   } = useChat()
 
   const { loadHistory } = useProphet()
@@ -67,7 +68,18 @@ function CreatePageContent() {
         })
       }
 
-      logger.info('Strategy loaded successfully', { strategy })
+      // Set current strategy for Prophet context (NEW!)
+      setCurrentStrategy({
+        id: strategy.id,
+        name: strategy.name,
+        tsdl_code: strategy.tsdl_code,
+        updated_at: strategy.updated_at,
+      })
+
+      logger.info('Strategy loaded successfully', { 
+        strategy,
+        contextSet: true 
+      })
 
       // Load conversation history
       await loadConversationHistory(id)
