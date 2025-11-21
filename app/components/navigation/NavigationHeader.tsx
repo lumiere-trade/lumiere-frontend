@@ -9,6 +9,7 @@ import { useWallet } from "@solana/wallet-adapter-react"
 import { WalletPanel } from "@/components/wallet/WalletPanel"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
 import { UserProfileModal } from "@/components/navigation/UserProfileModal"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -113,6 +114,8 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 </Button>
               }
             />
+
+            <ThemeToggle />
 
             <Button
               variant="outline"
