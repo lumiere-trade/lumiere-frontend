@@ -14,6 +14,7 @@ import {
   Trash2
 } from "lucide-react"
 import { useStrategies } from "@/hooks/use-strategies"
+import { useChat } from "@/contexts/ChatContext"
 
 interface StrategyPanelProps {
   isOpen: boolean
@@ -22,6 +23,7 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
+  const { clearChat } = useChat()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -30,6 +32,12 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const { strategies, isLoading, deleteStrategy, isDeleting } = useStrategies({
     limit: 50
   })
+
+  const handleNewStrategy = () => {
+    // Clear all chat state before navigating to create new strategy
+    clearChat()
+    router.push('/create')
+  }
 
   const handleStrategyClick = (strategyId: string) => {
     // Navigate to create page with strategy ID to load it
@@ -85,15 +93,15 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           {/* New Strategy Section with Close Button */}
           <div className="border-b border-primary/20">
             <div className="flex items-center justify-between px-4 py-4">
-              <Link
-                href="/create"
+              <button
+                onClick={handleNewStrategy}
                 className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
               >
                 <Plus className="h-5 w-5 text-primary shrink-0" />
                 <span className="text-base text-primary whitespace-nowrap">
                   New Strategy
                 </span>
-              </Link>
+              </button>
               <button
                 onClick={onToggle}
                 className="p-1 rounded-lg hover:bg-primary/10 transition-colors ml-2 shrink-0"
@@ -149,13 +157,13 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                     <p className="text-sm text-muted-foreground mb-3">
                       No strategies yet
                     </p>
-                    <Link
-                      href="/create"
+                    <button
+                      onClick={handleNewStrategy}
                       className="inline-flex items-center gap-2 text-sm text-primary hover:opacity-80 transition-opacity"
                     >
                       <Plus className="h-4 w-4" />
                       Create your first strategy
-                    </Link>
+                    </button>
                   </div>
                 ) : (
                   // Strategy list
@@ -178,7 +186,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                           <span className="text-sm text-muted-foreground capitalize">
                             {strategy.status}
                           </span>
-                          
+
                           {/* Action buttons - only show on hover */}
                           {isHovered && (
                             <div className="flex items-center gap-2">
