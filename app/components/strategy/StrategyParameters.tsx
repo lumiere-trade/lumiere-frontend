@@ -7,7 +7,7 @@ import { Code, Play, Save } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
-import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
+import { FieldParam, IndicatorParam, regenerateTSDL } from "@/lib/api/prophet"
 import {
   useCreateStrategy,
   useUpdateStrategy,
@@ -41,6 +41,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
   const [paramValues, setParamValues] = useState<Record<string, any>>({})
+  const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
 
   // Initialize param values from metadata
   useEffect(() => {
@@ -84,6 +85,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     })
   }, [strategyMetadata])
 
+  // Update tsdl_code when strategy prop changes
+  useEffect(() => {
+    setTsdlCode(strategy.tsdl_code)
+  }, [strategy.tsdl_code])
+
   const handleParamChange = (key: string, value: any) => {
     setParamValues(prev => ({ ...prev, [key]: value }))
   }
@@ -112,8 +118,34 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         exit_conditions: strategyMetadata?.exit_conditions || {},
         risk_management: strategyMetadata?.risk_management || {},
         position_sizing: strategyMetadata?.position_sizing || {},
-        // Include current parameter values
         values: paramValues
+      }
+
+      let finalTsdlCode = tsdlCode
+
+      // If editing and parameters changed, regenerate TSDL
+      if (isEditing && Object.keys(paramValues).length > 0) {
+        try {
+          log.info('Regenerating TSDL with updated parameters', {
+            paramCount: Object.keys(paramValues).length
+          })
+
+          const regenerateResponse = await regenerateTSDL({
+            current_tsdl: tsdlCode,
+            updated_values: paramValues
+          })
+
+          finalTsdlCode = regenerateResponse.tsdl_code
+          setTsdlCode(finalTsdlCode)
+
+          log.info('TSDL regenerated successfully', {
+            oldLength: tsdlCode.length,
+            newLength: finalTsdlCode.length
+          })
+        } catch (error) {
+          log.error('Failed to regenerate TSDL', { error })
+          toast.error('Failed to update strategy code. Saving with original code.')
+        }
       }
 
       let strategyId: string
@@ -125,7 +157,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
           updates: {
             name: name || strategy.name,
             description: `AI-generated ${strategy.type} strategy`,
-            tsdl_code: strategy.tsdl_code,
+            tsdl_code: finalTsdlCode,
             base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
             parameters
           }
@@ -141,7 +173,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: name || strategy.name,
           description: `AI-generated ${strategy.type} strategy`,
-          tsdl_code: strategy.tsdl_code,
+          tsdl_code: finalTsdlCode,
           version: '1.0.0',
           base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
           parameters
@@ -334,7 +366,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       {showCode && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
           <pre className="text-base text-muted-foreground whitespace-pre-wrap break-words">
-            <code>{strategy.tsdl_code}</code>
+            <code>{tsdlCode}</code>
           </pre>
         </div>
       )}
