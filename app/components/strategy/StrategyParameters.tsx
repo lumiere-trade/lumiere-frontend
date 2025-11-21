@@ -8,7 +8,11 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
 import { FieldParam, IndicatorParam } from "@/lib/api/prophet"
-import { useCreateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
+import { 
+  useCreateStrategy, 
+  useUpdateStrategy,
+  useCreateConversation 
+} from "@/hooks/mutations/use-architect-mutations"
 import { toast } from "sonner"
 import {
   Select,
@@ -29,8 +33,9 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategyMetadata, messages } = useChat()
+  const { strategyMetadata, messages, currentStrategy } = useChat()
   const createStrategyMutation = useCreateStrategy()
+  const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
 
   const [showCode, setShowCode] = useState(false)
@@ -85,7 +90,10 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
   const handleSave = async () => {
     try {
-      log.info('Saving strategy to Architect', {
+      const isEditing = !!currentStrategy?.id
+      
+      log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
+        strategyId: currentStrategy?.id,
         name,
         paramCount: Object.keys(paramValues).length,
         messageCount: messages.length
@@ -108,30 +116,52 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         values: paramValues
       }
 
-      // Create strategy via Architect API
-      const strategyResponse = await createStrategyMutation.mutateAsync({
-        name: name || strategy.name,
-        description: `AI-generated ${strategy.type} strategy`,
-        tsdl_code: strategy.tsdl_code,
-        version: '1.0.0',
-        base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
-        parameters
-      })
+      let strategyId: string
 
-      log.info('Strategy saved successfully', {
-        strategyId: strategyResponse.strategy_id,
-        name: name || strategy.name
-      })
+      if (isEditing) {
+        // UPDATE existing strategy
+        await updateStrategyMutation.mutateAsync({
+          strategyId: currentStrategy.id,
+          updates: {
+            name: name || strategy.name,
+            description: `AI-generated ${strategy.type} strategy`,
+            tsdl_code: strategy.tsdl_code,
+            parameters
+          }
+        })
+        strategyId = currentStrategy.id
+        
+        log.info('Strategy updated successfully', {
+          strategyId,
+          name: name || strategy.name
+        })
+      } else {
+        // CREATE new strategy
+        const strategyResponse = await createStrategyMutation.mutateAsync({
+          name: name || strategy.name,
+          description: `AI-generated ${strategy.type} strategy`,
+          tsdl_code: strategy.tsdl_code,
+          version: '1.0.0',
+          base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
+          parameters
+        })
+        strategyId = strategyResponse.strategy_id
+        
+        log.info('Strategy created successfully', {
+          strategyId,
+          name: name || strategy.name
+        })
+      }
 
       // Save conversation history if messages exist
       if (messages.length > 0) {
         log.info('Saving conversation history', {
-          strategyId: strategyResponse.strategy_id,
+          strategyId,
           messageCount: messages.length
         })
 
         await createConversationMutation.mutateAsync({
-          strategy_id: strategyResponse.strategy_id,
+          strategy_id: strategyId,
           state: 'completed', // Conversation is complete
           messages: messages.map(msg => ({
             role: msg.role,
@@ -142,12 +172,12 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         })
 
         log.info('Conversation history saved successfully', {
-          strategyId: strategyResponse.strategy_id,
+          strategyId,
           messageCount: messages.length
         })
       } else {
         log.warn('No conversation history to save', {
-          strategyId: strategyResponse.strategy_id
+          strategyId
         })
       }
 
@@ -260,7 +290,10 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     )
   }
 
-  const isSaving = createStrategyMutation.isPending || createConversationMutation.isPending
+  const isEditing = !!currentStrategy?.id
+  const isSaving = createStrategyMutation.isPending || 
+                   updateStrategyMutation.isPending || 
+                   createConversationMutation.isPending
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-24">
@@ -292,7 +325,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            {isSaving ? 'Saving...' : 'Save Strategy'}
+            {isSaving ? 'Saving...' : (isEditing ? 'Update Strategy' : 'Save Strategy')}
           </Button>
         </div>
       </div>
