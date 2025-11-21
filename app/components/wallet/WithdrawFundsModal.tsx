@@ -151,7 +151,7 @@ export function WithdrawFundsModal({ isOpen, onClose }: WithdrawFundsModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md z-[90] bg-card border border-primary/30 rounded-2xl shadow-2xl">
+      <DialogContent className="sm:max-w-md bg-card border border-primary/30 rounded-2xl shadow-2xl">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">Withdraw Funds</DialogTitle>
         </DialogHeader>
