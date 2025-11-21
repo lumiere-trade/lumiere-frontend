@@ -32,14 +32,19 @@ function CreatePageContent() {
     setGeneratedStrategy,
     setStrategyMetadata,
     setCurrentStrategy,
+    clearChat,
   } = useChat()
 
   const { loadHistory } = useProphet()
 
-  // Load strategy on mount if strategyId is present
+  // Load strategy on mount if strategyId is present, otherwise clear state
   useEffect(() => {
     if (strategyId && !generatedStrategy) {
       loadStrategy(strategyId)
+    } else if (!strategyId && generatedStrategy) {
+      // Clear state when navigating to /create without strategy parameter
+      logger.info('Clearing chat state for new strategy')
+      clearChat()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strategyId])
@@ -68,7 +73,7 @@ function CreatePageContent() {
         })
       }
 
-      // Set current strategy for Prophet context (NEW!)
+      // Set current strategy for Prophet context
       setCurrentStrategy({
         id: strategy.id,
         name: strategy.name,
@@ -76,9 +81,9 @@ function CreatePageContent() {
         updated_at: strategy.updated_at,
       })
 
-      logger.info('Strategy loaded successfully', { 
+      logger.info('Strategy loaded successfully', {
         strategy,
-        contextSet: true 
+        contextSet: true
       })
 
       // Load conversation history

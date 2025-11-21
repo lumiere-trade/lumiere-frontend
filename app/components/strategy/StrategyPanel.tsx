@@ -14,7 +14,6 @@ import {
   Trash2
 } from "lucide-react"
 import { useStrategies } from "@/hooks/use-strategies"
-import { useChat } from "@/contexts/ChatContext"
 
 interface StrategyPanelProps {
   isOpen: boolean
@@ -23,7 +22,6 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
-  const { clearChat } = useChat()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -34,8 +32,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   })
 
   const handleNewStrategy = () => {
-    // Clear all chat state before navigating to create new strategy
-    clearChat()
+    // Navigate to /create which will handle clearing state via useEffect
     router.push('/create')
   }
 
