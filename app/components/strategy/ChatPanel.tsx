@@ -212,7 +212,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         right: 0,
         width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
         top: '80px',
-        bottom: '64px'
+        bottom: '32px'
       }}
       onClick={handleBackdropClick}
     >
