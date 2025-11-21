@@ -4,7 +4,7 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000'
-const DEFAULT_TIMEOUT = 10000
+const DEFAULT_TIMEOUT = 30000
 
 export class ApiError extends Error {
   constructor(
