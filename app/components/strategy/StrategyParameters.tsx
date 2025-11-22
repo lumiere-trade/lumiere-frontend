@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save } from "lucide-react"
+import { Code, Play, Save, Loader2 } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
@@ -42,6 +42,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [name, setName] = useState(strategy.name)
   const [paramValues, setParamValues] = useState<Record<string, any>>({})
   const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
+  const [isRegenerating, setIsRegenerating] = useState(false)
 
   // Initialize param values from metadata
   useEffect(() => {
@@ -126,6 +127,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       // If editing and parameters changed, regenerate TSDL
       if (isEditing && Object.keys(paramValues).length > 0) {
         try {
+          setIsRegenerating(true)
+          
           log.info('Regenerating TSDL with updated parameters', {
             paramCount: Object.keys(paramValues).length
           })
@@ -142,9 +145,13 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             oldLength: tsdlCode.length,
             newLength: finalTsdlCode.length
           })
+          
+          toast.success('Strategy code updated successfully')
         } catch (error) {
           log.error('Failed to regenerate TSDL', { error })
           toast.error('Failed to update strategy code. Saving with original code.')
+        } finally {
+          setIsRegenerating(false)
         }
       }
 
@@ -324,7 +331,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   }
 
   const isEditing = !!currentStrategy?.id
-  const isSaving = createStrategyMutation.isPending ||
+  const isSaving = isRegenerating || 
+                   createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
@@ -357,11 +365,32 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             disabled={isSaving}
             className="gap-2"
           >
-            <Save className="h-4 w-4" />
-            {isSaving ? 'Saving...' : (isEditing ? 'Update Strategy' : 'Save Strategy')}
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {isRegenerating ? 'Regenerating...' : 'Saving...'}
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                {isEditing ? 'Update Strategy' : 'Save Strategy'}
+              </>
+            )}
           </Button>
         </div>
       </div>
+
+      {isRegenerating && (
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Updating strategy code...</p>
+              <p className="text-xs text-muted-foreground">AI is regenerating TSDL with your new parameters</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showCode && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
