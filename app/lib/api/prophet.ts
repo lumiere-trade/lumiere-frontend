@@ -77,6 +77,18 @@ export interface StrategyMetadata {
 }
 
 /**
+ * Regenerate TSDL Request/Response types
+ */
+export interface RegenerateTSDLRequest {
+  current_tsdl: string;
+  updated_values: Record<string, any>;
+}
+
+export interface RegenerateTSDLResponse {
+  tsdl_code: string;
+}
+
+/**
  * SSE Event types
  */
 export type SSEEvent =
@@ -226,7 +238,31 @@ export async function getProphetHealth(): Promise<ProphetHealthResponse> {
   return response.json();
 }
 
+/**
+ * Regenerate TSDL code with updated parameter values
+ * Uses LLM to intelligently update variable names and references
+ */
+export async function regenerateTSDL(
+  request: RegenerateTSDLRequest
+): Promise<RegenerateTSDLResponse> {
+  const response = await fetch(`${PROPHET_URL}/regenerate-tsdl`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `Failed to regenerate TSDL: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export const prophetApi = {
   sendChatMessageStream,
   getProphetHealth,
+  regenerateTSDL,
 };
