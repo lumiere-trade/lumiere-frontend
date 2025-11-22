@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save, Loader2 } from "lucide-react"
@@ -43,6 +43,29 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [paramValues, setParamValues] = useState<Record<string, any>>({})
   const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
   const [isRegenerating, setIsRegenerating] = useState(false)
+
+  // Parse entry/exit conditions from TSDL code
+  const strategyLogic = useMemo(() => {
+    const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
+    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+(?:TAKE_PROFIT|STOP_LOSS|END))/s)
+    
+    let entryCondition = ''
+    let exitCondition = ''
+    
+    if (entryMatch) {
+      entryCondition = entryMatch[1].trim()
+        .replace(/\s+AND\s+/g, ' AND\n')
+        .replace(/\s+OR\s+/g, ' OR\n')
+    }
+    
+    if (exitMatch) {
+      exitCondition = exitMatch[1].trim()
+        .replace(/\s+AND\s+/g, ' AND\n')
+        .replace(/\s+OR\s+/g, ' OR\n')
+    }
+    
+    return { entryCondition, exitCondition }
+  }, [tsdlCode])
 
   // Initialize param values from metadata
   useEffect(() => {
@@ -128,7 +151,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
       if (isEditing && Object.keys(paramValues).length > 0) {
         try {
           setIsRegenerating(true)
-          
+
           log.info('Regenerating TSDL with updated parameters', {
             paramCount: Object.keys(paramValues).length
           })
@@ -145,7 +168,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             oldLength: tsdlCode.length,
             newLength: finalTsdlCode.length
           })
-          
+
           toast.success('Strategy code updated successfully')
         } catch (error) {
           log.error('Failed to regenerate TSDL', { error })
@@ -331,7 +354,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   }
 
   const isEditing = !!currentStrategy?.id
-  const isSaving = isRegenerating || 
+  const isSaving = isRegenerating ||
                    createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
@@ -394,7 +417,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
       {showCode && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <pre className="text-base text-muted-foreground whitespace-pre-wrap break-words">
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words font-mono">
             <code>{tsdlCode}</code>
           </pre>
         </div>
@@ -425,6 +448,30 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
       {strategyMetadata && (
         <>
+          {/* Strategy Logic Section - Read-only display */}
+          {(strategyLogic.entryCondition || strategyLogic.exitCondition) && (
+            <div className="space-y-4">
+              <h3 className="text-xl font-semibold text-foreground">Strategy Logic</h3>
+              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Entry Conditions</p>
+                  <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
+                    {strategyLogic.entryCondition || 'No entry conditions defined'}
+                  </pre>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Exit Conditions</p>
+                  <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
+                    {strategyLogic.exitCondition || 'No exit conditions defined'}
+                  </pre>
+                </div>
+                <p className="text-xs text-muted-foreground italic">
+                  These conditions are part of the strategy logic and cannot be edited directly. Modify indicator parameters above to adjust the strategy behavior.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Indicators Section */}
           {strategyMetadata.indicators && strategyMetadata.indicators.length > 0 && (
             <div className="space-y-6">
