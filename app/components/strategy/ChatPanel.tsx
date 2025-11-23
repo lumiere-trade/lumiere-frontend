@@ -9,7 +9,6 @@ import { LogCategory } from "@/lib/debug"
 import { useProphet } from "@/hooks/use-prophet"
 import { StrategyPreview } from "./StrategyPreview"
 import { MarkdownMessage } from "./MarkdownMessage"
-import { ChatTeaser } from "./ChatTeaser"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
@@ -24,7 +23,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
-  const [showTeaser, setShowTeaser] = useState(false)
 
   const {
     messages,
@@ -37,18 +35,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     conversationState,
     error,
   } = useProphet()
-
-  // Show teaser after delay when chat is collapsed
-  useEffect(() => {
-    if (!isChatExpanded) {
-      const timer = setTimeout(() => {
-        setShowTeaser(true)
-      }, 500) // Delay before showing teaser
-      return () => clearTimeout(timer)
-    } else {
-      setShowTeaser(false)
-    }
-  }, [isChatExpanded])
 
   // Handle visibility and pre-scroll
   useEffect(() => {
@@ -233,11 +219,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     setInputValue("")
   }
 
-  const handleTeaserClick = () => {
-    log.info('Chat teaser clicked - expanding chat')
-    expandChat()
-  }
-
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
 
   const extractTSDL = (content: string) => {
@@ -247,8 +228,17 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   return (
     <>
-      {/* Floating Chat Teaser with slide animations */}
-      <ChatTeaser onClick={handleTeaserClick} show={showTeaser && !isChatExpanded} />
+      {/* Sticky Chat Button - shows when chat is collapsed */}
+      {!isChatExpanded && (
+        <button
+          onClick={expandChat}
+          className="fixed right-6 bottom-32 z-[70] bg-card border border-primary/30 rounded-full pl-4 pr-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.4)] transition-all duration-200 flex items-center gap-2.5 hover:bg-primary hover:text-primary-foreground hover:border-primary"
+          aria-label="Open chat"
+        >
+          <MessageSquare className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors" />
+          <span className="text-sm font-semibold">Chat</span>
+        </button>
+      )}
 
       {/* Main Chat Panel */}
       <div
