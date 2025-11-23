@@ -228,6 +228,19 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   return (
     <>
+      {/* Chat Button - separate, aligned with message box top */}
+      {!isChatExpanded && (
+        <Button
+          variant="outline"
+          size="lg"
+          className="fixed right-6 bottom-32 z-[70] rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
+          onClick={expandChat}
+        >
+          <MessageSquare className="h-5 w-5" />
+          Chat
+        </Button>
+      )}
+
       {/* Main Chat Panel */}
       <div
         className={`fixed z-60 transition-all duration-300 ${!isChatExpanded ? 'pointer-events-none' : ''}`}
@@ -241,42 +254,26 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         onClick={handleBackdropClick}
       >
         <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
-          {/* Bottom row: Message input + Chat button */}
-          <div className="flex-shrink-0 flex items-start gap-4 pointer-events-auto">
-            <div className="flex-1 relative rounded-2xl" onClick={(e) => e.stopPropagation()}>
-              <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-              <textarea
-                value={inputValue}
-                onChange={handleInputChange}
-                onClick={expandChat}
-                onKeyDown={handleKeyDown}
-                placeholder="How can I help you today?"
-                rows={3}
-                disabled={!isHealthy}
-                className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-              />
-              <Button
-                size="icon"
-                onClick={handleSend}
-                disabled={!inputValue.trim() || !isHealthy}
-                className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Chat button - aligned with message box */}
-            {!isChatExpanded && (
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-shrink-0 rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
-                onClick={expandChat}
-              >
-                <MessageSquare className="h-5 w-5" />
-                Chat
-              </Button>
-            )}
+          <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <textarea
+              value={inputValue}
+              onChange={handleInputChange}
+              onClick={expandChat}
+              onKeyDown={handleKeyDown}
+              placeholder="How can I help you today?"
+              rows={3}
+              disabled={!isHealthy}
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
+            />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!inputValue.trim() || !isHealthy}
+              className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
           </div>
 
           {isVisible && (
