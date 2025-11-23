@@ -233,7 +233,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         <Button
           variant="outline"
           size="lg"
-          className="fixed right-6 bottom-32 z-[70] rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
+          className="fixed right-6 bottom-36 z-[70] rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
           onClick={expandChat}
         >
           <MessageSquare className="h-5 w-5" />
