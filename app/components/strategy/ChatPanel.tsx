@@ -21,8 +21,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
-  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(null)
-  const [wasAtBottom, setWasAtBottom] = useState(true)
 
   const {
     messages,
@@ -36,13 +34,20 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     error,
   } = useProphet()
 
+  // Pre-scroll to bottom BEFORE making visible (no jump visible to user)
   useEffect(() => {
     if (isChatExpanded) {
+      // First, scroll to bottom instantly while still invisible
+      if (messagesContainerRef.current && messages.length > 0) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+      }
+      
+      // Then make visible immediately (already at bottom)
       setIsVisible(true)
     } else {
       setIsVisible(false)
     }
-  }, [isChatExpanded])
+  }, [isChatExpanded, messages.length])
 
   useEffect(() => {
     if (!isSending) {
@@ -77,38 +82,13 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     return () => clearInterval(interval)
   }, [isSending])
 
-  // Auto-scroll only when new messages arrive AND user was at bottom
+  // Auto-scroll when new messages arrive (smooth animation for new content)
   useEffect(() => {
-    if ((messages.length > 0 || isSending) && wasAtBottom) {
+    if (isVisible && (messages.length > 0 || isSending)) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, wasAtBottom])
+  }, [messages, isSending, isVisible])
 
-  // Save scroll position when chat closes
-  useEffect(() => {
-    if (!isChatExpanded && messagesContainerRef.current) {
-      const container = messagesContainerRef.current
-      const scrollTop = container.scrollTop
-      const scrollHeight = container.scrollHeight
-      const clientHeight = container.clientHeight
-      
-      // Check if user was at bottom (within 50px threshold)
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
-      
-      setSavedScrollPosition(scrollTop)
-      setWasAtBottom(isAtBottom)
-      
-      log.debug('Chat closing - saving scroll state', {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        isAtBottom,
-        messagesCount: messages.length
-      })
-    }
-  }, [isChatExpanded, messages.length])
-
-  // Restore scroll position when chat opens
   useEffect(() => {
     if (isChatExpanded) {
       log.info('Chat panel opened', {
@@ -116,46 +96,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         prophetHealthy: isHealthy,
         tsdlVersion,
         plugins: pluginsLoaded,
-        savedScrollPosition,
-        wasAtBottom
       })
-
-      if (messages.length > 0 && messagesContainerRef.current) {
-        setTimeout(() => {
-          if (messagesContainerRef.current) {
-            if (wasAtBottom || savedScrollPosition === null) {
-              // User was at bottom or first open - scroll to bottom
-              messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
-              log.debug('Restored scroll to bottom')
-            } else {
-              // Restore saved position
-              messagesContainerRef.current.scrollTop = savedScrollPosition
-              log.debug('Restored scroll position', { position: savedScrollPosition })
-            }
-          }
-        }, 50)
-      }
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded])
-
-  // Track if user is at bottom (for auto-scroll behavior)
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current
-      const scrollTop = container.scrollTop
-      const scrollHeight = container.scrollHeight
-      const clientHeight = container.clientHeight
-      
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
-      
-      if (isAtBottom !== wasAtBottom) {
-        setWasAtBottom(isAtBottom)
-        log.debug('Scroll position changed', { isAtBottom })
-      }
-    }
-  }
+  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded, messages.length])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) {
@@ -168,9 +113,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const userMessage = inputValue.trim()
     setInputValue("")
-
-    // Sending new message - user expects to see it at bottom
-    setWasAtBottom(true)
 
     log.info('Sending message to Prophet', {
       message: userMessage,
@@ -256,8 +198,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
     setInputValue("")
-    setSavedScrollPosition(null)
-    setWasAtBottom(true)
   }
 
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
@@ -355,7 +295,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
             <div 
               ref={messagesContainerRef}
-              onScroll={handleScroll}
               className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
             >
               {visibleMessages.length === 0 && !isSending && (
