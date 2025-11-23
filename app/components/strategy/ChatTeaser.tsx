@@ -1,6 +1,7 @@
 "use client"
 
 import { MessageSquare } from "lucide-react"
+import { useEffect, useState } from "react"
 
 interface ChatTeaserProps {
   onClick: () => void
@@ -8,22 +9,28 @@ interface ChatTeaserProps {
 }
 
 export function ChatTeaser({ onClick, show }: ChatTeaserProps) {
-  // Remove delayed unmount - keep in DOM always for smooth animations
-  if (!show) {
-    return null
-  }
+  const [shouldRender, setShouldRender] = useState(false)
+  const [animationClass, setAnimationClass] = useState("")
+
+  useEffect(() => {
+    if (show) {
+      setShouldRender(true)
+      setAnimationClass("chat-teaser-enter")
+    } else {
+      setAnimationClass("chat-teaser-exit")
+      const timer = setTimeout(() => {
+        setShouldRender(false)
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [show])
+
+  if (!shouldRender) return null
 
   return (
     <button
       onClick={onClick}
-      className={`
-        fixed right-6 bottom-32 z-[70]
-        transition-all duration-300 ease-out
-        ${show ? 'translate-x-0 opacity-100' : 'translate-x-[200%] opacity-0'}
-      `}
-      style={{
-        willChange: 'transform, opacity',
-      }}
+      className={`fixed right-6 bottom-32 z-[70] ${animationClass}`}
       aria-label="Open chat"
     >
       <div className="group bg-card border border-primary/30 rounded-full pl-4 pr-5 py-3 shadow-[0_4px_12px_rgb(0,0,0,0.15)] transition-all duration-200 flex items-center gap-2.5 hover:bg-primary hover:text-primary-foreground hover:border-primary hover:shadow-[0_6px_20px_rgb(0,0,0,0.2)]">

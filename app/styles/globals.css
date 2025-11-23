@@ -1,1 +1,32 @@
 @import '@lumiere/shared/styles/globals.css';
+
+/* ChatTeaser slide animations */
+@keyframes chat-teaser-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes chat-teaser-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.chat-teaser-enter {
+  animation: chat-teaser-slide-in 0.3s ease-out forwards;
+}
+
+.chat-teaser-exit {
+  animation: chat-teaser-slide-out 0.3s ease-in forwards;
+}
