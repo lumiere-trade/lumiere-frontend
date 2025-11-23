@@ -9,6 +9,7 @@ import { LogCategory } from "@/lib/debug"
 import { useProphet } from "@/hooks/use-prophet"
 import { StrategyPreview } from "./StrategyPreview"
 import { MarkdownMessage } from "./MarkdownMessage"
+import { ChatTeaser } from "./ChatTeaser"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
@@ -233,7 +234,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   const handleTeaserClick = () => {
-    log.info('Teaser clicked - expanding chat')
+    log.info('Chat teaser clicked - expanding chat')
     expandChat()
   }
 
@@ -247,18 +248,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   return (
     <>
       {/* Floating Chat Teaser - Only when collapsed */}
-      {showTeaser && !isChatExpanded && (
-        <div
-          className="fixed right-6 bottom-32 z-[70] cursor-pointer animate-in slide-in-from-right-5 duration-500"
-          onClick={handleTeaserClick}
-        >
-          <div className="bg-card border border-primary/30 rounded-full px-6 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.4)] transition-all duration-200 flex items-center gap-3 hover:scale-105 group">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            <span className="text-base font-semibold text-foreground">Prophet AI</span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
-        </div>
-      )}
+      {showTeaser && !isChatExpanded && <ChatTeaser onClick={handleTeaserClick} />}
 
       {/* Main Chat Panel */}
       <div
