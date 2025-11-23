@@ -294,7 +294,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               </SelectContent>
             </Select>
             {(description || paramData.description) && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {description || paramData.description}
               </p>
             )}
@@ -328,7 +328,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               className="w-full"
             />
             {(description || paramData.description) && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {description || paramData.description}
               </p>
             )}
@@ -437,7 +437,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             onChange={(e) => setName(e.target.value)}
             className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Give your strategy a descriptive name
           </p>
         </div>
