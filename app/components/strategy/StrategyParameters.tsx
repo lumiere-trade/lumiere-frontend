@@ -422,20 +422,20 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
       {showCode && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words font-mono">
+          <pre className="text-base text-muted-foreground whitespace-pre-wrap break-words font-mono">
             <code>{tsdlCode}</code>
           </pre>
         </div>
       )}
 
       <div className="bg-card border border-primary/20 rounded-2xl p-6">
-        <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground">Strategy Name</label>
+        <div className="space-y-1">
+          <label className="text-base font-semibold text-foreground">Strategy Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <p className="text-xs text-muted-foreground">
             Give your strategy a descriptive name
