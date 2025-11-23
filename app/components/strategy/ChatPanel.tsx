@@ -247,8 +247,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   return (
     <>
-      {/* Floating Chat Teaser - Only when collapsed */}
-      {showTeaser && !isChatExpanded && <ChatTeaser onClick={handleTeaserClick} />}
+      {/* Floating Chat Teaser with slide animations */}
+      <ChatTeaser onClick={handleTeaserClick} show={showTeaser && !isChatExpanded} />
 
       {/* Main Chat Panel */}
       <div
