@@ -314,8 +314,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         <div key={key} className="bg-card border border-primary/20 rounded-2xl p-6">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">{label}</label>
-              <span className="text-sm font-mono text-primary">
+              <label className="text-base font-semibold text-foreground">{label}</label>
+              <span className="text-base font-mono text-primary">
                 {currentValue}{unit}
               </span>
             </div>
@@ -459,13 +459,13 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               <h3 className="text-xl font-semibold text-foreground">Strategy Logic</h3>
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-4">
                 <div>
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Entry Conditions</p>
+                  <p className="text-base font-semibold text-muted-foreground mb-2">Entry Conditions</p>
                   <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
                     {strategyLogic.entryCondition || 'No entry conditions defined'}
                   </pre>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Exit Conditions</p>
+                  <p className="text-base font-semibold text-muted-foreground mb-2">Exit Conditions</p>
                   <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
                     {strategyLogic.exitCondition || 'No exit conditions defined'}
                   </pre>
