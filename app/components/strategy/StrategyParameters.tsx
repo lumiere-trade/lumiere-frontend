@@ -460,17 +460,17 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground mb-2">Entry Conditions</p>
-                  <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
+                  <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
                     {strategyLogic.entryCondition || 'No entry conditions defined'}
                   </pre>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-muted-foreground mb-2">Exit Conditions</p>
-                  <pre className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
+                  <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
                     {strategyLogic.exitCondition || 'No exit conditions defined'}
                   </pre>
                 </div>
-                <p className="text-xs text-muted-foreground italic">
+                <p className="text-sm text-muted-foreground italic">
                   These conditions are part of the strategy logic and cannot be edited directly. Modify indicator parameters above to adjust the strategy behavior.
                 </p>
               </div>
