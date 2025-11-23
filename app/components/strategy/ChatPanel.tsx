@@ -103,7 +103,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       const scrollTop = container.scrollTop
       const scrollHeight = container.scrollHeight
       const clientHeight = container.clientHeight
-      
+
       // Show button if not at bottom (threshold: 100px from bottom)
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 100
       setShowScrollButton(!isAtBottom && messages.length > 0)
@@ -319,7 +319,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             </div>
 
             <div className="relative flex-1 min-h-0">
-              <div 
+              <div
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
                 className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
@@ -431,13 +431,14 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
               {/* Floating scroll to bottom button */}
               {showScrollButton && (
-                <button
+                <Button
+                  size="icon"
                   onClick={scrollToBottom}
-                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-[0_8px_30px_rgb(0,0,0,0.4)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.5)] ring-2 ring-background hover:scale-105 transition-all duration-200 flex items-center justify-center z-10"
+                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
                   aria-label="Scroll to bottom"
                 >
                   <ArrowDown className="h-5 w-5" />
-                </button>
+                </Button>
               )}
             </div>
           </div>
