@@ -21,6 +21,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   const {
     messages,
@@ -34,18 +35,25 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     error,
   } = useProphet()
 
-  // Pre-scroll to bottom BEFORE making visible (no jump visible to user)
+  // Handle visibility and pre-scroll
   useEffect(() => {
     if (isChatExpanded) {
-      // First, scroll to bottom instantly while still invisible
-      if (messagesContainerRef.current && messages.length > 0) {
-        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
-      }
-      
-      // Then make visible immediately (already at bottom)
       setIsVisible(true)
+      setIsReady(false) // Hide content while scrolling
+      
+      // Wait for next frame, then scroll and show
+      requestAnimationFrame(() => {
+        if (messagesContainerRef.current && messages.length > 0) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
+        }
+        // Show content after scroll
+        requestAnimationFrame(() => {
+          setIsReady(true)
+        })
+      })
     } else {
       setIsVisible(false)
+      setIsReady(false)
     }
   }, [isChatExpanded, messages.length])
 
@@ -84,10 +92,10 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   // Auto-scroll when new messages arrive (smooth animation for new content)
   useEffect(() => {
-    if (isVisible && (messages.length > 0 || isSending)) {
+    if (isVisible && isReady && (messages.length > 0 || isSending)) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, isVisible])
+  }, [messages, isSending, isVisible, isReady])
 
   useEffect(() => {
     if (isChatExpanded) {
@@ -296,6 +304,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
             <div 
               ref={messagesContainerRef}
               className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
+              style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
             >
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
