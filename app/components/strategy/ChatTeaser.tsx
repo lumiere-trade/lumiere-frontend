@@ -36,12 +36,13 @@ export function ChatTeaser({ onClick, show }: ChatTeaserProps) {
 
   return (
     <div
-      className={`fixed right-6 bottom-32 z-[70] cursor-pointer transition-transform duration-300 ${
+      className={`fixed right-6 bottom-32 z-[70] cursor-pointer transition-transform duration-300 will-change-transform ${
         isVisible
           ? 'translate-x-0'
           : 'translate-x-full'
       }`}
       onClick={onClick}
+      style={{ transform: 'translateZ(0)' }}
     >
       <div className="group bg-card border border-primary/30 rounded-full pl-4 pr-5 py-3 shadow-[0_4px_12px_rgb(0,0,0,0.15)] transition-all duration-200 flex items-center gap-2.5 hover:bg-primary hover:text-primary-foreground hover:border-primary">
         <MessageSquare className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors" />
