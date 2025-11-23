@@ -16,8 +16,11 @@ export function ChatTeaser({ onClick, show }: ChatTeaserProps) {
     if (show) {
       // Show: render then animate in
       setShouldRender(true)
+      // Double requestAnimationFrame for reliable animation
       requestAnimationFrame(() => {
-        setIsVisible(true)
+        requestAnimationFrame(() => {
+          setIsVisible(true)
+        })
       })
     } else {
       // Hide: animate out then remove
@@ -33,10 +36,10 @@ export function ChatTeaser({ onClick, show }: ChatTeaserProps) {
 
   return (
     <div
-      className={`fixed right-6 bottom-32 z-[70] cursor-pointer transition-all duration-300 ${
+      className={`fixed right-6 bottom-32 z-[70] cursor-pointer transition-transform duration-300 ${
         isVisible
-          ? 'translate-x-0 opacity-100'
-          : 'translate-x-full opacity-0'
+          ? 'translate-x-0'
+          : 'translate-x-full'
       }`}
       onClick={onClick}
     >
