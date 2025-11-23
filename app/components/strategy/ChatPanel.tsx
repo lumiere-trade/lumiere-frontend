@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X, ArrowRight } from "lucide-react"
+import { Sparkles, MessageSquare, Send, X, ArrowRight, ArrowDown } from "lucide-react"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -22,6 +22,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
   const [isReady, setIsReady] = useState(false)
+  const [showScrollButton, setShowScrollButton] = useState(false)
 
   const {
     messages,
@@ -39,14 +40,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   useEffect(() => {
     if (isChatExpanded) {
       setIsVisible(true)
-      setIsReady(false) // Hide content while scrolling
-      
-      // Wait for next frame, then scroll and show
+      setIsReady(false)
+
       requestAnimationFrame(() => {
         if (messagesContainerRef.current && messages.length > 0) {
           messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
         }
-        // Show content after scroll
         requestAnimationFrame(() => {
           setIsReady(true)
         })
@@ -90,12 +89,30 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     return () => clearInterval(interval)
   }, [isSending])
 
-  // Auto-scroll when new messages arrive (smooth animation for new content)
+  // Auto-scroll when new messages arrive
   useEffect(() => {
     if (isVisible && isReady && (messages.length > 0 || isSending)) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages, isSending, isVisible, isReady])
+
+  // Track scroll position to show/hide scroll button
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      const scrollTop = container.scrollTop
+      const scrollHeight = container.scrollHeight
+      const clientHeight = container.clientHeight
+      
+      // Show button if not at bottom (threshold: 100px from bottom)
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 100
+      setShowScrollButton(!isAtBottom && messages.length > 0)
+    }
+  }
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
     if (isChatExpanded) {
@@ -301,113 +318,127 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               </div>
             </div>
 
-            <div 
-              ref={messagesContainerRef}
-              className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
-              style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
-            >
-              {visibleMessages.length === 0 && !isSending && (
-                <div className="flex items-center justify-center h-full text-center">
-                  <div className="space-y-2">
-                    <p className="text-base text-muted-foreground">
-                      Start by describing your trading strategy idea.
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Try: "Create an RSI strategy that buys when oversold"
-                    </p>
-                    {!isHealthy && (
-                      <p className="text-xs text-destructive">
-                        Warning: Prophet AI is not responding
+            <div className="relative flex-1 min-h-0">
+              <div 
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
+              >
+                {visibleMessages.length === 0 && !isSending && (
+                  <div className="flex items-center justify-center h-full text-center">
+                    <div className="space-y-2">
+                      <p className="text-base text-muted-foreground">
+                        Start by describing your trading strategy idea.
                       </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {visibleMessages.map((message) => {
-                const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
-                const contentWithoutTSDL = tsdlCode
-                  ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
-                  : message.content
-
-                return (
-                  <div key={message.id}>
-                    <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                      {message.role === "assistant" && (
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                          <Sparkles className="h-4 w-4 text-primary" />
-                        </div>
+                      <p className="text-sm text-muted-foreground">
+                        Try: "Create an RSI strategy that buys when oversold"
+                      </p>
+                      {!isHealthy && (
+                        <p className="text-xs text-destructive">
+                          Warning: Prophet AI is not responding
+                        </p>
                       )}
-
-                      <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
-                        <div
-                          className={`rounded-2xl px-4 py-3 ${
-                            message.role === "user"
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-background border border-primary/20"
-                          }`}
-                        >
-                          {message.role === "user" ? (
-                            <p className="text-base leading-relaxed whitespace-pre-line">
-                              {message.content}
-                            </p>
-                          ) : (
-                            <>
-                              {contentWithoutTSDL && (
-                                <MarkdownMessage content={contentWithoutTSDL} />
-                              )}
-
-                              {tsdlCode && (
-                                <>
-                                  {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
-                                  <StrategyPreview tsdlCode={tsdlCode} />
-                                </>
-                              )}
-                            </>
-                          )}
-                        </div>
-
-                        {tsdlCode && (
-                          <div className="mt-3">
-                            <Button
-                              onClick={handleViewStrategy}
-                              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                            >
-                              View Strategy
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
-                )
-              })}
+                )}
 
-              {isSending && (
-                <div className="flex gap-3 justify-start">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                    <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                {visibleMessages.map((message) => {
+                  const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
+                  const contentWithoutTSDL = tsdlCode
+                    ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
+                    : message.content
+
+                  return (
+                    <div key={message.id}>
+                      <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                        {message.role === "assistant" && (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
+
+                        <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
+                          <div
+                            className={`rounded-2xl px-4 py-3 ${
+                              message.role === "user"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background border border-primary/20"
+                            }`}
+                          >
+                            {message.role === "user" ? (
+                              <p className="text-base leading-relaxed whitespace-pre-line">
+                                {message.content}
+                              </p>
+                            ) : (
+                              <>
+                                {contentWithoutTSDL && (
+                                  <MarkdownMessage content={contentWithoutTSDL} />
+                                )}
+
+                                {tsdlCode && (
+                                  <>
+                                    {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
+                                    <StrategyPreview tsdlCode={tsdlCode} />
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          {tsdlCode && (
+                            <div className="mt-3">
+                              <Button
+                                onClick={handleViewStrategy}
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                              >
+                                View Strategy
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+
+                {isSending && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                      <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-base text-muted-foreground min-w-[80px]">
+                        {thinkingText}
+                      </p>
+                    </div>
                   </div>
-                  <div className="px-4 py-3">
-                    <p className="text-base text-muted-foreground min-w-[80px]">
-                      {thinkingText}
-                    </p>
+                )}
+
+                {error && (
+                  <div className="flex justify-center">
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
+                      <p className="text-base text-destructive">
+                        Error: {error.message}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Floating scroll to bottom button */}
+              {showScrollButton && (
+                <button
+                  onClick={scrollToBottom}
+                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center z-10"
+                  aria-label="Scroll to bottom"
+                >
+                  <ArrowDown className="h-5 w-5" />
+                </button>
               )}
-
-              {error && (
-                <div className="flex justify-center">
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
-                    <p className="text-base text-destructive">
-                      Error: {error.message}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
             </div>
           </div>
         )}
