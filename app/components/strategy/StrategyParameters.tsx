@@ -48,22 +48,22 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const strategyLogic = useMemo(() => {
     const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
     const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+(?:TAKE_PROFIT|STOP_LOSS|END))/s)
-    
+
     let entryCondition = ''
     let exitCondition = ''
-    
+
     if (entryMatch) {
       entryCondition = entryMatch[1].trim()
         .replace(/\s+AND\s+/g, ' AND\n')
         .replace(/\s+OR\s+/g, ' OR\n')
     }
-    
+
     if (exitMatch) {
       exitCondition = exitMatch[1].trim()
         .replace(/\s+AND\s+/g, ' AND\n')
         .replace(/\s+OR\s+/g, ' OR\n')
     }
-    
+
     return { entryCondition, exitCondition }
   }, [tsdlCode])
 
@@ -113,6 +113,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   useEffect(() => {
     setTsdlCode(strategy.tsdl_code)
   }, [strategy.tsdl_code])
+
+  // Update name when strategy prop changes
+  useEffect(() => {
+    setName(strategy.name)
+  }, [strategy.name])
 
   const handleParamChange = (key: string, value: any) => {
     setParamValues(prev => ({ ...prev, [key]: value }))
