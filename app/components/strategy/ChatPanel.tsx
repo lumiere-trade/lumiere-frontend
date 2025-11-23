@@ -230,14 +230,15 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     <>
       {/* Sticky Chat Button - shows when chat is collapsed */}
       {!isChatExpanded && (
-        <button
+        <Button
+          variant="outline"
+          size="lg"
+          className="fixed right-6 bottom-32 z-[70] rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
           onClick={expandChat}
-          className="fixed right-6 bottom-32 z-[70] bg-card border border-primary/30 rounded-full pl-4 pr-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.4)] transition-all duration-200 flex items-center gap-2.5 hover:bg-primary hover:text-primary-foreground hover:border-primary"
-          aria-label="Open chat"
         >
-          <MessageSquare className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors" />
-          <span className="text-sm font-semibold">Chat</span>
-        </button>
+          <MessageSquare className="h-5 w-5" />
+          Chat
+        </Button>
       )}
 
       {/* Main Chat Panel */}
