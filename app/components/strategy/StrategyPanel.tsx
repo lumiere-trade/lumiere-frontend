@@ -120,11 +120,6 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 <h3 className="text-base text-primary whitespace-nowrap">
                   Strategies
                 </h3>
-                {!isLoading && strategies.length > 0 && (
-                  <span className="text-xs text-muted-foreground">
-                    ({strategies.length})
-                  </span>
-                )}
               </div>
               {strategiesExpanded ? (
                 <ChevronDown className="h-4 w-4 text-primary shrink-0" />
