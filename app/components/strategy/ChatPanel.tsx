@@ -23,6 +23,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const [showTeaser, setShowTeaser] = useState(false)
 
   const {
     messages,
@@ -35,6 +36,18 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     conversationState,
     error,
   } = useProphet()
+
+  // Show teaser after delay when chat is collapsed
+  useEffect(() => {
+    if (!isChatExpanded) {
+      const timer = setTimeout(() => {
+        setShowTeaser(true)
+      }, 500) // Delay before showing teaser
+      return () => clearTimeout(timer)
+    } else {
+      setShowTeaser(false)
+    }
+  }, [isChatExpanded])
 
   // Handle visibility and pre-scroll
   useEffect(() => {
@@ -219,6 +232,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     setInputValue("")
   }
 
+  const handleTeaserClick = () => {
+    log.info('Teaser clicked - expanding chat')
+    expandChat()
+  }
+
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
 
   const extractTSDL = (content: string) => {
@@ -227,217 +245,234 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   return (
-    <div
-      className={`fixed z-60 transition-all duration-300 ${!isChatExpanded ? 'pointer-events-none' : ''}`}
-      style={{
-        left: isSidebarOpen ? '300px' : '32px',
-        right: 0,
-        width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
-        top: '80px',
-        bottom: '32px'
-      }}
-      onClick={handleBackdropClick}
-    >
-      <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
-        <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
-          <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-          <textarea
-            value={inputValue}
-            onChange={handleInputChange}
-            onClick={expandChat}
-            onKeyDown={handleKeyDown}
-            placeholder="How can I help you today?"
-            rows={3}
-            disabled={!isHealthy}
-            className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={!inputValue.trim() || !isHealthy}
-            className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+    <>
+      {/* Floating Chat Teaser - Only when collapsed */}
+      {showTeaser && !isChatExpanded && (
+        <div
+          className="fixed right-6 bottom-32 z-[70] cursor-pointer animate-in slide-in-from-right-5 duration-500"
+          onClick={handleTeaserClick}
+        >
+          <div className="bg-card border border-primary/30 rounded-full px-6 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.3)] hover:shadow-[0_12px_40px_rgb(0,0,0,0.4)] transition-all duration-200 flex items-center gap-3 hover:scale-105 group">
+            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+            <span className="text-base font-semibold text-foreground">Prophet AI</span>
+            <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+          </div>
         </div>
+      )}
 
-        {isVisible && (
-          <div
-            className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
-              isChatExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
-                  <Sparkles className="h-5 w-5 text-primary" />
+      {/* Main Chat Panel */}
+      <div
+        className={`fixed z-60 transition-all duration-300 ${!isChatExpanded ? 'pointer-events-none' : ''}`}
+        style={{
+          left: isSidebarOpen ? '300px' : '32px',
+          right: 0,
+          width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
+          top: '80px',
+          bottom: '32px'
+        }}
+        onClick={handleBackdropClick}
+      >
+        <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
+          <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
+            <textarea
+              value={inputValue}
+              onChange={handleInputChange}
+              onClick={expandChat}
+              onKeyDown={handleKeyDown}
+              placeholder="How can I help you today?"
+              rows={3}
+              disabled={!isHealthy}
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
+            />
+            <Button
+              size="icon"
+              onClick={handleSend}
+              disabled={!inputValue.trim() || !isHealthy}
+              className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {isVisible && (
+            <div
+              className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
+                isChatExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Strategy Creation Assistant
+                      {isHealthy && tsdlVersion && (
+                        <span className="ml-2 text-xs text-primary">
+                          • TSDL {tsdlVersion} • {pluginsLoaded.length} plugins
+                        </span>
+                      )}
+                      {conversationState && conversationState !== 'greeting' && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          • {conversationState}
+                        </span>
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Strategy Creation Assistant
-                    {isHealthy && tsdlVersion && (
-                      <span className="ml-2 text-xs text-primary">
-                        • TSDL {tsdlVersion} • {pluginsLoaded.length} plugins
-                      </span>
-                    )}
-                    {conversationState && conversationState !== 'greeting' && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        • {conversationState}
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {messages.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {messages.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleNewChat}
+                      className="text-xs"
+                    >
+                      New Chat
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={handleNewChat}
-                    className="text-xs"
+                    size="icon"
+                    onClick={collapseChat}
+                    className="h-8 w-8 rounded-lg"
                   >
-                    New Chat
+                    <X className="h-4 w-4" />
                   </Button>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={collapseChat}
-                  className="h-8 w-8 rounded-lg"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                </div>
               </div>
-            </div>
 
-            <div className="relative flex-1 min-h-0">
-              <div
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-                className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
-                style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
-              >
-                {visibleMessages.length === 0 && !isSending && (
-                  <div className="flex items-center justify-center h-full text-center">
-                    <div className="space-y-2">
-                      <p className="text-base text-muted-foreground">
-                        Start by describing your trading strategy idea.
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Try: "Create an RSI strategy that buys when oversold"
-                      </p>
-                      {!isHealthy && (
-                        <p className="text-xs text-destructive">
-                          Warning: Prophet AI is not responding
+              <div className="relative flex-1 min-h-0">
+                <div
+                  ref={messagesContainerRef}
+                  onScroll={handleScroll}
+                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                  style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
+                >
+                  {visibleMessages.length === 0 && !isSending && (
+                    <div className="flex items-center justify-center h-full text-center">
+                      <div className="space-y-2">
+                        <p className="text-base text-muted-foreground">
+                          Start by describing your trading strategy idea.
                         </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {visibleMessages.map((message) => {
-                  const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
-                  const contentWithoutTSDL = tsdlCode
-                    ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
-                    : message.content
-
-                  return (
-                    <div key={message.id}>
-                      <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                        {message.role === "assistant" && (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                          </div>
+                        <p className="text-sm text-muted-foreground">
+                          Try: "Create an RSI strategy that buys when oversold"
+                        </p>
+                        {!isHealthy && (
+                          <p className="text-xs text-destructive">
+                            Warning: Prophet AI is not responding
+                          </p>
                         )}
-
-                        <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
-                          <div
-                            className={`rounded-2xl px-4 py-3 ${
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-background border border-primary/20"
-                            }`}
-                          >
-                            {message.role === "user" ? (
-                              <p className="text-base leading-relaxed whitespace-pre-line">
-                                {message.content}
-                              </p>
-                            ) : (
-                              <>
-                                {contentWithoutTSDL && (
-                                  <MarkdownMessage content={contentWithoutTSDL} />
-                                )}
-
-                                {tsdlCode && (
-                                  <>
-                                    {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
-                                    <StrategyPreview tsdlCode={tsdlCode} />
-                                  </>
-                                )}
-                              </>
-                            )}
-                          </div>
-
-                          {tsdlCode && (
-                            <div className="mt-3">
-                              <Button
-                                onClick={handleViewStrategy}
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                              >
-                                View Strategy
-                                <ArrowRight className="ml-2 h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
-                  )
-                })}
+                  )}
 
-                {isSending && (
-                  <div className="flex gap-3 justify-start">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                      <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  {visibleMessages.map((message) => {
+                    const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
+                    const contentWithoutTSDL = tsdlCode
+                      ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
+                      : message.content
+
+                    return (
+                      <div key={message.id}>
+                        <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                          {message.role === "assistant" && (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                              <Sparkles className="h-4 w-4 text-primary" />
+                            </div>
+                          )}
+
+                          <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
+                            <div
+                              className={`rounded-2xl px-4 py-3 ${
+                                message.role === "user"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background border border-primary/20"
+                              }`}
+                            >
+                              {message.role === "user" ? (
+                                <p className="text-base leading-relaxed whitespace-pre-line">
+                                  {message.content}
+                                </p>
+                              ) : (
+                                <>
+                                  {contentWithoutTSDL && (
+                                    <MarkdownMessage content={contentWithoutTSDL} />
+                                  )}
+
+                                  {tsdlCode && (
+                                    <>
+                                      {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
+                                      <StrategyPreview tsdlCode={tsdlCode} />
+                                    </>
+                                  )}
+                                </>
+                              )}
+                            </div>
+
+                            {tsdlCode && (
+                              <div className="mt-3">
+                                <Button
+                                  onClick={handleViewStrategy}
+                                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                                >
+                                  View Strategy
+                                  <ArrowRight className="ml-2 h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {isSending && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-base text-muted-foreground inline-block" style={{ minWidth: '100px' }}>
+                          {thinkingText || '\u00A0'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="px-4 py-3">
-                      <p className="text-base text-muted-foreground inline-block" style={{ minWidth: '100px' }}>
-                        {thinkingText || '\u00A0'}
-                      </p>
+                  )}
+
+                  {error && (
+                    <div className="flex justify-center">
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
+                        <p className="text-base text-destructive">
+                          Error: {error.message}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Floating scroll to bottom button */}
+                {showScrollButton && (
+                  <Button
+                    size="icon"
+                    onClick={scrollToBottom}
+                    className="absolute bottom-6 right-6 h-10 w-10 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
+                    aria-label="Scroll to bottom"
+                  >
+                    <ArrowDown className="h-5 w-5" />
+                  </Button>
                 )}
-
-                {error && (
-                  <div className="flex justify-center">
-                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
-                      <p className="text-base text-destructive">
-                        Error: {error.message}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div ref={messagesEndRef} />
               </div>
-
-              {/* Floating scroll to bottom button */}
-              {showScrollButton && (
-                <Button
-                  size="icon"
-                  onClick={scrollToBottom}
-                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
-                  aria-label="Scroll to bottom"
-                >
-                  <ArrowDown className="h-5 w-5" />
-                </Button>
-              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
