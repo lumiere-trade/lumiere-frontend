@@ -179,38 +179,38 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         <div className="text-base font-medium text-foreground truncate">
                           {strategy.name}
                         </div>
-                        <div className="flex items-center justify-between mt-1">
+                        <div className="flex items-center justify-between mt-1 min-h-[24px]">
                           <span className="text-sm text-muted-foreground capitalize">
                             {strategy.status}
                           </span>
 
-                          {/* Action buttons - only show on hover */}
-                          {isHovered && (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleStrategyClick(strategy.id)
-                                }}
-                                disabled={isDeleting}
-                                className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="Edit strategy"
-                              >
-                                <Pencil className="h-4 w-4 text-primary" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleDelete(strategy.id, strategy.name)
-                                }}
-                                disabled={isDeleting || isThisDeleting}
-                                className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                title={isThisDeleting ? "Deleting..." : "Delete strategy"}
-                              >
-                                <Trash2 className={`h-4 w-4 text-primary ${isThisDeleting ? 'animate-pulse' : ''}`} />
-                              </button>
-                            </div>
-                          )}
+                          {/* Action buttons - always rendered, visibility controlled by opacity */}
+                          <div className={`flex items-center gap-2 transition-opacity duration-200 ${
+                            isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                          }`}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleStrategyClick(strategy.id)
+                              }}
+                              disabled={isDeleting}
+                              className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Edit strategy"
+                            >
+                              <Pencil className="h-4 w-4 text-primary" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDelete(strategy.id, strategy.name)
+                              }}
+                              disabled={isDeleting || isThisDeleting}
+                              className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title={isThisDeleting ? "Deleting..." : "Delete strategy"}
+                            >
+                              <Trash2 className={`h-4 w-4 text-primary ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )
