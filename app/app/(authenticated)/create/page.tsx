@@ -26,6 +26,7 @@ function CreatePageContent() {
   const {
     isChatExpanded,
     generatedStrategy,
+    currentStrategy,
     collapseChat,
     expandChat,
     setInputValue,
@@ -37,16 +38,26 @@ function CreatePageContent() {
 
   const { loadHistory } = useProphet()
 
-  // Load strategy on mount if strategyId is present, otherwise clear state
+  // Load strategy when strategyId changes or clear state when no strategyId
   useEffect(() => {
-    if (strategyId && !generatedStrategy) {
-      loadStrategy(strategyId)
+    if (strategyId) {
+      // Check if we need to load a different strategy
+      const isDifferentStrategy = !currentStrategy || currentStrategy.id !== strategyId
+      
+      if (isDifferentStrategy) {
+        logger.info('Strategy ID changed, loading new strategy', {
+          oldStrategyId: currentStrategy?.id,
+          newStrategyId: strategyId
+        })
+        loadStrategy(strategyId)
+      } else {
+        logger.info('Same strategy ID, no reload needed', { strategyId })
+      }
     } else if (!strategyId && generatedStrategy) {
       // Clear state when navigating to /create without strategy parameter
       logger.info('Clearing chat state for new strategy')
       clearChat()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [strategyId])
 
   const loadStrategy = async (id: string) => {
@@ -77,7 +88,8 @@ function CreatePageContent() {
       })
 
       logger.info('Strategy loaded successfully', {
-        strategy,
+        strategyId: strategy.id,
+        strategyName: strategy.name,
         contextSet: true,
         hasUpdatedValues: !!strategy.parameters?.values
       })
@@ -85,7 +97,7 @@ function CreatePageContent() {
       // Load conversation history
       await loadConversationHistory(id)
 
-      toast.success('Strategy loaded')
+      toast.success(`Strategy "${strategy.name}" loaded`)
     } catch (error) {
       logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
