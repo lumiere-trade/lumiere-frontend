@@ -433,7 +433,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               {showScrollButton && (
                 <button
                   onClick={scrollToBottom}
-                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-200 flex items-center justify-center z-10"
+                  className="absolute bottom-6 right-6 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200 flex items-center justify-center z-10"
                   aria-label="Scroll to bottom"
                 >
                   <ArrowDown className="h-5 w-5" />
