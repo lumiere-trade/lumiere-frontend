@@ -264,7 +264,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               placeholder="How can I help you today?"
               rows={3}
               disabled={!isHealthy}
-              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
+              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-white text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
             />
             <Button
               size="icon"
