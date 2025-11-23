@@ -56,6 +56,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }, [isChatExpanded, messages.length])
 
+  // Thinking animation - type out, pause, instant clear, repeat
   useEffect(() => {
     if (!isSending) {
       setThinkingText("")
@@ -64,27 +65,20 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const fullText = "Thinking..."
     let currentIndex = 0
-    let isDeleting = false
 
     const interval = setInterval(() => {
-      if (!isDeleting) {
-        if (currentIndex <= fullText.length) {
-          setThinkingText(fullText.substring(0, currentIndex))
-          currentIndex++
-        } else {
-          setTimeout(() => {
-            isDeleting = true
-          }, 500)
-        }
+      if (currentIndex <= fullText.length) {
+        // Typing phase
+        setThinkingText(fullText.substring(0, currentIndex))
+        currentIndex++
       } else {
-        if (currentIndex > 0) {
-          currentIndex--
-          setThinkingText(fullText.substring(0, currentIndex))
-        } else {
-          isDeleting = false
-        }
+        // Pause at end, then instant clear and restart
+        setTimeout(() => {
+          setThinkingText("")
+          currentIndex = 0
+        }, 800) // 800ms pause at end
       }
-    }, isDeleting ? 50 : 100)
+    }, 100) // 100ms per character
 
     return () => clearInterval(interval)
   }, [isSending])
@@ -409,8 +403,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                       <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                     </div>
                     <div className="px-4 py-3">
-                      <p className="text-base text-muted-foreground min-w-[80px]">
-                        {thinkingText}
+                      <p className="text-base text-muted-foreground inline-block" style={{ minWidth: '100px' }}>
+                        {thinkingText || '\u00A0'}
                       </p>
                     </div>
                   </div>
