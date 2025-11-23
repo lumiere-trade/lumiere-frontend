@@ -18,8 +18,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useChat()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [isVisible, setIsVisible] = useState(false)
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number | null>(null)
+  const [wasAtBottom, setWasAtBottom] = useState(true)
 
   const {
     messages,
@@ -74,12 +77,38 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     return () => clearInterval(interval)
   }, [isSending])
 
+  // Auto-scroll only when new messages arrive AND user was at bottom
   useEffect(() => {
-    if (messages.length > 0 || isSending) {
+    if ((messages.length > 0 || isSending) && wasAtBottom) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending])
+  }, [messages, isSending, wasAtBottom])
 
+  // Save scroll position when chat closes
+  useEffect(() => {
+    if (!isChatExpanded && messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      const scrollTop = container.scrollTop
+      const scrollHeight = container.scrollHeight
+      const clientHeight = container.clientHeight
+      
+      // Check if user was at bottom (within 50px threshold)
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
+      
+      setSavedScrollPosition(scrollTop)
+      setWasAtBottom(isAtBottom)
+      
+      log.debug('Chat closing - saving scroll state', {
+        scrollTop,
+        scrollHeight,
+        clientHeight,
+        isAtBottom,
+        messagesCount: messages.length
+      })
+    }
+  }, [isChatExpanded, messages.length])
+
+  // Restore scroll position when chat opens
   useEffect(() => {
     if (isChatExpanded) {
       log.info('Chat panel opened', {
@@ -87,17 +116,46 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         prophetHealthy: isHealthy,
         tsdlVersion,
         plugins: pluginsLoaded,
+        savedScrollPosition,
+        wasAtBottom
       })
 
-      if (messages.length > 0) {
+      if (messages.length > 0 && messagesContainerRef.current) {
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-        }, 100)
+          if (messagesContainerRef.current) {
+            if (wasAtBottom || savedScrollPosition === null) {
+              // User was at bottom or first open - scroll to bottom
+              messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+              log.debug('Restored scroll to bottom')
+            } else {
+              // Restore saved position
+              messagesContainerRef.current.scrollTop = savedScrollPosition
+              log.debug('Restored scroll position', { position: savedScrollPosition })
+            }
+          }
+        }, 50)
       }
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded, messages.length])
+  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded])
+
+  // Track if user is at bottom (for auto-scroll behavior)
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current
+      const scrollTop = container.scrollTop
+      const scrollHeight = container.scrollHeight
+      const clientHeight = container.clientHeight
+      
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50
+      
+      if (isAtBottom !== wasAtBottom) {
+        setWasAtBottom(isAtBottom)
+        log.debug('Scroll position changed', { isAtBottom })
+      }
+    }
+  }
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) {
@@ -110,6 +168,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const userMessage = inputValue.trim()
     setInputValue("")
+
+    // Sending new message - user expects to see it at bottom
+    setWasAtBottom(true)
 
     log.info('Sending message to Prophet', {
       message: userMessage,
@@ -195,10 +256,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
     setInputValue("")
+    setSavedScrollPosition(null)
+    setWasAtBottom(true)
   }
 
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
-  
+
   const extractTSDL = (content: string) => {
     const match = content.match(/```tsdl\n([\s\S]*?)```/)
     return match ? match[1] : null
@@ -240,7 +303,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         </div>
 
         {isVisible && (
-          <div 
+          <div
             className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
               isChatExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
             }`}
@@ -290,7 +353,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               </div>
             </div>
 
-            <div className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+            <div 
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className={`flex-1 px-6 py-4 space-y-4 min-h-0 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
+            >
               {visibleMessages.length === 0 && !isSending && (
                 <div className="flex items-center justify-center h-full text-center">
                   <div className="space-y-2">
@@ -311,7 +378,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
               {visibleMessages.map((message) => {
                 const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
-                const contentWithoutTSDL = tsdlCode 
+                const contentWithoutTSDL = tsdlCode
                   ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
                   : message.content
 
@@ -341,7 +408,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                               {contentWithoutTSDL && (
                                 <MarkdownMessage content={contentWithoutTSDL} />
                               )}
-                              
+
                               {tsdlCode && (
                                 <>
                                   {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
