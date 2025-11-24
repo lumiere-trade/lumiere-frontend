@@ -44,53 +44,26 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
   const [isRegenerating, setIsRegenerating] = useState(false)
 
-  // Parse entry/exit conditions from TSDL code (fallback)
-  const parsedConditions = useMemo(() => {
-    const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
-    
-    // FIXED: Parse EXIT_CONDITIONS properly - capture everything until END
-    // This includes condition lines AND STOP_LOSS/TAKE_PROFIT
-    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+END)/s)
+  // Parse entry/exit descriptions from TSDL METADATA section
+  const parsedDescriptions = useMemo(() => {
+    // Parse ENTRY_DESCRIPTION and EXIT_DESCRIPTION from METADATA
+    const entryDescMatch = tsdlCode.match(/ENTRY_DESCRIPTION:\s*"([^"]+)"/)
+    const exitDescMatch = tsdlCode.match(/EXIT_DESCRIPTION:\s*"([^"]+)"/)
 
-    let entryCondition = ''
-    let exitCondition = ''
-
-    if (entryMatch) {
-      entryCondition = entryMatch[1].trim()
-        .replace(/\s+AND\s+/g, ' AND\n')
-        .replace(/\s+OR\s+/g, ' OR\n')
+    return {
+      entryDescription: entryDescMatch ? entryDescMatch[1] : '',
+      exitDescription: exitDescMatch ? exitDescMatch[1] : ''
     }
-
-    if (exitMatch) {
-      // Extract only condition lines (before STOP_LOSS/TAKE_PROFIT)
-      const fullExit = exitMatch[1].trim()
-      const conditionLines = fullExit
-        .split('\n')
-        .filter(line => {
-          const trimmed = line.trim()
-          return trimmed && 
-                 !trimmed.startsWith('STOP_LOSS') && 
-                 !trimmed.startsWith('TAKE_PROFIT')
-        })
-        .join('\n')
-        .replace(/\s+AND\s+/g, ' AND\n')
-        .replace(/\s+OR\s+/g, ' OR\n')
-      
-      exitCondition = conditionLines
-    }
-
-    return { entryCondition, exitCondition }
   }, [tsdlCode])
 
-  // Use human-readable descriptions from metadata if available,
-  // otherwise fall back to parsed TSDL conditions
+  // Use descriptions from METADATA section in TSDL code
   const strategyLogic = useMemo(() => {
     return {
-      entryCondition: strategyMetadata?.entry_description || parsedConditions.entryCondition,
-      exitCondition: strategyMetadata?.exit_description || parsedConditions.exitCondition,
-      hasDescriptions: !!(strategyMetadata?.entry_description || strategyMetadata?.exit_description)
+      entryCondition: parsedDescriptions.entryDescription,
+      exitCondition: parsedDescriptions.exitDescription,
+      hasDescriptions: !!(parsedDescriptions.entryDescription || parsedDescriptions.exitDescription)
     }
-  }, [strategyMetadata, parsedConditions])
+  }, [parsedDescriptions])
 
   // Initialize param values from metadata
   useEffect(() => {

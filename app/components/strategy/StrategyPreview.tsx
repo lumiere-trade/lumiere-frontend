@@ -77,47 +77,6 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
       }
     }
 
-    // ENTRY_CONDITIONS section (extract human-readable conditions)
-    const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
-    if (entryMatch) {
-      let conditions = entryMatch[1].trim()
-      // Clean up formatting for display
-      conditions = conditions
-        .replace(/\s+AND\s+/g, ' AND ')
-        .replace(/\s+OR\s+/g, ' OR ')
-        .replace(/\s+/g, ' ')
-      params.buyCondition = conditions
-    } else {
-      params.buyCondition = ''
-    }
-
-    // EXIT_CONDITIONS section (extract only conditions, not TAKE_PROFIT/STOP_LOSS)
-    // FIXED: Parse everything until END, then filter out STOP_LOSS/TAKE_PROFIT lines
-    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+END)/s)
-    if (exitMatch) {
-      // Extract only condition lines (before STOP_LOSS/TAKE_PROFIT)
-      const fullExit = exitMatch[1].trim()
-      const conditionLines = fullExit
-        .split('\n')
-        .filter(line => {
-          const trimmed = line.trim()
-          return trimmed && 
-                 !trimmed.startsWith('STOP_LOSS') && 
-                 !trimmed.startsWith('TAKE_PROFIT')
-        })
-        .join('\n')
-      
-      // Clean up formatting
-      const conditions = conditionLines
-        .replace(/\s+AND\s+/g, ' AND ')
-        .replace(/\s+OR\s+/g, ' OR ')
-        .replace(/\s+/g, ' ')
-      
-      params.sellCondition = conditions
-    } else {
-      params.sellCondition = ''
-    }
-
     // EXIT_CONDITIONS - extract STOP_LOSS, TAKE_PROFIT
     const stopLossMatch = tsdlCode.match(/STOP_LOSS:\s*([\d.]+)/)
     params.stopLoss = stopLossMatch ? parseFloat(stopLossMatch[1]) : null
@@ -142,15 +101,21 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
     return { params }
   }, [tsdlCode])
 
-  // Use human-readable descriptions from metadata if available,
-  // otherwise fall back to parsed TSDL conditions
-  const entryDisplay = strategyMetadata?.entry_description
-    || parsedStrategy.params.buyCondition
-    || 'See full TSDL code'
+  // Parse entry/exit descriptions from TSDL METADATA section
+  const parsedDescriptions = useMemo(() => {
+    // Parse ENTRY_DESCRIPTION and EXIT_DESCRIPTION from METADATA
+    const entryDescMatch = tsdlCode.match(/ENTRY_DESCRIPTION:\s*"([^"]+)"/)
+    const exitDescMatch = tsdlCode.match(/EXIT_DESCRIPTION:\s*"([^"]+)"/)
 
-  const exitDisplay = strategyMetadata?.exit_description
-    || parsedStrategy.params.sellCondition
-    || 'See full TSDL code'
+    return {
+      entryDescription: entryDescMatch ? entryDescMatch[1] : '',
+      exitDescription: exitDescMatch ? exitDescMatch[1] : ''
+    }
+  }, [tsdlCode])
+
+  // Use descriptions from METADATA section in TSDL code
+  const entryDisplay = parsedDescriptions.entryDescription || 'See full TSDL code'
+  const exitDisplay = parsedDescriptions.exitDescription || 'See full TSDL code'
 
   return (
     <div className="space-y-4">
@@ -193,7 +158,7 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
           <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-sm text-muted-foreground mb-1">Buy When</p>
             <p className={`text-sm text-foreground whitespace-pre-wrap break-words ${
-              strategyMetadata?.entry_description ? '' : 'font-mono'
+              parsedDescriptions.entryDescription ? '' : 'font-mono'
             }`}>
               {entryDisplay}
             </p>
@@ -201,7 +166,7 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
           <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-sm text-muted-foreground mb-1">Sell When</p>
             <p className={`text-sm text-foreground whitespace-pre-wrap break-words ${
-              strategyMetadata?.exit_description ? '' : 'font-mono'
+              parsedDescriptions.exitDescription ? '' : 'font-mono'
             }`}>
               {exitDisplay}
             </p>
