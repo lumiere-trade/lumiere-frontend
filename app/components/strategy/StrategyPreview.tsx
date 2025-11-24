@@ -7,6 +7,12 @@ interface StrategyPreviewProps {
   tsdlCode: string
 }
 
+interface ParsedIndicator {
+  name: string
+  variable: string
+  source?: string
+}
+
 export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
   const { strategyMetadata } = useChat()
 
@@ -20,24 +26,53 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
     const timeframeMatch = tsdlCode.match(/TIMEFRAME:\s*(\S+)/)
     params.timeframe = timeframeMatch ? timeframeMatch[1] : 'Unknown'
 
-    // INDICATORS section
+    // INDICATORS section - enhanced to support source parameter
     const indicatorsMatch = tsdlCode.match(/INDICATORS\s+(.*?)\s+END/s)
     params.indicators = []
     if (indicatorsMatch) {
       const indicatorsBlock = indicatorsMatch[1]
-      const indicatorLines = indicatorsBlock.match(/(\w+)\s*=\s*(\w+)\(([\d.,\s]*)\)/g)
+      // Enhanced regex to capture both simple and source-based indicators
+      // Matches: varName = INDICATOR(params) or varName = INDICATOR(params, source=sourceVar)
+      const indicatorLines = indicatorsBlock.split('\n').filter(line => line.includes('='))
 
-      if (indicatorLines) {
-        for (const line of indicatorLines) {
-          const match = line.match(/(\w+)\s*=\s*(\w+)\(([\d.,\s]*)\)/)
-          if (match) {
-            const [, varName, indicatorType, argsStr] = match
-            const args = argsStr.split(',').map(a => a.trim()).filter(a => a)
-            params.indicators.push({
-              name: `${indicatorType}(${args.join(', ')})`,
-              variable: varName
-            })
+      for (const line of indicatorLines) {
+        const trimmedLine = line.trim()
+        if (!trimmedLine || trimmedLine.startsWith('#')) continue
+
+        // Match pattern: varName = INDICATOR(args)
+        // Args can be: numbers, source=identifier
+        const match = trimmedLine.match(/(\w+)\s*=\s*(\w+)\(([^)]*)\)/)
+        if (match) {
+          const [, varName, indicatorType, argsStr] = match
+
+          // Parse arguments
+          const args: string[] = []
+          let source: string | undefined
+
+          if (argsStr) {
+            // Split by comma, handling source=identifier
+            const parts = argsStr.split(',').map(p => p.trim()).filter(p => p)
+
+            for (const part of parts) {
+              if (part.startsWith('source=')) {
+                source = part.replace('source=', '').trim()
+              } else {
+                args.push(part)
+              }
+            }
           }
+
+          // Build display name
+          let displayName = `${indicatorType}(${args.join(', ')})`
+          if (source) {
+            displayName += ` [source: ${source}]`
+          }
+
+          params.indicators.push({
+            name: displayName,
+            variable: varName,
+            source: source
+          } as ParsedIndicator)
         }
       }
     }
@@ -124,10 +159,15 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
         <div className="space-y-2">
           <h3 className="text-base font-medium text-muted-foreground">Indicators</h3>
           <div className="space-y-2">
-            {parsedStrategy.params.indicators.map((indicator: any, idx: number) => (
+            {parsedStrategy.params.indicators.map((indicator: ParsedIndicator, idx: number) => (
               <div key={idx} className="border border-primary/20 bg-background rounded-lg p-3">
                 <p className="text-base font-medium text-foreground">{indicator.name}</p>
-                <p className="text-sm text-muted-foreground">Variable: {indicator.variable}</p>
+                <p className="text-sm text-muted-foreground">
+                  Variable: {indicator.variable}
+                  {indicator.source && (
+                    <span className="ml-2 text-primary/70">(derived from {indicator.source})</span>
+                  )}
+                </p>
               </div>
             ))}
           </div>
