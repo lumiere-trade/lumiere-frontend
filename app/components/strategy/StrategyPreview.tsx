@@ -92,14 +92,27 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
     }
 
     // EXIT_CONDITIONS section (extract only conditions, not TAKE_PROFIT/STOP_LOSS)
-    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+(?:TAKE_PROFIT|STOP_LOSS|END))/s)
+    // FIXED: Parse everything until END, then filter out STOP_LOSS/TAKE_PROFIT lines
+    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+END)/s)
     if (exitMatch) {
-      let conditions = exitMatch[1].trim()
+      // Extract only condition lines (before STOP_LOSS/TAKE_PROFIT)
+      const fullExit = exitMatch[1].trim()
+      const conditionLines = fullExit
+        .split('\n')
+        .filter(line => {
+          const trimmed = line.trim()
+          return trimmed && 
+                 !trimmed.startsWith('STOP_LOSS') && 
+                 !trimmed.startsWith('TAKE_PROFIT')
+        })
+        .join('\n')
+      
       // Clean up formatting
-      conditions = conditions
+      const conditions = conditionLines
         .replace(/\s+AND\s+/g, ' AND ')
         .replace(/\s+OR\s+/g, ' OR ')
         .replace(/\s+/g, ' ')
+      
       params.sellCondition = conditions
     } else {
       params.sellCondition = ''

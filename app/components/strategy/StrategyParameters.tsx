@@ -47,7 +47,10 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   // Parse entry/exit conditions from TSDL code (fallback)
   const parsedConditions = useMemo(() => {
     const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
-    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+(?:TAKE_PROFIT|STOP_LOSS|END))/s)
+    
+    // FIXED: Parse EXIT_CONDITIONS properly - capture everything until END
+    // This includes condition lines AND STOP_LOSS/TAKE_PROFIT
+    const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+END)/s)
 
     let entryCondition = ''
     let exitCondition = ''
@@ -59,9 +62,21 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     }
 
     if (exitMatch) {
-      exitCondition = exitMatch[1].trim()
+      // Extract only condition lines (before STOP_LOSS/TAKE_PROFIT)
+      const fullExit = exitMatch[1].trim()
+      const conditionLines = fullExit
+        .split('\n')
+        .filter(line => {
+          const trimmed = line.trim()
+          return trimmed && 
+                 !trimmed.startsWith('STOP_LOSS') && 
+                 !trimmed.startsWith('TAKE_PROFIT')
+        })
+        .join('\n')
         .replace(/\s+AND\s+/g, ' AND\n')
         .replace(/\s+OR\s+/g, ' OR\n')
+      
+      exitCondition = conditionLines
     }
 
     return { entryCondition, exitCondition }
