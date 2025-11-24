@@ -44,8 +44,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
   const [isRegenerating, setIsRegenerating] = useState(false)
 
-  // Parse entry/exit conditions from TSDL code
-  const strategyLogic = useMemo(() => {
+  // Parse entry/exit conditions from TSDL code (fallback)
+  const parsedConditions = useMemo(() => {
     const entryMatch = tsdlCode.match(/ENTRY_CONDITIONS\s+(.*?)(?=\s+END)/s)
     const exitMatch = tsdlCode.match(/EXIT_CONDITIONS\s+(.*?)(?=\s+(?:TAKE_PROFIT|STOP_LOSS|END))/s)
 
@@ -66,6 +66,16 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
     return { entryCondition, exitCondition }
   }, [tsdlCode])
+
+  // Use human-readable descriptions from metadata if available,
+  // otherwise fall back to parsed TSDL conditions
+  const strategyLogic = useMemo(() => {
+    return {
+      entryCondition: strategyMetadata?.entry_description || parsedConditions.entryCondition,
+      exitCondition: strategyMetadata?.exit_description || parsedConditions.exitCondition,
+      hasDescriptions: !!(strategyMetadata?.entry_description || strategyMetadata?.exit_description)
+    }
+  }, [strategyMetadata, parsedConditions])
 
   // Initialize param values from metadata
   useEffect(() => {
@@ -460,15 +470,19 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-4">
                 <div>
                   <p className="text-base font-semibold text-muted-foreground mb-2">Entry Conditions</p>
-                  <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
+                  <p className={`text-base text-foreground whitespace-pre-wrap break-words ${
+                    strategyLogic.hasDescriptions ? '' : 'font-mono'
+                  }`}>
                     {strategyLogic.entryCondition || 'No entry conditions defined'}
-                  </pre>
+                  </p>
                 </div>
                 <div>
                   <p className="text-base font-semibold text-muted-foreground mb-2">Exit Conditions</p>
-                  <pre className="text-base font-mono text-foreground whitespace-pre-wrap break-words">
+                  <p className={`text-base text-foreground whitespace-pre-wrap break-words ${
+                    strategyLogic.hasDescriptions ? '' : 'font-mono'
+                  }`}>
                     {strategyLogic.exitCondition || 'No exit conditions defined'}
-                  </pre>
+                  </p>
                 </div>
                 <p className="text-sm text-muted-foreground italic">
                   These conditions are part of the strategy logic and cannot be edited directly. Modify indicator parameters above to adjust the strategy behavior.

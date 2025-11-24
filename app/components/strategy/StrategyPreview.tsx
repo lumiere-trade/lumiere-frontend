@@ -1,12 +1,15 @@
 "use client"
 
 import { useMemo } from "react"
+import { useChat } from "@/contexts/ChatContext"
 
 interface StrategyPreviewProps {
   tsdlCode: string
 }
 
 export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
+  const { strategyMetadata } = useChat()
+
   const parsedStrategy = useMemo(() => {
     const params: Record<string, any> = {}
 
@@ -23,7 +26,7 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
     if (indicatorsMatch) {
       const indicatorsBlock = indicatorsMatch[1]
       const indicatorLines = indicatorsBlock.match(/(\w+)\s*=\s*(\w+)\(([\d.,\s]*)\)/g)
-      
+
       if (indicatorLines) {
         for (const line of indicatorLines) {
           const match = line.match(/(\w+)\s*=\s*(\w+)\(([\d.,\s]*)\)/)
@@ -91,6 +94,16 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
     return { params }
   }, [tsdlCode])
 
+  // Use human-readable descriptions from metadata if available,
+  // otherwise fall back to parsed TSDL conditions
+  const entryDisplay = strategyMetadata?.entry_description
+    || parsedStrategy.params.buyCondition
+    || 'See full TSDL code'
+
+  const exitDisplay = strategyMetadata?.exit_description
+    || parsedStrategy.params.sellCondition
+    || 'See full TSDL code'
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -126,14 +139,18 @@ export function StrategyPreview({ tsdlCode }: StrategyPreviewProps) {
         <div className="space-y-2">
           <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-sm text-muted-foreground mb-1">Buy When</p>
-            <p className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
-              {parsedStrategy.params.buyCondition || 'See full TSDL code'}
+            <p className={`text-sm text-foreground whitespace-pre-wrap break-words ${
+              strategyMetadata?.entry_description ? '' : 'font-mono'
+            }`}>
+              {entryDisplay}
             </p>
           </div>
           <div className="border border-primary/20 bg-background rounded-lg p-3">
             <p className="text-sm text-muted-foreground mb-1">Sell When</p>
-            <p className="text-sm font-mono text-foreground whitespace-pre-wrap break-words">
-              {parsedStrategy.params.sellCondition || 'See full TSDL code'}
+            <p className={`text-sm text-foreground whitespace-pre-wrap break-words ${
+              strategyMetadata?.exit_description ? '' : 'font-mono'
+            }`}>
+              {exitDisplay}
             </p>
           </div>
         </div>

@@ -74,6 +74,8 @@ export interface StrategyMetadata {
   exit_conditions: Record<string, FieldParam>;
   risk_management: Record<string, FieldParam>;
   position_sizing: Record<string, FieldParam>;
+  entry_description?: string | null;
+  exit_description?: string | null;
 }
 
 /**
