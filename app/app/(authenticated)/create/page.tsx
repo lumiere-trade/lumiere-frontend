@@ -116,7 +116,9 @@ function CreatePageContent() {
       asset: JSON.parse(JSON.stringify(parameters.asset || {})),
       exit_conditions: JSON.parse(JSON.stringify(parameters.exit_conditions || {})),
       risk_management: JSON.parse(JSON.stringify(parameters.risk_management || {})),
-      position_sizing: JSON.parse(JSON.stringify(parameters.position_sizing || {}))
+      position_sizing: JSON.parse(JSON.stringify(parameters.position_sizing || {})),
+      entry_description: parameters.entry_description || null,
+      exit_description: parameters.exit_description || null
     }
 
     // Merge indicator values

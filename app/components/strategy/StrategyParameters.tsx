@@ -157,6 +157,8 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         exit_conditions: strategyMetadata?.exit_conditions || {},
         risk_management: strategyMetadata?.risk_management || {},
         position_sizing: strategyMetadata?.position_sizing || {},
+        entry_description: strategyMetadata?.entry_description || null,
+        exit_description: strategyMetadata?.exit_description || null,
         values: paramValues
       }
 
