@@ -26,7 +26,7 @@ export interface ChatMessage {
 }
 
 // Typing animation config
-const CHARS_PER_SECOND = 80;
+const CHARS_PER_SECOND = 100;
 const MS_PER_CHAR = 1000 / CHARS_PER_SECOND;
 
 export function useProphet() {
