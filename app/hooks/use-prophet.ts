@@ -5,6 +5,7 @@
  * TYPING EFFECT: Buffers tokens and displays smoothly (~50 chars/sec)
  * FIXED: Uses flushSync for immediate React updates
  * DEBUG: Added detailed console logging
+ * FIX: Don't clear streamingMessageIdRef until animation completes
  */
 
 import { useCallback, useRef, useEffect } from 'react';
@@ -69,7 +70,7 @@ export function useProphet() {
       }
 
       const elapsed = timestamp - lastTypingTimeRef.current;
-      
+
       console.log('[TYPING] Frame:', {
         elapsed: elapsed.toFixed(2),
         threshold: MS_PER_CHAR,
@@ -83,7 +84,7 @@ export function useProphet() {
         displayBufferRef.current = displayBufferRef.current.slice(1);
         displayedContentRef.current += nextChar;
 
-        console.log('[TYPING] Showing char:', JSON.stringify(nextChar), 
+        console.log('[TYPING] Showing char:', JSON.stringify(nextChar),
                     '| Total displayed:', displayedContentRef.current.length,
                     '| Buffer remaining:', displayBufferRef.current.length);
 
@@ -106,18 +107,24 @@ export function useProphet() {
       if (displayBufferRef.current.length > 0 || !backendCompleteRef.current) {
         typingAnimationRef.current = requestAnimationFrame(animate);
       } else {
-        console.log('[TYPING] Animation complete');
+        console.log('[TYPING] Animation complete - clearing streamingMessageIdRef');
         typingAnimationRef.current = null;
+
+        // Save message ID before clearing
+        const messageId = streamingMessageIdRef.current;
 
         flushSync(() => {
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === streamingMessageIdRef.current
+              msg.id === messageId
                 ? { ...msg, isStreaming: false }
                 : msg
             )
           );
         });
+
+        // NOW clear the ref after React update
+        streamingMessageIdRef.current = null;
       }
     };
 
@@ -268,11 +275,11 @@ export function useProphet() {
             strategy_context: strategyContext,
           },
           (token: string) => {
-            console.log('[TOKEN] Received:', JSON.stringify(token), 
+            console.log('[TOKEN] Received:', JSON.stringify(token),
                         '| Buffer before:', displayBufferRef.current.length);
-            
+
             displayBufferRef.current += token;
-            
+
             console.log('[TOKEN] Buffer after:', displayBufferRef.current.length,
                         '| Displayed:', displayedContentRef.current.length,
                         '| Animation running:', typingAnimationRef.current !== null);
@@ -325,7 +332,7 @@ export function useProphet() {
 
             log.groupEnd();
 
-            streamingMessageIdRef.current = null;
+            // DON'T clear streamingMessageIdRef here - let animation finish buffer first
             resolve({
               message: fullMessage,
               conversation_id: convId,
