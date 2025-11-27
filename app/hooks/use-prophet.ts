@@ -3,9 +3,11 @@
  * OPTIMIZED: Uses Redis cache, sends minimal data
  * NEW: Supports strategy_context for editing workflows
  * TYPING EFFECT: Buffers tokens and displays smoothly (~50 chars/sec)
+ * FIXED: Uses flushSync for immediate React updates
  */
 
 import { useCallback, useRef, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { sendChatMessageStream, StrategyMetadata, StrategyContext } from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
@@ -22,8 +24,8 @@ export interface ChatMessage {
 }
 
 // Typing animation config
-const CHARS_PER_SECOND = 50;  // Readable speed
-const MS_PER_CHAR = 1000 / CHARS_PER_SECOND;  // ~20ms per char
+const CHARS_PER_SECOND = 50;
+const MS_PER_CHAR = 1000 / CHARS_PER_SECOND;
 
 export function useProphet() {
   const log = useLogger('ProphetHook', LogCategory.API);
@@ -48,10 +50,10 @@ export function useProphet() {
   const { data: health } = useProphetHealthQuery();
 
   /**
-   * Typing animation loop - shows chars from buffer smoothly
+   * Typing animation loop with flushSync for immediate updates
    */
   const startTypingAnimation = useCallback(() => {
-    if (typingAnimationRef.current !== null) return;  // Already running
+    if (typingAnimationRef.current !== null) return;
 
     const animate = (timestamp: number) => {
       if (!streamingMessageIdRef.current) {
@@ -62,40 +64,38 @@ export function useProphet() {
       const elapsed = timestamp - lastTypingTimeRef.current;
       
       if (elapsed >= MS_PER_CHAR && displayBufferRef.current.length > 0) {
-        // Show next char from buffer
         const nextChar = displayBufferRef.current[0];
         displayBufferRef.current = displayBufferRef.current.slice(1);
         displayedContentRef.current += nextChar;
         
         lastTypingTimeRef.current = timestamp;
 
-        // Update UI
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === streamingMessageIdRef.current
-              ? { ...msg, content: displayedContentRef.current }
-              : msg
-          )
-        );
+        // CRITICAL: Use flushSync to force immediate React update
+        flushSync(() => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === streamingMessageIdRef.current
+                ? { ...msg, content: displayedContentRef.current }
+                : msg
+            )
+          );
+        });
       }
 
-      // Continue animation if:
-      // 1. Still have chars in buffer, OR
-      // 2. Backend hasn't completed yet
       if (displayBufferRef.current.length > 0 || !backendCompleteRef.current) {
         typingAnimationRef.current = requestAnimationFrame(animate);
       } else {
-        // Animation complete
         typingAnimationRef.current = null;
         
-        // Mark streaming complete
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === streamingMessageIdRef.current
-              ? { ...msg, isStreaming: false }
-              : msg
-          )
-        );
+        flushSync(() => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === streamingMessageIdRef.current
+                ? { ...msg, isStreaming: false }
+                : msg
+            )
+          );
+        });
       }
     };
 
@@ -103,9 +103,6 @@ export function useProphet() {
     typingAnimationRef.current = requestAnimationFrame(animate);
   }, [setMessages]);
 
-  /**
-   * Cleanup typing animation on unmount
-   */
   useEffect(() => {
     return () => {
       if (typingAnimationRef.current) {
@@ -114,9 +111,6 @@ export function useProphet() {
     };
   }, []);
 
-  /**
-   * Load conversation history from Architect API
-   */
   const loadHistory = useCallback(
     (conversation: Conversation) => {
       log.info('Loading conversation history', {
@@ -158,7 +152,6 @@ export function useProphet() {
         hasStrategyContext: !!currentStrategy,
       });
 
-      // Add user message immediately
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
@@ -167,7 +160,6 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage]);
 
-      // Create placeholder for assistant message
       const assistantMessageId = `assistant-${Date.now()}`;
       streamingMessageIdRef.current = assistantMessageId;
       displayBufferRef.current = '';
@@ -183,7 +175,6 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage, assistantMessage]);
 
-      // Build OPTIONAL fallback history
       let fallbackHistory: Array<{ role: string; content: string }> | undefined;
       const redisConnected = health?.redis_cache === 'connected';
 
@@ -205,7 +196,6 @@ export function useProphet() {
         });
       }
 
-      // Build strategy_context if editing existing strategy
       let strategyContext: StrategyContext | undefined;
       if (currentStrategy) {
         strategyContext = {
@@ -248,37 +238,29 @@ export function useProphet() {
             history: fallbackHistory,
             strategy_context: strategyContext,
           },
-          // onToken - add to display buffer, start animation on first token
           (token: string) => {
             displayBufferRef.current += token;
             
-            // Start typing animation on first token
             if (displayedContentRef.current === '' && typingAnimationRef.current === null) {
               startTypingAnimation();
             }
           },
-          // onComplete
           (fullMessage, convId, newState) => {
             log.timeEnd('Prophet Response Time');
-
-            // Mark backend as complete
             backendCompleteRef.current = true;
 
-            // Update conversation ID and state
             if (!conversationId) {
               setConversationId(convId);
               log.info('New conversation created', { conversationId: convId });
             }
 
-            // Log state transition
             if (newState !== conversationState) {
               log.warn('STATE TRANSITION', {
                 from: conversationState,
                 to: newState,
                 conversationId: convId,
                 messageLength: fullMessage.length,
-                hasTSDL:
-                  fullMessage.includes('```tsdl') || fullMessage.includes('```'),
+                hasTSDL: fullMessage.includes('```tsdl') || fullMessage.includes('```'),
               });
             } else {
               log.info('State unchanged', {
@@ -307,7 +289,6 @@ export function useProphet() {
               state: newState,
             });
           },
-          // onError
           (err) => {
             log.timeEnd('Prophet Response Time');
             log.error('Prophet API Error', {
@@ -317,13 +298,11 @@ export function useProphet() {
             });
             log.groupEnd();
 
-            // Stop animation
             if (typingAnimationRef.current) {
               cancelAnimationFrame(typingAnimationRef.current);
               typingAnimationRef.current = null;
             }
 
-            // Mark message as error
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === assistantMessageId
@@ -340,7 +319,6 @@ export function useProphet() {
             backendCompleteRef.current = true;
             reject(err);
           },
-          // onStrategyMetadata - callback for strategy parameters
           (metadata: StrategyMetadata) => {
             log.info('Strategy metadata received', {
               indicatorsCount: metadata.indicators?.length || 0,
@@ -382,13 +360,11 @@ export function useProphet() {
       conversationId: conversationId,
     });
 
-    // Stop any active typing animation
     if (typingAnimationRef.current) {
       cancelAnimationFrame(typingAnimationRef.current);
       typingAnimationRef.current = null;
     }
 
-    // Clear refs
     streamingMessageIdRef.current = null;
     displayBufferRef.current = '';
     displayedContentRef.current = '';
