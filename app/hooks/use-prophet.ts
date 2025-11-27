@@ -4,6 +4,7 @@
  * NEW: Supports strategy_context for editing workflows
  * TYPING EFFECT: Buffers tokens and displays smoothly (~50 chars/sec)
  * FIXED: Uses flushSync for immediate React updates
+ * DEBUG: Added detailed console logging
  */
 
 import { useCallback, useRef, useEffect } from 'react';
@@ -46,28 +47,46 @@ export function useProphet() {
   const typingAnimationRef = useRef<number | null>(null);
   const lastTypingTimeRef = useRef<number>(0);
   const backendCompleteRef = useRef<boolean>(false);
-  
+
   const { data: health } = useProphetHealthQuery();
 
   /**
    * Typing animation loop with flushSync for immediate updates
    */
   const startTypingAnimation = useCallback(() => {
-    if (typingAnimationRef.current !== null) return;
+    if (typingAnimationRef.current !== null) {
+      console.log('[TYPING] Animation already running, skipping');
+      return;
+    }
+
+    console.log('[TYPING] Starting animation');
 
     const animate = (timestamp: number) => {
       if (!streamingMessageIdRef.current) {
+        console.log('[TYPING] No streaming message ID, stopping');
         typingAnimationRef.current = null;
         return;
       }
 
       const elapsed = timestamp - lastTypingTimeRef.current;
       
+      console.log('[TYPING] Frame:', {
+        elapsed: elapsed.toFixed(2),
+        threshold: MS_PER_CHAR,
+        bufferLength: displayBufferRef.current.length,
+        displayedLength: displayedContentRef.current.length,
+        backendComplete: backendCompleteRef.current
+      });
+
       if (elapsed >= MS_PER_CHAR && displayBufferRef.current.length > 0) {
         const nextChar = displayBufferRef.current[0];
         displayBufferRef.current = displayBufferRef.current.slice(1);
         displayedContentRef.current += nextChar;
-        
+
+        console.log('[TYPING] Showing char:', JSON.stringify(nextChar), 
+                    '| Total displayed:', displayedContentRef.current.length,
+                    '| Buffer remaining:', displayBufferRef.current.length);
+
         lastTypingTimeRef.current = timestamp;
 
         // CRITICAL: Use flushSync to force immediate React update
@@ -80,13 +99,16 @@ export function useProphet() {
             )
           );
         });
+
+        console.log('[TYPING] React state updated');
       }
 
       if (displayBufferRef.current.length > 0 || !backendCompleteRef.current) {
         typingAnimationRef.current = requestAnimationFrame(animate);
       } else {
+        console.log('[TYPING] Animation complete');
         typingAnimationRef.current = null;
-        
+
         flushSync(() => {
           setMessages((prev) =>
             prev.map((msg) =>
@@ -101,6 +123,7 @@ export function useProphet() {
 
     lastTypingTimeRef.current = performance.now();
     typingAnimationRef.current = requestAnimationFrame(animate);
+    console.log('[TYPING] First frame scheduled');
   }, [setMessages]);
 
   useEffect(() => {
@@ -165,6 +188,12 @@ export function useProphet() {
       displayBufferRef.current = '';
       displayedContentRef.current = '';
       backendCompleteRef.current = false;
+
+      console.log('[SEND] Message setup:', {
+        assistantId: assistantMessageId,
+        bufferCleared: displayBufferRef.current === '',
+        displayedCleared: displayedContentRef.current === ''
+      });
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -239,15 +268,29 @@ export function useProphet() {
             strategy_context: strategyContext,
           },
           (token: string) => {
+            console.log('[TOKEN] Received:', JSON.stringify(token), 
+                        '| Buffer before:', displayBufferRef.current.length);
+            
             displayBufferRef.current += token;
             
+            console.log('[TOKEN] Buffer after:', displayBufferRef.current.length,
+                        '| Displayed:', displayedContentRef.current.length,
+                        '| Animation running:', typingAnimationRef.current !== null);
+
             if (displayedContentRef.current === '' && typingAnimationRef.current === null) {
+              console.log('[TOKEN] First token - starting animation');
               startTypingAnimation();
             }
           },
           (fullMessage, convId, newState) => {
             log.timeEnd('Prophet Response Time');
             backendCompleteRef.current = true;
+
+            console.log('[COMPLETE] Backend done:', {
+              fullLength: fullMessage.length,
+              bufferRemaining: displayBufferRef.current.length,
+              displayed: displayedContentRef.current.length
+            });
 
             if (!conversationId) {
               setConversationId(convId);
