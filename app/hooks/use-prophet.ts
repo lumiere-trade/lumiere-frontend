@@ -1,10 +1,11 @@
 /**
- * Unified Prophet Hook with real SSE streaming
+ * Unified Prophet Hook with real SSE streaming + smooth typing display
  * OPTIMIZED: Uses Redis cache, sends minimal data
  * NEW: Supports strategy_context for editing workflows
+ * TYPING EFFECT: Buffers tokens and displays smoothly (~50 chars/sec)
  */
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { sendChatMessageStream, StrategyMetadata, StrategyContext } from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
@@ -20,6 +21,10 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+// Typing animation config
+const CHARS_PER_SECOND = 50;  // Readable speed
+const MS_PER_CHAR = 1000 / CHARS_PER_SECOND;  // ~20ms per char
+
 export function useProphet() {
   const log = useLogger('ProphetHook', LogCategory.API);
   const {
@@ -34,7 +39,80 @@ export function useProphet() {
   } = useChat();
 
   const streamingMessageIdRef = useRef<string | null>(null);
+  const displayBufferRef = useRef<string>('');
+  const displayedContentRef = useRef<string>('');
+  const typingAnimationRef = useRef<number | null>(null);
+  const lastTypingTimeRef = useRef<number>(0);
+  const backendCompleteRef = useRef<boolean>(false);
+  
   const { data: health } = useProphetHealthQuery();
+
+  /**
+   * Typing animation loop - shows chars from buffer smoothly
+   */
+  const startTypingAnimation = useCallback(() => {
+    if (typingAnimationRef.current !== null) return;  // Already running
+
+    const animate = (timestamp: number) => {
+      if (!streamingMessageIdRef.current) {
+        typingAnimationRef.current = null;
+        return;
+      }
+
+      const elapsed = timestamp - lastTypingTimeRef.current;
+      
+      if (elapsed >= MS_PER_CHAR && displayBufferRef.current.length > 0) {
+        // Show next char from buffer
+        const nextChar = displayBufferRef.current[0];
+        displayBufferRef.current = displayBufferRef.current.slice(1);
+        displayedContentRef.current += nextChar;
+        
+        lastTypingTimeRef.current = timestamp;
+
+        // Update UI
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === streamingMessageIdRef.current
+              ? { ...msg, content: displayedContentRef.current }
+              : msg
+          )
+        );
+      }
+
+      // Continue animation if:
+      // 1. Still have chars in buffer, OR
+      // 2. Backend hasn't completed yet
+      if (displayBufferRef.current.length > 0 || !backendCompleteRef.current) {
+        typingAnimationRef.current = requestAnimationFrame(animate);
+      } else {
+        // Animation complete
+        typingAnimationRef.current = null;
+        
+        // Mark streaming complete
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === streamingMessageIdRef.current
+              ? { ...msg, isStreaming: false }
+              : msg
+          )
+        );
+      }
+    };
+
+    lastTypingTimeRef.current = performance.now();
+    typingAnimationRef.current = requestAnimationFrame(animate);
+  }, [setMessages]);
+
+  /**
+   * Cleanup typing animation on unmount
+   */
+  useEffect(() => {
+    return () => {
+      if (typingAnimationRef.current) {
+        cancelAnimationFrame(typingAnimationRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Load conversation history from Architect API
@@ -47,7 +125,6 @@ export function useProphet() {
         state: conversation.state,
       });
 
-      // Convert Architect messages to ChatMessage format
       const chatMessages: ChatMessage[] = conversation.messages.map((msg) => ({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
@@ -56,7 +133,6 @@ export function useProphet() {
         isStreaming: false,
       }));
 
-      // Set messages and conversation state
       setMessages(chatMessages);
       setConversationId(conversation.id);
       setConversationState(conversation.state);
@@ -94,6 +170,9 @@ export function useProphet() {
       // Create placeholder for assistant message
       const assistantMessageId = `assistant-${Date.now()}`;
       streamingMessageIdRef.current = assistantMessageId;
+      displayBufferRef.current = '';
+      displayedContentRef.current = '';
+      backendCompleteRef.current = false;
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -105,10 +184,7 @@ export function useProphet() {
       setMessages([...messages, userMessage, assistantMessage]);
 
       // Build OPTIONAL fallback history
-      // Prophet will try Redis first, use this only if cache miss
       let fallbackHistory: Array<{ role: string; content: string }> | undefined;
-
-      // Only send history if Redis is disconnected OR this is first message
       const redisConnected = health?.redis_cache === 'connected';
 
       if (!redisConnected || !conversationId) {
@@ -170,30 +246,23 @@ export function useProphet() {
             conversation_id: conversationId || undefined,
             state: conversationState,
             history: fallbackHistory,
-            strategy_context: strategyContext, // NEW!
+            strategy_context: strategyContext,
           },
-          // onToken - append batch of characters
-          (tokenBatch: string) => {
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: msg.content + tokenBatch }
-                  : msg
-              )
-            );
+          // onToken - add to display buffer, start animation on first token
+          (token: string) => {
+            displayBufferRef.current += token;
+            
+            // Start typing animation on first token
+            if (displayedContentRef.current === '' && typingAnimationRef.current === null) {
+              startTypingAnimation();
+            }
           },
           // onComplete
           (fullMessage, convId, newState) => {
             log.timeEnd('Prophet Response Time');
 
-            // Mark streaming complete
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: fullMessage, isStreaming: false }
-                  : msg
-              )
-            );
+            // Mark backend as complete
+            backendCompleteRef.current = true;
 
             // Update conversation ID and state
             if (!conversationId) {
@@ -248,6 +317,12 @@ export function useProphet() {
             });
             log.groupEnd();
 
+            // Stop animation
+            if (typingAnimationRef.current) {
+              cancelAnimationFrame(typingAnimationRef.current);
+              typingAnimationRef.current = null;
+            }
+
             // Mark message as error
             setMessages((prev) =>
               prev.map((msg) =>
@@ -262,6 +337,7 @@ export function useProphet() {
             );
 
             streamingMessageIdRef.current = null;
+            backendCompleteRef.current = true;
             reject(err);
           },
           // onStrategyMetadata - callback for strategy parameters
@@ -279,7 +355,6 @@ export function useProphet() {
               })),
             });
 
-            // Store metadata in context
             setStrategyMetadata(metadata);
           }
         );
@@ -296,6 +371,7 @@ export function useProphet() {
       setMessages,
       setConversationId,
       setConversationState,
+      startTypingAnimation,
     ]
   );
 
@@ -306,11 +382,22 @@ export function useProphet() {
       conversationId: conversationId,
     });
 
+    // Stop any active typing animation
+    if (typingAnimationRef.current) {
+      cancelAnimationFrame(typingAnimationRef.current);
+      typingAnimationRef.current = null;
+    }
+
+    // Clear refs
+    streamingMessageIdRef.current = null;
+    displayBufferRef.current = '';
+    displayedContentRef.current = '';
+    backendCompleteRef.current = false;
+
     setMessages([]);
     setConversationId(null);
     setConversationState('greeting');
     setStrategyMetadata(null);
-    streamingMessageIdRef.current = null;
   }, [
     conversationState,
     messages,
@@ -323,7 +410,6 @@ export function useProphet() {
   ]);
 
   return {
-    // State from context
     messages,
     conversationId,
     conversationState,
@@ -332,13 +418,11 @@ export function useProphet() {
     pluginsLoaded: health?.plugins_loaded || [],
     redisCache: health?.redis_cache || 'unknown',
 
-    // Actions
     sendMessage,
     clearMessages,
     loadHistory,
 
-    // Loading states
     isSending: messages.some((m) => m.isStreaming),
-    error: null, // Errors are now in message content
+    error: null,
   };
 }
