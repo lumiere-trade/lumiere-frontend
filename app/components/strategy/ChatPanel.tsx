@@ -219,7 +219,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     setInputValue("")
   }
 
-  const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
+  // CHANGE 1: Include streaming messages even when empty
+  const visibleMessages = messages.filter(msg => msg.content.trim().length > 0 || msg.isStreaming)
+
+  // CHANGE 2: Show "Thinking..." only if streaming but no content yet
+  const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
+  const showThinking = isSending && !hasStreamingContent
 
   const extractTSDL = (content: string) => {
     const match = content.match(/```tsdl\n([\s\S]*?)```/)
@@ -331,10 +336,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 <div
                   ref={messagesContainerRef}
                   onScroll={handleScroll}
-                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || isSending ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || showThinking ? 'overflow-y-auto' : 'overflow-hidden'}`}
                   style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
                 >
-                  {visibleMessages.length === 0 && !isSending && (
+                  {/* CHANGE 3: Use showThinking instead of isSending */}
+                  {visibleMessages.length === 0 && !showThinking && (
                     <div className="flex items-center justify-center h-full text-center">
                       <div className="space-y-2">
                         <p className="text-base text-muted-foreground">
@@ -412,7 +418,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     )
                   })}
 
-                  {isSending && (
+                  {/* CHANGE 3: Use showThinking instead of isSending */}
+                  {showThinking && (
                     <div className="flex gap-3 justify-start">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
                         <Sparkles className="h-4 w-4 text-primary animate-pulse" />
