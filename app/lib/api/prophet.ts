@@ -2,6 +2,7 @@
  * Prophet API Client with SSE streaming support
  * OPTIMIZED: Uses Redis cache, sends minimal data
  * NEW: Supports strategy_context for editing workflows
+ * FIXED: No throttling - real-time token streaming
  */
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
@@ -24,7 +25,7 @@ export interface ProphetChatRequest {
   user_id?: string;
   state?: string;
   history?: ProphetMessage[];
-  strategy_context?: StrategyContext; // NEW!
+  strategy_context?: StrategyContext;
 }
 
 export interface ProphetHealthResponse {
@@ -33,7 +34,7 @@ export interface ProphetHealthResponse {
   version: string;
   mode?: string;
   tsdl_syntax_loaded?: boolean;
-  redis_cache?: string; // NEW: Redis status
+  redis_cache?: string;
   tsdl_version?: string;
   plugins_loaded?: string[];
   plugin_count?: number;
@@ -41,9 +42,6 @@ export interface ProphetHealthResponse {
   estimated_tokens?: number;
 }
 
-/**
- * Parameter metadata types from Prophet
- */
 export interface ParamMetadata {
   type: 'int' | 'float' | 'enum' | 'string' | 'boolean';
   min?: number;
@@ -78,9 +76,6 @@ export interface StrategyMetadata {
   exit_description?: string | null;
 }
 
-/**
- * Regenerate TSDL Request/Response types
- */
 export interface RegenerateTSDLRequest {
   current_tsdl: string;
   updated_values: Record<string, any>;
@@ -90,9 +85,6 @@ export interface RegenerateTSDLResponse {
   tsdl_code: string;
 }
 
-/**
- * SSE Event types
- */
 export type SSEEvent =
   | { type: 'metadata'; data: { conversation_id: string; state: string } }
   | { type: 'token'; data: { token: string } }
@@ -102,7 +94,7 @@ export type SSEEvent =
 
 /**
  * Send chat message to Prophet AI with SSE streaming
- * Throttles token updates for smoother visual display
+ * NO THROTTLING - Real-time token streaming for immediate display
  * NEW: Supports optional strategy_context for editing workflows
  */
 export async function sendChatMessageStream(
@@ -136,36 +128,6 @@ export async function sendChatMessageStream(
     let conversationId = '';
     let state = '';
 
-    // Throttling for smoother display
-    let pendingTokens: string[] = [];
-    let isProcessingTokens = false;
-
-    const processPendingTokens = () => {
-      if (pendingTokens.length === 0 || isProcessingTokens) return;
-
-      isProcessingTokens = true;
-      const batchSize = 5;
-      const delay = 15;
-
-      const processNextBatch = () => {
-        if (pendingTokens.length === 0) {
-          isProcessingTokens = false;
-          return;
-        }
-
-        const batch = pendingTokens.splice(0, batchSize);
-        onToken(batch.join(''));
-
-        if (pendingTokens.length > 0) {
-          setTimeout(processNextBatch, delay);
-        } else {
-          isProcessingTokens = false;
-        }
-      };
-
-      processNextBatch();
-    };
-
     while (true) {
       const { done, value } = await reader.read();
 
@@ -173,7 +135,6 @@ export async function sendChatMessageStream(
 
       buffer += decoder.decode(value, { stream: true });
 
-      // Process complete SSE messages
       const lines = buffer.split('\n\n');
       buffer = lines.pop() || '';
 
@@ -192,25 +153,14 @@ export async function sendChatMessageStream(
             state = eventData.state;
           } else if (eventType === 'token') {
             fullMessage += eventData.token;
-            pendingTokens.push(eventData.token);
-            processPendingTokens();
+            onToken(eventData.token);
           } else if (eventType === 'strategy_metadata') {
-            // Handle strategy metadata from Prophet
             if (onStrategyMetadata) {
               onStrategyMetadata(eventData as StrategyMetadata);
             }
           } else if (eventType === 'done') {
             state = eventData.state || state;
-
-            // Wait for pending tokens to finish
-            const waitForCompletion = () => {
-              if (isProcessingTokens || pendingTokens.length > 0) {
-                setTimeout(waitForCompletion, 50);
-              } else {
-                onComplete(fullMessage, conversationId, state);
-              }
-            };
-            waitForCompletion();
+            onComplete(fullMessage, conversationId, state);
           } else if (eventType === 'error') {
             onError(new Error(eventData.error));
           }
@@ -222,9 +172,6 @@ export async function sendChatMessageStream(
   }
 }
 
-/**
- * Get Prophet health status
- */
 export async function getProphetHealth(): Promise<ProphetHealthResponse> {
   const response = await fetch(`${PROPHET_URL}/health`, {
     method: 'GET',
@@ -240,10 +187,6 @@ export async function getProphetHealth(): Promise<ProphetHealthResponse> {
   return response.json();
 }
 
-/**
- * Regenerate TSDL code with updated parameter values
- * Uses LLM to intelligently update variable names and references
- */
 export async function regenerateTSDL(
   request: RegenerateTSDLRequest
 ): Promise<RegenerateTSDLResponse> {
