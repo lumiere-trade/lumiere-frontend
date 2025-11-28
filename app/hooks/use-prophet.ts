@@ -4,6 +4,7 @@
  * NEW: Supports strategy_context for editing workflows
  * TYPING EFFECT: Buffers tokens and displays smoothly (~100 chars/sec)
  * STRATEGY DETECTION: Detects strategy generation, shows progress, continues after
+ * DEBUG: Comprehensive logging to diagnose progress bar issues
  */
 
 import { useCallback, useRef, useEffect } from 'react';
@@ -39,6 +40,9 @@ const STRATEGY_MARKERS = [
 // Estimated strategy content length for progress calculation
 const ESTIMATED_STRATEGY_LENGTH = 1500;
 
+// Debug mode
+const DEBUG_STRATEGY_DETECTION = true;
+
 export function useProphet() {
   const log = useLogger('ProphetHook', LogCategory.API);
   const {
@@ -70,10 +74,24 @@ export function useProphet() {
   const { data: health } = useProphetHealthQuery();
 
   /**
+   * Debug logger for strategy detection
+   */
+  const debugLog = (message: string, data?: any) => {
+    if (DEBUG_STRATEGY_DETECTION) {
+      console.log(`[STRATEGY-DEBUG] ${message}`, data || '');
+    }
+  };
+
+  /**
    * Check if content contains strategy markers
    */
   const containsStrategyMarker = (content: string): boolean => {
-    return STRATEGY_MARKERS.some(marker => content.includes(marker));
+    const found = STRATEGY_MARKERS.some(marker => content.includes(marker));
+    if (found && DEBUG_STRATEGY_DETECTION) {
+      const foundMarker = STRATEGY_MARKERS.find(m => content.includes(m));
+      debugLog('Marker found', { marker: foundMarker, contentLength: content.length });
+    }
+    return found;
   };
 
   /**
@@ -83,15 +101,28 @@ export function useProphet() {
     // Check if we have a complete TSDL block with closing ```
     const tsdlMatch = strategyContent.match(/```tsdl\n[\s\S]*?```/);
     if (tsdlMatch) {
+      debugLog('Strategy complete: TSDL block found', {
+        matchLength: tsdlMatch[0].length,
+        totalLength: strategyContent.length
+      });
       return true;
     }
 
     // Alternative: check for "Strategy Overview" followed by enough content
     if (strategyContent.includes('Strategy Overview') &&
         strategyContent.length > 800) {
-      // Heuristic: if we have substantial content, likely complete
+      debugLog('Strategy complete: Heuristic (Overview + 800 chars)', {
+        length: strategyContent.length
+      });
       return true;
     }
+
+    debugLog('Strategy NOT complete', {
+      hasOverview: strategyContent.includes('Strategy Overview'),
+      length: strategyContent.length,
+      hasTSDL: strategyContent.includes('```tsdl'),
+      hasClosing: strategyContent.includes('```\n') || strategyContent.endsWith('```')
+    });
 
     return false;
   };
@@ -231,6 +262,8 @@ export function useProphet() {
       setIsGeneratingStrategy(false);
       setStrategyGenerationProgress(0);
 
+      debugLog('=== NEW MESSAGE - Strategy state reset ===');
+
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
         role: 'assistant',
@@ -286,26 +319,44 @@ export function useProphet() {
             strategy_context: strategyContext,
           },
           (token: string) => {
-            console.log('[TOKEN] Received:', JSON.stringify(token));
+            console.log('[TOKEN] Received:', JSON.stringify(token).substring(0, 50));
 
             // Accumulate full content for detection
             const currentFullContent = displayedContentRef.current + displayBufferRef.current + token;
 
+            debugLog('Token processing', {
+              tokenLength: token.length,
+              bufferLength: displayBufferRef.current.length,
+              displayedLength: displayedContentRef.current.length,
+              totalLength: currentFullContent.length,
+              isGenerating: isGeneratingStrategyRef.current
+            });
+
             // Check if we should switch to strategy generation mode
             if (!isGeneratingStrategyRef.current && containsStrategyMarker(currentFullContent)) {
-              console.log('[STRATEGY] Detection triggered!');
+              debugLog('=== SWITCHING TO STRATEGY MODE ===', {
+                totalContent: currentFullContent.length,
+                displayed: displayedContentRef.current.length,
+                buffer: displayBufferRef.current.length
+              });
 
               // Stop typing animation
               if (typingAnimationRef.current) {
                 cancelAnimationFrame(typingAnimationRef.current);
                 typingAnimationRef.current = null;
+                debugLog('Typing animation stopped');
               }
 
               // Save pre-strategy content
               preStrategyContentRef.current = displayedContentRef.current;
+              debugLog('Pre-strategy content saved', {
+                length: preStrategyContentRef.current.length
+              });
 
               // Switch to strategy generation mode
               isGeneratingStrategyRef.current = true;
+              
+              debugLog('CALLING setIsGeneratingStrategy(true)');
               setIsGeneratingStrategy(true);
 
               // Clear display buffer - start accumulating strategy
@@ -320,16 +371,28 @@ export function useProphet() {
               // Accumulate strategy content
               strategyContentRef.current += token;
 
+              debugLog('Accumulating strategy content', {
+                accumulated: strategyContentRef.current.length,
+                token: token.substring(0, 30)
+              });
+
               // Check if strategy block is complete
               if (isStrategyComplete(strategyContentRef.current)) {
-                console.log('[STRATEGY] Strategy block complete - switching to post-strategy mode');
+                debugLog('=== STRATEGY COMPLETE - SWITCHING TO POST-STRATEGY ===', {
+                  strategyLength: strategyContentRef.current.length
+                });
 
                 // Set progress to 100%
+                debugLog('CALLING setStrategyGenerationProgress(100)');
                 setStrategyGenerationProgress(100);
 
                 // Update message with pre + strategy content
                 const contentSoFar = preStrategyContentRef.current + strategyContentRef.current;
                 displayedContentRef.current = contentSoFar;
+
+                debugLog('Updating displayed content', {
+                  contentLength: contentSoFar.length
+                });
 
                 flushSync(() => {
                   setMessages((prev) =>
@@ -342,7 +405,10 @@ export function useProphet() {
                 });
 
                 // Hide progress bar
+                debugLog('CALLING setIsGeneratingStrategy(false)');
                 setIsGeneratingStrategy(false);
+                
+                debugLog('CALLING setStrategyGenerationProgress(0)');
                 setStrategyGenerationProgress(0);
 
                 // Switch to post-strategy mode (no longer generating)
@@ -356,12 +422,13 @@ export function useProphet() {
                   95
                 );
 
-                setStrategyGenerationProgress(progress);
-
-                console.log('[STRATEGY] Progress:', {
+                debugLog('Updating progress', {
                   length: strategyContentRef.current.length,
                   progress: Math.round(progress)
                 });
+
+                debugLog('CALLING setStrategyGenerationProgress(' + Math.round(progress) + ')');
+                setStrategyGenerationProgress(progress);
               }
             } else {
               // Normal typing mode (pre-strategy or post-strategy)
@@ -379,12 +446,15 @@ export function useProphet() {
             log.timeEnd('Prophet Response Time');
             backendCompleteRef.current = true;
 
-            console.log('[COMPLETE] Backend done, isGenerating:', isGeneratingStrategyRef.current);
+            debugLog('=== BACKEND COMPLETE ===', {
+              isGenerating: isGeneratingStrategyRef.current,
+              messageLength: fullMessage.length
+            });
 
             // CRITICAL FIX: If still in strategy generation mode when backend completes,
             // force completion of strategy
             if (isGeneratingStrategyRef.current) {
-              console.log('[STRATEGY] Backend complete - forcing strategy completion');
+              debugLog('FORCING STRATEGY COMPLETION (backend done)');
               
               // Set progress to 100%
               setStrategyGenerationProgress(100);
