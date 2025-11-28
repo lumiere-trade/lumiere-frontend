@@ -26,6 +26,8 @@ interface ChatContextType {
   messages: ChatMessage[]
   conversationId: string | null
   conversationState: string
+  isGeneratingStrategy: boolean
+  strategyGenerationProgress: number
   expandChat: () => void
   collapseChat: () => void
   setGeneratedStrategy: (strategy: any) => void
@@ -35,6 +37,8 @@ interface ChatContextType {
   setMessages: (messages: ChatMessage[]) => void
   setConversationId: (id: string | null) => void
   setConversationState: (state: string) => void
+  setIsGeneratingStrategy: (value: boolean) => void
+  setStrategyGenerationProgress: (value: number) => void
   clearChat: () => void
 }
 
@@ -49,6 +53,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [conversationState, setConversationState] = useState<string>('greeting')
+  const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false)
+  const [strategyGenerationProgress, setStrategyGenerationProgress] = useState(0)
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
@@ -61,6 +67,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setStrategyMetadata(null)
     setCurrentStrategy(null)
     setInputValue("")
+    setIsGeneratingStrategy(false)
+    setStrategyGenerationProgress(0)
   }
 
   return (
@@ -74,6 +82,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         messages,
         conversationId,
         conversationState,
+        isGeneratingStrategy,
+        strategyGenerationProgress,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
@@ -83,6 +93,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setMessages,
         setConversationId,
         setConversationState,
+        setIsGeneratingStrategy,
+        setStrategyGenerationProgress,
         clearChat,
       }}
     >

@@ -8,6 +8,7 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useProphet } from "@/hooks/use-prophet"
 import { StrategyPreview } from "./StrategyPreview"
+import { StrategyGenerationProgress } from "./StrategyGenerationProgress"
 import { MarkdownMessage } from "./MarkdownMessage"
 
 interface ChatPanelProps {
@@ -16,7 +17,17 @@ interface ChatPanelProps {
 
 export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
-  const { isChatExpanded, expandChat, collapseChat, setGeneratedStrategy, inputValue, setInputValue } = useChat()
+  const {
+    isChatExpanded,
+    expandChat,
+    collapseChat,
+    setGeneratedStrategy,
+    inputValue,
+    setInputValue,
+    isGeneratingStrategy,
+    strategyGenerationProgress,
+  } = useChat()
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
@@ -56,9 +67,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }, [isChatExpanded, messages.length])
 
-  // Thinking animation - type out, pause, instant clear, repeat
+  // Thinking animation - only show if not generating strategy
   useEffect(() => {
-    if (!isSending) {
+    if (!isSending || isGeneratingStrategy) {
       setThinkingText("")
       return
     }
@@ -68,27 +79,25 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     const interval = setInterval(() => {
       if (currentIndex <= fullText.length) {
-        // Typing phase
         setThinkingText(fullText.substring(0, currentIndex))
         currentIndex++
       } else {
-        // Pause at end, then instant clear and restart
         setTimeout(() => {
           setThinkingText("")
           currentIndex = 0
-        }, 800) // 800ms pause at end
+        }, 800)
       }
-    }, 100) // 100ms per character
+    }, 100)
 
     return () => clearInterval(interval)
-  }, [isSending])
+  }, [isSending, isGeneratingStrategy])
 
-  // Auto-scroll when new messages arrive
+  // Auto-scroll when new messages arrive or strategy generation updates
   useEffect(() => {
-    if (isVisible && isReady && (messages.length > 0 || isSending)) {
+    if (isVisible && isReady && (messages.length > 0 || isSending || isGeneratingStrategy)) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, isVisible, isReady])
+  }, [messages, isSending, isGeneratingStrategy, isVisible, isReady])
 
   // Track scroll position to show/hide scroll button
   const handleScroll = () => {
@@ -98,7 +107,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       const scrollHeight = container.scrollHeight
       const clientHeight = container.clientHeight
 
-      // Show button if not at bottom (threshold: 100px from bottom)
       const isAtBottom = scrollHeight - scrollTop - clientHeight < 100
       setShowScrollButton(!isAtBottom && messages.length > 0)
     }
@@ -222,9 +230,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   // Only show messages with content (no empty streaming bubbles)
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
 
-  // Show "Thinking..." only if streaming but no visible content yet
+  // Show "Thinking..." only if streaming but no visible content yet AND not generating strategy
   const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
-  const showThinking = isSending && !hasStreamingContent
+  const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
   const extractTSDL = (content: string) => {
     const match = content.match(/```tsdl\n([\s\S]*?)```/)
@@ -336,10 +344,10 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 <div
                   ref={messagesContainerRef}
                   onScroll={handleScroll}
-                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || showThinking ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || showThinking || isGeneratingStrategy ? 'overflow-y-auto' : 'overflow-hidden'}`}
                   style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
                 >
-                  {visibleMessages.length === 0 && !showThinking && (
+                  {visibleMessages.length === 0 && !showThinking && !isGeneratingStrategy && (
                     <div className="flex items-center justify-center h-full text-center">
                       <div className="space-y-2">
                         <p className="text-base text-muted-foreground">
@@ -417,6 +425,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     )
                   })}
 
+                  {/* Strategy Generation Progress */}
+                  {isGeneratingStrategy && (
+                    <StrategyGenerationProgress progress={strategyGenerationProgress} />
+                  )}
+
+                  {/* Thinking Animation */}
                   {showThinking && (
                     <div className="flex gap-3 justify-start">
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
