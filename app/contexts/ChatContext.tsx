@@ -1,6 +1,7 @@
 "use client"
+
 import { createContext, useContext, useState, ReactNode } from 'react'
-import { StrategyMetadata } from '@/lib/api/prophet'
+import { StrategyParameters } from '@/lib/api/prophet'
 
 export interface ChatMessage {
   id: string
@@ -20,7 +21,7 @@ export interface CurrentStrategy {
 interface ChatContextType {
   isChatExpanded: boolean
   generatedStrategy: any | null
-  strategyMetadata: StrategyMetadata | null
+  strategyMetadata: StrategyParameters | null
   currentStrategy: CurrentStrategy | null
   inputValue: string
   messages: ChatMessage[]
@@ -28,10 +29,13 @@ interface ChatContextType {
   conversationState: string
   isGeneratingStrategy: boolean
   strategyGenerationProgress: number
+  progressStage: string
+  progressMessage: string
+
   expandChat: () => void
   collapseChat: () => void
   setGeneratedStrategy: (strategy: any) => void
-  setStrategyMetadata: (metadata: StrategyMetadata | null) => void
+  setStrategyMetadata: (metadata: StrategyParameters | null) => void
   setCurrentStrategy: (strategy: CurrentStrategy | null) => void
   setInputValue: (value: string) => void
   setMessages: (messages: ChatMessage[]) => void
@@ -39,6 +43,8 @@ interface ChatContextType {
   setConversationState: (state: string) => void
   setIsGeneratingStrategy: (value: boolean) => void
   setStrategyGenerationProgress: (value: number) => void
+  setProgressStage: (stage: string) => void
+  setProgressMessage: (message: string) => void
   clearChat: () => void
 }
 
@@ -47,7 +53,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
-  const [strategyMetadata, setStrategyMetadata] = useState<StrategyMetadata | null>(null)
+  const [strategyMetadata, setStrategyMetadata] = useState<StrategyParameters | null>(null)
   const [currentStrategy, setCurrentStrategy] = useState<CurrentStrategy | null>(null)
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -55,6 +61,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [conversationState, setConversationState] = useState<string>('greeting')
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false)
   const [strategyGenerationProgress, setStrategyGenerationProgress] = useState(0)
+  const [progressStage, setProgressStage] = useState<string>('')
+  const [progressMessage, setProgressMessage] = useState<string>('')
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
@@ -69,6 +77,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setInputValue("")
     setIsGeneratingStrategy(false)
     setStrategyGenerationProgress(0)
+    setProgressStage('')
+    setProgressMessage('')
   }
 
   return (
@@ -84,6 +94,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         conversationState,
         isGeneratingStrategy,
         strategyGenerationProgress,
+        progressStage,
+        progressMessage,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
@@ -95,6 +107,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setConversationState,
         setIsGeneratingStrategy,
         setStrategyGenerationProgress,
+        setProgressStage,
+        setProgressMessage,
         clearChat,
       }}
     >

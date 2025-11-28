@@ -1,8 +1,7 @@
 /**
- * Prophet API Client with SSE streaming support
- * OPTIMIZED: Uses Redis cache, sends minimal data
- * NEW: Supports strategy_context for editing workflows
- * FIXED: No throttling - real-time token streaming
+ * Prophet API Client - SSE Streaming
+ * CRITICAL: Frontend does NOT detect TSDL or calculate progress.
+ * Prophet sends explicit events - frontend just visualizes them.
  */
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
@@ -33,13 +32,10 @@ export interface ProphetHealthResponse {
   service: string;
   version: string;
   mode?: string;
-  tsdl_syntax_loaded?: boolean;
+  compact_syntax_loaded?: boolean;
+  platform_docs_tool?: string;
+  embeddings_service?: string;
   redis_cache?: string;
-  tsdl_version?: string;
-  plugins_loaded?: string[];
-  plugin_count?: number;
-  tsdl_documentation_size?: number;
-  estimated_tokens?: number;
 }
 
 export interface ParamMetadata {
@@ -66,7 +62,7 @@ export interface IndicatorParam {
   params: Record<string, FieldParam>;
 }
 
-export interface StrategyMetadata {
+export interface StrategyParameters {
   indicators: IndicatorParam[];
   asset: Record<string, FieldParam>;
   exit_conditions: Record<string, FieldParam>;
@@ -74,6 +70,19 @@ export interface StrategyMetadata {
   position_sizing: Record<string, FieldParam>;
   entry_description?: string | null;
   exit_description?: string | null;
+}
+
+export interface ProgressEvent {
+  stage: 'generating_strategy' | 'validating_strategy' | 'wrapping_up';
+  message: string;
+  percent: number;
+}
+
+export interface StrategyGeneratedEvent {
+  tsdl_code: string;
+  parameters: StrategyParameters;
+  strategy_id: string;
+  strategy_name: string;
 }
 
 export interface RegenerateTSDLRequest {
@@ -88,21 +97,22 @@ export interface RegenerateTSDLResponse {
 export type SSEEvent =
   | { type: 'metadata'; data: { conversation_id: string; state: string } }
   | { type: 'token'; data: { token: string } }
-  | { type: 'strategy_metadata'; data: StrategyMetadata }
+  | { type: 'progress'; data: ProgressEvent }
+  | { type: 'strategy_generated'; data: StrategyGeneratedEvent }
   | { type: 'done'; data: { conversation_id: string; state: string; message_count?: number } }
   | { type: 'error'; data: { error: string } };
 
 /**
- * Send chat message to Prophet AI with SSE streaming
- * NO THROTTLING - Real-time token streaming for immediate display
- * NEW: Supports optional strategy_context for editing workflows
+ * Send chat message to Prophet AI with SSE streaming.
+ * Prophet controls ALL strategy detection and progress - frontend just listens.
  */
 export async function sendChatMessageStream(
   request: ProphetChatRequest,
   onToken: (token: string) => void,
+  onProgress: (progress: ProgressEvent) => void,
+  onStrategyGenerated: (strategy: StrategyGeneratedEvent) => void,
   onComplete: (fullMessage: string, conversationId: string, state: string) => void,
-  onError: (error: Error) => void,
-  onStrategyMetadata?: (metadata: StrategyMetadata) => void
+  onError: (error: Error) => void
 ): Promise<void> {
   try {
     const response = await fetch(`${PROPHET_URL}/chat`, {
@@ -154,10 +164,10 @@ export async function sendChatMessageStream(
           } else if (eventType === 'token') {
             fullMessage += eventData.token;
             onToken(eventData.token);
-          } else if (eventType === 'strategy_metadata') {
-            if (onStrategyMetadata) {
-              onStrategyMetadata(eventData as StrategyMetadata);
-            }
+          } else if (eventType === 'progress') {
+            onProgress(eventData as ProgressEvent);
+          } else if (eventType === 'strategy_generated') {
+            onStrategyGenerated(eventData as StrategyGeneratedEvent);
           } else if (eventType === 'done') {
             state = eventData.state || state;
             onComplete(fullMessage, conversationId, state);

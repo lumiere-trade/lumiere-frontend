@@ -21,13 +21,15 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     isChatExpanded,
     expandChat,
     collapseChat,
-    setGeneratedStrategy,
     inputValue,
     setInputValue,
     isGeneratingStrategy,
     strategyGenerationProgress,
+    progressStage,
+    progressMessage,
+    generatedStrategy,
   } = useChat()
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
@@ -41,9 +43,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     clearMessages,
     isSending,
     isHealthy,
-    tsdlVersion,
-    pluginsLoaded,
     conversationState,
+    redisCache,
     error,
   } = useProphet()
 
@@ -121,13 +122,12 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       log.info('Chat panel opened', {
         messagesCount: messages.length,
         prophetHealthy: isHealthy,
-        tsdlVersion,
-        plugins: pluginsLoaded,
+        redisCache,
       })
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded, isHealthy, tsdlVersion, pluginsLoaded, messages.length])
+  }, [isChatExpanded, isHealthy, redisCache, messages.length, log])
 
   const handleSend = async () => {
     if (!inputValue.trim() || isSending) {
@@ -149,44 +149,10 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
     try {
       log.time('prophet-response')
-      const response = await sendMessage(userMessage)
+      await sendMessage(userMessage)
       log.timeEnd('prophet-response')
 
-      log.info('Prophet response received', {
-        conversationId: response.conversation_id,
-        state: response.state,
-        responseLength: response.message.length,
-      })
-
-      if (response.message.includes('```tsdl')) {
-        log.info('TSDL code detected in response - extracting strategy')
-
-        const tsdlMatch = response.message.match(/```tsdl\n([\s\S]*?)```/)
-        if (tsdlMatch) {
-          const tsdlCode = tsdlMatch[1]
-
-          const nameMatch = tsdlCode.match(/STRATEGY ["']([^"']+)["']/)
-          const strategyName = nameMatch ? nameMatch[1] : 'Generated Strategy'
-
-          const mockStrategy = {
-            name: strategyName,
-            type: "indicator_based",
-            parameters: {},
-            tsdl_code: tsdlCode
-          }
-
-          log.info('Strategy extracted successfully', {
-            strategyName: mockStrategy.name,
-            tsdlLength: tsdlCode.length
-          })
-
-          setGeneratedStrategy(mockStrategy)
-
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-          }, 100)
-        }
-      }
+      log.info('Prophet response received')
     } catch (err) {
       log.error('Failed to send message to Prophet', {
         error: err instanceof Error ? err.message : 'Unknown error',
@@ -233,11 +199,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   // Show "Thinking..." only if streaming but no visible content yet AND not generating strategy
   const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
-
-  const extractTSDL = (content: string) => {
-    const match = content.match(/```tsdl\n([\s\S]*?)```/)
-    return match ? match[1] : null
-  }
 
   return (
     <>
@@ -305,9 +266,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
                     <p className="text-sm text-muted-foreground">
                       Strategy Creation Assistant
-                      {isHealthy && tsdlVersion && (
+                      {isHealthy && (
                         <span className="ml-2 text-xs text-primary">
-                          • TSDL {tsdlVersion} • {pluginsLoaded.length} plugins
+                          • Redis: {redisCache}
                         </span>
                       )}
                       {conversationState && conversationState !== 'greeting' && (
@@ -365,69 +326,43 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                     </div>
                   )}
 
-                  {visibleMessages.map((message) => {
-                    const tsdlCode = message.role === "assistant" ? extractTSDL(message.content) : null
-                    const contentWithoutTSDL = tsdlCode
-                      ? message.content.replace(/```tsdl\n[\s\S]*?```/, '').trim()
-                      : message.content
+                  {visibleMessages.map((message) => (
+                    <div key={message.id}>
+                      <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                        {message.role === "assistant" && (
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                            <Sparkles className="h-4 w-4 text-primary" />
+                          </div>
+                        )}
 
-                    return (
-                      <div key={message.id}>
-                        <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                          {message.role === "assistant" && (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                              <Sparkles className="h-4 w-4 text-primary" />
-                            </div>
-                          )}
-
-                          <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
-                            <div
-                              className={`rounded-2xl px-4 py-3 ${
-                                message.role === "user"
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-background border border-primary/20"
-                              }`}
-                            >
-                              {message.role === "user" ? (
-                                <p className="text-base leading-relaxed whitespace-pre-line">
-                                  {message.content}
-                                </p>
-                              ) : (
-                                <>
-                                  {contentWithoutTSDL && (
-                                    <MarkdownMessage content={contentWithoutTSDL} />
-                                  )}
-
-                                  {tsdlCode && (
-                                    <>
-                                      {contentWithoutTSDL && <div className="my-3 border-t border-primary/20" />}
-                                      <StrategyPreview tsdlCode={tsdlCode} />
-                                    </>
-                                  )}
-                                </>
-                              )}
-                            </div>
-
-                            {tsdlCode && (
-                              <div className="mt-3">
-                                <Button
-                                  onClick={handleViewStrategy}
-                                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
-                                >
-                                  View Strategy
-                                  <ArrowRight className="ml-2 h-4 w-4" />
-                                </Button>
-                              </div>
+                        <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
+                          <div
+                            className={`rounded-2xl px-4 py-3 ${
+                              message.role === "user"
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background border border-primary/20"
+                            }`}
+                          >
+                            {message.role === "user" ? (
+                              <p className="text-base leading-relaxed whitespace-pre-line">
+                                {message.content}
+                              </p>
+                            ) : (
+                              <MarkdownMessage content={message.content} />
                             )}
                           </div>
                         </div>
                       </div>
-                    )
-                  })}
+                    </div>
+                  ))}
 
-                  {/* Strategy Generation Progress */}
+                  {/* Strategy Generation Progress - Prophet-driven */}
                   {isGeneratingStrategy && (
-                    <StrategyGenerationProgress progress={strategyGenerationProgress} />
+                    <StrategyGenerationProgress 
+                      progress={strategyGenerationProgress}
+                      stage={progressStage}
+                      message={progressMessage}
+                    />
                   )}
 
                   {/* Thinking Animation */}
@@ -473,6 +408,20 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           )}
         </div>
       </div>
+
+      {/* Strategy View Button - shows when strategy generated */}
+      {generatedStrategy && isChatExpanded && (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[80]">
+          <Button
+            onClick={handleViewStrategy}
+            size="lg"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl"
+          >
+            View Generated Strategy
+            <ArrowRight className="ml-2 h-5 w-5" />
+          </Button>
+        </div>
+      )}
     </>
   )
 }

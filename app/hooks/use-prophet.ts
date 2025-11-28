@@ -1,15 +1,15 @@
 /**
- * Unified Prophet Hook with real SSE streaming + smooth typing display
- * OPTIMIZED: Uses Redis cache, sends minimal data
- * NEW: Supports strategy_context for editing workflows
- * TYPING EFFECT: Buffers tokens and displays smoothly (~100 chars/sec)
- * STRATEGY DETECTION: Detects strategy generation, shows progress, continues after
- * DEBUG: Comprehensive logging to diagnose progress bar issues
+ * Prophet Hook - Clean Event-Driven Design
+ * CRITICAL: NO client-side detection - Prophet tells us everything via events
  */
 
-import { useCallback, useRef, useEffect } from 'react';
-import { flushSync } from 'react-dom';
-import { sendChatMessageStream, StrategyMetadata, StrategyContext } from '@/lib/api/prophet';
+import { useCallback, useRef } from 'react';
+import {
+  sendChatMessageStream,
+  ProgressEvent,
+  StrategyGeneratedEvent,
+  StrategyContext
+} from '@/lib/api/prophet';
 import { useProphetHealthQuery } from './queries/use-prophet-queries';
 import { useLogger } from './use-logger';
 import { LogCategory } from '@/lib/debug';
@@ -24,25 +24,6 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
-// Typing animation config
-const CHARS_PER_SECOND = 100;
-const MS_PER_CHAR = 1000 / CHARS_PER_SECOND;
-
-// Strategy detection markers
-const STRATEGY_MARKERS = [
-  'Strategy Overview',
-  'Trading Pair',
-  '```tsdl',
-  'STRATEGY "',
-  'Indicators'
-];
-
-// Estimated strategy content length for progress calculation
-const ESTIMATED_STRATEGY_LENGTH = 1500;
-
-// Debug mode
-const DEBUG_STRATEGY_DETECTION = true;
-
 export function useProphet() {
   const log = useLogger('ProphetHook', LogCategory.API);
   const {
@@ -56,148 +37,15 @@ export function useProphet() {
     currentStrategy,
     setIsGeneratingStrategy,
     setStrategyGenerationProgress,
+    setProgressStage,
+    setProgressMessage,
+    setGeneratedStrategy,
   } = useChat();
 
   const streamingMessageIdRef = useRef<string | null>(null);
-  const displayBufferRef = useRef<string>('');
-  const displayedContentRef = useRef<string>('');
-  const typingAnimationRef = useRef<number | null>(null);
-  const lastTypingTimeRef = useRef<number>(0);
-  const backendCompleteRef = useRef<boolean>(false);
-
-  // Strategy generation refs
-  const isGeneratingStrategyRef = useRef<boolean>(false);
-  const strategyContentRef = useRef<string>('');
-  const preStrategyContentRef = useRef<string>('');
-  const postStrategyContentRef = useRef<string>('');
+  const fullMessageRef = useRef<string>('');
 
   const { data: health } = useProphetHealthQuery();
-
-  /**
-   * Debug logger for strategy detection
-   */
-  const debugLog = (message: string, data?: any) => {
-    if (DEBUG_STRATEGY_DETECTION) {
-      console.log(`[STRATEGY-DEBUG] ${message}`, data || '');
-    }
-  };
-
-  /**
-   * Check if content contains strategy markers
-   */
-  const containsStrategyMarker = (content: string): boolean => {
-    const found = STRATEGY_MARKERS.some(marker => content.includes(marker));
-    if (found && DEBUG_STRATEGY_DETECTION) {
-      const foundMarker = STRATEGY_MARKERS.find(m => content.includes(m));
-      debugLog('Marker found', { marker: foundMarker, contentLength: content.length });
-    }
-    return found;
-  };
-
-  /**
-   * Check if strategy block is complete (has closing ```)
-   */
-  const isStrategyComplete = (strategyContent: string): boolean => {
-    // Check if we have a complete TSDL block with closing ```
-    const tsdlMatch = strategyContent.match(/```tsdl\n[\s\S]*?```/);
-    if (tsdlMatch) {
-      debugLog('Strategy complete: TSDL block found', {
-        matchLength: tsdlMatch[0].length,
-        totalLength: strategyContent.length
-      });
-      return true;
-    }
-
-    // Alternative: check for "Strategy Overview" followed by enough content
-    if (strategyContent.includes('Strategy Overview') &&
-        strategyContent.length > 800) {
-      debugLog('Strategy complete: Heuristic (Overview + 800 chars)', {
-        length: strategyContent.length
-      });
-      return true;
-    }
-
-    debugLog('Strategy NOT complete', {
-      hasOverview: strategyContent.includes('Strategy Overview'),
-      length: strategyContent.length,
-      hasTSDL: strategyContent.includes('```tsdl'),
-      hasClosing: strategyContent.includes('```\n') || strategyContent.endsWith('```')
-    });
-
-    return false;
-  };
-
-  /**
-   * Typing animation loop with flushSync for immediate updates
-   */
-  const startTypingAnimation = useCallback(() => {
-    if (typingAnimationRef.current !== null) {
-      console.log('[TYPING] Animation already running, skipping');
-      return;
-    }
-
-    console.log('[TYPING] Starting animation');
-
-    const animate = (timestamp: number) => {
-      if (!streamingMessageIdRef.current) {
-        console.log('[TYPING] No streaming message ID, stopping');
-        typingAnimationRef.current = null;
-        return;
-      }
-
-      const elapsed = timestamp - lastTypingTimeRef.current;
-
-      if (elapsed >= MS_PER_CHAR && displayBufferRef.current.length > 0) {
-        const nextChar = displayBufferRef.current[0];
-        displayBufferRef.current = displayBufferRef.current.slice(1);
-        displayedContentRef.current += nextChar;
-
-        lastTypingTimeRef.current = timestamp;
-
-        flushSync(() => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === streamingMessageIdRef.current
-                ? { ...msg, content: displayedContentRef.current }
-                : msg
-            )
-          );
-        });
-      }
-
-      if (displayBufferRef.current.length > 0 || !backendCompleteRef.current) {
-        typingAnimationRef.current = requestAnimationFrame(animate);
-      } else {
-        console.log('[TYPING] Animation complete');
-        typingAnimationRef.current = null;
-
-        const messageId = streamingMessageIdRef.current;
-
-        flushSync(() => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId
-                ? { ...msg, isStreaming: false }
-                : msg
-            )
-          );
-        });
-
-        streamingMessageIdRef.current = null;
-      }
-    };
-
-    lastTypingTimeRef.current = performance.now();
-    typingAnimationRef.current = requestAnimationFrame(animate);
-  }, [setMessages]);
-
-  useEffect(() => {
-    return () => {
-      if (typingAnimationRef.current) {
-        cancelAnimationFrame(typingAnimationRef.current);
-      }
-    };
-  }, []);
 
   const loadHistory = useCallback(
     (conversation: Conversation) => {
@@ -240,6 +88,7 @@ export function useProphet() {
         hasStrategyContext: !!currentStrategy,
       });
 
+      // Add user message
       const userMessage: ChatMessage = {
         id: `user-${Date.now()}`,
         role: 'user',
@@ -248,21 +97,10 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage]);
 
+      // Create assistant message
       const assistantMessageId = `assistant-${Date.now()}`;
       streamingMessageIdRef.current = assistantMessageId;
-      displayBufferRef.current = '';
-      displayedContentRef.current = '';
-      backendCompleteRef.current = false;
-
-      // Reset strategy generation state
-      isGeneratingStrategyRef.current = false;
-      strategyContentRef.current = '';
-      preStrategyContentRef.current = '';
-      postStrategyContentRef.current = '';
-      setIsGeneratingStrategy(false);
-      setStrategyGenerationProgress(0);
-
-      debugLog('=== NEW MESSAGE - Strategy state reset ===');
+      fullMessageRef.current = '';
 
       const assistantMessage: ChatMessage = {
         id: assistantMessageId,
@@ -273,6 +111,7 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage, assistantMessage]);
 
+      // Prepare fallback history (if Redis not connected or new conversation)
       let fallbackHistory: Array<{ role: string; content: string }> | undefined;
       const redisConnected = health?.redis_cache === 'connected';
 
@@ -288,6 +127,7 @@ export function useProphet() {
         });
       }
 
+      // Prepare strategy context (if editing existing strategy)
       let strategyContext: StrategyContext | undefined;
       if (currentStrategy) {
         strategyContext = {
@@ -318,175 +158,75 @@ export function useProphet() {
             history: fallbackHistory,
             strategy_context: strategyContext,
           },
+          // onToken - real-time character streaming
           (token: string) => {
-            console.log('[TOKEN] Received:', JSON.stringify(token).substring(0, 50));
+            fullMessageRef.current += token;
 
-            // Accumulate full content for detection
-            const currentFullContent = displayedContentRef.current + displayBufferRef.current + token;
-
-            debugLog('Token processing', {
-              tokenLength: token.length,
-              bufferLength: displayBufferRef.current.length,
-              displayedLength: displayedContentRef.current.length,
-              totalLength: currentFullContent.length,
-              isGenerating: isGeneratingStrategyRef.current
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: fullMessageRef.current }
+                  : msg
+              )
+            );
+          },
+          // onProgress - Prophet tells us stage and percent
+          (progress: ProgressEvent) => {
+            log.info('Progress update', {
+              stage: progress.stage,
+              percent: progress.percent,
+              message: progress.message,
             });
 
-            // Check if we should switch to strategy generation mode
-            if (!isGeneratingStrategyRef.current && containsStrategyMarker(currentFullContent)) {
-              debugLog('=== SWITCHING TO STRATEGY MODE ===', {
-                totalContent: currentFullContent.length,
-                displayed: displayedContentRef.current.length,
-                buffer: displayBufferRef.current.length
-              });
-
-              // Stop typing animation
-              if (typingAnimationRef.current) {
-                cancelAnimationFrame(typingAnimationRef.current);
-                typingAnimationRef.current = null;
-                debugLog('Typing animation stopped');
-              }
-
-              // Save pre-strategy content
-              preStrategyContentRef.current = displayedContentRef.current;
-              debugLog('Pre-strategy content saved', {
-                length: preStrategyContentRef.current.length
-              });
-
-              // Switch to strategy generation mode
-              isGeneratingStrategyRef.current = true;
-              
-              debugLog('CALLING setIsGeneratingStrategy(true)');
-              setIsGeneratingStrategy(true);
-
-              // Clear display buffer - start accumulating strategy
-              displayBufferRef.current = '';
-
-              log.info('Strategy generation detected', {
-                preStrategyLength: preStrategyContentRef.current.length
-              });
-            }
-
-            if (isGeneratingStrategyRef.current) {
-              // Accumulate strategy content
-              strategyContentRef.current += token;
-
-              debugLog('Accumulating strategy content', {
-                accumulated: strategyContentRef.current.length,
-                token: token.substring(0, 30)
-              });
-
-              // Check if strategy block is complete
-              if (isStrategyComplete(strategyContentRef.current)) {
-                debugLog('=== STRATEGY COMPLETE - SWITCHING TO POST-STRATEGY ===', {
-                  strategyLength: strategyContentRef.current.length
-                });
-
-                // Set progress to 100%
-                debugLog('CALLING setStrategyGenerationProgress(100)');
-                setStrategyGenerationProgress(100);
-
-                // Update message with pre + strategy content
-                const contentSoFar = preStrategyContentRef.current + strategyContentRef.current;
-                displayedContentRef.current = contentSoFar;
-
-                debugLog('Updating displayed content', {
-                  contentLength: contentSoFar.length
-                });
-
-                flushSync(() => {
-                  setMessages((prev) =>
-                    prev.map((msg) =>
-                      msg.id === assistantMessageId
-                        ? { ...msg, content: contentSoFar }
-                        : msg
-                    )
-                  );
-                });
-
-                // Hide progress bar
-                debugLog('CALLING setIsGeneratingStrategy(false)');
-                setIsGeneratingStrategy(false);
-                
-                debugLog('CALLING setStrategyGenerationProgress(0)');
-                setStrategyGenerationProgress(0);
-
-                // Switch to post-strategy mode (no longer generating)
-                isGeneratingStrategyRef.current = false;
-
-                log.info('Switched to post-strategy streaming mode');
-              } else {
-                // Calculate progress (cap at 95% until complete)
-                const progress = Math.min(
-                  (strategyContentRef.current.length / ESTIMATED_STRATEGY_LENGTH) * 100,
-                  95
-                );
-
-                debugLog('Updating progress', {
-                  length: strategyContentRef.current.length,
-                  progress: Math.round(progress)
-                });
-
-                debugLog('CALLING setStrategyGenerationProgress(' + Math.round(progress) + ')');
-                setStrategyGenerationProgress(progress);
-              }
-            } else {
-              // Normal typing mode (pre-strategy or post-strategy)
-              displayBufferRef.current += token;
-
-              if (displayedContentRef.current === '' && typingAnimationRef.current === null) {
-                startTypingAnimation();
-              } else if (typingAnimationRef.current === null && displayBufferRef.current.length > 0) {
-                // Resume animation if stopped (post-strategy content)
-                startTypingAnimation();
-              }
-            }
+            setIsGeneratingStrategy(true);
+            setProgressStage(progress.stage);
+            setProgressMessage(progress.message);
+            setStrategyGenerationProgress(progress.percent);
           },
+          // onStrategyGenerated - Prophet sends complete strategy
+          (strategy: StrategyGeneratedEvent) => {
+            log.info('Strategy generated', {
+              strategyId: strategy.strategy_id,
+              strategyName: strategy.strategy_name,
+              tsdlLength: strategy.tsdl_code.length,
+              indicatorsCount: strategy.parameters.indicators?.length || 0,
+            });
+
+            // Hide progress bar
+            setIsGeneratingStrategy(false);
+            setStrategyGenerationProgress(0);
+
+            // Store strategy metadata
+            setStrategyMetadata(strategy.parameters);
+
+            // Store generated strategy for display
+            setGeneratedStrategy({
+              name: strategy.strategy_name,
+              type: 'indicator_based',
+              parameters: {},
+              tsdl_code: strategy.tsdl_code,
+            });
+          },
+          // onComplete - stream finished
           (fullMessage, convId, newState) => {
             log.timeEnd('Prophet Response Time');
-            backendCompleteRef.current = true;
-
-            debugLog('=== BACKEND COMPLETE ===', {
-              isGenerating: isGeneratingStrategyRef.current,
-              messageLength: fullMessage.length
-            });
-
-            // CRITICAL FIX: If still in strategy generation mode when backend completes,
-            // force completion of strategy
-            if (isGeneratingStrategyRef.current) {
-              debugLog('FORCING STRATEGY COMPLETION (backend done)');
-              
-              // Set progress to 100%
-              setStrategyGenerationProgress(100);
-
-              // Update message with all content received
-              const finalContent = preStrategyContentRef.current + strategyContentRef.current;
-              displayedContentRef.current = finalContent;
-
-              flushSync(() => {
-                setMessages((prev) =>
-                  prev.map((msg) =>
-                    msg.id === assistantMessageId
-                      ? { ...msg, content: finalContent, isStreaming: false }
-                      : msg
-                  )
-                );
-              });
-
-              // Hide progress bar
-              setIsGeneratingStrategy(false);
-              setStrategyGenerationProgress(0);
-              
-              // Clear strategy mode
-              isGeneratingStrategyRef.current = false;
-              streamingMessageIdRef.current = null;
-            }
 
             if (!conversationId) {
               setConversationId(convId);
             }
 
             setConversationState(newState);
+
+            // Mark message as complete
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, isStreaming: false }
+                  : msg
+              )
+            );
+
+            streamingMessageIdRef.current = null;
 
             log.info('Response complete', {
               conversationId: convId,
@@ -502,15 +242,11 @@ export function useProphet() {
               state: newState,
             });
           },
+          // onError
           (err) => {
             log.timeEnd('Prophet Response Time');
             log.error('Prophet API Error', { error: err.message });
             log.groupEnd();
-
-            if (typingAnimationRef.current) {
-              cancelAnimationFrame(typingAnimationRef.current);
-              typingAnimationRef.current = null;
-            }
 
             setMessages((prev) =>
               prev.map((msg) =>
@@ -527,15 +263,8 @@ export function useProphet() {
             setIsGeneratingStrategy(false);
             setStrategyGenerationProgress(0);
             streamingMessageIdRef.current = null;
-            backendCompleteRef.current = true;
-            reject(err);
-          },
-          (metadata: StrategyMetadata) => {
-            log.info('Strategy metadata received', {
-              indicatorsCount: metadata.indicators?.length || 0,
-            });
 
-            setStrategyMetadata(metadata);
+            reject(err);
           }
         );
       });
@@ -553,26 +282,17 @@ export function useProphet() {
       setConversationState,
       setIsGeneratingStrategy,
       setStrategyGenerationProgress,
-      startTypingAnimation,
+      setProgressStage,
+      setProgressMessage,
+      setGeneratedStrategy,
     ]
   );
 
   const clearMessages = useCallback(() => {
     log.info('Clearing conversation');
 
-    if (typingAnimationRef.current) {
-      cancelAnimationFrame(typingAnimationRef.current);
-      typingAnimationRef.current = null;
-    }
-
     streamingMessageIdRef.current = null;
-    displayBufferRef.current = '';
-    displayedContentRef.current = '';
-    backendCompleteRef.current = false;
-    isGeneratingStrategyRef.current = false;
-    strategyContentRef.current = '';
-    preStrategyContentRef.current = '';
-    postStrategyContentRef.current = '';
+    fullMessageRef.current = '';
 
     setMessages([]);
     setConversationId(null);
@@ -595,8 +315,6 @@ export function useProphet() {
     conversationId,
     conversationState,
     isHealthy: health?.status === 'healthy',
-    tsdlVersion: health?.tsdl_version,
-    pluginsLoaded: health?.plugins_loaded || [],
     redisCache: health?.redis_cache || 'unknown',
 
     sendMessage,
