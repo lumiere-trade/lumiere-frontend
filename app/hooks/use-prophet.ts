@@ -85,14 +85,14 @@ export function useProphet() {
     if (tsdlMatch) {
       return true;
     }
-    
+
     // Alternative: check for "Strategy Overview" followed by enough content
-    if (strategyContent.includes('Strategy Overview') && 
+    if (strategyContent.includes('Strategy Overview') &&
         strategyContent.length > 800) {
       // Heuristic: if we have substantial content, likely complete
       return true;
     }
-    
+
     return false;
   };
 
@@ -323,14 +323,14 @@ export function useProphet() {
               // Check if strategy block is complete
               if (isStrategyComplete(strategyContentRef.current)) {
                 console.log('[STRATEGY] Strategy block complete - switching to post-strategy mode');
-                
+
                 // Set progress to 100%
                 setStrategyGenerationProgress(100);
-                
+
                 // Update message with pre + strategy content
                 const contentSoFar = preStrategyContentRef.current + strategyContentRef.current;
                 displayedContentRef.current = contentSoFar;
-                
+
                 flushSync(() => {
                   setMessages((prev) =>
                     prev.map((msg) =>
@@ -344,10 +344,10 @@ export function useProphet() {
                 // Hide progress bar
                 setIsGeneratingStrategy(false);
                 setStrategyGenerationProgress(0);
-                
+
                 // Switch to post-strategy mode (no longer generating)
                 isGeneratingStrategyRef.current = false;
-                
+
                 log.info('Switched to post-strategy streaming mode');
               } else {
                 // Calculate progress (cap at 95% until complete)
@@ -379,7 +379,38 @@ export function useProphet() {
             log.timeEnd('Prophet Response Time');
             backendCompleteRef.current = true;
 
-            console.log('[COMPLETE] Backend done');
+            console.log('[COMPLETE] Backend done, isGenerating:', isGeneratingStrategyRef.current);
+
+            // CRITICAL FIX: If still in strategy generation mode when backend completes,
+            // force completion of strategy
+            if (isGeneratingStrategyRef.current) {
+              console.log('[STRATEGY] Backend complete - forcing strategy completion');
+              
+              // Set progress to 100%
+              setStrategyGenerationProgress(100);
+
+              // Update message with all content received
+              const finalContent = preStrategyContentRef.current + strategyContentRef.current;
+              displayedContentRef.current = finalContent;
+
+              flushSync(() => {
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: finalContent, isStreaming: false }
+                      : msg
+                  )
+                );
+              });
+
+              // Hide progress bar
+              setIsGeneratingStrategy(false);
+              setStrategyGenerationProgress(0);
+              
+              // Clear strategy mode
+              isGeneratingStrategyRef.current = false;
+              streamingMessageIdRef.current = null;
+            }
 
             if (!conversationId) {
               setConversationId(convId);
