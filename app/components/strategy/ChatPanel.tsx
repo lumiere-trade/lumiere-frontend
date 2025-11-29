@@ -36,7 +36,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
-  const [shouldPulseStrategy, setShouldPulseStrategy] = useState(false)
+  const [isStrategyNew, setIsStrategyNew] = useState(false)
   const previousStrategyRef = useRef<any>(null)
 
   const {
@@ -50,11 +50,11 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     error,
   } = useProphet()
 
-  // Track strategy changes and trigger pulse animation
+  // Track strategy changes - mark as new when strategy changes
   useEffect(() => {
     if (generatedStrategy && generatedStrategy !== previousStrategyRef.current) {
-      log.info('New strategy generated - starting pulse animation')
-      setShouldPulseStrategy(true)
+      log.info('New strategy generated - marking as new')
+      setIsStrategyNew(true)
       previousStrategyRef.current = generatedStrategy
     }
   }, [generatedStrategy, log])
@@ -173,8 +173,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   const handleViewStrategy = () => {
-    log.info('View Strategy button clicked - stopping pulse animation and closing chat')
-    setShouldPulseStrategy(false)
+    log.info('View Strategy button clicked - marking strategy as viewed and closing chat')
+    setIsStrategyNew(false)
     collapseChat()
   }
 
@@ -182,7 +182,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
     setInputValue("")
-    setShouldPulseStrategy(false)
+    setIsStrategyNew(false)
     previousStrategyRef.current = null
   }
 
@@ -221,7 +221,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
         <Button
           variant="outline"
           size="lg"
-          className="fixed right-6 bottom-34 z-[70] rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
+          className="fixed right-6 bottom-34 z-[70] rounded-full px-6 font-semibold gap-2"
           onClick={expandChat}
         >
           <MessageSquare className="h-5 w-5" />
@@ -395,11 +395,9 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                   {generatedStrategy ? (
                     <Button
                       onClick={handleViewStrategy}
-                      variant="outline"
+                      variant={isStrategyNew ? "default" : "outline"}
                       size="lg"
-                      className={`rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)] ${
-                        shouldPulseStrategy ? 'animate-pulse-hover' : ''
-                      }`}
+                      className="rounded-full px-6 font-semibold gap-2"
                     >
                       View Strategy
                       <ArrowRight className="h-5 w-5" />
@@ -411,7 +409,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                   {/* New Chat Button - Right */}
                   <Button
                     onClick={handleNewChat}
-                    variant="ghost"
+                    variant="outline"
                     size="lg"
                     className="rounded-full px-6 font-semibold gap-2"
                   >
@@ -424,23 +422,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
           )}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes pulse-hover {
-          0%, 100% {
-            transform: scale(1);
-            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
-          }
-          50% {
-            transform: scale(1.02);
-            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
-          }
-        }
-
-        :global(.animate-pulse-hover) {
-          animation: pulse-hover 2s ease-in-out infinite;
-        }
-      `}</style>
     </>
   )
 }
