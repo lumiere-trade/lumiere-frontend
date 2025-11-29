@@ -187,12 +187,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }
 
-  const handleNewChat = () => {
-    log.info('Starting new chat - clearing previous conversation')
-    clearMessages()
-    setInputValue("")
-  }
-
   // Only show messages with content (no empty streaming bubbles)
   const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
 
@@ -257,55 +251,24 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
               }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-primary/20 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 border border-primary/30">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">Prophet AI</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Strategy Creation Assistant
-                      {isHealthy && (
-                        <span className="ml-2 text-xs text-primary">
-                          • Redis: {redisCache}
-                        </span>
-                      )}
-                      {conversationState && conversationState !== 'greeting' && (
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          • {conversationState}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {messages.length > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleNewChat}
-                      className="text-xs"
-                    >
-                      New Chat
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={collapseChat}
-                    className="h-8 w-8 rounded-lg"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+              {/* Close Button - Top Right */}
+              <div className="absolute top-4 right-4 z-10">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={collapseChat}
+                  className="h-8 w-8 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               </div>
 
+              {/* Messages Container */}
               <div className="relative flex-1 min-h-0">
                 <div
                   ref={messagesContainerRef}
                   onScroll={handleScroll}
-                  className={`h-full px-6 py-4 space-y-4 ${visibleMessages.length > 0 || showThinking || isGeneratingStrategy ? 'overflow-y-auto' : 'overflow-hidden'}`}
+                  className={`h-full px-6 py-6 space-y-4 ${visibleMessages.length > 0 || showThinking || isGeneratingStrategy ? 'overflow-y-auto' : 'overflow-hidden'}`}
                   style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
                 >
                   {visibleMessages.length === 0 && !showThinking && !isGeneratingStrategy && (
@@ -358,7 +321,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
                   {/* Strategy Generation Progress - Prophet-driven */}
                   {isGeneratingStrategy && (
-                    <StrategyGenerationProgress 
+                    <StrategyGenerationProgress
                       progress={strategyGenerationProgress}
                       stage={progressStage}
                       message={progressMessage}
@@ -404,24 +367,25 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                   </Button>
                 )}
               </div>
+
+              {/* Footer with View Strategy Button */}
+              {generatedStrategy && (
+                <div className="flex-shrink-0 border-t border-primary/20 px-6 py-4 bg-background/50 backdrop-blur-sm">
+                  <Button
+                    onClick={handleViewStrategy}
+                    variant="outline"
+                    size="lg"
+                    className="w-full rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
+                  >
+                    View Strategy
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
-
-      {/* Strategy View Button - shows when strategy generated */}
-      {generatedStrategy && isChatExpanded && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[80]">
-          <Button
-            onClick={handleViewStrategy}
-            size="lg"
-            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-2xl"
-          >
-            View Generated Strategy
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
-      )}
     </>
   )
 }
