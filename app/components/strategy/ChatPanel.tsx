@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X, ArrowRight, ArrowDown } from "lucide-react"
+import { Sparkles, MessageSquare, Send, X, ArrowRight, ArrowDown, Plus } from "lucide-react"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -36,6 +36,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isReady, setIsReady] = useState(false)
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const [shouldPulseStrategy, setShouldPulseStrategy] = useState(false)
+  const previousStrategyRef = useRef<any>(null)
 
   const {
     messages,
@@ -47,6 +49,15 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     redisCache,
     error,
   } = useProphet()
+
+  // Track strategy changes and trigger pulse animation
+  useEffect(() => {
+    if (generatedStrategy && generatedStrategy !== previousStrategyRef.current) {
+      log.info('New strategy generated - starting pulse animation')
+      setShouldPulseStrategy(true)
+      previousStrategyRef.current = generatedStrategy
+    }
+  }, [generatedStrategy, log])
 
   // Handle visibility and pre-scroll
   useEffect(() => {
@@ -162,8 +173,17 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   const handleViewStrategy = () => {
-    log.info('View Strategy button clicked - closing chat')
+    log.info('View Strategy button clicked - stopping pulse animation and closing chat')
+    setShouldPulseStrategy(false)
     collapseChat()
+  }
+
+  const handleNewChat = () => {
+    log.info('Starting new chat - clearing previous conversation')
+    clearMessages()
+    setInputValue("")
+    setShouldPulseStrategy(false)
+    previousStrategyRef.current = null
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -368,24 +388,59 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
                 )}
               </div>
 
-              {/* Footer with View Strategy Button */}
-              {generatedStrategy && (
-                <div className="flex-shrink-0 border-t border-primary/20 px-6 py-4 bg-background/50 backdrop-blur-sm">
+              {/* Footer - Always Visible */}
+              <div className="flex-shrink-0 border-t border-primary/20 px-6 py-4 bg-background/50 backdrop-blur-sm">
+                <div className="flex items-center justify-between gap-4">
+                  {/* View Strategy Button - Left */}
+                  {generatedStrategy ? (
+                    <Button
+                      onClick={handleViewStrategy}
+                      variant="outline"
+                      size="lg"
+                      className={`rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)] ${
+                        shouldPulseStrategy ? 'animate-pulse-hover' : ''
+                      }`}
+                    >
+                      View Strategy
+                      <ArrowRight className="h-5 w-5" />
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
+
+                  {/* New Chat Button - Right */}
                   <Button
-                    onClick={handleViewStrategy}
-                    variant="outline"
+                    onClick={handleNewChat}
+                    variant="ghost"
                     size="lg"
-                    className="w-full rounded-full px-6 font-semibold gap-2 shadow-[0_4px_8px_0_rgba(0,0,0,0.1)]"
+                    className="rounded-full px-6 font-semibold gap-2"
                   >
-                    View Strategy
-                    <ArrowRight className="h-5 w-5" />
+                    <Plus className="h-5 w-5" />
+                    New Chat
                   </Button>
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes pulse-hover {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.1);
+          }
+          50% {
+            transform: scale(1.02);
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.15);
+          }
+        }
+
+        :global(.animate-pulse-hover) {
+          animation: pulse-hover 2s ease-in-out infinite;
+        }
+      `}</style>
     </>
   )
 }
