@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save, Loader2 } from "lucide-react"
+import { Code, Play, Save, Loader2, X } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
@@ -14,6 +14,8 @@ import {
   useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
+import { BacktestResponse } from "@/lib/api/cartographe"
+import { BacktestResults } from "@/components/strategy/BacktestResults"
 import { toast } from "sonner"
 import {
   Select,
@@ -45,6 +47,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const [paramValues, setParamValues] = useState<Record<string, any>>({})
   const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
   const [isRegenerating, setIsRegenerating] = useState(false)
+  const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
 
   // Parse entry/exit descriptions from TSDL METADATA section
   const parsedDescriptions = useMemo(() => {
@@ -271,7 +274,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         tsdlLength: tsdlCode.length
       })
 
-      await runBacktestMutation.mutateAsync({
+      const results = await runBacktestMutation.mutateAsync({
         tsdl_document: tsdlCode,
         symbol,
         days_back: 90,
@@ -282,8 +285,11 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
         cache_results: true
       })
 
-      // TODO: Navigate to results page or display results inline
-      log.info('Backtest completed successfully')
+      setBacktestResults(results)
+      log.info('Backtest completed successfully', {
+        backtest_id: results.backtest_id,
+        total_return: results.metrics.total_return_pct
+      })
     } catch (error) {
       log.error('Backtest failed', { error })
     }
@@ -455,6 +461,20 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
               <p className="text-xs text-muted-foreground">AI is regenerating TSDL with your new parameters</p>
             </div>
           </div>
+        </div>
+      )}
+
+      {backtestResults && (
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setBacktestResults(null)}
+            className="absolute -top-2 -right-2 z-10 h-8 w-8 p-0 rounded-full"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <BacktestResults results={backtestResults} />
         </div>
       )}
 

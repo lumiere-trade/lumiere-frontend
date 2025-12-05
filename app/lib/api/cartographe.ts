@@ -23,32 +23,42 @@ export interface BacktestRequest {
 }
 
 export interface BacktestMetrics {
+  total_return: number;
   total_return_pct: number;
-  win_rate: number;
+  final_equity: number;
+  cagr: number;
   sharpe_ratio: number;
   sortino_ratio: number;
+  max_drawdown: number;
   max_drawdown_pct: number;
   total_trades: number;
   winning_trades: number;
   losing_trades: number;
+  win_rate: number;
   profit_factor: number;
-  avg_trade_return_pct: number;
-  avg_win_return_pct: number;
-  avg_loss_return_pct: number;
 }
 
 export interface EquityPoint {
   timestamp: string;
   equity: number;
+  cash: number;
+  positions_value: number;
+  drawdown: number;
+  return_pct: number;
 }
 
 export interface Trade {
+  id: string;
   timestamp: string;
-  action: 'BUY' | 'SELL';
+  side: 'BUY' | 'SELL';
+  symbol: string;
   price: number;
   quantity: number;
-  pnl?: number;
-  pnl_pct?: number;
+  value: number;
+  commission: number;
+  reason: string;
+  pnl?: number | null;
+  pnl_pct?: number | null;
 }
 
 export interface Candle {
@@ -65,18 +75,25 @@ export interface TradeAnalysis {
   avg_loss: number;
   largest_win: number;
   largest_loss: number;
+  avg_holding_time_minutes: number;
   longest_winning_streak: number;
   longest_losing_streak: number;
-  avg_holding_period_minutes: number;
 }
 
 export interface BacktestResponse {
   backtest_id: string;
+  symbol: string;
+  start_date: string;
+  end_date: string;
+  initial_capital: number;
+  status: 'COMPLETED' | 'FAILED';
   metrics: BacktestMetrics;
   equity_curve: EquityPoint[];
   trades: Trade[];
-  market_data: Candle[];
   trade_analysis: TradeAnalysis;
+  market_data: Candle[];
+  execution_time_seconds?: number | null;
+  error_message?: string | null;
 }
 
 export interface HealthResponse {
