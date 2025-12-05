@@ -13,6 +13,7 @@ import {
   useUpdateStrategy,
   useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
+import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import { toast } from "sonner"
 import {
   Select,
@@ -37,6 +38,7 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
+  const runBacktestMutation = useRunBacktest()
 
   const [showCode, setShowCode] = useState(false)
   const [name, setName] = useState(strategy.name)
@@ -256,9 +258,35 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
     }
   }
 
-  const handleBacktest = () => {
-    log.info('Backtest started', { name })
-    toast.info('Backtest feature coming soon!')
+  const handleBacktest = async () => {
+    try {
+      // Extract symbol and timeframe from asset metadata
+      const symbol = paramValues['asset_symbol'] || strategyMetadata?.asset?.symbol?.value || 'SOL/USDT'
+      const timeframe = paramValues['asset_timeframe'] || strategyMetadata?.asset?.timeframe?.value || '1h'
+
+      log.info('Starting backtest', {
+        name,
+        symbol,
+        timeframe,
+        tsdlLength: tsdlCode.length
+      })
+
+      await runBacktestMutation.mutateAsync({
+        tsdl_document: tsdlCode,
+        symbol,
+        days_back: 90,
+        initial_capital: 10000.0,
+        timeframe,
+        slippage: 0.001,
+        commission: 0.001,
+        cache_results: true
+      })
+
+      // TODO: Navigate to results page or display results inline
+      log.info('Backtest completed successfully')
+    } catch (error) {
+      log.error('Backtest failed', { error })
+    }
   }
 
   const renderParamField = (
@@ -382,10 +410,20 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
             variant="outline"
             size="sm"
             onClick={handleBacktest}
+            disabled={runBacktestMutation.isPending || !tsdlCode}
             className="gap-2"
           >
-            <Play className="h-4 w-4" />
-            Backtest
+            {runBacktestMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Running...
+              </>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                Backtest
+              </>
+            )}
           </Button>
           <Button
             size="sm"
