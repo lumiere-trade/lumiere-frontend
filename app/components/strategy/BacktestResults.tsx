@@ -103,16 +103,16 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
         close: candle.close,
         high: candle.high,
         low: candle.low,
-        buy: trade?.side === 'BUY' ? trade.price : undefined,
-        sell: trade?.side === 'SELL' ? trade.price : undefined,
-        sellPnl: trade?.side === 'SELL' ? trade.pnl : undefined
+        buy: trade?.side === 'BUY' ? trade.price : null,
+        sell: trade?.side === 'SELL' ? trade.price : null,
+        sellPnl: trade?.side === 'SELL' ? trade.pnl : null
       }
     })
   }, [market_data, trades])
 
   // Count buy/sell signals
-  const buyCount = priceChartData.filter(d => d.buy !== undefined).length
-  const sellCount = priceChartData.filter(d => d.sell !== undefined).length
+  const buyCount = priceChartData.filter(d => d.buy !== null && d.buy !== undefined).length
+  const sellCount = priceChartData.filter(d => d.sell !== null && d.sell !== undefined).length
 
   const isPositive = normalizedMetrics.total_return_pct > 0
 
@@ -217,9 +217,10 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                     stroke="hsl(var(--border))"
                   />
                   <YAxis 
+                    yAxisId="price"
                     tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                     stroke="hsl(var(--border))"
-                    domain={['dataMin - 5', 'dataMax + 5']}
+                    domain={['auto', 'auto']}
                     tickFormatter={(value) => `$${value.toFixed(0)}`}
                   />
                   <Tooltip 
@@ -230,6 +231,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                       color: 'hsl(var(--popover-foreground))'
                     }}
                     formatter={(value: any, name: string) => {
+                      if (!value) return null
                       if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
                       if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
                       if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
@@ -238,25 +240,33 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                   />
                   {/* Price line */}
                   <Line 
+                    yAxisId="price"
                     type="monotone" 
                     dataKey="close" 
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     dot={false}
                     name="close"
+                    connectNulls
                   />
                   {/* Buy signals */}
                   <Scatter 
+                    yAxisId="price"
                     dataKey="buy"
                     fill="hsl(var(--chart-2))"
+                    stroke="hsl(var(--background))"
+                    strokeWidth={2}
                     shape="circle"
                     r={6}
                     name="buy"
                   />
                   {/* Sell signals */}
                   <Scatter 
+                    yAxisId="price"
                     dataKey="sell"
                     fill="hsl(var(--destructive))"
+                    stroke="hsl(var(--background))"
+                    strokeWidth={2}
                     shape="circle"
                     r={6}
                     name="sell"
