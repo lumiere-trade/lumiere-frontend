@@ -5,10 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumi
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { 
-  LineChart, Line, AreaChart, Area, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  LineChart, Line, AreaChart, Area, ComposedChart,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter
 } from 'recharts'
-import { TrendingUp, TrendingDown, Activity, DollarSign, Target, Clock } from "lucide-react"
+import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 
@@ -55,6 +55,57 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
       }
     })
   }, [tradesData])
+
+  // Prepare price chart data with buy/sell markers
+  const priceChartData = useMemo(() => {
+    // Create map of timestamps to trades for quick lookup
+    const tradeMap = new Map<number, { side: 'BUY' | 'SELL', price: number, pnl?: number }>()
+    
+    trades.forEach(trade => {
+      const ts = new Date(trade.timestamp).getTime()
+      tradeMap.set(ts, {
+        side: trade.side,
+        price: trade.price,
+        pnl: trade.pnl || undefined
+      })
+    })
+
+    // Combine market data with trades
+    return market_data.map((candle) => {
+      const ts = new Date(candle.timestamp).getTime()
+      const trade = tradeMap.get(ts)
+      
+      return {
+        timestamp: ts,
+        date: format(new Date(candle.timestamp), 'MMM dd'),
+        close: candle.close,
+        high: candle.high,
+        low: candle.low,
+        // Add trade markers
+        buy: trade?.side === 'BUY' ? trade.price : null,
+        sell: trade?.side === 'SELL' ? trade.price : null,
+        sellPnl: trade?.side === 'SELL' ? trade.pnl : null
+      }
+    })
+  }, [market_data, trades])
+
+  // Separate buy and sell trades for scatter plot
+  const buyTrades = useMemo(() => {
+    return priceChartData
+      .filter(d => d.buy !== null)
+      .map(d => ({ timestamp: d.timestamp, price: d.buy, date: d.date }))
+  }, [priceChartData])
+
+  const sellTrades = useMemo(() => {
+    return priceChartData
+      .filter(d => d.sell !== null)
+      .map(d => ({ 
+        timestamp: d.timestamp, 
+        price: d.sell, 
+        date: d.date,
+        pnl: d.sellPnl
+      }))
+  }, [priceChartData])
 
   const isPositive = metrics.total_return_pct > 0
 
@@ -126,12 +177,104 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
       </div>
 
       {/* Charts */}
-      <Tabs defaultValue="equity" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="price" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="price">Price & Trades</TabsTrigger>
           <TabsTrigger value="equity">Equity Curve</TabsTrigger>
           <TabsTrigger value="drawdown">Drawdown</TabsTrigger>
           <TabsTrigger value="trades">Trade PnL</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="price" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Price Chart with Trade Signals</CardTitle>
+              <CardDescription>
+                <span className="inline-flex items-center gap-2 mr-4">
+                  <span className="inline-block w-3 h-3 rounded-full bg-chart-2"></span>
+                  Buy Signals
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <span className="inline-block w-3 h-3 rounded-full bg-destructive"></span>
+                  Sell Signals
+                </span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <ComposedChart data={priceChartData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
+                    domain={['dataMin - 5', 'dataMax + 5']}
+                    tickFormatter={(value) => `$${value.toFixed(0)}`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--popover))', 
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                      color: 'hsl(var(--popover-foreground))'
+                    }}
+                    formatter={(value: any, name: string) => {
+                      if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
+                      return [value, name]
+                    }}
+                  />
+                  {/* Price line */}
+                  <Line 
+                    type="monotone" 
+                    dataKey="close" 
+                    stroke="hsl(var(--primary))" 
+                    strokeWidth={2}
+                    dot={false}
+                    name="Price"
+                  />
+                  {/* Buy signals - green dots */}
+                  <Scatter 
+                    data={buyTrades}
+                    fill="hsl(var(--chart-2))"
+                    shape="circle"
+                    name="Buy"
+                  >
+                    {buyTrades.map((entry, index) => (
+                      <circle 
+                        key={`buy-${index}`} 
+                        r={6} 
+                        fill="hsl(var(--chart-2))"
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Scatter>
+                  {/* Sell signals - red dots */}
+                  <Scatter 
+                    data={sellTrades}
+                    fill="hsl(var(--destructive))"
+                    shape="circle"
+                    name="Sell"
+                  >
+                    {sellTrades.map((entry, index) => (
+                      <circle 
+                        key={`sell-${index}`} 
+                        r={6} 
+                        fill="hsl(var(--destructive))"
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                      />
+                    ))}
+                  </Scatter>
+                </ComposedChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="equity" className="space-y-4">
           <Card>
@@ -144,33 +287,34 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                 <AreaChart data={equityData}>
                   <defs>
                     <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                   />
                   <YAxis 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                     tickFormatter={(value) => `$${value.toLocaleString()}`}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                      backgroundColor: 'hsl(var(--popover))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      color: 'hsl(var(--popover-foreground))'
                     }}
                     formatter={(value: number) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Equity']}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="equity" 
-                    stroke="#8b5cf6" 
+                    stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     fill="url(#equityGradient)"
                   />
@@ -191,33 +335,34 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                 <AreaChart data={equityData}>
                   <defs>
                     <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                   />
                   <YAxis 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                     tickFormatter={(value) => `${value.toFixed(1)}%`}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                      backgroundColor: 'hsl(var(--popover))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      color: 'hsl(var(--popover-foreground))'
                     }}
                     formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
                   />
                   <Area 
                     type="monotone" 
                     dataKey="drawdown" 
-                    stroke="#ef4444" 
+                    stroke="hsl(var(--destructive))" 
                     strokeWidth={2}
                     fill="url(#drawdownGradient)"
                   />
@@ -236,22 +381,23 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={cumulativePnL}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
                   <XAxis 
                     dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                   />
                   <YAxis 
-                    tick={{ fontSize: 12 }}
-                    stroke="#888"
+                    tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    stroke="hsl(var(--border))"
                     tickFormatter={(value) => `$${value.toLocaleString()}`}
                   />
                   <Tooltip 
                     contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                      backgroundColor: 'hsl(var(--popover))', 
                       border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px'
+                      borderRadius: '8px',
+                      color: 'hsl(var(--popover-foreground))'
                     }}
                     formatter={(value: number, name: string) => {
                       if (name === 'cumulative_pnl') {
@@ -263,7 +409,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                   <Line 
                     type="monotone" 
                     dataKey="cumulative_pnl" 
-                    stroke="#8b5cf6" 
+                    stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     dot={false}
                   />
@@ -307,19 +453,19 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Avg Win</span>
-              <span className="font-semibold text-green-600">${trade_analysis.avg_win.toFixed(2)}</span>
+              <span className="font-semibold text-chart-2">${trade_analysis.avg_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Avg Loss</span>
-              <span className="font-semibold text-red-600">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
+              <span className="font-semibold text-destructive">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Largest Win</span>
-              <span className="font-semibold text-green-600">${trade_analysis.largest_win.toFixed(2)}</span>
+              <span className="font-semibold text-chart-2">${trade_analysis.largest_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Largest Loss</span>
-              <span className="font-semibold text-red-600">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
+              <span className="font-semibold text-destructive">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
