@@ -103,34 +103,16 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
         close: candle.close,
         high: candle.high,
         low: candle.low,
-        buy: trade?.side === 'BUY' ? trade.price : null,
-        sell: trade?.side === 'SELL' ? trade.price : null,
-        sellPnl: trade?.side === 'SELL' ? trade.pnl : null
+        buy: trade?.side === 'BUY' ? trade.price : undefined,
+        sell: trade?.side === 'SELL' ? trade.price : undefined,
+        sellPnl: trade?.side === 'SELL' ? trade.pnl : undefined
       }
     })
   }, [market_data, trades])
 
-  // Separate buy and sell trades for scatter plot
-  const buyTrades = useMemo(() => {
-    return priceChartData
-      .filter(d => d.buy !== null)
-      .map(d => ({ 
-        timestamp: d.timestamp, 
-        price: d.buy!,
-        date: d.date
-      }))
-  }, [priceChartData])
-
-  const sellTrades = useMemo(() => {
-    return priceChartData
-      .filter(d => d.sell !== null)
-      .map(d => ({ 
-        timestamp: d.timestamp, 
-        price: d.sell!,
-        date: d.date,
-        pnl: d.sellPnl
-      }))
-  }, [priceChartData])
+  // Count buy/sell signals
+  const buyCount = priceChartData.filter(d => d.buy !== undefined).length
+  const sellCount = priceChartData.filter(d => d.sell !== undefined).length
 
   const isPositive = normalizedMetrics.total_return_pct > 0
 
@@ -217,11 +199,11 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
               <CardDescription>
                 <span className="inline-flex items-center gap-2 mr-4">
                   <span className="inline-block w-3 h-3 rounded-full bg-chart-2"></span>
-                  Buy Signals ({buyTrades.length})
+                  Buy Signals ({buyCount})
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-destructive"></span>
-                  Sell Signals ({sellTrades.length})
+                  Sell Signals ({sellCount})
                 </span>
               </CardDescription>
             </CardHeader>
@@ -249,7 +231,8 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                     }}
                     formatter={(value: any, name: string) => {
                       if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
-                      if (name === 'price') return [`$${value.toFixed(2)}`, 'Trade Price']
+                      if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
+                      if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
                       return [value, name]
                     }}
                   />
@@ -264,38 +247,20 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                   />
                   {/* Buy signals */}
                   <Scatter 
-                    data={buyTrades}
+                    dataKey="buy"
                     fill="hsl(var(--chart-2))"
                     shape="circle"
-                    name="price"
-                  >
-                    {buyTrades.map((entry, index) => (
-                      <circle 
-                        key={`buy-${index}`} 
-                        r={6} 
-                        fill="hsl(var(--chart-2))"
-                        stroke="hsl(var(--background))"
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </Scatter>
+                    r={6}
+                    name="buy"
+                  />
                   {/* Sell signals */}
                   <Scatter 
-                    data={sellTrades}
+                    dataKey="sell"
                     fill="hsl(var(--destructive))"
                     shape="circle"
-                    name="price"
-                  >
-                    {sellTrades.map((entry, index) => (
-                      <circle 
-                        key={`sell-${index}`} 
-                        r={6} 
-                        fill="hsl(var(--destructive))"
-                        stroke="hsl(var(--background))"
-                        strokeWidth={2}
-                      />
-                    ))}
-                  </Scatter>
+                    r={6}
+                    name="sell"
+                  />
                 </ComposedChart>
               </ResponsiveContainer>
             </CardContent>
