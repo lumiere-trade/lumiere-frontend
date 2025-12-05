@@ -20,11 +20,23 @@ interface BacktestResultsProps {
 export function BacktestResults({ results, onClose }: BacktestResultsProps) {
   const { metrics, equity_curve, trades, trade_analysis, market_data } = results
 
+  // Backend is inconsistent: win_rate is already percentage, but other *_pct fields are decimals
+  // Normalize to always display as percentage
+  const normalizedMetrics = useMemo(() => ({
+    ...metrics,
+    // win_rate comes as 20.0 (already percent), don't multiply
+    win_rate_pct: metrics.win_rate,
+    // These come as -0.0607 (decimal), multiply by 100
+    total_return_pct: metrics.total_return_pct * 100,
+    max_drawdown_pct: metrics.max_drawdown_pct * 100,
+    cagr_pct: metrics.cagr * 100
+  }), [metrics])
+
   // Format equity curve data for Recharts
   const equityData = useMemo(() => {
     return equity_curve.map((point) => ({
       timestamp: new Date(point.timestamp).getTime(),
-      date: format(new Date(point.timestamp), 'MMM dd'),
+      date: format(new Date(point.timestamp), 'MMM dd HH:mm'),
       equity: point.equity,
       drawdown: point.drawdown * 100,
       return: point.return_pct * 100
@@ -39,7 +51,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
         timestamp: new Date(trade.timestamp).getTime(),
         date: format(new Date(trade.timestamp), 'MMM dd HH:mm'),
         pnl: trade.pnl || 0,
-        pnl_pct: (trade.pnl_pct || 0) * 100,
+        pnl_pct: trade.pnl_pct ? trade.pnl_pct * 100 : 0,
         price: trade.price
       }))
   }, [trades])
@@ -57,12 +69,22 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
   }, [tradesData])
 
   // Prepare price chart data with buy/sell markers
+  // Handle inconsistent timestamp formats from backend
   const priceChartData = useMemo(() => {
-    // Create map of timestamps to trades for quick lookup
+    if (!market_data || market_data.length === 0) {
+      return []
+    }
+
+    // Normalize timestamps to milliseconds for comparison
+    const normalizeTimestamp = (ts: string): number => {
+      return new Date(ts).getTime()
+    }
+
+    // Create map of normalized timestamps to trades
     const tradeMap = new Map<number, { side: 'BUY' | 'SELL', price: number, pnl?: number }>()
     
     trades.forEach(trade => {
-      const ts = new Date(trade.timestamp).getTime()
+      const ts = normalizeTimestamp(trade.timestamp)
       tradeMap.set(ts, {
         side: trade.side,
         price: trade.price,
@@ -72,16 +94,15 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
 
     // Combine market data with trades
     return market_data.map((candle) => {
-      const ts = new Date(candle.timestamp).getTime()
+      const ts = normalizeTimestamp(candle.timestamp)
       const trade = tradeMap.get(ts)
       
       return {
         timestamp: ts,
-        date: format(new Date(candle.timestamp), 'MMM dd'),
+        date: format(new Date(candle.timestamp), 'MMM dd HH:mm'),
         close: candle.close,
         high: candle.high,
         low: candle.low,
-        // Add trade markers
         buy: trade?.side === 'BUY' ? trade.price : null,
         sell: trade?.side === 'SELL' ? trade.price : null,
         sellPnl: trade?.side === 'SELL' ? trade.pnl : null
@@ -93,7 +114,11 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
   const buyTrades = useMemo(() => {
     return priceChartData
       .filter(d => d.buy !== null)
-      .map(d => ({ timestamp: d.timestamp, price: d.buy, date: d.date }))
+      .map(d => ({ 
+        timestamp: d.timestamp, 
+        price: d.buy!,
+        date: d.date
+      }))
   }, [priceChartData])
 
   const sellTrades = useMemo(() => {
@@ -101,13 +126,13 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
       .filter(d => d.sell !== null)
       .map(d => ({ 
         timestamp: d.timestamp, 
-        price: d.sell, 
+        price: d.sell!,
         date: d.date,
         pnl: d.sellPnl
       }))
   }, [priceChartData])
 
-  const isPositive = metrics.total_return_pct > 0
+  const isPositive = normalizedMetrics.total_return_pct > 0
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -121,7 +146,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
         </div>
         <Badge variant={isPositive ? "default" : "destructive"} className="text-lg px-4 py-2">
           {isPositive ? <TrendingUp className="h-4 w-4 mr-2" /> : <TrendingDown className="h-4 w-4 mr-2" />}
-          {metrics.total_return_pct > 0 ? '+' : ''}{metrics.total_return_pct.toFixed(2)}%
+          {normalizedMetrics.total_return_pct > 0 ? '+' : ''}{normalizedMetrics.total_return_pct.toFixed(2)}%
         </Badge>
       </div>
 
@@ -144,7 +169,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
             <CardDescription>Win Rate</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(metrics.win_rate * 100).toFixed(1)}%</div>
+            <div className="text-2xl font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
               {metrics.winning_trades}W / {metrics.losing_trades}L
             </p>
@@ -168,7 +193,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
             <CardDescription>Max Drawdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{metrics.max_drawdown_pct.toFixed(2)}%</div>
+            <div className="text-2xl font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
             <p className="text-xs text-muted-foreground mt-1">
               ${Math.abs(metrics.max_drawdown).toLocaleString()}
             </p>
@@ -192,11 +217,11 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
               <CardDescription>
                 <span className="inline-flex items-center gap-2 mr-4">
                   <span className="inline-block w-3 h-3 rounded-full bg-chart-2"></span>
-                  Buy Signals
+                  Buy Signals ({buyTrades.length})
                 </span>
                 <span className="inline-flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-destructive"></span>
-                  Sell Signals
+                  Sell Signals ({sellTrades.length})
                 </span>
               </CardDescription>
             </CardHeader>
@@ -224,6 +249,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                     }}
                     formatter={(value: any, name: string) => {
                       if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
+                      if (name === 'price') return [`$${value.toFixed(2)}`, 'Trade Price']
                       return [value, name]
                     }}
                   />
@@ -234,14 +260,14 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     dot={false}
-                    name="Price"
+                    name="close"
                   />
-                  {/* Buy signals - green dots */}
+                  {/* Buy signals */}
                   <Scatter 
                     data={buyTrades}
                     fill="hsl(var(--chart-2))"
                     shape="circle"
-                    name="Buy"
+                    name="price"
                   >
                     {buyTrades.map((entry, index) => (
                       <circle 
@@ -253,12 +279,12 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
                       />
                     ))}
                   </Scatter>
-                  {/* Sell signals - red dots */}
+                  {/* Sell signals */}
                   <Scatter 
                     data={sellTrades}
                     fill="hsl(var(--destructive))"
                     shape="circle"
-                    name="Sell"
+                    name="price"
                   >
                     {sellTrades.map((entry, index) => (
                       <circle 
@@ -437,7 +463,7 @@ export function BacktestResults({ results, onClose }: BacktestResultsProps) {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">CAGR</span>
-              <span className="font-semibold">{(metrics.cagr * 100).toFixed(2)}%</span>
+              <span className="font-semibold">{normalizedMetrics.cagr_pct.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Avg Holding Time</span>
