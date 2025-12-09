@@ -279,18 +279,14 @@ function CreatePageContent() {
 
           {!generatedStrategy && (
             <div className="absolute inset-0 flex items-center justify-center px-6">
-              <div className="w-full max-w-3xl mx-auto space-y-8">
-                <div className="text-center space-y-4">
+              <div className="w-full max-w-3xl mx-auto space-y-6">
+                <div className="text-center">
                   <h1 className="text-4xl font-bold text-foreground tracking-tight">
                     Ready to create your strategy?
                   </h1>
-
-                  <p className="text-lg text-muted-foreground">
-                    Describe your trading idea in natural language
-                  </p>
                 </div>
 
-                <div className="relative w-full">
+                <div className="relative w-full shadow-sm">
                   <textarea
                     value={localInputValue}
                     onChange={(e) => setLocalInputValue(e.target.value)}
@@ -310,8 +306,7 @@ function CreatePageContent() {
                   </Button>
                 </div>
 
-                <div className="space-y-3 pt-4 max-w-2xl mx-auto">
-                  <p className="text-sm text-muted-foreground">Try one of these:</p>
+                <div className="pt-2 max-w-2xl mx-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {examplePrompts.map((prompt, index) => (
                       <button
