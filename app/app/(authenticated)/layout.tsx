@@ -1,10 +1,10 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
 import { ChatPanel } from "@/components/strategy/ChatPanel"
-import { Footer } from "@lumiere/shared/components"
 import { ChatProvider } from "@/contexts/ChatContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
@@ -59,17 +59,6 @@ export default function AuthenticatedLayout({
       >
         {children}
       </main>
-
-      {/* Footer - Fixed at bottom */}
-      <div
-        className="fixed bottom-0 right-0 z-40 transition-all duration-300"
-        style={{
-          left: isSidebarOpen ? '300px' : '0',
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : '100vw'
-        }}
-      >
-        <Footer isSidebarOpen={isSidebarOpen} />
-      </div>
 
       {/* Chat Overlay - Higher z-index */}
       {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
