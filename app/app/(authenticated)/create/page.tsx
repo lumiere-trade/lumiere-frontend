@@ -1,8 +1,9 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Sparkles } from "lucide-react"
+import { Sparkles, Send } from "lucide-react"
+import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
@@ -29,21 +30,22 @@ function CreatePageContent() {
     currentStrategy,
     collapseChat,
     expandChat,
-    setInputValue,
     setGeneratedStrategy,
     setStrategyMetadata,
     setCurrentStrategy,
     clearChat,
   } = useChat()
 
-  const { loadHistory } = useProphet()
+  const { loadHistory, sendMessage, isSending, isHealthy } = useProphet()
+
+  const [localInputValue, setLocalInputValue] = useState("")
 
   // Load strategy when strategyId changes or clear state when no strategyId
   useEffect(() => {
     if (strategyId) {
       // Check if we need to load a different strategy
       const isDifferentStrategy = !currentStrategy || currentStrategy.id !== strategyId
-      
+
       if (isDifferentStrategy) {
         logger.info('Strategy ID changed, loading new strategy', {
           oldStrategyId: currentStrategy?.id,
@@ -215,8 +217,44 @@ function CreatePageContent() {
   }
 
   const handlePromptClick = (prompt: string) => {
-    setInputValue(prompt)
+    setLocalInputValue(prompt)
+  }
+
+  const handleSend = async () => {
+    if (!localInputValue.trim() || isSending) {
+      logger.warn('Send blocked', {
+        reason: !localInputValue.trim() ? 'empty input' : 'already sending',
+        inputLength: localInputValue.length
+      })
+      return
+    }
+
+    const userMessage = localInputValue.trim()
+    setLocalInputValue("")
+
+    logger.info('Sending initial message from empty state', {
+      message: userMessage,
+      messageLength: userMessage.length
+    })
+
     expandChat()
+
+    try {
+      await sendMessage(userMessage)
+      logger.info('Initial message sent successfully')
+    } catch (err) {
+      logger.error('Failed to send initial message', {
+        error: err instanceof Error ? err.message : 'Unknown error'
+      })
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      logger.debug('Enter key pressed - sending message')
+      handleSend()
+    }
   }
 
   return (
@@ -240,36 +278,71 @@ function CreatePageContent() {
           )}
 
           {!generatedStrategy && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <div className="flex justify-center mb-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 border border-primary/30">
-                    <Sparkles className="h-7 w-7 text-primary" />
+            <div className="absolute inset-0 flex items-center justify-center px-6">
+              <div className="w-full max-w-3xl mx-auto space-y-8">
+                <div className="text-center space-y-4">
+                  <div className="flex justify-center mb-6">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20">
+                      <Sparkles className="h-8 w-8 text-primary" />
+                    </div>
                   </div>
+
+                  <h1 className="text-4xl font-bold text-foreground tracking-tight">
+                    Ready to create your strategy?
+                  </h1>
+
+                  <p className="text-lg text-muted-foreground">
+                    Describe your trading idea in natural language
+                  </p>
                 </div>
 
-                <h1 className="text-3xl font-bold text-foreground">
-                  Ready to create your strategy?
-                </h1>
+                <div className="relative w-full">
+                  <textarea
+                    value={localInputValue}
+                    onChange={(e) => setLocalInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Describe your trading strategy..."
+                    rows={3}
+                    disabled={!isHealthy || isSending}
+                    className="w-full px-6 py-4 pr-16 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleSend}
+                    disabled={!localInputValue.trim() || !isHealthy || isSending}
+                    className="absolute right-3 bottom-3 h-10 w-10 rounded-xl"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
+                </div>
 
-                <p className="text-lg text-muted-foreground">
-                  Describe your trading idea in natural language
-                </p>
-
-                <div className="space-y-3 pt-4 max-w-2xl mx-auto">
-                  <p className="text-sm text-muted-foreground">Try one of these:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Try one of these:
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {examplePrompts.map((prompt, index) => (
                       <button
                         key={index}
                         onClick={() => handlePromptClick(prompt)}
-                        className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-sm text-left transition-all hover:border-primary/40 hover:bg-card"
+                        disabled={isSending}
+                        className="group relative rounded-xl border border-border bg-card px-5 py-4 text-left transition-all hover:border-primary/50 hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {prompt}
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {prompt}
+                        </p>
                       </button>
                     ))}
                   </div>
                 </div>
+
+                {!isHealthy && (
+                  <div className="text-center">
+                    <p className="text-sm text-destructive">
+                      Prophet AI is not responding. Please check the connection.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}
