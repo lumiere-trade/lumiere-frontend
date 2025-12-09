@@ -294,7 +294,7 @@ function CreatePageContent() {
                     placeholder="Describe your trading strategy..."
                     rows={3}
                     disabled={!isHealthy || isSending}
-                    className="w-full px-6 py-4 pr-16 rounded-2xl border border-primary/20 bg-card/50 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none hover:ring-2 hover:ring-primary/30 focus:ring-2 focus:ring-primary/50 transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-6 py-4 pr-16 rounded-2xl border border-primary/20 bg-card/50 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none transition-all text-base disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                   <Button
                     size="icon"
