@@ -207,7 +207,7 @@ function CreatePageContent() {
   // Show conversation view
   if (hasMessages) {
     return (
-      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)', scrollbarGutter: 'stable' }}>
+      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)' }}>
         <div className="flex-1 pb-4">
           <MessageList
             messages={messages}
