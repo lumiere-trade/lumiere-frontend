@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} style={{ scrollbarGutter: "stable" }}>
+      <body className={inter.className}>
         <ErrorBoundary>
           <AdminAuthProvider>
             <Providers>{children}</Providers>
