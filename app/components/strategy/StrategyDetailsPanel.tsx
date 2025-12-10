@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelLeftClose, Sliders, Code, Play, Save } from "lucide-react"
+import { PanelRightClose, Sliders, Code, Play, Save } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { useState } from "react"
@@ -40,6 +40,14 @@ export function StrategyDetailsPanel({
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-9 w-9"
+            >
+              <PanelRightClose className="h-5 w-5 text-primary" />
+            </Button>
+            <Button
               variant={activeTab === 'parameters' ? 'default' : 'outline'}
               size="sm"
               onClick={() => onTabChange('parameters')}
@@ -77,14 +85,6 @@ export function StrategyDetailsPanel({
             >
               <Save className="h-4 w-4" />
               Save Strategy
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <PanelLeftClose className="h-5 w-5 text-primary" />
             </Button>
           </div>
         </div>
