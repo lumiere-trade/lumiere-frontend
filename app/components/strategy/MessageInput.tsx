@@ -1,6 +1,6 @@
 "use client"
 
-import { KeyboardEvent } from "react"
+import { KeyboardEvent, useEffect, useRef } from "react"
 import { Send, Square } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 
@@ -13,6 +13,7 @@ interface MessageInputProps {
   isSending?: boolean
   placeholder?: string
   className?: string
+  autoFocus?: boolean
 }
 
 export function MessageInput({
@@ -23,8 +24,17 @@ export function MessageInput({
   disabled = false,
   isSending = false,
   placeholder = "Describe your trading strategy...",
-  className = ""
+  className = "",
+  autoFocus = false
 }: MessageInputProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus()
+    }
+  }, [autoFocus])
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -47,6 +57,7 @@ export function MessageInput({
   return (
     <div className={`relative w-full ${className}`}>
       <textarea
+        ref={textareaRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}

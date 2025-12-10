@@ -230,6 +230,7 @@ function CreatePageContent() {
               disabled={!isHealthy}
               isSending={isSending}
               placeholder="Reply..."
+              autoFocus={true}
             />
           </div>
         </div>
