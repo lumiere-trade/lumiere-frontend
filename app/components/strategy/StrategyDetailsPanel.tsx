@@ -126,6 +126,7 @@ export function StrategyDetailsPanel({
                 <StrategyParameters
                   strategy={strategyForParams}
                   hideActions={true}
+                  compact={true}
                 />
               )}
               {activeTab === 'code' && strategy && (

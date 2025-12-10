@@ -33,9 +33,10 @@ interface StrategyParametersProps {
     tsdl_code: string
   }
   hideActions?: boolean
+  compact?: boolean
 }
 
-export function StrategyParameters({ strategy, hideActions = false }: StrategyParametersProps) {
+export function StrategyParameters({ strategy, hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategyMetadata, messages, currentStrategy } = useChat()
   const createStrategyMutation = useCreateStrategy()
@@ -400,7 +401,7 @@ export function StrategyParameters({ strategy, hideActions = false }: StrategyPa
                    createConversationMutation.isPending
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-40">
+    <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
       {!hideActions && (
         <div className="flex items-center justify-end">
           <div className="flex gap-2">
