@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from '@lumiere/shared/components/ui/button'
-import { Sparkles, MessageSquare, Send, X, ArrowRight, ArrowDown, Plus } from "lucide-react"
+import { Sparkles, Send, X, ArrowRight, ArrowDown, Plus } from "lucide-react"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -19,10 +19,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const {
     isChatExpanded,
-    expandChat,
     collapseChat,
-    inputValue,
-    setInputValue,
     isGeneratingStrategy,
     strategyGenerationProgress,
     progressStage,
@@ -41,7 +38,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   const {
     messages,
-    sendMessage,
     clearMessages,
     isSending,
     isHealthy,
@@ -140,38 +136,6 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     }
   }, [isChatExpanded, isHealthy, redisCache, messages.length, log])
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isSending) {
-      log.warn('Send blocked', {
-        reason: !inputValue.trim() ? 'empty input' : 'already sending',
-        inputLength: inputValue.length
-      })
-      return
-    }
-
-    const userMessage = inputValue.trim()
-    setInputValue("")
-
-    log.info('Sending message to Prophet', {
-      message: userMessage,
-      messageLength: userMessage.length,
-      messagePreview: userMessage.substring(0, 50)
-    })
-
-    try {
-      log.time('prophet-response')
-      await sendMessage(userMessage)
-      log.timeEnd('prophet-response')
-
-      log.info('Prophet response received')
-    } catch (err) {
-      log.error('Failed to send message to Prophet', {
-        error: err instanceof Error ? err.message : 'Unknown error',
-        userMessage: userMessage.substring(0, 50)
-      })
-    }
-  }
-
   const handleViewStrategy = () => {
     log.info('View Strategy button clicked - marking strategy as viewed and closing chat')
     setIsStrategyNew(false)
@@ -181,24 +145,8 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const handleNewChat = () => {
     log.info('Starting new chat - clearing previous conversation')
     clearMessages()
-    setInputValue("")
     setIsStrategyNew(false)
     previousStrategyRef.current = null
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      log.debug('Enter key pressed - sending message')
-      handleSend()
-    }
-  }
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value)
-    if (e.target.value.length % 50 === 0 && e.target.value.length > 0) {
-      log.debug('Input length milestone', { length: e.target.value.length })
-    }
   }
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -214,214 +162,177 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
-  return (
-    <>
-      {/* Chat Button - separate, aligned with message box top */}
-      {!isChatExpanded && (
-        <Button
-          variant="outline"
-          size="lg"
-          className="fixed right-6 bottom-34 z-[70] rounded-full px-6 font-semibold gap-2"
-          onClick={expandChat}
-        >
-          <MessageSquare className="h-5 w-5" />
-          Chat
-        </Button>
-      )}
+  // Don't render anything if chat is not expanded
+  if (!isChatExpanded || !isVisible) {
+    return null
+  }
 
-      {/* Main Chat Panel */}
-      <div
-        className={`fixed z-60 transition-all duration-300 ${!isChatExpanded ? 'pointer-events-none' : ''}`}
-        style={{
-          left: isSidebarOpen ? '300px' : '32px',
-          right: 0,
-          width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
-          top: '80px',
-          bottom: '32px'
-        }}
-        onClick={handleBackdropClick}
-      >
-        <div className="h-full flex flex-col-reverse max-w-5xl mx-auto px-6 pb-6 gap-4">
-          <div className="flex-shrink-0 relative pointer-events-auto rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <MessageSquare className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground pointer-events-none" />
-            <textarea
-              value={inputValue}
-              onChange={handleInputChange}
-              onClick={expandChat}
-              onKeyDown={handleKeyDown}
-              placeholder="How can I help you today?"
-              rows={3}
-              disabled={!isHealthy}
-              className="w-full pl-12 pr-14 pt-3 pb-4 rounded-2xl border border-primary/30 bg-card text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all shadow-2xl text-base disabled:opacity-50"
-            />
+  return (
+    <div
+      className="fixed z-60 transition-all duration-300"
+      style={{
+        left: isSidebarOpen ? '300px' : '32px',
+        right: 0,
+        width: isSidebarOpen ? 'calc(100vw - 300px)' : 'calc(100vw - 32px)',
+        top: '80px',
+        bottom: '32px'
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div className="h-full flex flex-col max-w-5xl mx-auto px-6 gap-4">
+        <div
+          className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out opacity-100 translate-y-0"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close Button - Top Right */}
+          <div className="absolute top-4 right-4 z-10">
             <Button
+              variant="ghost"
               size="icon"
-              onClick={handleSend}
-              disabled={!inputValue.trim() || !isHealthy}
-              className="absolute right-3 bottom-4 h-9 w-9 rounded-lg"
+              onClick={collapseChat}
+              className="h-8 w-8 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background"
             >
-              <Send className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
 
-          {isVisible && (
+          {/* Messages Container */}
+          <div className="relative flex-1 min-h-0">
             <div
-              className={`flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out ${
-                isChatExpanded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-              }`}
-              onClick={(e) => e.stopPropagation()}
+              ref={messagesContainerRef}
+              onScroll={handleScroll}
+              className={`h-full px-6 py-6 space-y-4 ${visibleMessages.length > 0 || showThinking || isGeneratingStrategy ? 'overflow-y-auto' : 'overflow-hidden'}`}
+              style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
             >
-              {/* Close Button - Top Right */}
-              <div className="absolute top-4 right-4 z-10">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={collapseChat}
-                  className="h-8 w-8 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              {visibleMessages.length === 0 && !showThinking && !isGeneratingStrategy && (
+                <div className="flex items-center justify-center h-full text-center">
+                  <div className="space-y-2">
+                    <p className="text-base text-muted-foreground">
+                      Start by describing your trading strategy idea.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Try: "Create an RSI strategy that buys when oversold"
+                    </p>
+                    {!isHealthy && (
+                      <p className="text-xs text-destructive">
+                        Warning: Prophet AI is not responding
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-              {/* Messages Container */}
-              <div className="relative flex-1 min-h-0">
-                <div
-                  ref={messagesContainerRef}
-                  onScroll={handleScroll}
-                  className={`h-full px-6 py-6 space-y-4 ${visibleMessages.length > 0 || showThinking || isGeneratingStrategy ? 'overflow-y-auto' : 'overflow-hidden'}`}
-                  style={{ opacity: isReady ? 1 : 0, transition: 'opacity 0.05s' }}
-                >
-                  {visibleMessages.length === 0 && !showThinking && !isGeneratingStrategy && (
-                    <div className="flex items-center justify-center h-full text-center">
-                      <div className="space-y-2">
-                        <p className="text-base text-muted-foreground">
-                          Start by describing your trading strategy idea.
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Try: "Create an RSI strategy that buys when oversold"
-                        </p>
-                        {!isHealthy && (
-                          <p className="text-xs text-destructive">
-                            Warning: Prophet AI is not responding
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {visibleMessages.map((message) => (
-                    <div key={message.id}>
-                      <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                        {message.role === "assistant" && (
-                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                            <Sparkles className="h-4 w-4 text-primary" />
-                          </div>
-                        )}
-
-                        <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
-                          <div
-                            className={`rounded-2xl px-4 py-3 ${
-                              message.role === "user"
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-background border border-primary/20"
-                            }`}
-                          >
-                            {message.role === "user" ? (
-                              <p className="text-base leading-relaxed whitespace-pre-line">
-                                {message.content}
-                              </p>
-                            ) : (
-                              <MarkdownMessage content={message.content} />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* Strategy Generation Progress - Prophet-driven */}
-                  {isGeneratingStrategy && (
-                    <StrategyGenerationProgress
-                      progress={strategyGenerationProgress}
-                      stage={progressStage}
-                      message={progressMessage}
-                    />
-                  )}
-
-                  {/* Thinking Animation */}
-                  {showThinking && (
-                    <div className="flex gap-3 justify-start">
+              {visibleMessages.map((message) => (
+                <div key={message.id}>
+                  <div className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+                    {message.role === "assistant" && (
                       <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
-                        <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                        <Sparkles className="h-4 w-4 text-primary" />
                       </div>
-                      <div className="px-4 py-3">
-                        <p className="text-base text-muted-foreground inline-block" style={{ minWidth: '100px' }}>
-                          {thinkingText || '\u00A0'}
-                        </p>
+                    )}
+
+                    <div className={`max-w-[80%] ${message.role === "user" ? "" : "w-full"}`}>
+                      <div
+                        className={`rounded-2xl px-4 py-3 ${
+                          message.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-background border border-primary/20"
+                        }`}
+                      >
+                        {message.role === "user" ? (
+                          <p className="text-base leading-relaxed whitespace-pre-line">
+                            {message.content}
+                          </p>
+                        ) : (
+                          <MarkdownMessage content={message.content} />
+                        )}
                       </div>
                     </div>
-                  )}
-
-                  {error && (
-                    <div className="flex justify-center">
-                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
-                        <p className="text-base text-destructive">
-                          Error: {error.message}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div ref={messagesEndRef} />
+                  </div>
                 </div>
+              ))}
 
-                {/* Floating scroll to bottom button */}
-                {showScrollButton && (
-                  <Button
-                    size="icon"
-                    onClick={scrollToBottom}
-                    className="absolute bottom-6 right-6 h-10 w-10 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
-                    aria-label="Scroll to bottom"
-                  >
-                    <ArrowDown className="h-5 w-5" />
-                  </Button>
-                )}
-              </div>
+              {/* Strategy Generation Progress - Prophet-driven */}
+              {isGeneratingStrategy && (
+                <StrategyGenerationProgress
+                  progress={strategyGenerationProgress}
+                  stage={progressStage}
+                  message={progressMessage}
+                />
+              )}
 
-              {/* Footer - Always Visible */}
-              <div className="flex-shrink-0 border-t border-primary/20 px-6 py-4 bg-background/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between gap-4">
-                  {/* View Strategy Button - Left */}
-                  {generatedStrategy ? (
-                    <Button
-                      onClick={handleViewStrategy}
-                      variant={isStrategyNew ? "default" : "outline"}
-                      size="lg"
-                      className="rounded-full px-6 font-semibold gap-2"
-                    >
-                      View Strategy
-                      <ArrowRight className="h-5 w-5" />
-                    </Button>
-                  ) : (
-                    <div />
-                  )}
-
-                  {/* New Chat Button - Right */}
-                  <Button
-                    onClick={handleNewChat}
-                    variant="outline"
-                    size="lg"
-                    className="rounded-full px-6 font-semibold gap-2"
-                  >
-                    <Plus className="h-5 w-5" />
-                    New Chat
-                  </Button>
+              {/* Thinking Animation */}
+              {showThinking && (
+                <div className="flex gap-3 justify-start">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 border border-primary/30 flex-shrink-0 self-start mt-1">
+                    <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  </div>
+                  <div className="px-4 py-3">
+                    <p className="text-base text-muted-foreground inline-block" style={{ minWidth: '100px' }}>
+                      {thinkingText || '\u00A0'}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {error && (
+                <div className="flex justify-center">
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg px-4 py-2">
+                    <p className="text-base text-destructive">
+                      Error: {error.message}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div ref={messagesEndRef} />
             </div>
-          )}
+
+            {/* Floating scroll to bottom button */}
+            {showScrollButton && (
+              <Button
+                size="icon"
+                onClick={scrollToBottom}
+                className="absolute bottom-6 right-6 h-10 w-10 rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
+                aria-label="Scroll to bottom"
+              >
+                <ArrowDown className="h-5 w-5" />
+              </Button>
+            )}
+          </div>
+
+          {/* Footer - Only Buttons */}
+          <div className="flex-shrink-0 border-t border-primary/20 px-6 py-4 bg-background/50 backdrop-blur-sm">
+            <div className="flex items-center justify-between gap-4">
+              {/* View Strategy Button - Left */}
+              {generatedStrategy ? (
+                <Button
+                  onClick={handleViewStrategy}
+                  variant={isStrategyNew ? "default" : "outline"}
+                  size="lg"
+                  className="rounded-full px-6 font-semibold gap-2"
+                >
+                  View Strategy
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              ) : (
+                <div />
+              )}
+
+              {/* New Chat Button - Right */}
+              <Button
+                onClick={handleNewChat}
+                variant="outline"
+                size="lg"
+                className="rounded-full px-6 font-semibold gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                New Chat
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
