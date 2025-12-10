@@ -201,18 +201,20 @@ function CreatePageContent() {
   // Show conversation view
   if (hasMessages) {
     return (
-      <div className="relative min-h-screen pb-32">
-        <MessageList
-          messages={messages}
-          isSending={isSending}
-          isGeneratingStrategy={isGeneratingStrategy}
-          strategyGenerationProgress={strategyGenerationProgress}
-          progressStage={progressStage}
-          progressMessage={progressMessage}
-          error={error}
-        />
+      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)' }}>
+        <div className="flex-1 pb-4">
+          <MessageList
+            messages={messages}
+            isSending={isSending}
+            isGeneratingStrategy={isGeneratingStrategy}
+            strategyGenerationProgress={strategyGenerationProgress}
+            progressStage={progressStage}
+            progressMessage={progressMessage}
+            error={error}
+          />
+        </div>
 
-        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm">
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
           <div className="w-full max-w-3xl mx-auto px-6 py-4">
             <MessageInput
               value={inputValue}
