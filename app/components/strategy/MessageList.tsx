@@ -164,7 +164,7 @@ export function MessageList({
         )}
 
         {generatedStrategy && !isGeneratingStrategy && (
-          <div className="flex justify-center py-4">
+          <div className="flex justify-start py-4">
             <Button
               onClick={onViewStrategy}
               size="lg"
