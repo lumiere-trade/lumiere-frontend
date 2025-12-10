@@ -1,14 +1,16 @@
 "use client"
 
 import { KeyboardEvent } from "react"
-import { Send } from "lucide-react"
+import { Send, Square } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 
 interface MessageInputProps {
   value: string
   onChange: (value: string) => void
   onSend: () => void
+  onStop?: () => void
   disabled?: boolean
+  isSending?: boolean
   placeholder?: string
   className?: string
 }
@@ -17,13 +19,27 @@ export function MessageInput({
   value,
   onChange,
   onSend,
+  onStop,
   disabled = false,
+  isSending = false,
   placeholder = "Describe your trading strategy...",
   className = ""
 }: MessageInputProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
+      if (isSending && onStop) {
+        onStop()
+      } else {
+        onSend()
+      }
+    }
+  }
+
+  const handleButtonClick = () => {
+    if (isSending && onStop) {
+      onStop()
+    } else {
       onSend()
     }
   }
@@ -41,11 +57,16 @@ export function MessageInput({
       />
       <Button
         size="icon"
-        onClick={onSend}
-        disabled={!value.trim() || disabled}
+        onClick={handleButtonClick}
+        disabled={disabled || (!isSending && !value.trim())}
         className="absolute right-3 bottom-3 h-10 w-10 rounded-xl"
+        variant={isSending ? "destructive" : "default"}
       >
-        <Send className="h-5 w-5" />
+        {isSending ? (
+          <Square className="h-4 w-4" fill="currentColor" />
+        ) : (
+          <Send className="h-5 w-5" />
+        )}
       </Button>
     </div>
   )

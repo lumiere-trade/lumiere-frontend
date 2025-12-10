@@ -45,6 +45,7 @@ function CreatePageContent() {
     isHealthy,
     error,
     loadHistory,
+    stopGeneration,
   } = useProphet()
 
   const [inputValue, setInputValue] = useState("")
@@ -185,6 +186,11 @@ function CreatePageContent() {
     }
   }
 
+  const handleStop = () => {
+    logger.info('Stop generation requested')
+    stopGeneration()
+  }
+
   // Determine view state
   const hasMessages = messages.length > 0
   const hasStrategy = !!generatedStrategy
@@ -220,7 +226,9 @@ function CreatePageContent() {
               value={inputValue}
               onChange={setInputValue}
               onSend={handleSend}
-              disabled={!isHealthy || isSending}
+              onStop={handleStop}
+              disabled={!isHealthy}
+              isSending={isSending}
               placeholder="Reply..."
             />
           </div>
