@@ -121,7 +121,7 @@ export function StrategyDetailsPanel({
             </div>
 
             {/* Scrollable content area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
               {activeTab === 'parameters' && strategyForParams && (
                 <StrategyParameters
                   strategy={strategyForParams}
