@@ -49,6 +49,7 @@ function CreatePageContent() {
   } = useProphet()
 
   const [inputValue, setInputValue] = useState("")
+  const [showStrategyView, setShowStrategyView] = useState(false)
 
   // Load strategy when strategyId changes
   useEffect(() => {
@@ -191,12 +192,17 @@ function CreatePageContent() {
     stopGeneration()
   }
 
+  const handleViewStrategy = () => {
+    logger.info('View strategy clicked')
+    setShowStrategyView(true)
+  }
+
   // Determine view state
   const hasMessages = messages.length > 0
   const hasStrategy = !!generatedStrategy
 
   // Show strategy parameters
-  if (hasStrategy) {
+  if (hasStrategy && showStrategyView) {
     return (
       <div className="py-8">
         <StrategyParameters strategy={generatedStrategy} />
@@ -217,6 +223,8 @@ function CreatePageContent() {
             progressStage={progressStage}
             progressMessage={progressMessage}
             error={error}
+            generatedStrategy={generatedStrategy}
+            onViewStrategy={handleViewStrategy}
           />
         </div>
 

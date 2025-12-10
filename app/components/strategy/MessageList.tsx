@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Sparkles, ArrowDown } from "lucide-react"
+import { Sparkles, ArrowDown, Eye } from "lucide-react"
 import { Message } from "./Message"
 import { StrategyGenerationProgress } from "./StrategyGenerationProgress"
 import { Button } from "@lumiere/shared/components/ui/button"
@@ -21,6 +21,8 @@ interface MessageListProps {
   progressStage: string
   progressMessage: string
   error?: { message: string } | null
+  generatedStrategy?: any
+  onViewStrategy?: () => void
 }
 
 export function MessageList({
@@ -30,7 +32,9 @@ export function MessageList({
   strategyGenerationProgress,
   progressStage,
   progressMessage,
-  error
+  error,
+  generatedStrategy,
+  onViewStrategy
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -69,7 +73,7 @@ export function MessageList({
       ([entry]) => {
         const isAtBottom = entry.isIntersecting
         setShowScrollButton(!isAtBottom)
-        
+
         // If user scrolled back to bottom, clear the flag
         if (isAtBottom) {
           setUserHasScrolledUp(false)
@@ -156,6 +160,19 @@ export function MessageList({
                 Error: {error.message}
               </p>
             </div>
+          </div>
+        )}
+
+        {generatedStrategy && !isGeneratingStrategy && (
+          <div className="flex justify-center py-4">
+            <Button
+              onClick={onViewStrategy}
+              size="lg"
+              className="gap-2"
+            >
+              <Eye className="h-5 w-5" />
+              View Strategy
+            </Button>
           </div>
         )}
 
