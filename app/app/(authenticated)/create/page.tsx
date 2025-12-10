@@ -313,7 +313,7 @@ function CreatePageContent() {
                         key={index}
                         onClick={() => handlePromptClick(prompt)}
                         disabled={isSending}
-                        className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-sm text-left transition-all hover:border-primary/40 hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-xl border border-primary/20 bg-card/50 px-4 py-2.5 text-base text-left transition-all hover:border-primary/40 hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {prompt}
                       </button>
