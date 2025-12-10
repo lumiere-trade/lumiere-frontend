@@ -221,6 +221,7 @@ function CreatePageContent() {
               onChange={setInputValue}
               onSend={handleSend}
               disabled={!isHealthy || isSending}
+              placeholder="Reply..."
             />
           </div>
         </div>
