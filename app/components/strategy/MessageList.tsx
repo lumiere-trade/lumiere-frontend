@@ -36,6 +36,7 @@ export function MessageList({
   const containerRef = useRef<HTMLDivElement>(null)
   const [thinkingText, setThinkingText] = useState("")
   const [showScrollButton, setShowScrollButton] = useState(false)
+  const [userHasScrolledUp, setUserHasScrolledUp] = useState(false)
 
   // Thinking animation
   useEffect(() => {
@@ -66,7 +67,16 @@ export function MessageList({
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setShowScrollButton(!entry.isIntersecting)
+        const isAtBottom = entry.isIntersecting
+        setShowScrollButton(!isAtBottom)
+        
+        // If user scrolled back to bottom, clear the flag
+        if (isAtBottom) {
+          setUserHasScrolledUp(false)
+        } else if (isSending) {
+          // User scrolled up during streaming
+          setUserHasScrolledUp(true)
+        }
       },
       { threshold: 0.1 }
     )
@@ -76,12 +86,12 @@ export function MessageList({
     }
 
     return () => observer.disconnect()
-  }, [])
+  }, [isSending])
 
   // Auto-scroll logic with streaming awareness
   useEffect(() => {
-    // Don't auto-scroll if user scrolled up during streaming
-    if (isSending && showScrollButton) {
+    // Don't auto-scroll if user manually scrolled up during streaming
+    if (isSending && userHasScrolledUp) {
       return
     }
 
@@ -89,9 +99,17 @@ export function MessageList({
     if (!showScrollButton || messages.length === 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, isGeneratingStrategy, showScrollButton])
+  }, [messages, isSending, isGeneratingStrategy, showScrollButton, userHasScrolledUp])
+
+  // Reset userHasScrolledUp when streaming stops
+  useEffect(() => {
+    if (!isSending) {
+      setUserHasScrolledUp(false)
+    }
+  }, [isSending])
 
   const scrollToBottom = () => {
+    setUserHasScrolledUp(false)
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
