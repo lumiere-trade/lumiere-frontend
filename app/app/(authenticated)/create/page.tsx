@@ -201,7 +201,7 @@ function CreatePageContent() {
   // Show conversation view
   if (hasMessages) {
     return (
-      <div className="flex flex-col min-h-[calc(100vh-120px)]">
+      <div className="relative min-h-screen pb-32">
         <MessageList
           messages={messages}
           isSending={isSending}
@@ -212,7 +212,7 @@ function CreatePageContent() {
           error={error}
         />
 
-        <div className="sticky bottom-0 w-full border-t border-primary/20 bg-background/95 backdrop-blur-sm">
+        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm">
           <div className="w-full max-w-3xl mx-auto px-6 py-4">
             <MessageInput
               value={inputValue}
