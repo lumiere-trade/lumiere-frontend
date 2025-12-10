@@ -32,9 +32,10 @@ interface StrategyParametersProps {
     parameters: Record<string, any>
     tsdl_code: string
   }
+  hideActions?: boolean
 }
 
-export function StrategyParameters({ strategy }: StrategyParametersProps) {
+export function StrategyParameters({ strategy, hideActions = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategyMetadata, messages, currentStrategy } = useChat()
   const createStrategyMutation = useCreateStrategy()
@@ -400,56 +401,58 @@ export function StrategyParameters({ strategy }: StrategyParametersProps) {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 pb-40">
-      <div className="flex items-center justify-end">
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCode(!showCode)}
-            className="gap-2"
-          >
-            <Code className="h-4 w-4" />
-            {showCode ? "Hide Code" : "View Code"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBacktest}
-            disabled={runBacktestMutation.isPending || !tsdlCode}
-            className="gap-2"
-          >
-            {runBacktestMutation.isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Running...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                Backtest
-              </>
-            )}
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={isSaving}
-            className="gap-2"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {isRegenerating ? 'Regenerating...' : 'Saving...'}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {isEditing ? 'Update Strategy' : 'Save Strategy'}
-              </>
-            )}
-          </Button>
+      {!hideActions && (
+        <div className="flex items-center justify-end">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCode(!showCode)}
+              className="gap-2"
+            >
+              <Code className="h-4 w-4" />
+              {showCode ? "Hide Code" : "View Code"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBacktest}
+              disabled={runBacktestMutation.isPending || !tsdlCode}
+              className="gap-2"
+            >
+              {runBacktestMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Running...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  Backtest
+                </>
+              )}
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={isSaving}
+              className="gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {isRegenerating ? 'Regenerating...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  {isEditing ? 'Update Strategy' : 'Save Strategy'}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {isRegenerating && (
         <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
