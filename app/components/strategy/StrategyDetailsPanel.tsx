@@ -56,72 +56,72 @@ export function StrategyDetailsPanel({
 
       {/* Expanded state - full panel IN FLEX (not fixed) */}
       <div
-        className={`h-full bg-background border-l border-border flex flex-col transition-all duration-300 ease-in-out ${
-          isOpen ? 'w-1/2' : 'w-0 opacity-0'
+        className={`h-full bg-background border-l border-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
+          isOpen ? 'w-1/2' : 'w-0'
         }`}
       >
-        {isOpen && (
-          <>
-            {/* Spacer for header */}
-            <div className="h-[54px] shrink-0" />
+        {/* Spacer for header */}
+        <div className="h-[54px] shrink-0" />
 
-            {/* Header with action buttons */}
-            <div className="border-b border-border flex-shrink-0 px-6 py-3">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onToggle}
-                    className="gap-2"
-                  >
-                    <PanelRightClose className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={activeTab === 'parameters' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => onTabChange('parameters')}
-                    className="gap-2"
-                  >
-                    <Sliders className="h-4 w-4" />
-                    Parameters
-                  </Button>
-                  <Button
-                    variant={activeTab === 'code' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => onTabChange('code')}
-                    className="gap-2"
-                  >
-                    <Code className="h-4 w-4" />
-                    View Code
-                  </Button>
-                  <Button
-                    variant={activeTab === 'backtest' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => onTabChange('backtest')}
-                    className="gap-2"
-                  >
-                    <Play className="h-4 w-4" />
-                    Backtest
-                  </Button>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleSaveStrategy}
-                    disabled={isSaving}
-                    className="gap-2"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Strategy
-                  </Button>
-                </div>
-              </div>
+        {/* Header with action buttons */}
+        <div className="border-b border-border flex-shrink-0 px-6 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggle}
+                className="gap-2"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={activeTab === 'parameters' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('parameters')}
+                className="gap-2"
+              >
+                <Sliders className="h-4 w-4" />
+                Parameters
+              </Button>
+              <Button
+                variant={activeTab === 'code' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('code')}
+                className="gap-2"
+              >
+                <Code className="h-4 w-4" />
+                View Code
+              </Button>
+              <Button
+                variant={activeTab === 'backtest' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('backtest')}
+                className="gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Backtest
+              </Button>
             </div>
 
-            {/* Scrollable content area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleSaveStrategy}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Save Strategy
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
+          {isOpen && (
+            <>
               {activeTab === 'parameters' && strategyForParams && (
                 <StrategyParameters
                   strategy={strategyForParams}
@@ -141,9 +141,9 @@ export function StrategyDetailsPanel({
                   Backtest functionality coming soon
                 </div>
               )}
-            </div>
-          </>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </>
   )
