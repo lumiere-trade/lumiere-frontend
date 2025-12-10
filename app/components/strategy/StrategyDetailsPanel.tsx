@@ -40,12 +40,12 @@ export function StrategyDetailsPanel({
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="icon"
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              className="h-9 w-9"
+              className="gap-2"
             >
-              <PanelRightClose className="h-5 w-5 text-primary" />
+              <PanelRightClose className="h-4 w-4" />
             </Button>
             <Button
               variant={activeTab === 'parameters' ? 'default' : 'outline'}
