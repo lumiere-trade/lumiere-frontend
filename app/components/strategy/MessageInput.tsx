@@ -60,7 +60,6 @@ export function MessageInput({
         onClick={handleButtonClick}
         disabled={disabled || (!isSending && !value.trim())}
         className="absolute right-3 bottom-3 h-10 w-10 rounded-xl"
-        variant={isSending ? "destructive" : "default"}
       >
         {isSending ? (
           <Square className="h-4 w-4" fill="currentColor" />
