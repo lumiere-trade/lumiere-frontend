@@ -22,8 +22,8 @@ function AuthenticatedLayoutContent({
   const pathname = usePathname()
   const { user, isLoading } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
   
-  // Only use chat context on create page
   const chatContext = isCreatePage ? useChat() : null
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
@@ -43,18 +43,33 @@ function AuthenticatedLayoutContent({
     }
   }, [router, user, isLoading])
 
+  // Sync isDetailsPanelOpen with ChatContext
+  useEffect(() => {
+    if (chatContext) {
+      setIsDetailsPanelOpen(chatContext.isDetailsPanelOpen)
+    }
+  }, [chatContext?.isDetailsPanelOpen])
+
   // Auto-close StrategyPanel when DetailsPanel opens
   useEffect(() => {
-    if (chatContext?.isDetailsPanelOpen && isSidebarOpen) {
+    if (isDetailsPanelOpen && isSidebarOpen) {
       setIsSidebarOpen(false)
     }
-  }, [chatContext?.isDetailsPanelOpen, isSidebarOpen])
+  }, [isDetailsPanelOpen])
 
   if (!storage.hasToken() || isLoading) {
     return null
   }
 
-  const isDetailsPanelOpen = chatContext?.isDetailsPanelOpen || false
+  const handleDetailsPanelToggle = () => {
+    if (chatContext) {
+      if (isDetailsPanelOpen) {
+        chatContext.closeDetailsPanel()
+      } else {
+        chatContext.openDetailsPanel()
+      }
+    }
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -71,26 +86,24 @@ function AuthenticatedLayoutContent({
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content - Chat/Page */}
         <main
-          className={`flex-1 overflow-y-auto bg-background transition-all duration-300 ${
-            isDetailsPanelOpen ? 'w-1/2' : 'w-full'
-          }`}
+          className="flex-1 overflow-y-auto bg-background transition-all duration-300"
           style={{
-            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
+            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px',
+            paddingRight: isDetailsPanelOpen ? '0' : '32px'
           }}
         >
           {children}
         </main>
 
         {/* Details Panel - Right side */}
-        {isDetailsPanelOpen && isCreatePage && chatContext && (
-          <aside className="w-1/2 h-full overflow-hidden">
-            <StrategyDetailsPanel
-              activeTab={chatContext.detailsPanelTab}
-              onTabChange={chatContext.setDetailsPanelTab}
-              strategy={chatContext.generatedStrategy}
-              onClose={chatContext.closeDetailsPanel}
-            />
-          </aside>
+        {isCreatePage && chatContext && (
+          <StrategyDetailsPanel
+            isOpen={isDetailsPanelOpen}
+            onToggle={handleDetailsPanelToggle}
+            activeTab={chatContext.detailsPanelTab}
+            onTabChange={chatContext.setDetailsPanelTab}
+            strategy={chatContext.generatedStrategy}
+          />
         )}
       </div>
 

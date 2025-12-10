@@ -1,22 +1,24 @@
 "use client"
 
-import { PanelRightClose, Sliders, Code, Play, Save } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, Save } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { useState } from "react"
 
 interface StrategyDetailsPanelProps {
+  isOpen: boolean
+  onToggle: () => void
   activeTab: 'parameters' | 'code' | 'backtest'
   onTabChange: (tab: 'parameters' | 'code' | 'backtest') => void
   strategy: any
-  onClose: () => void
 }
 
 export function StrategyDetailsPanel({
+  isOpen,
+  onToggle,
   activeTab,
   onTabChange,
-  strategy,
-  onClose
+  strategy
 }: StrategyDetailsPanelProps) {
   const [isSaving, setIsSaving] = useState(false)
 
@@ -34,83 +36,110 @@ export function StrategyDetailsPanel({
   }
 
   return (
-    <div className="h-full flex flex-col bg-background border-l border-border">
-      {/* Header with action buttons */}
-      <div className="border-b border-border flex-shrink-0 px-8 py-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="gap-2"
-            >
-              <PanelRightClose className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={activeTab === 'parameters' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onTabChange('parameters')}
-              className="gap-2"
-            >
-              <Sliders className="h-4 w-4" />
-              Parameters
-            </Button>
-            <Button
-              variant={activeTab === 'code' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onTabChange('code')}
-              className="gap-2"
-            >
-              <Code className="h-4 w-4" />
-              View Code
-            </Button>
-            <Button
-              variant={activeTab === 'backtest' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onTabChange('backtest')}
-              className="gap-2"
-            >
-              <Play className="h-4 w-4" />
-              Backtest
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={handleSaveStrategy}
-              disabled={isSaving}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              Save Strategy
-            </Button>
-          </div>
+    <>
+      {/* Collapsed state - thin strip on right */}
+      <div
+        className={`fixed right-0 top-0 h-screen w-8 z-10 bg-card border-l border-primary/20 transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-full' : 'translate-x-0'
+        }`}
+      >
+        <div className="h-full flex items-center justify-center" style={{ marginTop: '54px' }}>
+          <button
+            onClick={onToggle}
+            className="h-full w-full px-2 hover:bg-card/80 transition-colors"
+            title="Open strategy details"
+          >
+            <PanelRightOpen className="h-5 w-5 text-primary" />
+          </button>
         </div>
       </div>
 
-      {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
-        {activeTab === 'parameters' && strategyForParams && (
-          <StrategyParameters 
-            strategy={strategyForParams}
-            hideActions={true}
-          />
-        )}
-        {activeTab === 'code' && strategy && (
-          <div className="bg-card border border-border rounded-lg p-4">
-            <pre className="text-sm font-mono whitespace-pre-wrap">
-              {strategy.tsdl_code}
-            </pre>
+      {/* Expanded state - full panel */}
+      <div
+        className={`fixed right-0 top-0 h-screen w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Spacer for header */}
+        <div className="h-[54px] shrink-0" />
+
+        {/* Header with action buttons */}
+        <div className="border-b border-border flex-shrink-0 px-8 py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggle}
+                className="gap-2"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={activeTab === 'parameters' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('parameters')}
+                className="gap-2"
+              >
+                <Sliders className="h-4 w-4" />
+                Parameters
+              </Button>
+              <Button
+                variant={activeTab === 'code' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('code')}
+                className="gap-2"
+              >
+                <Code className="h-4 w-4" />
+                View Code
+              </Button>
+              <Button
+                variant={activeTab === 'backtest' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('backtest')}
+                className="gap-2"
+              >
+                <Play className="h-4 w-4" />
+                Backtest
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={handleSaveStrategy}
+                disabled={isSaving}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                Save Strategy
+              </Button>
+            </div>
           </div>
-        )}
-        {activeTab === 'backtest' && (
-          <div className="text-center text-muted-foreground py-12">
-            Backtest functionality coming soon
-          </div>
-        )}
+        </div>
+
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-6">
+          {activeTab === 'parameters' && strategyForParams && (
+            <StrategyParameters 
+              strategy={strategyForParams}
+              hideActions={true}
+            />
+          )}
+          {activeTab === 'code' && strategy && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <pre className="text-sm font-mono whitespace-pre-wrap">
+                {strategy.tsdl_code}
+              </pre>
+            </div>
+          )}
+          {activeTab === 'backtest' && (
+            <div className="text-center text-muted-foreground py-12">
+              Backtest functionality coming soon
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
