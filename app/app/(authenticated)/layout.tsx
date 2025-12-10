@@ -23,14 +23,14 @@ function AuthenticatedLayoutContent({
   const { user, isLoading } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
-  
+
   const chatContext = isCreatePage ? useChat() : null
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
-    
+
     if (!storage.hasToken()) {
       logger.warn(LogCategory.AUTH, 'No JWT found, redirecting to login')
       router.replace('/login')
@@ -77,34 +77,32 @@ function AuthenticatedLayoutContent({
       <NavigationHeader currentPage={currentPage} />
 
       {/* Sidebar - Fixed positioning */}
-      <StrategyPanel 
-        isOpen={isSidebarOpen} 
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+      <StrategyPanel
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      {/* Main Content Area - Flex container for chat and details panel */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Main Content - Chat/Page */}
-        <main
-          className="flex-1 overflow-y-auto bg-background transition-all duration-300"
-          style={{
-            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
-          }}
-        >
-          {children}
-        </main>
+      {/* Main Content Area */}
+      <main
+        className="flex-1 overflow-y-auto bg-background transition-all duration-300"
+        style={{
+          paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px',
+          paddingRight: isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+        }}
+      >
+        {children}
+      </main>
 
-        {/* Details Panel - Right side as flex item */}
-        {isCreatePage && chatContext && (
-          <StrategyDetailsPanel
-            isOpen={isDetailsPanelOpen}
-            onToggle={handleDetailsPanelToggle}
-            activeTab={chatContext.detailsPanelTab}
-            onTabChange={chatContext.setDetailsPanelTab}
-            strategy={chatContext.generatedStrategy}
-          />
-        )}
-      </div>
+      {/* Details Panel - Fixed positioning (renders separately) */}
+      {isCreatePage && chatContext && (
+        <StrategyDetailsPanel
+          isOpen={isDetailsPanelOpen}
+          onToggle={handleDetailsPanelToggle}
+          activeTab={chatContext.detailsPanelTab}
+          onTabChange={chatContext.setDetailsPanelTab}
+          strategy={chatContext.generatedStrategy}
+        />
+      )}
 
       {/* Chat Overlay - Higher z-index */}
       {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}

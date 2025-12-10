@@ -54,10 +54,10 @@ export function StrategyDetailsPanel({
         </div>
       </div>
 
-      {/* Expanded state - full panel IN FLEX (not fixed) */}
+      {/* Expanded state - fixed position like old version */}
       <div
-        className={`h-full bg-background border-l border-border flex flex-col transition-all duration-300 ease-in-out overflow-hidden ${
-          isOpen ? 'w-1/2' : 'w-0'
+        className={`fixed right-0 top-0 h-screen w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Spacer for header */}
@@ -120,28 +120,24 @@ export function StrategyDetailsPanel({
 
         {/* Scrollable content area */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
-          {isOpen && (
-            <>
-              {activeTab === 'parameters' && strategyForParams && (
-                <StrategyParameters
-                  strategy={strategyForParams}
-                  hideActions={true}
-                  compact={true}
-                />
-              )}
-              {activeTab === 'code' && strategy && (
-                <div className="bg-card border border-border rounded-lg p-4">
-                  <pre className="text-sm font-mono whitespace-pre-wrap">
-                    {strategy.tsdl_code}
-                  </pre>
-                </div>
-              )}
-              {activeTab === 'backtest' && (
-                <div className="text-center text-muted-foreground py-12">
-                  Backtest functionality coming soon
-                </div>
-              )}
-            </>
+          {activeTab === 'parameters' && strategyForParams && (
+            <StrategyParameters
+              strategy={strategyForParams}
+              hideActions={true}
+              compact={true}
+            />
+          )}
+          {activeTab === 'code' && strategy && (
+            <div className="bg-card border border-border rounded-lg p-4">
+              <pre className="text-sm font-mono whitespace-pre-wrap">
+                {strategy.tsdl_code}
+              </pre>
+            </div>
+          )}
+          {activeTab === 'backtest' && (
+            <div className="text-center text-muted-foreground py-12">
+              Backtest functionality coming soon
+            </div>
           )}
         </div>
       </div>
