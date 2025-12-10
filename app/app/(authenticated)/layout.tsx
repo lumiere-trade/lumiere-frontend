@@ -86,10 +86,11 @@ function AuthenticatedLayoutContent({
       <div className="flex-1 flex overflow-hidden">
         {/* Main Content - Chat/Page */}
         <main
-          className="flex-1 overflow-y-auto bg-background transition-all duration-300"
+          className={`flex-1 overflow-y-auto bg-background transition-all duration-300 ${
+            isDetailsPanelOpen ? 'w-1/2' : 'w-full'
+          }`}
           style={{
-            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px',
-            paddingRight: isDetailsPanelOpen ? '0' : '32px'
+            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
           }}
         >
           {children}
