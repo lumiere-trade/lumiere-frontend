@@ -34,7 +34,7 @@ export function StrategyDetailsPanel({
   return (
     <div className="h-full flex flex-col bg-background border-l border-border">
       {/* Header */}
-      <div className="h-16 border-b border-border px-6 flex items-center justify-between bg-card/50 flex-shrink-0">
+      <div className="h-16 border-b border-border px-8 flex items-center justify-between bg-card/50 flex-shrink-0">
         <h2 className="text-lg font-semibold">Strategy Details</h2>
         <Button
           variant="ghost"
@@ -48,7 +48,7 @@ export function StrategyDetailsPanel({
 
       {/* Tabs */}
       <div className="border-b border-border bg-card/30 flex-shrink-0">
-        <div className="flex px-6">
+        <div className="flex px-8">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -66,24 +66,20 @@ export function StrategyDetailsPanel({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-8 py-6">
         {activeTab === 'parameters' && strategyForParams && (
           <StrategyParameters strategy={strategyForParams} />
         )}
         {activeTab === 'code' && strategy && (
-          <div className="p-6">
-            <div className="bg-card border border-border rounded-lg p-4">
-              <pre className="text-sm font-mono whitespace-pre-wrap">
-                {strategy.tsdl_code}
-              </pre>
-            </div>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <pre className="text-sm font-mono whitespace-pre-wrap">
+              {strategy.tsdl_code}
+            </pre>
           </div>
         )}
         {activeTab === 'backtest' && (
-          <div className="p-6">
-            <div className="text-center text-muted-foreground">
-              Backtest functionality coming soon
-            </div>
+          <div className="text-center text-muted-foreground">
+            Backtest functionality coming soon
           </div>
         )}
       </div>
