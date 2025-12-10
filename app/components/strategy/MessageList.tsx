@@ -94,8 +94,8 @@ export function MessageList({
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
   return (
-    <div ref={containerRef} className="relative">
-      <div className="w-full max-w-3xl mx-auto px-6 py-8 space-y-6">
+    <div ref={containerRef} className="relative w-full max-w-3xl mx-auto px-6 py-8">
+      <div className="space-y-6">
         {visibleMessages.map((message) => (
           <Message
             key={message.id}
@@ -139,11 +139,11 @@ export function MessageList({
       </div>
 
       {showScrollButton && (
-        <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="sticky bottom-28 left-0 right-0 flex justify-center pointer-events-none mb-4">
           <Button
             size="icon"
             onClick={scrollToBottom}
-            className="h-10 w-10 rounded-full shadow-lg"
+            className="h-10 w-10 rounded-full shadow-lg pointer-events-auto"
           >
             <ArrowDown className="h-5 w-5" />
           </Button>
