@@ -306,7 +306,7 @@ function CreatePageContent() {
                   </Button>
                 </div>
 
-                <div className="pt-2 max-w-2xl mx-auto">
+                <div className="pt-2 max-w-3xl mx-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                     {examplePrompts.map((prompt, index) => (
                       <button
