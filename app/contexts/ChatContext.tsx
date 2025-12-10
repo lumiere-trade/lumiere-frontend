@@ -18,6 +18,8 @@ export interface CurrentStrategy {
   updated_at?: string
 }
 
+export type DetailsPanelTab = 'parameters' | 'code' | 'backtest'
+
 interface ChatContextType {
   isChatExpanded: boolean
   generatedStrategy: any | null
@@ -31,6 +33,8 @@ interface ChatContextType {
   strategyGenerationProgress: number
   progressStage: string
   progressMessage: string
+  isDetailsPanelOpen: boolean
+  detailsPanelTab: DetailsPanelTab
 
   expandChat: () => void
   collapseChat: () => void
@@ -45,6 +49,9 @@ interface ChatContextType {
   setStrategyGenerationProgress: (value: number) => void
   setProgressStage: (stage: string) => void
   setProgressMessage: (message: string) => void
+  openDetailsPanel: () => void
+  closeDetailsPanel: () => void
+  setDetailsPanelTab: (tab: DetailsPanelTab) => void
   clearChat: () => void
 }
 
@@ -63,9 +70,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [strategyGenerationProgress, setStrategyGenerationProgress] = useState(0)
   const [progressStage, setProgressStage] = useState<string>('')
   const [progressMessage, setProgressMessage] = useState<string>('')
+  const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
+  const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
+  const openDetailsPanel = () => setIsDetailsPanelOpen(true)
+  const closeDetailsPanel = () => setIsDetailsPanelOpen(false)
 
   const clearChat = () => {
     setMessages([])
@@ -79,6 +90,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setStrategyGenerationProgress(0)
     setProgressStage('')
     setProgressMessage('')
+    setIsDetailsPanelOpen(false)
+    setDetailsPanelTab('parameters')
   }
 
   return (
@@ -96,6 +109,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         strategyGenerationProgress,
         progressStage,
         progressMessage,
+        isDetailsPanelOpen,
+        detailsPanelTab,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
@@ -109,6 +124,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setStrategyGenerationProgress,
         setProgressStage,
         setProgressMessage,
+        openDetailsPanel,
+        closeDetailsPanel,
+        setDetailsPanelTab,
         clearChat,
       }}
     >

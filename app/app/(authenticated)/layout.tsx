@@ -4,28 +4,33 @@ import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
+import { StrategyDetailsPanel } from "@/components/strategy/StrategyDetailsPanel"
 import { ChatPanel } from "@/components/strategy/ChatPanel"
-import { ChatProvider } from "@/contexts/ChatContext"
+import { ChatProvider, useChat } from "@/contexts/ChatContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"
 
-export default function AuthenticatedLayout({
+function AuthenticatedLayoutContent({
   children,
+  isCreatePage
 }: {
   children: React.ReactNode
+  isCreatePage: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const { user, isLoading } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  
+  // Only use chat context on create page
+  const chatContext = isCreatePage ? useChat() : null
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
-  const isCreatePage = pathname === '/create'
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
-
+    
     if (!storage.hasToken()) {
       logger.warn(LogCategory.AUTH, 'No JWT found, redirecting to login')
       router.replace('/login')
@@ -38,36 +43,80 @@ export default function AuthenticatedLayout({
     }
   }, [router, user, isLoading])
 
+  // Auto-close StrategyPanel when DetailsPanel opens
+  useEffect(() => {
+    if (chatContext?.isDetailsPanelOpen && isSidebarOpen) {
+      setIsSidebarOpen(false)
+    }
+  }, [chatContext?.isDetailsPanelOpen, isSidebarOpen])
+
   if (!storage.hasToken() || isLoading) {
     return null
   }
 
-  const content = (
+  const isDetailsPanelOpen = chatContext?.isDetailsPanelOpen || false
+
+  return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header - Fixed at top */}
       <NavigationHeader currentPage={currentPage} />
 
       {/* Sidebar - Fixed positioning */}
-      <StrategyPanel isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <StrategyPanel 
+        isOpen={isSidebarOpen} 
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+      />
 
-      {/* Main Content - Flex grow, scrollable */}
-      <main
-        className="flex-1 overflow-y-auto bg-background transition-all duration-300"
-        style={{
-          paddingLeft: isSidebarOpen ? '300px' : '32px'
-        }}
-      >
-        {children}
-      </main>
+      {/* Main Content Area - Flex container for chat and details panel */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Content - Chat/Page */}
+        <main
+          className={`flex-1 overflow-y-auto bg-background transition-all duration-300 ${
+            isDetailsPanelOpen ? 'w-1/2' : 'w-full'
+          }`}
+          style={{
+            paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
+          }}
+        >
+          {children}
+        </main>
+
+        {/* Details Panel - Right side */}
+        {isDetailsPanelOpen && isCreatePage && chatContext && (
+          <aside className="w-1/2 h-full overflow-hidden">
+            <StrategyDetailsPanel
+              activeTab={chatContext.detailsPanelTab}
+              onTabChange={chatContext.setDetailsPanelTab}
+              strategy={chatContext.generatedStrategy}
+              onClose={chatContext.closeDetailsPanel}
+            />
+          </aside>
+        )}
+      </div>
 
       {/* Chat Overlay - Higher z-index */}
       {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
     </div>
   )
+}
+
+export default function AuthenticatedLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+  const isCreatePage = pathname === '/create'
 
   return isCreatePage ? (
-    <ChatProvider>{content}</ChatProvider>
+    <ChatProvider>
+      <AuthenticatedLayoutContent isCreatePage={true}>
+        {children}
+      </AuthenticatedLayoutContent>
+    </ChatProvider>
   ) : (
-    content
+    <AuthenticatedLayoutContent isCreatePage={false}>
+      {children}
+    </AuthenticatedLayoutContent>
   )
 }

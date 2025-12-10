@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { StrategyParameters } from "@/components/strategy/StrategyParameters"
 import { MessageInput } from "@/components/strategy/MessageInput"
 import { ExamplePrompts } from "@/components/strategy/ExamplePrompts"
 import { MessageList } from "@/components/strategy/MessageList"
@@ -36,6 +35,7 @@ function CreatePageContent() {
     strategyGenerationProgress,
     progressStage,
     progressMessage,
+    openDetailsPanel,
   } = useChat()
 
   const {
@@ -49,7 +49,6 @@ function CreatePageContent() {
   } = useProphet()
 
   const [inputValue, setInputValue] = useState("")
-  const [showStrategyView, setShowStrategyView] = useState(false)
 
   // Load strategy when strategyId changes
   useEffect(() => {
@@ -194,21 +193,11 @@ function CreatePageContent() {
 
   const handleViewStrategy = () => {
     logger.info('View strategy clicked')
-    setShowStrategyView(true)
+    openDetailsPanel()
   }
 
   // Determine view state
   const hasMessages = messages.length > 0
-  const hasStrategy = !!generatedStrategy
-
-  // Show strategy parameters
-  if (hasStrategy && showStrategyView) {
-    return (
-      <div className="py-8">
-        <StrategyParameters strategy={generatedStrategy} />
-      </div>
-    )
-  }
 
   // Show conversation view
   if (hasMessages) {
