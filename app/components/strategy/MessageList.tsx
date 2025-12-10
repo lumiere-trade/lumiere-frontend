@@ -78,12 +78,18 @@ export function MessageList({
     return () => observer.disconnect()
   }, [])
 
-  // Auto-scroll only if already at bottom or new message
+  // Auto-scroll logic with streaming awareness
   useEffect(() => {
+    // Don't auto-scroll if user scrolled up during streaming
+    if (isSending && showScrollButton) {
+      return
+    }
+
+    // Auto-scroll if at bottom or no messages
     if (!showScrollButton || messages.length === 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, isGeneratingStrategy])
+  }, [messages, isSending, isGeneratingStrategy, showScrollButton])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
