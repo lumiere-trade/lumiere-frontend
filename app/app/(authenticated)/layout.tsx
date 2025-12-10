@@ -57,6 +57,13 @@ function AuthenticatedLayoutContent({
     }
   }, [isDetailsPanelOpen])
 
+  // Auto-close DetailsPanel when StrategyPanel opens
+  useEffect(() => {
+    if (isSidebarOpen && isDetailsPanelOpen) {
+      chatContext?.closeDetailsPanel()
+    }
+  }, [isSidebarOpen])
+
   if (!storage.hasToken() || isLoading) {
     return null
   }
