@@ -26,7 +26,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const rendererRef = useRef<ChartRenderer | null>(null)
   const rafRef = useRef<number | null>(null)
   
-  // State (minimal - performance)
   const [state, setState] = useState<ChartState>({
     mode: 'L',
     timeframe: '15m',
@@ -49,7 +48,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const stateRef = useRef(state)
   stateRef.current = state
   
-  // Convert data to optimized format (once)
+  // Convert data to optimized format
   useEffect(() => {
     const candles: Candle[] = data.map(d => ({
       t: d.timestamp,
@@ -85,7 +84,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     
     rendererRef.current = new ChartRenderer(canvasRef.current)
     
-    // Initial viewport calculation
     if (state.candles.length > 0 && containerRef.current) {
       const width = containerRef.current.clientWidth
       const viewport = calculateViewport(
@@ -103,7 +101,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
   }, [])
   
-  // Render loop (RAF - 60fps)
+  // Render loop
   useEffect(() => {
     const render = () => {
       if (stateRef.current.dirty && rendererRef.current) {
@@ -130,7 +128,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
   }, [])
   
-  // Recalculate viewport on data/zoom/pan change
+  // Recalculate viewport
   useEffect(() => {
     if (state.candles.length === 0 || !containerRef.current) return
     
@@ -149,7 +147,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }))
   }, [state.candles, state.viewport.zoom, state.viewport.offsetX])
   
-  // Mouse wheel zoom (optimized with passive)
+  // Mouse wheel zoom
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
     
@@ -189,7 +187,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     const y = e.clientY - rect.top
     
     if (stateRef.current.isDragging) {
-      // Pan
       setState(prev => ({
         ...prev,
         viewport: {
@@ -200,7 +197,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         dirty: true
       }))
     } else {
-      // Just crosshair
       setState(prev => ({
         ...prev,
         mouse: { x, y },
@@ -225,12 +221,11 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }))
   }, [])
   
-  // Touch support (mobile)
+  // Touch support
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null)
   
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
-      // Single touch - pan
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
@@ -243,7 +238,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       
       setState(prev => ({ ...prev, isDragging: true }))
     } else if (e.touches.length === 2) {
-      // Pinch zoom
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
       const dist = Math.hypot(
@@ -261,7 +255,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     if (!touchStartRef.current) return
     
     if (e.touches.length === 1 && stateRef.current.isDragging) {
-      // Pan
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
@@ -280,7 +273,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       
       touchStartRef.current.x = x
     } else if (e.touches.length === 2) {
-      // Pinch zoom
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
       const dist = Math.hypot(
@@ -308,7 +300,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     setState(prev => ({ ...prev, isDragging: false }))
   }, [])
   
-  // Resize handler (debounced)
+  // Resize handler
   useEffect(() => {
     const handleResize = debounce(() => {
       if (!canvasRef.current || !rendererRef.current || !containerRef.current) return
@@ -358,7 +350,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           }))
           break
         case '0':
-          // Reset zoom
           setState(prev => ({
             ...prev,
             viewport: {
@@ -445,7 +436,8 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       >
         <canvas
           ref={canvasRef}
-          className="w-full h-full cursor-crosshair"
+          className="w-full h-full"
+          style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -453,7 +445,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ touchAction: 'none' }}
         />
       </div>
       

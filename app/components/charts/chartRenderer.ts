@@ -1,16 +1,13 @@
 import { Candle, Trade, Viewport, Mode } from './types'
 import { priceToY, indexToX, formatPrice, formatTime, getVisibleCandles } from './chartUtils'
 
-const COLORS = {
-  bg: '#0a0a0a',
-  grid: '#1a1a1a',
-  text: '#888888',
-  cross: '#8b5cf6',
-  up: '#22c55e',
-  down: '#ef4444',
-  line: '#8b5cf6',
-  buy: '#22c55e',
-  sell: '#ef4444'
+// Read CSS variables from document
+function getCSSColor(varName: string, fallback: string): string {
+  if (typeof document === 'undefined') return fallback
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(varName)
+    .trim()
+  return value || fallback
 }
 
 const PADDING = { top: 10, right: 60, bottom: 30, left: 10 }
@@ -20,12 +17,36 @@ export class ChartRenderer {
   private width: number
   private height: number
   private chartHeight: number
+  private colors: {
+    bg: string
+    grid: string
+    text: string
+    cross: string
+    up: string
+    down: string
+    line: string
+    buy: string
+    sell: string
+  }
   
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = this.setupCanvas(canvas)
     this.width = canvas.width
     this.height = canvas.height
     this.chartHeight = this.height - PADDING.top - PADDING.bottom
+    
+    // Initialize colors from CSS variables
+    this.colors = {
+      bg: getCSSColor('--background', '#0a0a0a'),
+      grid: getCSSColor('--border', '#1a1a1a'),
+      text: getCSSColor('--muted-foreground', '#888888'),
+      cross: getCSSColor('--primary', '#8b5cf6'),
+      up: getCSSColor('--chart-green', '#22c55e'),
+      down: getCSSColor('--chart-red', '#ef4444'),
+      line: getCSSColor('--primary', '#8b5cf6'),
+      buy: getCSSColor('--chart-green', '#22c55e'),
+      sell: getCSSColor('--chart-red', '#ef4444')
+    }
   }
   
   private setupCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
@@ -40,13 +61,26 @@ export class ChartRenderer {
     canvas.style.width = `${rect.width}px`
     canvas.style.height = `${rect.height}px`
     
-    const ctx = canvas.getContext('2d', { alpha: false })!  // alpha: false = faster
+    const ctx = canvas.getContext('2d', { alpha: false })!
     ctx.scale(dpr, dpr)
     return ctx
   }
   
   public resize(canvas: HTMLCanvasElement) {
     this.ctx = this.setupCanvas(canvas)
+    
+    // Refresh colors on resize (in case theme changed)
+    this.colors = {
+      bg: getCSSColor('--background', '#0a0a0a'),
+      grid: getCSSColor('--border', '#1a1a1a'),
+      text: getCSSColor('--muted-foreground', '#888888'),
+      cross: getCSSColor('--primary', '#8b5cf6'),
+      up: getCSSColor('--chart-green', '#22c55e'),
+      down: getCSSColor('--chart-red', '#ef4444'),
+      line: getCSSColor('--primary', '#8b5cf6'),
+      buy: getCSSColor('--chart-green', '#22c55e'),
+      sell: getCSSColor('--chart-red', '#ef4444')
+    }
   }
   
   public render(
@@ -56,14 +90,14 @@ export class ChartRenderer {
     mode: Mode,
     mouse: { x: number; y: number } | null
   ) {
-    // Clear (optimized - single fillRect)
-    this.ctx.fillStyle = COLORS.bg
+    // Clear
+    this.ctx.fillStyle = this.colors.bg
     this.ctx.fillRect(0, 0, this.width, this.height)
     
     // Draw grid
     this.drawGrid(viewport)
     
-    // Draw candles/line (viewport culled)
+    // Draw candles/line
     const visible = getVisibleCandles(candles, viewport)
     
     if (mode === 'C') {
@@ -72,14 +106,14 @@ export class ChartRenderer {
       this.drawLine(visible, viewport)
     }
     
-    // Draw trades (only visible ones)
+    // Draw trades
     this.drawTrades(trades, viewport)
     
     // Draw axes
     this.drawPriceAxis(viewport)
     this.drawTimeAxis(candles, viewport)
     
-    // Draw crosshair (if mouse present)
+    // Draw crosshair
     if (mouse) {
       this.drawCrosshair(mouse, candles, viewport)
     }
@@ -87,10 +121,10 @@ export class ChartRenderer {
   
   private drawGrid(viewport: Viewport) {
     const { priceMin, priceMax } = viewport
-    this.ctx.strokeStyle = COLORS.grid
+    this.ctx.strokeStyle = this.colors.grid
     this.ctx.lineWidth = 1
     
-    // Horizontal lines (5 lines)
+    // Horizontal lines
     const priceStep = (priceMax - priceMin) / 5
     for (let i = 0; i <= 5; i++) {
       const price = priceMin + (priceStep * i)
@@ -102,7 +136,7 @@ export class ChartRenderer {
       this.ctx.stroke()
     }
     
-    // Vertical lines (time grid) - every ~100px
+    // Vertical lines
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, PADDING.left)
@@ -127,14 +161,14 @@ export class ChartRenderer {
       if (x < PADDING.left || x > this.width - PADDING.right) return
       
       const isUp = candle.c >= candle.o
-      const color = isUp ? COLORS.up : COLORS.down
+      const color = isUp ? this.colors.up : this.colors.down
       
       const yHigh = priceToY(candle.h, priceMin, priceMax, this.chartHeight, PADDING.top)
       const yLow = priceToY(candle.l, priceMin, priceMax, this.chartHeight, PADDING.top)
       const yOpen = priceToY(candle.o, priceMin, priceMax, this.chartHeight, PADDING.top)
       const yClose = priceToY(candle.c, priceMin, priceMax, this.chartHeight, PADDING.top)
       
-      // Wick (optimized - single path)
+      // Wick
       this.ctx.strokeStyle = color
       this.ctx.lineWidth = wickWidth
       this.ctx.beginPath()
@@ -161,7 +195,7 @@ export class ChartRenderer {
     
     const { priceMin, priceMax, candleWidth, offsetX } = viewport
     
-    this.ctx.strokeStyle = COLORS.line
+    this.ctx.strokeStyle = this.colors.line
     this.ctx.lineWidth = 2
     this.ctx.beginPath()
     
@@ -185,29 +219,25 @@ export class ChartRenderer {
     const markerSize = 8
     
     trades.forEach(trade => {
-      // Binary search would be more optimal here for many trades
-      // For now, simple filter
-      const idx = trade.t  // Assuming trade.t is already index
+      const idx = trade.t
       
       if (idx < startIdx || idx > endIdx) return
       
       const x = indexToX(idx, candleWidth, offsetX, PADDING.left)
       const y = priceToY(trade.p, priceMin, priceMax, this.chartHeight, PADDING.top)
       
-      const color = trade.s === 'B' ? COLORS.buy : COLORS.sell
+      const color = trade.s === 'B' ? this.colors.buy : this.colors.sell
       const yOffset = trade.s === 'B' ? markerSize : -markerSize
       
-      // Triangle marker (optimized path)
+      // Triangle marker
       this.ctx.fillStyle = color
       this.ctx.beginPath()
       
       if (trade.s === 'B') {
-        // Up arrow
         this.ctx.moveTo(x, y - yOffset)
         this.ctx.lineTo(x - markerSize / 2, y)
         this.ctx.lineTo(x + markerSize / 2, y)
       } else {
-        // Down arrow
         this.ctx.moveTo(x, y - yOffset)
         this.ctx.lineTo(x - markerSize / 2, y)
         this.ctx.lineTo(x + markerSize / 2, y)
@@ -220,7 +250,7 @@ export class ChartRenderer {
   
   private drawPriceAxis(viewport: Viewport) {
     const { priceMin, priceMax } = viewport
-    this.ctx.fillStyle = COLORS.text
+    this.ctx.fillStyle = this.colors.text
     this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'middle'
@@ -241,7 +271,7 @@ export class ChartRenderer {
   private drawTimeAxis(candles: Candle[], viewport: Viewport) {
     const { candleWidth, offsetX, startIdx, endIdx } = viewport
     
-    this.ctx.fillStyle = COLORS.text
+    this.ctx.fillStyle = this.colors.text
     this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'center'
     this.ctx.textBaseline = 'top'
@@ -269,7 +299,7 @@ export class ChartRenderer {
     const { priceMin, priceMax, candleWidth, offsetX } = viewport
     
     // Crosshair lines
-    this.ctx.strokeStyle = COLORS.cross
+    this.ctx.strokeStyle = this.colors.cross
     this.ctx.lineWidth = 1
     this.ctx.setLineDash([4, 4])
     
@@ -290,10 +320,10 @@ export class ChartRenderer {
     // Price label
     const price = priceMax - ((mouse.y - PADDING.top) / this.chartHeight) * (priceMax - priceMin)
     
-    this.ctx.fillStyle = COLORS.cross
+    this.ctx.fillStyle = this.colors.cross
     this.ctx.fillRect(this.width - PADDING.right, mouse.y - 10, PADDING.right, 20)
     
-    this.ctx.fillStyle = '#000'
+    this.ctx.fillStyle = this.colors.bg
     this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'center'
     this.ctx.textBaseline = 'middle'
@@ -309,10 +339,10 @@ export class ChartRenderer {
       const timeStr = formatTime(candles[candleIdx].t)
       const textWidth = this.ctx.measureText(timeStr).width
       
-      this.ctx.fillStyle = COLORS.cross
+      this.ctx.fillStyle = this.colors.cross
       this.ctx.fillRect(mouse.x - textWidth / 2 - 4, this.height - PADDING.bottom, textWidth + 8, 20)
       
-      this.ctx.fillStyle = '#000'
+      this.ctx.fillStyle = this.colors.bg
       this.ctx.fillText(
         timeStr,
         mouse.x,
@@ -338,7 +368,7 @@ export class ChartRenderer {
     const width = 120
     const height = lines.length * lineHeight + padding * 2
     
-    // Position tooltip (avoid edges)
+    // Position tooltip
     let tooltipX = x + 15
     let tooltipY = y + 15
     
@@ -354,12 +384,12 @@ export class ChartRenderer {
     this.ctx.fillRect(tooltipX, tooltipY, width, height)
     
     // Border
-    this.ctx.strokeStyle = COLORS.cross
+    this.ctx.strokeStyle = this.colors.cross
     this.ctx.lineWidth = 1
     this.ctx.strokeRect(tooltipX, tooltipY, width, height)
     
     // Text
-    this.ctx.fillStyle = COLORS.text
+    this.ctx.fillStyle = this.colors.text
     this.ctx.font = '12px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'top'
