@@ -23,6 +23,12 @@ export function drawdownToY(
 ): number {
   const chartHeight = height - PADDING.top - PADDING.bottom
   const range = drawdownMax - drawdownMin
+  
+  // Handle zero range (no drawdown variation)
+  if (range === 0 || !isFinite(range)) {
+    return PADDING.top + chartHeight / 2
+  }
+  
   const normalized = (drawdown - drawdownMin) / range
   return PADDING.top + chartHeight * (1 - normalized)
 }
@@ -33,6 +39,7 @@ export function indexToX(
   width: number
 ): number {
   const chartWidth = width - PADDING.left - PADDING.right
+  if (totalPoints <= 1) return PADDING.left
   return PADDING.left + (index / (totalPoints - 1)) * chartWidth
 }
 
@@ -70,10 +77,16 @@ export function calculateDrawdownViewport(
     drawdownMin = Math.min(...visibleSlice.map((p) => p.d))
     drawdownMax = Math.max(...visibleSlice.map((p) => p.d))
 
-    const range = drawdownMax - drawdownMin
-    const padding = range * 0.1
-    drawdownMin = Math.min(0, drawdownMin - padding)
-    drawdownMax = Math.max(0, drawdownMax + padding)
+    // Handle case where all drawdowns are 0 (no drawdown)
+    if (drawdownMin === 0 && drawdownMax === 0) {
+      drawdownMin = -0.01  // -1%
+      drawdownMax = 0
+    } else {
+      const range = drawdownMax - drawdownMin
+      const padding = range * 0.1
+      drawdownMin = Math.min(0, drawdownMin - padding)
+      drawdownMax = Math.max(0, drawdownMax + padding)
+    }
   }
 
   return {
