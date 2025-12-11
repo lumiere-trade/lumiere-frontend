@@ -20,19 +20,19 @@ interface BacktestResultsProps {
 // Decimate data to max N points for performance
 function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
   if (data.length <= maxPoints) return data
-  
+
   const step = Math.ceil(data.length / maxPoints)
   const decimated: T[] = []
-  
+
   for (let i = 0; i < data.length; i += step) {
     decimated.push(data[i])
   }
-  
+
   // Always include last point
   if (decimated[decimated.length - 1] !== data[data.length - 1]) {
     decimated.push(data[data.length - 1])
   }
-  
+
   return decimated
 }
 
@@ -119,9 +119,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
         sellPnl: trade?.side === 'SELL' ? trade.pnl : null
       }
     })
-    
+
     const decimated = decimateData(full, 300)
-    
+
     console.log('Price chart data:', {
       original_length: full.length,
       decimated_length: decimated.length,
@@ -129,16 +129,16 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
       last_point: decimated[decimated.length - 1],
       sample_points: decimated.slice(0, 5)
     })
-    
+
     return decimated
   }, [market_data, trades])
 
-  const buyCount = useMemo(() => 
+  const buyCount = useMemo(() =>
     priceChartData.filter(d => d.buy !== null && d.buy !== undefined).length,
     [priceChartData]
   )
-  
-  const sellCount = useMemo(() => 
+
+  const sellCount = useMemo(() =>
     priceChartData.filter(d => d.sell !== null && d.sell !== undefined).length,
     [priceChartData]
   )
@@ -276,7 +276,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         stroke="hsl(var(--primary))"
                         strokeWidth={2}
                         dot={false}
-                        name="close"
                         isAnimationActive={false}
                       />
                       <Scatter
@@ -287,7 +286,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         strokeWidth={2}
                         shape="circle"
                         r={6}
-                        name="buy"
                         isAnimationActive={false}
                       />
                       <Scatter
@@ -298,7 +296,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         strokeWidth={2}
                         shape="circle"
                         r={6}
-                        name="sell"
                         isAnimationActive={false}
                       />
                     </ComposedChart>
