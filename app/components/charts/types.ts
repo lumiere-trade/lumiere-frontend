@@ -62,3 +62,27 @@ export interface EquityState {
   isDragging: boolean
   dirty: boolean
 }
+
+// Drawdown chart types
+export interface DrawdownPoint {
+  t: number  // timestamp
+  d: number  // drawdown (0 to 1, negative values)
+}
+
+export interface DrawdownViewport {
+  startIdx: number
+  endIdx: number
+  drawdownMin: number
+  drawdownMax: number
+  zoom: number
+  offsetX: number
+  width: number
+}
+
+export interface DrawdownState {
+  points: DrawdownPoint[]
+  viewport: DrawdownViewport
+  mouse: { x: number; y: number } | null
+  isDragging: boolean
+  dirty: boolean
+}

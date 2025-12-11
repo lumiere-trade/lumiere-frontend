@@ -5,13 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumi
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import {
-  LineChart, Line, AreaChart, Area, Brush,
+  LineChart, Line, Brush,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
-import { TradingChart, EquityCurve } from "@/components/charts"
+import { TradingChart, EquityCurve, DrawdownChart } from "@/components/charts"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -60,14 +60,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     return decimateData(full, 300)
   }, [equity_curve])
 
-  // Legacy equity data for Recharts (drawdown tab still uses Recharts)
-  const equityData = useMemo(() => {
+  // Drawdown data for custom DrawdownChart component
+  const drawdownChartData = useMemo(() => {
     const full = equity_curve.map((point) => ({
       timestamp: new Date(point.timestamp).getTime(),
-      date: format(new Date(point.timestamp), 'MMM dd HH:mm'),
-      equity: point.equity,
-      drawdown: point.drawdown * 100,
-      return: point.return_pct * 100
+      drawdown: point.drawdown
     }))
     return decimateData(full, 300)
   }, [equity_curve])
@@ -260,49 +257,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Peak-to-trough decline</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={equityData}>
-                    <defs>
-                      <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#888888"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="#888888"
-                      fontSize={12}
-                      tickFormatter={(value) => `${value.toFixed(1)}%`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1a1a1a',
-                        border: '1px solid #333',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="drawdown"
-                      stroke="#ef4444"
-                      strokeWidth={2}
-                      fill="url(#drawdownGradient)"
-                    />
-                    <Brush
-                      dataKey="date"
-                      height={40}
-                      stroke="#ef4444"
-                      fill="#1a1a1a"
-                      travellerWidth={10}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {drawdownChartData.length > 0 ? (
+                  <DrawdownChart data={drawdownChartData} height={450} />
+                ) : (
+                  <div className="h-[450px] flex items-center justify-center text-muted-foreground">
+                    No drawdown data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
