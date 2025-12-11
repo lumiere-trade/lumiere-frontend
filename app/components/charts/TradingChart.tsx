@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { Button } from "@lumiere/shared/components/ui/button"
 import { LineChartIcon, CandlestickChart } from "lucide-react"
 import { ChartRenderer } from './chartRenderer'
-import { calculateViewport, debounce } from './chartUtils'
+import { calculateViewport } from './chartUtils'
 import { Candle, Trade, Mode, TF, ChartState, Viewport } from './types'
 
 interface TradingChartProps {
@@ -25,6 +25,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<ChartRenderer | null>(null)
   const rafRef = useRef<number | null>(null)
+  const [resizeKey, setResizeKey] = useState(0)
   
   const [state, setState] = useState<ChartState>({
     mode: 'L',
@@ -89,19 +90,23 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       const viewport = calculateViewport(
         state.candles,
         width,
-        state.viewport.zoom,
-        state.viewport.offsetX
+        1, // Reset zoom on init
+        0  // Reset pan on init
       )
       
       setState(prev => ({
         ...prev,
-        viewport,
+        viewport: {
+          ...viewport,
+          zoom: 1,
+          offsetX: 0
+        },
         dirty: true
       }))
     }
   }, [])
   
-  // ResizeObserver for immediate resize detection (better than window.resize)
+  // ResizeObserver for immediate resize detection
   useEffect(() => {
     if (!containerRef.current) return
     
@@ -109,22 +114,11 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       for (const entry of entries) {
         if (!canvasRef.current || !rendererRef.current) continue
         
-        // Immediate resize (no debounce for monitor changes)
+        // Force canvas resize
         rendererRef.current.resize(canvasRef.current)
         
-        const width = entry.contentRect.width
-        const viewport = calculateViewport(
-          stateRef.current.candles,
-          width,
-          stateRef.current.viewport.zoom,
-          stateRef.current.viewport.offsetX
-        )
-        
-        setState(prev => ({
-          ...prev,
-          viewport,
-          dirty: true
-        }))
+        // Trigger full viewport recalculation
+        setResizeKey(prev => prev + 1)
       }
     })
     
@@ -132,6 +126,25 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     
     return () => resizeObserver.disconnect()
   }, [])
+  
+  // Recalculate viewport on resize
+  useEffect(() => {
+    if (!containerRef.current || state.candles.length === 0) return
+    
+    const width = containerRef.current.clientWidth
+    const viewport = calculateViewport(
+      state.candles,
+      width,
+      state.viewport.zoom,
+      state.viewport.offsetX
+    )
+    
+    setState(prev => ({
+      ...prev,
+      viewport,
+      dirty: true
+    }))
+  }, [resizeKey, state.candles])
   
   // Theme change detection
   useEffect(() => {
@@ -188,7 +201,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
   }, [])
   
-  // Recalculate viewport
+  // Recalculate viewport on zoom/pan
   useEffect(() => {
     if (state.candles.length === 0 || !containerRef.current) return
     
@@ -205,7 +218,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       viewport,
       dirty: true
     }))
-  }, [state.candles, state.viewport.zoom, state.viewport.offsetX])
+  }, [state.viewport.zoom, state.viewport.offsetX])
   
   // Mouse wheel zoom
   const handleWheel = useCallback((e: WheelEvent) => {
