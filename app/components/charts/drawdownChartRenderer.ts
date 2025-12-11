@@ -1,325 +1,114 @@
-import { parse as culorParse, formatRgb } from 'culori'
+import { parse, formatRgb } from 'culori'
+import { DrawdownPoint, DrawdownViewport } from './types'
+import { drawdownToY, indexToX, formatDrawdown, formatTime, getVisiblePoints } from './drawdownChartUtils'
 
-interface DrawdownPoint {
-  t: number
-  d: number
-}
+// Read CSS variables from document and convert to RGB
+function getCSSColorAsRGB(varName: string): string {
+  if (typeof document === 'undefined') return 'rgb(0, 0, 0)'
 
-interface DrawdownViewport {
-  startIdx: number
-  endIdx: number
-  drawdownMin: number
-  drawdownMax: number
-  zoom: number
-  offsetX: number
-  width: number
-}
-
-const PADDING = { top: 20, right: 50, bottom: 40, left: 60 }
-const GRID_COLOR = 'rgba(100, 100, 100, 0.2)'
-const TEXT_COLOR = 'rgba(150, 150, 150, 1)'
-const CROSSHAIR_COLOR = 'rgba(150, 150, 150, 0.5)'
-
-function getCSSColorAsRGB(variable: string): string {
   const value = getComputedStyle(document.documentElement)
-    .getPropertyValue(variable)
+    .getPropertyValue(varName)
     .trim()
 
-  if (!value) {
-    return 'rgb(239, 68, 68)'
+  if (!value) return 'rgb(0, 0, 0)'
+
+  // Parse color (supports oklch, rgb, hex, etc) and convert to RGB
+  const parsed = parse(value)
+  return parsed ? formatRgb(parsed) : 'rgb(0, 0, 0)'
+}
+
+// Parse RGB/RGBA color string to components
+function parseColorToRGBA(colorStr: string): { r: number; g: number; b: number; a: number } {
+  const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+  if (match) {
+    return {
+      r: parseInt(match[1]),
+      g: parseInt(match[2]),
+      b: parseInt(match[3]),
+      a: match[4] ? parseFloat(match[4]) : 1
+    }
   }
 
-  const parsed = culorParse(value)
-  if (!parsed) {
-    return 'rgb(239, 68, 68)'
+  return { r: 0, g: 0, b: 0, a: 1 }
+}
+
+// Create RGBA string with alpha
+function rgba(color: { r: number; g: number; b: number }, alpha: number): string {
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+}
+
+// Responsive padding based on canvas width
+function getPadding(width: number) {
+  return {
+    top: 20,
+    right: Math.max(70, width * 0.08),
+    bottom: 40,
+    left: Math.max(60, width * 0.08)
   }
-
-  return formatRgb(parsed)
-}
-
-function parseColorToRGBA(rgbString: string, alpha: number = 1): string {
-  const match = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/)
-  if (!match) return `rgba(239, 68, 68, ${alpha})`
-  
-  const [, r, g, b] = match
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-function drawdownToY(
-  drawdown: number,
-  drawdownMin: number,
-  drawdownMax: number,
-  height: number
-): number {
-  const chartHeight = height - PADDING.top - PADDING.bottom
-  const range = drawdownMax - drawdownMin
-  const normalized = (drawdown - drawdownMin) / range
-  return PADDING.top + chartHeight * (1 - normalized)
-}
-
-function indexToX(index: number, totalPoints: number, width: number): number {
-  const chartWidth = width - PADDING.left - PADDING.right
-  return PADDING.left + (index / (totalPoints - 1)) * chartWidth
-}
-
-function formatDrawdown(value: number): string {
-  return `${(value * 100).toFixed(2)}%`
-}
-
-function formatTime(timestamp: number): string {
-  const date = new Date(timestamp)
-  const hours = date.getHours().toString().padStart(2, '0')
-  const minutes = date.getMinutes().toString().padStart(2, '0')
-  return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${minutes}`
 }
 
 export class DrawdownChartRenderer {
-  private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
-  private dpr: number = 1
-  private destructiveColor: string = 'rgb(239, 68, 68)'
+  private width: number
+  private height: number
+  private chartHeight: number
+  private padding: { top: number; right: number; bottom: number; left: number }
+  private colors: {
+    bg: string
+    grid: string
+    text: string
+    cross: string
+    line: string
+    tooltipBg: string
+    tooltipBorder: string
+  }
 
   constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas
-    const ctx = canvas.getContext('2d', { alpha: false })
-    if (!ctx) throw new Error('Could not get canvas context')
+    const parent = canvas.parentElement
+    if (!parent) throw new Error('Canvas must have parent element')
+
+    const rect = parent.getBoundingClientRect()
+    const { ctx, width, height } = this.setupCanvas(canvas, rect.width, rect.height)
+
     this.ctx = ctx
-    this.dpr = window.devicePixelRatio || 1
-    this.updateDestructiveColor()
+    this.width = width
+    this.height = height
+    this.padding = getPadding(width)
+    this.chartHeight = height - this.padding.top - this.padding.bottom
+
+    this.colors = this.loadColors()
   }
 
-  public updateDestructiveColor(): void {
-    this.destructiveColor = getCSSColorAsRGB('--destructive')
+  private loadColors() {
+    return {
+      bg: getCSSColorAsRGB('--background'),
+      grid: getCSSColorAsRGB('--border'),
+      text: getCSSColorAsRGB('--muted-foreground'),
+      cross: getCSSColorAsRGB('--destructive'),
+      line: getCSSColorAsRGB('--destructive'),
+      tooltipBg: getCSSColorAsRGB('--popover'),
+      tooltipBorder: getCSSColorAsRGB('--border')
+    }
   }
 
-  private setupCanvas(width: number, height: number): void {
-    this.canvas.width = width * this.dpr
-    this.canvas.height = height * this.dpr
-    this.canvas.style.width = `${width}px`
-    this.canvas.style.height = `${height}px`
-    this.ctx.scale(this.dpr, this.dpr)
-  }
-
-  private clearCanvas(width: number, height: number): void {
-    const bgColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--background')
-      .trim()
-    this.ctx.fillStyle = bgColor || '#ffffff'
-    this.ctx.fillRect(0, 0, width, height)
-  }
-
-  private drawGrid(
+  private setupCanvas(
+    canvas: HTMLCanvasElement,
     width: number,
-    height: number,
-    viewport: DrawdownViewport
-  ): void {
-    const chartWidth = width - PADDING.left - PADDING.right
-    const chartHeight = height - PADDING.top - PADDING.bottom
+    height: number
+  ): { ctx: CanvasRenderingContext2D; width: number; height: number } {
+    const dpr = window.devicePixelRatio || 1
 
-    this.ctx.save()
-    this.ctx.strokeStyle = GRID_COLOR
-    this.ctx.lineWidth = 1
+    canvas.width = width * dpr
+    canvas.height = height * dpr
 
-    const numHorizontalLines = 5
-    for (let i = 0; i <= numHorizontalLines; i++) {
-      const y = PADDING.top + (chartHeight * i) / numHorizontalLines
-      this.ctx.beginPath()
-      this.ctx.moveTo(PADDING.left, y)
-      this.ctx.lineTo(PADDING.left + chartWidth, y)
-      this.ctx.stroke()
-    }
+    const ctx = canvas.getContext('2d', { alpha: false })!
+    ctx.scale(dpr, dpr)
 
-    const numVerticalLines = 6
-    for (let i = 0; i <= numVerticalLines; i++) {
-      const x = PADDING.left + (chartWidth * i) / numVerticalLines
-      this.ctx.beginPath()
-      this.ctx.moveTo(x, PADDING.top)
-      this.ctx.lineTo(x, PADDING.top + chartHeight)
-      this.ctx.stroke()
-    }
-
-    this.ctx.restore()
+    return { ctx, width, height }
   }
 
-  private drawAxes(
-    width: number,
-    height: number,
-    points: DrawdownPoint[],
-    viewport: DrawdownViewport
-  ): void {
-    const chartWidth = width - PADDING.left - PADDING.right
-    const chartHeight = height - PADDING.top - PADDING.bottom
-
-    this.ctx.save()
-    this.ctx.fillStyle = TEXT_COLOR
-    this.ctx.font = '11px sans-serif'
-    this.ctx.textAlign = 'right'
-    this.ctx.textBaseline = 'middle'
-
-    const numYLabels = 5
-    for (let i = 0; i <= numYLabels; i++) {
-      const ratio = i / numYLabels
-      const drawdown = viewport.drawdownMin + (viewport.drawdownMax - viewport.drawdownMin) * (1 - ratio)
-      const y = PADDING.top + chartHeight * ratio
-      this.ctx.fillText(formatDrawdown(drawdown), PADDING.left - 10, y)
-    }
-
-    this.ctx.textAlign = 'center'
-    this.ctx.textBaseline = 'top'
-
-    const numXLabels = 6
-    const visiblePoints = points.slice(viewport.startIdx, viewport.endIdx + 1)
-    for (let i = 0; i <= numXLabels; i++) {
-      const ratio = i / numXLabels
-      const pointIdx = Math.floor(ratio * (visiblePoints.length - 1))
-      const point = visiblePoints[pointIdx]
-      if (point) {
-        const x = PADDING.left + chartWidth * ratio
-        const label = formatTime(point.t)
-        this.ctx.fillText(label, x, height - PADDING.bottom + 10)
-      }
-    }
-
-    this.ctx.restore()
-  }
-
-  private drawDrawdownCurve(
-    width: number,
-    height: number,
-    points: DrawdownPoint[],
-    viewport: DrawdownViewport
-  ): void {
-    const visiblePoints = points.slice(viewport.startIdx, viewport.endIdx + 1)
-    if (visiblePoints.length < 2) return
-
-    const chartHeight = height - PADDING.top - PADDING.bottom
-    const zeroY = drawdownToY(0, viewport.drawdownMin, viewport.drawdownMax, height)
-
-    this.ctx.save()
-    this.ctx.beginPath()
-
-    const totalVisible = visiblePoints.length
-    visiblePoints.forEach((point, idx) => {
-      const x = indexToX(idx, totalVisible, width)
-      const y = drawdownToY(point.d, viewport.drawdownMin, viewport.drawdownMax, height)
-
-      if (idx === 0) {
-        this.ctx.moveTo(x, y)
-      } else {
-        this.ctx.lineTo(x, y)
-      }
-    })
-
-    this.ctx.strokeStyle = this.destructiveColor
-    this.ctx.lineWidth = 2
-    this.ctx.stroke()
-
-    const gradient = this.ctx.createLinearGradient(0, PADDING.top, 0, zeroY)
-    gradient.addColorStop(0, parseColorToRGBA(this.destructiveColor, 0.3))
-    gradient.addColorStop(1, parseColorToRGBA(this.destructiveColor, 0))
-
-    this.ctx.lineTo(
-      indexToX(totalVisible - 1, totalVisible, width),
-      zeroY
-    )
-    this.ctx.lineTo(
-      indexToX(0, totalVisible, width),
-      zeroY
-    )
-    this.ctx.closePath()
-
-    this.ctx.fillStyle = gradient
-    this.ctx.fill()
-
-    this.ctx.restore()
-  }
-
-  private drawCrosshair(
-    width: number,
-    height: number,
-    points: DrawdownPoint[],
-    viewport: DrawdownViewport,
-    mouseX: number,
-    mouseY: number
-  ): void {
-    const chartWidth = width - PADDING.left - PADDING.right
-    const chartHeight = height - PADDING.top - PADDING.bottom
-
-    if (
-      mouseX < PADDING.left ||
-      mouseX > PADDING.left + chartWidth ||
-      mouseY < PADDING.top ||
-      mouseY > PADDING.top + chartHeight
-    ) {
-      return
-    }
-
-    const visiblePoints = points.slice(viewport.startIdx, viewport.endIdx + 1)
-    if (visiblePoints.length === 0) return
-
-    const relativeX = mouseX - PADDING.left
-    const ratio = relativeX / chartWidth
-    const pointIdx = Math.floor(ratio * (visiblePoints.length - 1))
-    const point = visiblePoints[pointIdx]
-
-    if (!point) return
-
-    const x = indexToX(pointIdx, visiblePoints.length, width)
-    const y = drawdownToY(point.d, viewport.drawdownMin, viewport.drawdownMax, height)
-
-    this.ctx.save()
-
-    this.ctx.strokeStyle = CROSSHAIR_COLOR
-    this.ctx.lineWidth = 1
-    this.ctx.setLineDash([5, 5])
-
-    this.ctx.beginPath()
-    this.ctx.moveTo(x, PADDING.top)
-    this.ctx.lineTo(x, PADDING.top + chartHeight)
-    this.ctx.stroke()
-
-    this.ctx.beginPath()
-    this.ctx.moveTo(PADDING.left, y)
-    this.ctx.lineTo(PADDING.left + chartWidth, y)
-    this.ctx.stroke()
-
-    this.ctx.setLineDash([])
-
-    this.ctx.fillStyle = this.destructiveColor
-    this.ctx.beginPath()
-    this.ctx.arc(x, y, 4, 0, Math.PI * 2)
-    this.ctx.fill()
-
-    const tooltipText = `${formatTime(point.t)} | ${formatDrawdown(point.d)}`
-    this.ctx.font = '12px sans-serif'
-    const textWidth = this.ctx.measureText(tooltipText).width
-    const tooltipPadding = 8
-    const tooltipWidth = textWidth + tooltipPadding * 2
-    const tooltipHeight = 24
-
-    let tooltipX = x + 10
-    let tooltipY = y - 10
-
-    if (tooltipX + tooltipWidth > width - PADDING.right) {
-      tooltipX = x - tooltipWidth - 10
-    }
-    if (tooltipY < PADDING.top) {
-      tooltipY = y + 10
-    }
-
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-    this.ctx.fillRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
-
-    this.ctx.strokeStyle = this.destructiveColor
-    this.ctx.lineWidth = 1
-    this.ctx.strokeRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight)
-
-    this.ctx.fillStyle = '#ffffff'
-    this.ctx.textAlign = 'left'
-    this.ctx.textBaseline = 'middle'
-    this.ctx.fillText(tooltipText, tooltipX + tooltipPadding, tooltipY + tooltipHeight / 2)
-
-    this.ctx.restore()
+  public updateDestructiveColor() {
+    this.colors = this.loadColors()
   }
 
   public render(
@@ -328,38 +117,300 @@ export class DrawdownChartRenderer {
     points: DrawdownPoint[],
     viewport: DrawdownViewport,
     mouse: { x: number; y: number } | null
-  ): void {
-    this.setupCanvas(width, height)
-    this.clearCanvas(width, height)
+  ) {
+    // Update dimensions if changed
+    if (width !== this.width || height !== this.height) {
+      this.width = width
+      this.height = height
+      this.padding = getPadding(width)
+      this.chartHeight = height - this.padding.top - this.padding.bottom
+    }
+
+    // Clear
+    this.ctx.fillStyle = this.colors.bg
+    this.ctx.fillRect(0, 0, this.width, this.height)
 
     if (points.length === 0) {
-      this.ctx.fillStyle = TEXT_COLOR
+      this.ctx.fillStyle = this.colors.text
       this.ctx.font = '14px sans-serif'
       this.ctx.textAlign = 'center'
       this.ctx.textBaseline = 'middle'
-      this.ctx.fillText('No data available', width / 2, height / 2)
+      this.ctx.fillText('No data available', this.width / 2, this.height / 2)
       return
     }
 
+    // Draw grid
+    this.drawGrid(viewport)
+
+    // Draw drawdown curve
+    const visible = getVisiblePoints(points, viewport)
+    this.drawDrawdownCurve(visible, viewport)
+
+    // Draw axes
+    this.drawDrawdownAxis(viewport)
+    this.drawTimeAxis(points, viewport)
+
+    // Draw crosshair
+    if (mouse) {
+      this.drawCrosshair(mouse, points, viewport)
+    }
+  }
+
+  private drawGrid(viewport: DrawdownViewport) {
+    const { drawdownMin, drawdownMax } = viewport
+    this.ctx.strokeStyle = this.colors.grid
+    this.ctx.lineWidth = 1
+
+    // Horizontal lines
+    const drawdownStep = (drawdownMax - drawdownMin) / 5
+    for (let i = 0; i <= 5; i++) {
+      const drawdown = drawdownMin + (drawdownStep * i)
+      const y = drawdownToY(drawdown, drawdownMin, drawdownMax, this.height)
+
+      this.ctx.beginPath()
+      this.ctx.moveTo(this.padding.left, y)
+      this.ctx.lineTo(this.width - this.padding.right, y)
+      this.ctx.stroke()
+    }
+
+    // Vertical lines
+    const visiblePoints = viewport.endIdx - viewport.startIdx + 1
+    const step = Math.max(1, Math.floor(visiblePoints / 6))
+    
+    for (let i = 0; i <= 6; i++) {
+      const idx = viewport.startIdx + Math.floor((visiblePoints * i) / 6)
+      if (idx <= viewport.endIdx) {
+        const x = indexToX(i, 6, this.width)
+
+        this.ctx.beginPath()
+        this.ctx.moveTo(x, this.padding.top)
+        this.ctx.lineTo(x, this.height - this.padding.bottom)
+        this.ctx.stroke()
+      }
+    }
+  }
+
+  private drawDrawdownCurve(points: DrawdownPoint[], viewport: DrawdownViewport) {
+    if (points.length === 0) return
+
+    const { drawdownMin, drawdownMax } = viewport
+
+    // Parse destructive color
+    const lineColor = parseColorToRGBA(this.colors.line)
+
+    // Save context and setup clipping region
     this.ctx.save()
     this.ctx.beginPath()
     this.ctx.rect(
-      PADDING.left,
-      PADDING.top,
-      width - PADDING.left - PADDING.right,
-      height - PADDING.top - PADDING.bottom
+      this.padding.left,
+      this.padding.top,
+      this.width - this.padding.left - this.padding.right,
+      this.chartHeight
     )
     this.ctx.clip()
 
-    this.drawGrid(width, height, viewport)
-    this.drawDrawdownCurve(width, height, points, viewport)
+    // Calculate zero line Y position
+    const zeroY = drawdownToY(0, drawdownMin, drawdownMax, this.height)
 
+    // Build area path
+    this.ctx.beginPath()
+    points.forEach((point, idx) => {
+      const x = indexToX(idx, points.length, this.width)
+      const y = drawdownToY(point.d, drawdownMin, drawdownMax, this.height)
+
+      if (idx === 0) {
+        this.ctx.moveTo(x, y)
+      } else {
+        this.ctx.lineTo(x, y)
+      }
+    })
+
+    // Complete area path to zero line
+    const lastX = indexToX(points.length - 1, points.length, this.width)
+    const firstX = indexToX(0, points.length, this.width)
+
+    this.ctx.lineTo(lastX, zeroY)
+    this.ctx.lineTo(firstX, zeroY)
+    this.ctx.closePath()
+
+    // Fill area with gradient from zero line to drawdown
+    const gradient = this.ctx.createLinearGradient(0, zeroY, 0, this.height - this.padding.bottom)
+    gradient.addColorStop(0, rgba(lineColor, 0.3))
+    gradient.addColorStop(1, rgba(lineColor, 0))
+
+    this.ctx.fillStyle = gradient
+    this.ctx.fill()
+
+    // Draw line
+    this.ctx.beginPath()
+    points.forEach((point, idx) => {
+      const x = indexToX(idx, points.length, this.width)
+      const y = drawdownToY(point.d, drawdownMin, drawdownMax, this.height)
+
+      if (idx === 0) {
+        this.ctx.moveTo(x, y)
+      } else {
+        this.ctx.lineTo(x, y)
+      }
+    })
+
+    this.ctx.strokeStyle = this.colors.line
+    this.ctx.lineWidth = 2
+    this.ctx.stroke()
+
+    // Restore context
     this.ctx.restore()
+  }
 
-    this.drawAxes(width, height, points, viewport)
+  private drawDrawdownAxis(viewport: DrawdownViewport) {
+    const { drawdownMin, drawdownMax } = viewport
+    this.ctx.fillStyle = this.colors.text
+    this.ctx.font = '11px monospace'
+    this.ctx.textAlign = 'left'
+    this.ctx.textBaseline = 'middle'
 
-    if (mouse) {
-      this.drawCrosshair(width, height, points, viewport, mouse.x, mouse.y)
+    const drawdownStep = (drawdownMax - drawdownMin) / 5
+    for (let i = 0; i <= 5; i++) {
+      const drawdown = drawdownMin + (drawdownStep * i)
+      const y = drawdownToY(drawdown, drawdownMin, drawdownMax, this.height)
+
+      this.ctx.fillText(
+        formatDrawdown(drawdown),
+        this.width - this.padding.right + 5,
+        y
+      )
     }
+  }
+
+  private drawTimeAxis(points: DrawdownPoint[], viewport: DrawdownViewport) {
+    this.ctx.fillStyle = this.colors.text
+    this.ctx.font = '11px monospace'
+    this.ctx.textAlign = 'center'
+    this.ctx.textBaseline = 'top'
+
+    const visiblePoints = getVisiblePoints(points, viewport)
+    const step = Math.max(1, Math.floor(visiblePoints.length / 6))
+
+    for (let i = 0; i <= 6; i++) {
+      const idx = Math.floor((visiblePoints.length - 1) * i / 6)
+      if (idx < visiblePoints.length) {
+        const point = visiblePoints[idx]
+        const x = indexToX(i, 6, this.width)
+        const timeStr = formatTime(point.t)
+
+        this.ctx.fillText(timeStr, x, this.height - this.padding.bottom + 5)
+      }
+    }
+  }
+
+  private drawCrosshair(
+    mouse: { x: number; y: number },
+    points: DrawdownPoint[],
+    viewport: DrawdownViewport
+  ) {
+    const { drawdownMin, drawdownMax } = viewport
+
+    // Crosshair lines
+    this.ctx.strokeStyle = this.colors.cross
+    this.ctx.lineWidth = 1
+    this.ctx.setLineDash([4, 4])
+
+    // Vertical
+    this.ctx.beginPath()
+    this.ctx.moveTo(mouse.x, this.padding.top)
+    this.ctx.lineTo(mouse.x, this.height - this.padding.bottom)
+    this.ctx.stroke()
+
+    // Horizontal
+    this.ctx.beginPath()
+    this.ctx.moveTo(this.padding.left, mouse.y)
+    this.ctx.lineTo(this.width - this.padding.right, mouse.y)
+    this.ctx.stroke()
+
+    this.ctx.setLineDash([])
+
+    // Drawdown label
+    const drawdown = drawdownMax - ((mouse.y - this.padding.top) / this.chartHeight) * (drawdownMax - drawdownMin)
+
+    this.ctx.fillStyle = this.colors.cross
+    this.ctx.fillRect(this.width - this.padding.right, mouse.y - 10, this.padding.right, 20)
+
+    this.ctx.fillStyle = this.colors.bg
+    this.ctx.font = '11px monospace'
+    this.ctx.textAlign = 'center'
+    this.ctx.textBaseline = 'middle'
+    this.ctx.fillText(
+      formatDrawdown(drawdown),
+      this.width - this.padding.right / 2,
+      mouse.y
+    )
+
+    // Find closest point
+    const visiblePoints = getVisiblePoints(points, viewport)
+    const chartWidth = this.width - this.padding.left - this.padding.right
+    const relativeX = mouse.x - this.padding.left
+    const ratio = relativeX / chartWidth
+    const pointIdx = Math.floor(ratio * (visiblePoints.length - 1))
+
+    if (pointIdx >= 0 && pointIdx < visiblePoints.length) {
+      const point = visiblePoints[pointIdx]
+      const timeStr = formatTime(point.t)
+      const textWidth = this.ctx.measureText(timeStr).width
+
+      this.ctx.fillStyle = this.colors.cross
+      this.ctx.fillRect(mouse.x - textWidth / 2 - 4, this.height - this.padding.bottom, textWidth + 8, 20)
+
+      this.ctx.fillStyle = this.colors.bg
+      this.ctx.fillText(timeStr, mouse.x, this.height - this.padding.bottom + 10)
+
+      // Tooltip
+      this.drawTooltip(mouse.x, mouse.y, point)
+    }
+  }
+
+  private drawTooltip(x: number, y: number, point: DrawdownPoint) {
+    const lines = [
+      `Time: ${formatTime(point.t)}`,
+      `Drawdown: ${formatDrawdown(point.d)}`
+    ]
+
+    const padding = 8
+    const lineHeight = 16
+    const width = 160
+    const height = lines.length * lineHeight + padding * 2
+
+    // Position tooltip
+    let tooltipX = x + 15
+    let tooltipY = y + 15
+
+    if (tooltipX + width > this.width - this.padding.right) {
+      tooltipX = x - width - 15
+    }
+    if (tooltipY + height > this.height - this.padding.bottom) {
+      tooltipY = y - height - 15
+    }
+
+    // Background
+    this.ctx.fillStyle = this.colors.tooltipBg
+    this.ctx.fillRect(tooltipX, tooltipY, width, height)
+
+    // Border
+    this.ctx.strokeStyle = this.colors.tooltipBorder
+    this.ctx.lineWidth = 1
+    this.ctx.strokeRect(tooltipX, tooltipY, width, height)
+
+    // Text
+    this.ctx.fillStyle = this.colors.text
+    this.ctx.font = '12px monospace'
+    this.ctx.textAlign = 'left'
+    this.ctx.textBaseline = 'top'
+
+    lines.forEach((line, idx) => {
+      this.ctx.fillText(
+        line,
+        tooltipX + padding,
+        tooltipY + padding + (idx * lineHeight)
+      )
+    })
   }
 }
