@@ -6,7 +6,7 @@ import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { Button } from "@lumiere/shared/components/ui/button"
 import {
-  LineChart, Line, AreaChart, Area, ComposedChart, Bar,
+  LineChart, Line, AreaChart, Area, ComposedChart, Bar, Brush,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter
 } from 'recharts'
 import { TrendingUp, TrendingDown, Clock, CandlestickChart, LineChartIcon } from "lucide-react"
@@ -295,7 +295,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
               </CardHeader>
               <CardContent>
                 {priceChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
+                  <ResponsiveContainer width="100%" height={450}>
                     {chartMode === 'line' ? (
                       <ComposedChart data={priceChartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
@@ -345,6 +345,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                           strokeWidth={1}
                           shape="circle"
                           r={5}
+                        />
+                        <Brush
+                          dataKey="date"
+                          height={40}
+                          stroke="#8b5cf6"
+                          fill="#1a1a1a"
+                          travellerWidth={10}
                         />
                       </ComposedChart>
                     ) : (
@@ -399,11 +406,18 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                           shape="circle"
                           r={5}
                         />
+                        <Brush
+                          dataKey="date"
+                          height={40}
+                          stroke="#8b5cf6"
+                          fill="#1a1a1a"
+                          travellerWidth={10}
+                        />
                       </ComposedChart>
                     )}
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                  <div className="h-[450px] flex items-center justify-center text-muted-foreground">
                     No price data available
                   </div>
                 )}
@@ -420,7 +434,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Portfolio value over time</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={350}>
                   <AreaChart data={equityData}>
                     <defs>
                       <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
@@ -454,6 +468,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       strokeWidth={2}
                       fill="url(#equityGradient)"
                     />
+                    <Brush
+                      dataKey="date"
+                      height={40}
+                      stroke="#8b5cf6"
+                      fill="#1a1a1a"
+                      travellerWidth={10}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -469,7 +490,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Peak-to-trough decline</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={350}>
                   <AreaChart data={equityData}>
                     <defs>
                       <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
@@ -503,6 +524,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       strokeWidth={2}
                       fill="url(#drawdownGradient)"
                     />
+                    <Brush
+                      dataKey="date"
+                      height={40}
+                      stroke="#ef4444"
+                      fill="#1a1a1a"
+                      travellerWidth={10}
+                    />
                   </AreaChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -518,7 +546,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Profit and loss per trade</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={350}>
                   <LineChart data={cumulativePnL}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
                     <XAxis
@@ -550,6 +578,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       stroke="#8b5cf6"
                       strokeWidth={2}
                       dot={false}
+                    />
+                    <Brush
+                      dataKey="date"
+                      height={40}
+                      stroke="#8b5cf6"
+                      fill="#1a1a1a"
+                      travellerWidth={10}
                     />
                   </LineChart>
                 </ResponsiveContainer>
