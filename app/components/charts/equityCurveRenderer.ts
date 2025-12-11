@@ -25,7 +25,17 @@ function parseColorToRGBA(ctx: CanvasRenderingContext2D, cssColor: string): { r:
     }
   }
 
-  return { r: 139, g: 92, b: 246, a: 1 }
+  // Fallback: parse from hex
+  const hex = cssColor.replace('#', '')
+  if (hex.length === 6 || hex.length === 3) {
+    const r = parseInt(hex.substring(0, 2), 16)
+    const g = parseInt(hex.substring(2, 4), 16)
+    const b = parseInt(hex.substring(4, 6), 16)
+    return { r, g, b, a: 1 }
+  }
+
+  // Last resort: return transparent
+  return { r: 0, g: 0, b: 0, a: 0 }
 }
 
 // Create RGBA string with alpha
@@ -72,15 +82,18 @@ export class EquityCurveRenderer {
     this.padding = getPadding(width)
     this.chartHeight = height - this.padding.top - this.padding.bottom
 
-    // Initialize colors from CSS variables
-    this.colors = {
-      bg: getCSSColor('--background', '#0a0a0a'),
-      grid: getCSSColor('--border', '#1a1a1a'),
-      text: getCSSColor('--muted-foreground', '#888888'),
+    this.colors = this.loadColors()
+  }
+
+  private loadColors() {
+    return {
+      bg: getCSSColor('--background', '#ffffff'),
+      grid: getCSSColor('--border', '#e5e7eb'),
+      text: getCSSColor('--muted-foreground', '#6b7280'),
       cross: getCSSColor('--primary', '#8b5cf6'),
       line: getCSSColor('--primary', '#8b5cf6'),
-      tooltipBg: getCSSColor('--popover', '#1a1a1a'),
-      tooltipBorder: getCSSColor('--border', '#333333')
+      tooltipBg: getCSSColor('--popover', '#ffffff'),
+      tooltipBorder: getCSSColor('--border', '#e5e7eb')
     }
   }
 
@@ -113,16 +126,7 @@ export class EquityCurveRenderer {
     this.padding = getPadding(width)
     this.chartHeight = height - this.padding.top - this.padding.bottom
 
-    // Refresh colors on resize (in case theme changed)
-    this.colors = {
-      bg: getCSSColor('--background', '#0a0a0a'),
-      grid: getCSSColor('--border', '#1a1a1a'),
-      text: getCSSColor('--muted-foreground', '#888888'),
-      cross: getCSSColor('--primary', '#8b5cf6'),
-      line: getCSSColor('--primary', '#8b5cf6'),
-      tooltipBg: getCSSColor('--popover', '#1a1a1a'),
-      tooltipBorder: getCSSColor('--border', '#333333')
-    }
+    this.colors = this.loadColors()
   }
 
   public render(
