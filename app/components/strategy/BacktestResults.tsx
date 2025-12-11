@@ -4,11 +4,12 @@ import { useMemo, memo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
+import { Button } from "@lumiere/shared/components/ui/button"
 import {
-  LineChart, Line, AreaChart, Area, ComposedChart,
+  LineChart, Line, AreaChart, Area, ComposedChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter
 } from 'recharts'
-import { TrendingUp, TrendingDown, Clock } from "lucide-react"
+import { TrendingUp, TrendingDown, Clock, CandlestickChart, LineChartIcon } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 
@@ -16,6 +17,8 @@ interface BacktestResultsProps {
   results: BacktestResponse
   onClose?: () => void
 }
+
+type ChartMode = 'line' | 'candles'
 
 // Decimate data to max N points for performance
 function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
@@ -36,9 +39,42 @@ function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
   return decimated
 }
 
+// Custom candlestick shape
+const CandleShape = (props: any) => {
+  const { x, y, width, height, low, high, open, close } = props
+  const isGreen = close > open
+  const color = isGreen ? '#22c55e' : '#ef4444'
+  const wickX = x + width / 2
+
+  return (
+    <g>
+      {/* Wick (high-low line) */}
+      <line
+        x1={wickX}
+        y1={y + (isGreen ? 0 : height)}
+        x2={wickX}
+        y2={y + (isGreen ? height : 0)}
+        stroke={color}
+        strokeWidth={1}
+      />
+      {/* Body (open-close box) */}
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={color}
+        stroke={color}
+        strokeWidth={1}
+      />
+    </g>
+  )
+}
+
 export const BacktestResults = memo(function BacktestResults({ results, onClose }: BacktestResultsProps) {
   const { metrics, equity_curve, trades, trade_analysis, market_data } = results
   const [activeTab, setActiveTab] = useState('price')
+  const [chartMode, setChartMode] = useState<ChartMode>('line')
 
   const normalizedMetrics = useMemo(() => ({
     ...metrics,
@@ -107,35 +143,28 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     const full = market_data.map((candle) => {
       const ts = normalizeTimestamp(candle.timestamp)
       const trade = tradeMap.get(ts)
+      
+      // For candlestick: map OHLC to y-coordinates
+      const isGreen = candle.close > candle.open
+      const bodyTop = Math.max(candle.open, candle.close)
+      const bodyBottom = Math.min(candle.open, candle.close)
 
       return {
         timestamp: ts,
         date: format(new Date(candle.timestamp), 'MMM dd HH:mm'),
-        close: candle.close,
+        open: candle.open,
         high: candle.high,
         low: candle.low,
+        close: candle.close,
+        // For Bar component in candlestick mode
+        candleData: [bodyBottom, bodyTop],
         buy: trade?.side === 'BUY' ? trade.price : null,
         sell: trade?.side === 'SELL' ? trade.price : null,
         sellPnl: trade?.side === 'SELL' ? trade.pnl : null
       }
     })
 
-    const decimated = decimateData(full, 300)
-
-    console.log('Price chart data:', {
-      original_length: full.length,
-      decimated_length: decimated.length,
-      first_point: decimated[0],
-      last_point: decimated[decimated.length - 1],
-      sample_points: decimated.slice(0, 5),
-      has_close_values: decimated.every(d => typeof d.close === 'number'),
-      close_range: {
-        min: Math.min(...decimated.map(d => d.close)),
-        max: Math.max(...decimated.map(d => d.close))
-      }
-    })
-
-    return decimated
+    return decimateData(full, 300)
   }, [market_data, trades])
 
   const buyCount = useMemo(() =>
@@ -230,48 +259,148 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           <TabsContent value="price" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Price Chart with Trade Signals</CardTitle>
-                <CardDescription>
-                  <span className="inline-flex items-center gap-2 mr-4">
-                    <span className="inline-block w-3 h-3 rounded-full bg-chart-2"></span>
-                    Buy Signals ({buyCount})
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <span className="inline-block w-3 h-3 rounded-full bg-destructive"></span>
-                    Sell Signals ({sellCount})
-                  </span>
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Price Chart with Trade Signals</CardTitle>
+                    <CardDescription className="mt-2">
+                      <span className="inline-flex items-center gap-2 mr-4">
+                        <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
+                        Buy Signals ({buyCount})
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
+                        Sell Signals ({sellCount})
+                      </span>
+                    </CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={chartMode === 'line' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartMode('line')}
+                    >
+                      <LineChartIcon className="h-4 w-4 mr-2" />
+                      Line
+                    </Button>
+                    <Button
+                      variant={chartMode === 'candles' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setChartMode('candles')}
+                    >
+                      <CandlestickChart className="h-4 w-4 mr-2" />
+                      Candles
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {priceChartData.length > 0 ? (
                   <ResponsiveContainer width="100%" height={400}>
-                    <LineChart data={priceChartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis
-                        dataKey="date"
-                        stroke="#888888"
-                        fontSize={12}
-                      />
-                      <YAxis
-                        stroke="#888888"
-                        fontSize={12}
-                        tickFormatter={(value) => `$${value.toFixed(0)}`}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#1a1a1a',
-                          border: '1px solid #333',
-                          borderRadius: '8px'
-                        }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="close"
-                        stroke="#8b5cf6"
-                        strokeWidth={2}
-                        dot={false}
-                      />
-                    </LineChart>
+                    {chartMode === 'line' ? (
+                      <ComposedChart data={priceChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#888888"
+                          fontSize={12}
+                        />
+                        <YAxis
+                          stroke="#888888"
+                          fontSize={12}
+                          tickFormatter={(value) => `$${value.toFixed(0)}`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid #333',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: any, name: string) => {
+                            if (!value) return null
+                            if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
+                            if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
+                            if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
+                            return [value, name]
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="close"
+                          stroke="#8b5cf6"
+                          strokeWidth={2}
+                          dot={false}
+                        />
+                        <Scatter
+                          dataKey="buy"
+                          fill="#22c55e"
+                          stroke="#000"
+                          strokeWidth={1}
+                          shape="circle"
+                          r={5}
+                        />
+                        <Scatter
+                          dataKey="sell"
+                          fill="#ef4444"
+                          stroke="#000"
+                          strokeWidth={1}
+                          shape="circle"
+                          r={5}
+                        />
+                      </ComposedChart>
+                    ) : (
+                      <ComposedChart data={priceChartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#888888"
+                          fontSize={12}
+                        />
+                        <YAxis
+                          stroke="#888888"
+                          fontSize={12}
+                          domain={['auto', 'auto']}
+                          tickFormatter={(value) => `$${value.toFixed(0)}`}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#1a1a1a',
+                            border: '1px solid #333',
+                            borderRadius: '8px'
+                          }}
+                          formatter={(value: any, name: string) => {
+                            if (!value) return null
+                            if (name === 'open') return [`$${value.toFixed(2)}`, 'Open']
+                            if (name === 'high') return [`$${value.toFixed(2)}`, 'High']
+                            if (name === 'low') return [`$${value.toFixed(2)}`, 'Low']
+                            if (name === 'close') return [`$${value.toFixed(2)}`, 'Close']
+                            if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
+                            if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
+                            return [value, name]
+                          }}
+                        />
+                        <Bar
+                          dataKey="candleData"
+                          shape={<CandleShape />}
+                          maxBarSize={8}
+                        />
+                        <Scatter
+                          dataKey="buy"
+                          fill="#22c55e"
+                          stroke="#000"
+                          strokeWidth={1}
+                          shape="circle"
+                          r={5}
+                        />
+                        <Scatter
+                          dataKey="sell"
+                          fill="#ef4444"
+                          stroke="#000"
+                          strokeWidth={1}
+                          shape="circle"
+                          r={5}
+                        />
+                      </ComposedChart>
+                    )}
                   </ResponsiveContainer>
                 ) : (
                   <div className="h-[400px] flex items-center justify-center text-muted-foreground">
@@ -295,37 +424,35 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                   <AreaChart data={equityData}>
                     <defs>
                       <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                     />
                     <YAxis
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                       tickFormatter={(value) => `$${value.toLocaleString()}`}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'hsl(var(--popover))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        color: 'hsl(var(--popover-foreground))'
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid #333',
+                        borderRadius: '8px'
                       }}
                       formatter={(value: number) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Equity']}
                     />
                     <Area
                       type="monotone"
                       dataKey="equity"
-                      stroke="hsl(var(--primary))"
+                      stroke="#8b5cf6"
                       strokeWidth={2}
                       fill="url(#equityGradient)"
-                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -346,37 +473,35 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                   <AreaChart data={equityData}>
                     <defs>
                       <linearGradient id="drawdownGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                     />
                     <YAxis
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                       tickFormatter={(value) => `${value.toFixed(1)}%`}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'hsl(var(--popover))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        color: 'hsl(var(--popover-foreground))'
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid #333',
+                        borderRadius: '8px'
                       }}
                       formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
                     />
                     <Area
                       type="monotone"
                       dataKey="drawdown"
-                      stroke="hsl(var(--destructive))"
+                      stroke="#ef4444"
                       strokeWidth={2}
                       fill="url(#drawdownGradient)"
-                      isAnimationActive={false}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -395,23 +520,22 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={cumulativePnL}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                     />
                     <YAxis
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
+                      stroke="#888888"
+                      fontSize={12}
                       tickFormatter={(value) => `$${value.toLocaleString()}`}
                     />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: 'hsl(var(--popover))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        color: 'hsl(var(--popover-foreground))'
+                        backgroundColor: '#1a1a1a',
+                        border: '1px solid #333',
+                        borderRadius: '8px'
                       }}
                       formatter={(value: number, name: string) => {
                         if (name === 'cumulative_pnl') {
@@ -423,10 +547,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     <Line
                       type="monotone"
                       dataKey="cumulative_pnl"
-                      stroke="hsl(var(--primary))"
+                      stroke="#8b5cf6"
                       strokeWidth={2}
                       dot={false}
-                      isAnimationActive={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -469,19 +592,19 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Avg Win</span>
-              <span className="font-semibold text-chart-2">${trade_analysis.avg_win.toFixed(2)}</span>
+              <span className="font-semibold text-green-500">${trade_analysis.avg_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Avg Loss</span>
-              <span className="font-semibold text-destructive">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
+              <span className="font-semibold text-red-500">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Largest Win</span>
-              <span className="font-semibold text-chart-2">${trade_analysis.largest_win.toFixed(2)}</span>
+              <span className="font-semibold text-green-500">${trade_analysis.largest_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Largest Loss</span>
-              <span className="font-semibold text-destructive">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
+              <span className="font-semibold text-red-500">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
