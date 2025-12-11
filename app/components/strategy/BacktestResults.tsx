@@ -251,7 +251,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         yAxisId="price"
                         tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
                         stroke="hsl(var(--border))"
-                        domain={['dataMin - 10', 'dataMax + 10']}
+                        domain={['auto', 'auto']}
                         tickFormatter={(value) => `$${value.toFixed(0)}`}
                       />
                       <Tooltip
