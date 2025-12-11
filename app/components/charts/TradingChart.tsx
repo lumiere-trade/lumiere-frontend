@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { Button } from "@lumiere/shared/components/ui/button"
 import { LineChartIcon, CandlestickChart } from "lucide-react"
 import { ChartRenderer } from './chartRenderer'
 import { calculateViewport } from './chartUtils'
-import { Candle, Trade, Mode, TF, ChartState, Viewport } from './types'
+import { Candle, Trade, Mode, ChartState } from './types'
 
 interface TradingChartProps {
   data: Array<{
@@ -25,8 +25,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<ChartRenderer | null>(null)
   const rafRef = useRef<number | null>(null)
-  const [resizeKey, setResizeKey] = useState(0)
-  
+
   const [state, setState] = useState<ChartState>({
     mode: 'L',
     timeframe: '15m',
@@ -45,12 +44,16 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     isDragging: false,
     dirty: true
   })
-  
+
   const stateRef = useRef(state)
   stateRef.current = state
-  
-  // Convert data to optimized format
-  useEffect(() => {
+
+  const [zoom, setZoom] = useState(1)
+  const [offsetX, setOffsetX] = useState(0)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  // Transform data to optimized format (memoized)
+  const { candles, trades } = useMemo(() => {
     const candles: Candle[] = data.map(d => ({
       t: d.timestamp,
       o: d.open,
@@ -58,7 +61,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       l: d.low,
       c: d.close
     }))
-    
+
     const trades: Trade[] = data
       .map((d, idx) => {
         if (d.buy !== null && d.buy !== undefined) {
@@ -70,91 +73,77 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         return null
       })
       .filter((t): t is Trade => t !== null)
-    
+
+    return { candles, trades }
+  }, [data])
+
+  // Reset zoom/pan when data changes
+  useEffect(() => {
+    setZoom(1)
+    setOffsetX(0)
+  }, [data])
+
+  // Initialize renderer once
+  useEffect(() => {
+    if (!canvasRef.current) return
+    rendererRef.current = new ChartRenderer(canvasRef.current)
+  }, [])
+
+  // ResizeObserver for container width tracking
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width
+        if (width > 0) {
+          setContainerWidth(width)
+
+          // Force canvas resize
+          if (canvasRef.current && rendererRef.current) {
+            rendererRef.current.resize(canvasRef.current)
+          }
+        }
+      }
+    })
+
+    resizeObserver.observe(containerRef.current)
+
+    // Initial width
+    setContainerWidth(containerRef.current.clientWidth)
+
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  // Unified viewport calculation - single source of truth
+  useEffect(() => {
+    if (candles.length === 0 || containerWidth === 0) return
+
+    const viewport = calculateViewport(
+      candles,
+      containerWidth,
+      zoom,
+      offsetX
+    )
+
     setState(prev => ({
       ...prev,
       candles,
       trades,
-      dirty: true
-    }))
-  }, [data])
-  
-  // Initialize renderer
-  useEffect(() => {
-    if (!canvasRef.current) return
-    
-    rendererRef.current = new ChartRenderer(canvasRef.current)
-    
-    if (state.candles.length > 0 && containerRef.current) {
-      const width = containerRef.current.clientWidth
-      const viewport = calculateViewport(
-        state.candles,
-        width,
-        1, // Reset zoom on init
-        0  // Reset pan on init
-      )
-      
-      setState(prev => ({
-        ...prev,
-        viewport: {
-          ...viewport,
-          zoom: 1,
-          offsetX: 0
-        },
-        dirty: true
-      }))
-    }
-  }, [])
-  
-  // ResizeObserver for immediate resize detection
-  useEffect(() => {
-    if (!containerRef.current) return
-    
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (!canvasRef.current || !rendererRef.current) continue
-        
-        // Force canvas resize
-        rendererRef.current.resize(canvasRef.current)
-        
-        // Trigger full viewport recalculation
-        setResizeKey(prev => prev + 1)
-      }
-    })
-    
-    resizeObserver.observe(containerRef.current)
-    
-    return () => resizeObserver.disconnect()
-  }, [])
-  
-  // Recalculate viewport on resize
-  useEffect(() => {
-    if (!containerRef.current || state.candles.length === 0) return
-    
-    const width = containerRef.current.clientWidth
-    const viewport = calculateViewport(
-      state.candles,
-      width,
-      state.viewport.zoom,
-      state.viewport.offsetX
-    )
-    
-    setState(prev => ({
-      ...prev,
       viewport,
       dirty: true
     }))
-  }, [resizeKey, state.candles])
-  
+  }, [candles, trades, containerWidth, zoom, offsetX])
+
   // Theme change detection
   useEffect(() => {
     if (!canvasRef.current || !rendererRef.current) return
-    
+
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
           mutation.type === 'attributes' &&
-          (mutation.attributeName === 'class' || 
+          (mutation.attributeName === 'class' ||
            mutation.attributeName === 'data-theme' ||
            mutation.attributeName === 'style')
         ) {
@@ -165,15 +154,15 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         }
       })
     })
-    
+
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class', 'data-theme', 'style']
     })
-    
+
     return () => observer.disconnect()
   }, [])
-  
+
   // Render loop
   useEffect(() => {
     const render = () => {
@@ -185,106 +174,64 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           stateRef.current.mode,
           stateRef.current.mouse
         )
-        
+
         setState(prev => ({ ...prev, dirty: false }))
       }
-      
+
       rafRef.current = requestAnimationFrame(render)
     }
-    
+
     rafRef.current = requestAnimationFrame(render)
-    
+
     return () => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current)
       }
     }
   }, [])
-  
-  // Recalculate viewport on zoom/pan
-  useEffect(() => {
-    if (state.candles.length === 0 || !containerRef.current) return
-    
-    const width = containerRef.current.clientWidth
-    const viewport = calculateViewport(
-      state.candles,
-      width,
-      state.viewport.zoom,
-      state.viewport.offsetX
-    )
-    
-    setState(prev => ({
-      ...prev,
-      viewport,
-      dirty: true
-    }))
-  }, [state.viewport.zoom, state.viewport.offsetX])
-  
+
   // Mouse wheel zoom
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
-    
+
     const delta = -e.deltaY
     const zoomFactor = delta > 0 ? 1.1 : 0.9
-    
-    setState(prev => ({
-      ...prev,
-      viewport: {
-        ...prev.viewport,
-        zoom: Math.max(0.1, Math.min(10, prev.viewport.zoom * zoomFactor))
-      }
-    }))
+
+    setZoom(prev => Math.max(0.1, Math.min(10, prev * zoomFactor)))
   }, [])
-  
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    
+
     canvas.addEventListener('wheel', handleWheel, { passive: false })
     return () => canvas.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
-  
+
   // Mouse drag pan
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    setState(prev => ({
-      ...prev,
-      isDragging: true
-    }))
+  const handleMouseDown = useCallback(() => {
+    setState(prev => ({ ...prev, isDragging: true }))
   }, [])
-  
+
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect()
     if (!rect) return
-    
+
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-    
+
     if (stateRef.current.isDragging) {
-      setState(prev => ({
-        ...prev,
-        viewport: {
-          ...prev.viewport,
-          offsetX: prev.viewport.offsetX + e.movementX
-        },
-        mouse: { x, y },
-        dirty: true
-      }))
+      setOffsetX(prev => prev + e.movementX)
+      setState(prev => ({ ...prev, mouse: { x, y }, dirty: true }))
     } else {
-      setState(prev => ({
-        ...prev,
-        mouse: { x, y },
-        dirty: true
-      }))
+      setState(prev => ({ ...prev, mouse: { x, y }, dirty: true }))
     }
   }, [])
-  
+
   const handleMouseUp = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      isDragging: false
-    }))
+    setState(prev => ({ ...prev, isDragging: false }))
   }, [])
-  
+
   const handleMouseLeave = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -293,22 +240,22 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       dirty: true
     }))
   }, [])
-  
+
   // Touch support
   const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null)
-  
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
-      
+
       touchStartRef.current = {
         x: touch.clientX - rect.left,
         y: touch.clientY - rect.top,
         dist: 0
       }
-      
+
       setState(prev => ({ ...prev, isDragging: true }))
     } else if (e.touches.length === 2) {
       const touch1 = e.touches[0]
@@ -317,33 +264,25 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       )
-      
+
       touchStartRef.current = { x: 0, y: 0, dist }
     }
   }, [])
-  
+
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault()
-    
+
     if (!touchStartRef.current) return
-    
+
     if (e.touches.length === 1 && stateRef.current.isDragging) {
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
       if (!rect) return
-      
+
       const x = touch.clientX - rect.left
       const dx = x - touchStartRef.current.x
-      
-      setState(prev => ({
-        ...prev,
-        viewport: {
-          ...prev.viewport,
-          offsetX: prev.viewport.offsetX + dx
-        },
-        dirty: true
-      }))
-      
+
+      setOffsetX(prev => prev + dx)
       touchStartRef.current.x = x
     } else if (e.touches.length === 2) {
       const touch1 = e.touches[0]
@@ -352,85 +291,47 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         touch2.clientX - touch1.clientX,
         touch2.clientY - touch1.clientY
       )
-      
+
       const zoomFactor = dist / touchStartRef.current.dist
-      
-      setState(prev => ({
-        ...prev,
-        viewport: {
-          ...prev.viewport,
-          zoom: Math.max(0.1, Math.min(10, prev.viewport.zoom * zoomFactor))
-        },
-        dirty: true
-      }))
-      
+
+      setZoom(prev => Math.max(0.1, Math.min(10, prev * zoomFactor)))
       touchStartRef.current.dist = dist
     }
   }, [])
-  
+
   const handleTouchEnd = useCallback(() => {
     touchStartRef.current = null
     setState(prev => ({ ...prev, isDragging: false }))
   }, [])
-  
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case '+':
         case '=':
-          setState(prev => ({
-            ...prev,
-            viewport: {
-              ...prev.viewport,
-              zoom: Math.min(10, prev.viewport.zoom * 1.2)
-            }
-          }))
+          setZoom(prev => Math.min(10, prev * 1.2))
           break
         case '-':
-          setState(prev => ({
-            ...prev,
-            viewport: {
-              ...prev.viewport,
-              zoom: Math.max(0.1, prev.viewport.zoom * 0.8)
-            }
-          }))
+          setZoom(prev => Math.max(0.1, prev * 0.8))
           break
         case '0':
-          setState(prev => ({
-            ...prev,
-            viewport: {
-              ...prev.viewport,
-              zoom: 1,
-              offsetX: 0
-            }
-          }))
+          setZoom(1)
+          setOffsetX(0)
           break
         case 'ArrowLeft':
-          setState(prev => ({
-            ...prev,
-            viewport: {
-              ...prev.viewport,
-              offsetX: prev.viewport.offsetX + 50
-            }
-          }))
+          setOffsetX(prev => prev + 50)
           break
         case 'ArrowRight':
-          setState(prev => ({
-            ...prev,
-            viewport: {
-              ...prev.viewport,
-              offsetX: prev.viewport.offsetX - 50
-            }
-          }))
+          setOffsetX(prev => prev - 50)
           break
       }
     }
-    
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
-  
+
   // Mode toggle
   const toggleMode = useCallback(() => {
     setState(prev => ({
@@ -439,10 +340,10 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       dirty: true
     }))
   }, [])
-  
-  const buyCount = state.trades.filter(t => t.s === 'B').length
-  const sellCount = state.trades.filter(t => t.s === 'S').length
-  
+
+  const buyCount = trades.filter(t => t.s === 'B').length
+  const sellCount = trades.filter(t => t.s === 'S').length
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -475,8 +376,8 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           </Button>
         </div>
       </div>
-      
-      <div 
+
+      <div
         ref={containerRef}
         className="relative w-full"
         style={{ height: `${height}px` }}
@@ -494,7 +395,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           onTouchEnd={handleTouchEnd}
         />
       </div>
-      
+
       <div className="text-xs text-muted-foreground text-center">
         Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset • Arrow keys to scroll
       </div>
