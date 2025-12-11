@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react'
 import { StrategyParameters } from '@/lib/api/prophet'
+import { BacktestResponse } from '@/lib/api/cartographe'
 
 export interface ChatMessage {
   id: string
@@ -35,6 +36,8 @@ interface ChatContextType {
   progressMessage: string
   isDetailsPanelOpen: boolean
   detailsPanelTab: DetailsPanelTab
+  backtestResults: BacktestResponse | null
+  isBacktesting: boolean
 
   expandChat: () => void
   collapseChat: () => void
@@ -52,6 +55,8 @@ interface ChatContextType {
   openDetailsPanel: () => void
   closeDetailsPanel: () => void
   setDetailsPanelTab: (tab: DetailsPanelTab) => void
+  setBacktestResults: (results: BacktestResponse | null) => void
+  setIsBacktesting: (value: boolean) => void
   clearChat: () => void
 }
 
@@ -72,6 +77,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [progressMessage, setProgressMessage] = useState<string>('')
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
+  const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
+  const [isBacktesting, setIsBacktesting] = useState(false)
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
@@ -92,6 +99,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setProgressMessage('')
     setIsDetailsPanelOpen(false)
     setDetailsPanelTab('parameters')
+    setBacktestResults(null)
+    setIsBacktesting(false)
   }
 
   return (
@@ -111,6 +120,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         progressMessage,
         isDetailsPanelOpen,
         detailsPanelTab,
+        backtestResults,
+        isBacktesting,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
@@ -127,6 +138,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         openDetailsPanel,
         closeDetailsPanel,
         setDetailsPanelTab,
+        setBacktestResults,
+        setIsBacktesting,
         clearChat,
       }}
     >

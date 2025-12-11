@@ -1,9 +1,12 @@
 "use client"
 
-import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, Save } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
+import { BacktestResults } from "./BacktestResults"
 import { useState } from "react"
+import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
+import { useChat } from "@/contexts/ChatContext"
 
 interface StrategyDetailsPanelProps {
   isOpen: boolean
@@ -21,6 +24,8 @@ export function StrategyDetailsPanel({
   strategy
 }: StrategyDetailsPanelProps) {
   const [isSaving, setIsSaving] = useState(false)
+  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
+  const runBacktestMutation = useRunBacktest()
 
   // Transform generatedStrategy to StrategyParameters format
   const strategyForParams = strategy ? {
@@ -33,6 +38,35 @@ export function StrategyDetailsPanel({
   const handleSaveStrategy = async () => {
     // TODO: Trigger save from StrategyParameters
     console.log('Save strategy clicked')
+  }
+
+  const handleRunBacktest = async () => {
+    if (!strategy || !strategy.tsdl_code) {
+      console.error('No strategy to backtest')
+      return
+    }
+
+    setIsBacktesting(true)
+    setBacktestResults(null)
+
+    try {
+      const result = await runBacktestMutation.mutateAsync({
+        tsdl_document: strategy.tsdl_code,
+        symbol: 'SOL/USDC',  // Default symbol, TODO: make configurable
+        days_back: 30,       // Default 30 days, TODO: make configurable
+        initial_capital: 10000,  // Default $10k, TODO: make configurable
+        timeframe: '1h',     // Default 1h, TODO: make configurable
+        slippage: 0.001,     // 0.1% slippage
+        commission: 0.001,   // 0.1% commission
+        cache_results: true
+      })
+
+      setBacktestResults(result)
+    } catch (error) {
+      console.error('Backtest failed:', error)
+    } finally {
+      setIsBacktesting(false)
+    }
   }
 
   return (
@@ -96,10 +130,20 @@ export function StrategyDetailsPanel({
               <Button
                 variant={activeTab === 'backtest' ? 'default' : 'outline'}
                 size="sm"
-                onClick={() => onTabChange('backtest')}
+                onClick={() => {
+                  onTabChange('backtest')
+                  if (!backtestResults && !isBacktesting) {
+                    handleRunBacktest()
+                  }
+                }}
                 className="gap-2"
+                disabled={isBacktesting}
               >
-                <Play className="h-4 w-4" />
+                {isBacktesting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
                 Backtest
               </Button>
             </div>
@@ -135,8 +179,28 @@ export function StrategyDetailsPanel({
             </div>
           )}
           {activeTab === 'backtest' && (
-            <div className="text-center text-muted-foreground py-12">
-              Backtest functionality coming soon
+            <div>
+              {isBacktesting && (
+                <div className="text-center py-12">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+                  <p className="text-lg font-semibold">Running backtest...</p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    This may take up to 60 seconds
+                  </p>
+                </div>
+              )}
+              {!isBacktesting && !backtestResults && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground mb-4">No backtest results yet</p>
+                  <Button onClick={handleRunBacktest} className="gap-2">
+                    <Play className="h-4 w-4" />
+                    Run Backtest
+                  </Button>
+                </div>
+              )}
+              {!isBacktesting && backtestResults && (
+                <BacktestResults results={backtestResults} />
+              )}
             </div>
           )}
         </div>
