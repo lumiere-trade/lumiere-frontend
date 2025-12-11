@@ -4,7 +4,7 @@
  * Communicates through Pourtier proxy (/api/cartographe/*)
  */
 
-import { post, get } from './client';
+import { post, get, apiRequest } from './client';
 import { logger, LogCategory } from '@/lib/debug';
 
 // ============================================================================
@@ -108,10 +108,11 @@ export interface HealthResponse {
 
 const CARTOGRAPHE_PREFIX = '/api/cartographe';
 const LOG_CATEGORY = LogCategory.API;
+const BACKTEST_TIMEOUT = 90000; // 90 seconds for backtest
 
 /**
  * Run backtest on TSDL strategy
- * Timeout: 60 seconds (handled by Pourtier)
+ * Timeout: 90 seconds (Cartographe can take up to 60s)
  */
 export const runBacktest = async (
   request: BacktestRequest
@@ -121,10 +122,22 @@ export const runBacktest = async (
     days_back: request.days_back,
     timeframe: request.timeframe,
     initial_capital: request.initial_capital,
+    tsdl_length: request.tsdl_document.length,
   });
 
+  // Log first 500 chars of TSDL for debugging
+  console.log('TSDL Document (first 500 chars):', request.tsdl_document.substring(0, 500));
+
   try {
-    const result = await post(`${CARTOGRAPHE_PREFIX}/backtest`, request);
+    const result = await apiRequest<BacktestResponse>(
+      `${CARTOGRAPHE_PREFIX}/backtest`,
+      {
+        method: 'POST',
+        body: JSON.stringify(request),
+      },
+      BACKTEST_TIMEOUT
+    );
+    
     logger.info(LOG_CATEGORY, 'Backtest completed successfully', {
       backtest_id: result.backtest_id,
       total_return: result.metrics.total_return_pct,
