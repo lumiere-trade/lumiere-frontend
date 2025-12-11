@@ -14,9 +14,9 @@ function getCSSColor(varName: string, fallback: string): string {
 function getPadding(width: number) {
   return {
     top: 20,
-    right: Math.max(70, width * 0.08),  // 8% of width, min 70px
+    right: Math.max(70, width * 0.08),
     bottom: 40,
-    left: Math.max(15, width * 0.02)    // 2% of width, min 15px
+    left: Math.max(15, width * 0.02)
   }
 }
 
@@ -41,11 +41,12 @@ export class ChartRenderer {
   }
   
   constructor(canvas: HTMLCanvasElement) {
-    this.ctx = this.setupCanvas(canvas)
-    this.width = canvas.width
-    this.height = canvas.height
-    this.padding = getPadding(this.width)
-    this.chartHeight = this.height - this.padding.top - this.padding.bottom
+    const { ctx, width, height } = this.setupCanvas(canvas)
+    this.ctx = ctx
+    this.width = width
+    this.height = height
+    this.padding = getPadding(width)
+    this.chartHeight = height - this.padding.top - this.padding.bottom
     
     // Initialize colors from CSS variables
     this.colors = {
@@ -63,27 +64,31 @@ export class ChartRenderer {
     }
   }
   
-  private setupCanvas(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  private setupCanvas(canvas: HTMLCanvasElement): { ctx: CanvasRenderingContext2D; width: number; height: number } {
     const dpr = window.devicePixelRatio || 1
     const rect = canvas.getBoundingClientRect()
     
-    this.width = rect.width
-    this.height = rect.height
+    const width = rect.width
+    const height = rect.height
     
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    canvas.style.width = `${rect.width}px`
-    canvas.style.height = `${rect.height}px`
+    canvas.width = width * dpr
+    canvas.height = height * dpr
+    canvas.style.width = `${width}px`
+    canvas.style.height = `${height}px`
     
     const ctx = canvas.getContext('2d', { alpha: false })!
     ctx.scale(dpr, dpr)
-    return ctx
+    
+    return { ctx, width, height }
   }
   
   public resize(canvas: HTMLCanvasElement) {
-    this.ctx = this.setupCanvas(canvas)
-    this.padding = getPadding(this.width)
-    this.chartHeight = this.height - this.padding.top - this.padding.bottom
+    const { ctx, width, height } = this.setupCanvas(canvas)
+    this.ctx = ctx
+    this.width = width
+    this.height = height
+    this.padding = getPadding(width)
+    this.chartHeight = height - this.padding.top - this.padding.bottom
     
     // Refresh colors on resize (in case theme changed)
     this.colors = {
