@@ -11,7 +11,7 @@ import {
 import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
-import { TradingChart } from "@/components/charts"
+import { TradingChart, EquityCurve } from "@/components/charts"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -49,7 +49,18 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     cagr_pct: metrics.cagr * 100
   }), [metrics])
 
-  // Decimated equity data - max 300 points
+  // Equity data for custom EquityCurve component
+  const equityCurveData = useMemo(() => {
+    const full = equity_curve.map((point) => ({
+      timestamp: new Date(point.timestamp).getTime(),
+      equity: point.equity,
+      drawdown: point.drawdown,
+      return_pct: point.return_pct
+    }))
+    return decimateData(full, 300)
+  }, [equity_curve])
+
+  // Legacy equity data for Recharts (drawdown tab still uses Recharts)
   const equityData = useMemo(() => {
     const full = equity_curve.map((point) => ({
       timestamp: new Date(point.timestamp).getTime(),
@@ -229,49 +240,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Portfolio value over time</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <AreaChart data={equityData}>
-                    <defs>
-                      <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#888888"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="#888888"
-                      fontSize={12}
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1a1a1a',
-                        border: '1px solid #333',
-                        borderRadius: '8px'
-                      }}
-                      formatter={(value: number) => [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Equity']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="equity"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      fill="url(#equityGradient)"
-                    />
-                    <Brush
-                      dataKey="date"
-                      height={40}
-                      stroke="#8b5cf6"
-                      fill="#1a1a1a"
-                      travellerWidth={10}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {equityCurveData.length > 0 ? (
+                  <EquityCurve data={equityCurveData} height={450} />
+                ) : (
+                  <div className="h-[450px] flex items-center justify-center text-muted-foreground">
+                    No equity data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -359,12 +334,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         backgroundColor: '#1a1a1a',
                         border: '1px solid #333',
                         borderRadius: '8px'
-                      }}
-                      formatter={(value: number, name: string) => {
-                        if (name === 'cumulative_pnl') {
-                          return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Cumulative PnL']
-                        }
-                        return [`$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 'Trade PnL']
                       }}
                     />
                     <Line
