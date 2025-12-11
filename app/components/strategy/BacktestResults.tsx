@@ -11,7 +11,7 @@ import {
 import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
-import { PriceChart } from "@/components/charts/PriceChart"
+import { TradingChart } from "@/components/charts"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -84,7 +84,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     })
   }, [tradesData])
 
-  // Price chart data for lightweight-charts
+  // Price chart data for custom TradingChart
   const priceChartData = useMemo(() => {
     if (!market_data || market_data.length === 0) {
       return []
@@ -210,7 +210,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
               </CardHeader>
               <CardContent>
                 {priceChartData.length > 0 ? (
-                  <PriceChart data={priceChartData} height={450} />
+                  <TradingChart data={priceChartData} height={450} />
                 ) : (
                   <div className="h-[450px] flex items-center justify-center text-muted-foreground">
                     No price data available
