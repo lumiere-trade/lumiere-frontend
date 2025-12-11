@@ -10,13 +10,22 @@ function getCSSColor(varName: string, fallback: string): string {
   return value || fallback
 }
 
-const PADDING = { top: 10, right: 60, bottom: 30, left: 10 }
+// Responsive padding based on canvas width
+function getPadding(width: number) {
+  return {
+    top: 20,
+    right: Math.max(70, width * 0.08),  // 8% of width, min 70px
+    bottom: 40,
+    left: Math.max(15, width * 0.02)    // 2% of width, min 15px
+  }
+}
 
 export class ChartRenderer {
   private ctx: CanvasRenderingContext2D
   private width: number
   private height: number
   private chartHeight: number
+  private padding: { top: number; right: number; bottom: number; left: number }
   private colors: {
     bg: string
     grid: string
@@ -35,7 +44,8 @@ export class ChartRenderer {
     this.ctx = this.setupCanvas(canvas)
     this.width = canvas.width
     this.height = canvas.height
-    this.chartHeight = this.height - PADDING.top - PADDING.bottom
+    this.padding = getPadding(this.width)
+    this.chartHeight = this.height - this.padding.top - this.padding.bottom
     
     // Initialize colors from CSS variables
     this.colors = {
@@ -72,6 +82,8 @@ export class ChartRenderer {
   
   public resize(canvas: HTMLCanvasElement) {
     this.ctx = this.setupCanvas(canvas)
+    this.padding = getPadding(this.width)
+    this.chartHeight = this.height - this.padding.top - this.padding.bottom
     
     // Refresh colors on resize (in case theme changed)
     this.colors = {
@@ -134,22 +146,22 @@ export class ChartRenderer {
     const priceStep = (priceMax - priceMin) / 5
     for (let i = 0; i <= 5; i++) {
       const price = priceMin + (priceStep * i)
-      const y = priceToY(price, priceMin, priceMax, this.chartHeight, PADDING.top)
+      const y = priceToY(price, priceMin, priceMax, this.chartHeight, this.padding.top)
       
       this.ctx.beginPath()
-      this.ctx.moveTo(PADDING.left, y)
-      this.ctx.lineTo(this.width - PADDING.right, y)
+      this.ctx.moveTo(this.padding.left, y)
+      this.ctx.lineTo(this.width - this.padding.right, y)
       this.ctx.stroke()
     }
     
     // Vertical lines
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, PADDING.left)
-      if (x >= PADDING.left && x <= this.width - PADDING.right) {
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, this.padding.left)
+      if (x >= this.padding.left && x <= this.width - this.padding.right) {
         this.ctx.beginPath()
-        this.ctx.moveTo(x, PADDING.top)
-        this.ctx.lineTo(x, this.height - PADDING.bottom)
+        this.ctx.moveTo(x, this.padding.top)
+        this.ctx.lineTo(x, this.height - this.padding.bottom)
         this.ctx.stroke()
       }
     }
@@ -162,17 +174,17 @@ export class ChartRenderer {
     
     candles.forEach((candle, idx) => {
       const actualIdx = viewport.startIdx + idx
-      const x = indexToX(actualIdx, candleWidth, offsetX, PADDING.left)
+      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
       
-      if (x < PADDING.left || x > this.width - PADDING.right) return
+      if (x < this.padding.left || x > this.width - this.padding.right) return
       
       const isUp = candle.c >= candle.o
       const color = isUp ? this.colors.up : this.colors.down
       
-      const yHigh = priceToY(candle.h, priceMin, priceMax, this.chartHeight, PADDING.top)
-      const yLow = priceToY(candle.l, priceMin, priceMax, this.chartHeight, PADDING.top)
-      const yOpen = priceToY(candle.o, priceMin, priceMax, this.chartHeight, PADDING.top)
-      const yClose = priceToY(candle.c, priceMin, priceMax, this.chartHeight, PADDING.top)
+      const yHigh = priceToY(candle.h, priceMin, priceMax, this.chartHeight, this.padding.top)
+      const yLow = priceToY(candle.l, priceMin, priceMax, this.chartHeight, this.padding.top)
+      const yOpen = priceToY(candle.o, priceMin, priceMax, this.chartHeight, this.padding.top)
+      const yClose = priceToY(candle.c, priceMin, priceMax, this.chartHeight, this.padding.top)
       
       // Wick
       this.ctx.strokeStyle = color
@@ -207,8 +219,8 @@ export class ChartRenderer {
     
     candles.forEach((candle, idx) => {
       const actualIdx = viewport.startIdx + idx
-      const x = indexToX(actualIdx, candleWidth, offsetX, PADDING.left)
-      const y = priceToY(candle.c, priceMin, priceMax, this.chartHeight, PADDING.top)
+      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
+      const y = priceToY(candle.c, priceMin, priceMax, this.chartHeight, this.padding.top)
       
       if (idx === 0) {
         this.ctx.moveTo(x, y)
@@ -229,8 +241,8 @@ export class ChartRenderer {
       
       if (idx < startIdx || idx > endIdx) return
       
-      const x = indexToX(idx, candleWidth, offsetX, PADDING.left)
-      const y = priceToY(trade.p, priceMin, priceMax, this.chartHeight, PADDING.top)
+      const x = indexToX(idx, candleWidth, offsetX, this.padding.left)
+      const y = priceToY(trade.p, priceMin, priceMax, this.chartHeight, this.padding.top)
       
       const color = trade.s === 'B' ? this.colors.buy : this.colors.sell
       const yOffset = trade.s === 'B' ? markerSize : -markerSize
@@ -264,11 +276,11 @@ export class ChartRenderer {
     const priceStep = (priceMax - priceMin) / 5
     for (let i = 0; i <= 5; i++) {
       const price = priceMin + (priceStep * i)
-      const y = priceToY(price, priceMin, priceMax, this.chartHeight, PADDING.top)
+      const y = priceToY(price, priceMin, priceMax, this.chartHeight, this.padding.top)
       
       this.ctx.fillText(
         `$${formatPrice(price)}`,
-        this.width - PADDING.right + 5,
+        this.width - this.padding.right + 5,
         y
       )
     }
@@ -286,13 +298,13 @@ export class ChartRenderer {
     for (let i = startIdx; i <= endIdx; i += step) {
       if (i >= candles.length) continue
       
-      const x = indexToX(i, candleWidth, offsetX, PADDING.left)
+      const x = indexToX(i, candleWidth, offsetX, this.padding.left)
       const timeStr = formatTime(candles[i].t)
       
       this.ctx.fillText(
         timeStr,
         x,
-        this.height - PADDING.bottom + 5
+        this.height - this.padding.bottom + 5
       )
     }
   }
@@ -311,23 +323,23 @@ export class ChartRenderer {
     
     // Vertical
     this.ctx.beginPath()
-    this.ctx.moveTo(mouse.x, PADDING.top)
-    this.ctx.lineTo(mouse.x, this.height - PADDING.bottom)
+    this.ctx.moveTo(mouse.x, this.padding.top)
+    this.ctx.lineTo(mouse.x, this.height - this.padding.bottom)
     this.ctx.stroke()
     
     // Horizontal
     this.ctx.beginPath()
-    this.ctx.moveTo(PADDING.left, mouse.y)
-    this.ctx.lineTo(this.width - PADDING.right, mouse.y)
+    this.ctx.moveTo(this.padding.left, mouse.y)
+    this.ctx.lineTo(this.width - this.padding.right, mouse.y)
     this.ctx.stroke()
     
     this.ctx.setLineDash([])
     
     // Price label
-    const price = priceMax - ((mouse.y - PADDING.top) / this.chartHeight) * (priceMax - priceMin)
+    const price = priceMax - ((mouse.y - this.padding.top) / this.chartHeight) * (priceMax - priceMin)
     
     this.ctx.fillStyle = this.colors.cross
-    this.ctx.fillRect(this.width - PADDING.right, mouse.y - 10, PADDING.right, 20)
+    this.ctx.fillRect(this.width - this.padding.right, mouse.y - 10, this.padding.right, 20)
     
     this.ctx.fillStyle = this.colors.bg
     this.ctx.font = '11px monospace'
@@ -335,24 +347,24 @@ export class ChartRenderer {
     this.ctx.textBaseline = 'middle'
     this.ctx.fillText(
       `$${formatPrice(price)}`,
-      this.width - PADDING.right / 2,
+      this.width - this.padding.right / 2,
       mouse.y
     )
     
     // Time label
-    const candleIdx = Math.floor((mouse.x - PADDING.left - offsetX) / candleWidth)
+    const candleIdx = Math.floor((mouse.x - this.padding.left - offsetX) / candleWidth)
     if (candleIdx >= 0 && candleIdx < candles.length) {
       const timeStr = formatTime(candles[candleIdx].t)
       const textWidth = this.ctx.measureText(timeStr).width
       
       this.ctx.fillStyle = this.colors.cross
-      this.ctx.fillRect(mouse.x - textWidth / 2 - 4, this.height - PADDING.bottom, textWidth + 8, 20)
+      this.ctx.fillRect(mouse.x - textWidth / 2 - 4, this.height - this.padding.bottom, textWidth + 8, 20)
       
       this.ctx.fillStyle = this.colors.bg
       this.ctx.fillText(
         timeStr,
         mouse.x,
-        this.height - PADDING.bottom + 10
+        this.height - this.padding.bottom + 10
       )
       
       // Tooltip with OHLC
@@ -378,10 +390,10 @@ export class ChartRenderer {
     let tooltipX = x + 15
     let tooltipY = y + 15
     
-    if (tooltipX + width > this.width - PADDING.right) {
+    if (tooltipX + width > this.width - this.padding.right) {
       tooltipX = x - width - 15
     }
-    if (tooltipY + height > this.height - PADDING.bottom) {
+    if (tooltipY + height > this.height - this.padding.bottom) {
       tooltipY = y - height - 15
     }
     
