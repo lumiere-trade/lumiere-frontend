@@ -45,7 +45,7 @@ export function PriceChart({ data, height = 450 }: PriceChartProps) {
         horzLines: { color: '#1a1a1a' },
       },
       crosshair: {
-        mode: 1, // Normal crosshair
+        mode: 1,
         vertLine: {
           color: '#8b5cf6',
           labelBackgroundColor: '#8b5cf6',
