@@ -4,9 +4,9 @@ import { Candle, Trade, Viewport } from './types'
 export function findCandleIndex(candles: Candle[], timestamp: number): number {
   let left = 0
   let right = candles.length - 1
-  
+
   while (left <= right) {
-    const mid = (left + right) >>> 1  // Fast division by 2
+    const mid = (left + right) >>> 1
     if (candles[mid].t === timestamp) return mid
     if (candles[mid].t < timestamp) left = mid + 1
     else right = mid - 1
@@ -21,7 +21,7 @@ export function getVisibleCandles(
 ): Candle[] {
   const { startIdx, endIdx } = viewport
   return candles.slice(
-    Math.max(0, startIdx - 2),  // +2 buffer for smooth edges
+    Math.max(0, startIdx - 2),
     Math.min(candles.length, endIdx + 2)
   )
 }
@@ -32,11 +32,12 @@ export function priceToY(
   priceMin: number,
   priceMax: number,
   chartHeight: number,
-  padding: number
+  paddingTop: number
 ): number {
   const priceRange = priceMax - priceMin
-  if (priceRange === 0) return chartHeight / 2
-  return padding + ((priceMax - price) / priceRange) * (chartHeight - padding * 2)
+  if (priceRange === 0) return chartHeight / 2 + paddingTop
+  // chartHeight is already adjusted for padding, so just add paddingTop offset
+  return paddingTop + ((priceMax - price) / priceRange) * chartHeight
 }
 
 // Index to X coordinate
@@ -44,9 +45,9 @@ export function indexToX(
   index: number,
   candleWidth: number,
   offsetX: number,
-  padding: number
+  paddingLeft: number
 ): number {
-  return padding + offsetX + (index * candleWidth)
+  return paddingLeft + offsetX + (index * candleWidth)
 }
 
 // Debounce (optimization for resize/scroll)
@@ -68,31 +69,31 @@ export function calculateViewport(
   zoom: number,
   offsetX: number
 ): Viewport {
-  const candleWidth = Math.max(2, 8 * zoom)  // Min 2px, scales with zoom
+  const candleWidth = Math.max(2, 8 * zoom)
   const visibleCandles = Math.floor(width / candleWidth)
-  
+
   const endIdx = Math.min(
     candles.length - 1,
     Math.floor(-offsetX / candleWidth) + visibleCandles
   )
   const startIdx = Math.max(0, endIdx - visibleCandles)
-  
+
   // Calculate price range from visible candles
   let priceMin = Infinity
   let priceMax = -Infinity
-  
+
   for (let i = startIdx; i <= endIdx; i++) {
     if (i < candles.length) {
       priceMin = Math.min(priceMin, candles[i].l)
       priceMax = Math.max(priceMax, candles[i].h)
     }
   }
-  
+
   // Add 5% padding to price range
   const padding = (priceMax - priceMin) * 0.05
   priceMin -= padding
   priceMax += padding
-  
+
   return {
     startIdx,
     endIdx,
@@ -106,7 +107,7 @@ export function calculateViewport(
 
 // Format price (optimized string formatting)
 export function formatPrice(price: number): string {
-  return price < 1 
+  return price < 1
     ? price.toFixed(4)
     : price < 100
     ? price.toFixed(2)
