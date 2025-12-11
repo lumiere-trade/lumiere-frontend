@@ -1,25 +1,25 @@
+import { parse, formatRgb } from 'culori'
 import { EquityPoint, EquityViewport } from './types'
 import { equityToY, indexToX, formatEquity, formatPercent, formatTime, getVisiblePoints } from './equityCurveUtils'
 
-// Read CSS variables from document
-function getCSSColor(varName: string): string {
-  if (typeof document === 'undefined') return 'transparent'
+// Read CSS variables from document and convert to RGB
+function getCSSColorAsRGB(varName: string): string {
+  if (typeof document === 'undefined') return 'rgb(0, 0, 0)'
   
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(varName)
     .trim()
   
-  return value || 'transparent'
+  if (!value) return 'rgb(0, 0, 0)'
+  
+  // Parse color (supports oklch, rgb, hex, etc) and convert to RGB
+  const parsed = parse(value)
+  return parsed ? formatRgb(parsed) : 'rgb(0, 0, 0)'
 }
 
-// Parse CSS color to RGBA using canvas API
-function parseColorToRGBA(ctx: CanvasRenderingContext2D, cssColor: string): { r: number; g: number; b: number; a: number } {
-  // Let canvas parse any CSS color format (oklch, rgb, hex, etc)
-  ctx.fillStyle = cssColor
-  const parsed = ctx.fillStyle
-
-  // Canvas always returns rgb/rgba format
-  const match = parsed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+// Parse RGB/RGBA color string to components
+function parseColorToRGBA(colorStr: string): { r: number; g: number; b: number; a: number } {
+  const match = colorStr.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
   if (match) {
     return {
       r: parseInt(match[1]),
@@ -28,9 +28,8 @@ function parseColorToRGBA(ctx: CanvasRenderingContext2D, cssColor: string): { r:
       a: match[4] ? parseFloat(match[4]) : 1
     }
   }
-
-  // Fallback to transparent
-  return { r: 0, g: 0, b: 0, a: 0 }
+  
+  return { r: 0, g: 0, b: 0, a: 1 }
 }
 
 // Create RGBA string with alpha
@@ -82,13 +81,13 @@ export class EquityCurveRenderer {
 
   private loadColors() {
     return {
-      bg: getCSSColor('--background'),
-      grid: getCSSColor('--border'),
-      text: getCSSColor('--muted-foreground'),
-      cross: getCSSColor('--primary'),
-      line: getCSSColor('--primary'),
-      tooltipBg: getCSSColor('--popover'),
-      tooltipBorder: getCSSColor('--border')
+      bg: getCSSColorAsRGB('--background'),
+      grid: getCSSColorAsRGB('--border'),
+      text: getCSSColorAsRGB('--muted-foreground'),
+      cross: getCSSColorAsRGB('--primary'),
+      line: getCSSColorAsRGB('--primary'),
+      tooltipBg: getCSSColorAsRGB('--popover'),
+      tooltipBorder: getCSSColorAsRGB('--border')
     }
   }
 
@@ -187,8 +186,8 @@ export class EquityCurveRenderer {
     const { equityMin, equityMax, offsetX } = viewport
     const pointWidth = Math.max(1, 3 * viewport.zoom)
 
-    // Parse primary color from theme (works with oklch, rgb, hex, etc)
-    const lineColor = parseColorToRGBA(this.ctx, this.colors.line)
+    // Parse primary color (now in RGB format thanks to culori)
+    const lineColor = parseColorToRGBA(this.colors.line)
 
     // Save context and setup clipping region
     this.ctx.save()
