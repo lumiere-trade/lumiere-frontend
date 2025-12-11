@@ -36,3 +36,29 @@ export interface ChartState {
   isDragging: boolean
   dirty: boolean  // needs redraw
 }
+
+// Equity Curve types
+export interface EquityPoint {
+  t: number  // timestamp
+  e: number  // equity value
+  d: number  // drawdown (0 to 1, where 0.15 = 15%)
+  r: number  // return % (cumulative)
+}
+
+export interface EquityViewport {
+  startIdx: number
+  endIdx: number
+  equityMin: number
+  equityMax: number
+  zoom: number
+  offsetX: number
+  width: number
+}
+
+export interface EquityState {
+  points: EquityPoint[]
+  viewport: EquityViewport
+  mouse: { x: number; y: number } | null
+  isDragging: boolean
+  dirty: boolean
+}
