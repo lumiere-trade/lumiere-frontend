@@ -277,7 +277,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         strokeWidth={2}
                         dot={false}
                         name="close"
-                        connectNulls
                         isAnimationActive={false}
                       />
                       <Scatter
