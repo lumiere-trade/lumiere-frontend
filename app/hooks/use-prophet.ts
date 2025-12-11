@@ -97,19 +97,10 @@ export function useProphet() {
       };
       setMessages([...messages, userMessage]);
 
-      // Create assistant message
+      // Prepare assistant message ID (but don't create message yet!)
       const assistantMessageId = `assistant-${Date.now()}`;
       streamingMessageIdRef.current = assistantMessageId;
       fullMessageRef.current = '';
-
-      const assistantMessage: ChatMessage = {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: '',
-        timestamp: new Date(),
-        isStreaming: true,
-      };
-      setMessages([...messages, userMessage, assistantMessage]);
 
       // Prepare fallback history (if Redis not connected or new conversation)
       let fallbackHistory: Array<{ role: string; content: string }> | undefined;
@@ -162,13 +153,31 @@ export function useProphet() {
           (token: string) => {
             fullMessageRef.current += token;
 
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? { ...msg, content: fullMessageRef.current }
-                  : msg
-              )
-            );
+            setMessages((prev) => {
+              // Check if assistant message exists
+              const assistantExists = prev.some((m) => m.id === assistantMessageId);
+
+              if (!assistantExists) {
+                // Create assistant message on first token
+                return [
+                  ...prev,
+                  {
+                    id: assistantMessageId,
+                    role: 'assistant' as const,
+                    content: fullMessageRef.current,
+                    timestamp: new Date(),
+                    isStreaming: true,
+                  },
+                ];
+              } else {
+                // Update existing assistant message
+                return prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: fullMessageRef.current }
+                    : msg
+                );
+              }
+            });
           },
           // onProgress - Prophet tells us stage and percent
           (progress: ProgressEvent) => {
@@ -248,17 +257,34 @@ export function useProphet() {
             log.error('Prophet API Error', { error: err.message });
             log.groupEnd();
 
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === assistantMessageId
-                  ? {
-                      ...msg,
-                      content: `Error: ${err.message}`,
-                      isStreaming: false,
-                    }
-                  : msg
-              )
-            );
+            setMessages((prev) => {
+              const assistantExists = prev.some((m) => m.id === assistantMessageId);
+
+              if (!assistantExists) {
+                // Create error message if no assistant message exists
+                return [
+                  ...prev,
+                  {
+                    id: assistantMessageId,
+                    role: 'assistant' as const,
+                    content: `Error: ${err.message}`,
+                    timestamp: new Date(),
+                    isStreaming: false,
+                  },
+                ];
+              } else {
+                // Update existing message with error
+                return prev.map((msg) =>
+                  msg.id === assistantMessageId
+                    ? {
+                        ...msg,
+                        content: `Error: ${err.message}`,
+                        isStreaming: false,
+                      }
+                    : msg
+                );
+              }
+            });
 
             setIsGeneratingStrategy(false);
             setStrategyGenerationProgress(0);
