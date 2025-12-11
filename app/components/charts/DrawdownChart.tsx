@@ -13,9 +13,9 @@ interface DrawdownChartProps {
   height?: number
 }
 
-export const DrawdownChart = memo(function DrawdownChart({ 
-  data, 
-  height = 350 
+export const DrawdownChart = memo(function DrawdownChart({
+  data,
+  height = 350
 }: DrawdownChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -72,13 +72,7 @@ export const DrawdownChart = memo(function DrawdownChart({
         if (width !== lastWidthRef.current) {
           lastWidthRef.current = width
           setContainerWidth(width)
-
-          const canvas = canvasRef.current
-          const renderer = rendererRef.current
-          if (canvas && renderer) {
-            renderer.resize(canvas)
-            setState(s => ({ ...s, dirty: true }))
-          }
+          setState(s => ({ ...s, dirty: true }))
         }
       }
     })
@@ -90,10 +84,9 @@ export const DrawdownChart = memo(function DrawdownChart({
   // Theme change detection
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      const canvas = canvasRef.current
       const renderer = rendererRef.current
-      if (canvas && renderer) {
-        renderer.resize(canvas)
+      if (renderer) {
+        renderer.updateDestructiveColor()
         setState(s => ({ ...s, dirty: true }))
       }
     })
@@ -108,9 +101,9 @@ export const DrawdownChart = memo(function DrawdownChart({
 
   // Calculate viewport
   useEffect(() => {
-    if (points.length === 0) return
+    if (points.length === 0 || containerWidth === 0) return
 
-    const viewport = calculateDrawdownViewport(points, containerWidth, zoom, offsetX)
+    const viewport = calculateDrawdownViewport(points, zoom, offsetX, containerWidth)
     setState(s => ({
       ...s,
       points,
@@ -126,8 +119,15 @@ export const DrawdownChart = memo(function DrawdownChart({
       const renderer = rendererRef.current
       const currentState = stateRef.current
 
-      if (canvas && renderer && currentState.dirty) {
-        renderer.render(currentState.points, currentState.viewport, currentState.mouse)
+      if (canvas && renderer && currentState.dirty && containerWidth > 0) {
+        const rect = canvas.getBoundingClientRect()
+        renderer.render(
+          rect.width,
+          rect.height,
+          currentState.points,
+          currentState.viewport,
+          currentState.mouse
+        )
         setState(s => ({ ...s, dirty: false }))
       }
 
@@ -138,7 +138,7 @@ export const DrawdownChart = memo(function DrawdownChart({
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
-  }, [])
+  }, [containerWidth])
 
   // Mouse wheel zoom
   useEffect(() => {
@@ -192,7 +192,10 @@ export const DrawdownChart = memo(function DrawdownChart({
 
     if (state.isDragging) {
       const dx = e.movementX
-      setOffsetX(o => o + dx)
+      const visiblePoints = Math.max(10, Math.floor(points.length / zoom))
+      const pixelsPerPoint = containerWidth / visiblePoints
+      const pointDelta = dx / pixelsPerPoint
+      setOffsetX(o => o - pointDelta)
     }
 
     setState(s => ({
@@ -240,7 +243,10 @@ export const DrawdownChart = memo(function DrawdownChart({
     if (e.touches.length === 1 && touchStartRef.current) {
       const touch = e.touches[0]
       const dx = touch.clientX - touchStartRef.current.x
-      setOffsetX(o => o + dx)
+      const visiblePoints = Math.max(10, Math.floor(points.length / zoom))
+      const pixelsPerPoint = containerWidth / visiblePoints
+      const pointDelta = dx / pixelsPerPoint
+      setOffsetX(o => o - pointDelta)
       touchStartRef.current.x = touch.clientX
     } else if (e.touches.length === 2 && touchStartRef.current) {
       const dx = e.touches[0].clientX - e.touches[1].clientX
