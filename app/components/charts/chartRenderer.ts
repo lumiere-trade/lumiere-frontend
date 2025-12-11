@@ -46,7 +46,7 @@ export class ChartRenderer {
 
     const rect = parent.getBoundingClientRect()
     const { ctx, width, height } = this.setupCanvas(canvas, rect.width, rect.height)
-    
+
     this.ctx = ctx
     this.width = width
     this.height = height
@@ -91,7 +91,7 @@ export class ChartRenderer {
 
     const rect = parent.getBoundingClientRect()
     const { ctx, width, height } = this.setupCanvas(canvas, rect.width, rect.height)
-    
+
     this.ctx = ctx
     this.width = width
     this.height = height
@@ -226,6 +226,18 @@ export class ChartRenderer {
 
     const { priceMin, priceMax, candleWidth, offsetX } = viewport
 
+    // Save context and setup clipping region
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      this.padding.left,
+      this.padding.top,
+      this.width - this.padding.left - this.padding.right,
+      this.chartHeight
+    )
+    this.ctx.clip()
+
+    // Draw line
     this.ctx.strokeStyle = this.colors.line
     this.ctx.lineWidth = 2
     this.ctx.beginPath()
@@ -243,6 +255,9 @@ export class ChartRenderer {
     })
 
     this.ctx.stroke()
+
+    // Restore context (remove clipping)
+    this.ctx.restore()
   }
 
   private drawTrades(trades: Trade[], viewport: Viewport) {
