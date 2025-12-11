@@ -10,6 +10,29 @@ function getCSSColor(varName: string, fallback: string): string {
   return value || fallback
 }
 
+// Parse CSS color to RGBA using canvas API
+function parseColorToRGBA(ctx: CanvasRenderingContext2D, cssColor: string): { r: number; g: number; b: number; a: number } {
+  ctx.fillStyle = cssColor
+  const parsed = ctx.fillStyle
+
+  const match = parsed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/)
+  if (match) {
+    return {
+      r: parseInt(match[1]),
+      g: parseInt(match[2]),
+      b: parseInt(match[3]),
+      a: match[4] ? parseFloat(match[4]) : 1
+    }
+  }
+
+  return { r: 139, g: 92, b: 246, a: 1 }
+}
+
+// Create RGBA string with alpha
+function rgba(color: { r: number; g: number; b: number }, alpha: number): string {
+  return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+}
+
 // Responsive padding based on canvas width
 function getPadding(width: number) {
   return {
@@ -165,6 +188,9 @@ export class EquityCurveRenderer {
     const { equityMin, equityMax, offsetX } = viewport
     const pointWidth = Math.max(1, 3 * viewport.zoom)
 
+    // Parse line color to RGB using canvas API
+    const lineColor = parseColorToRGBA(this.ctx, this.colors.line)
+
     // Save context and setup clipping region
     this.ctx.save()
     this.ctx.beginPath()
@@ -176,9 +202,8 @@ export class EquityCurveRenderer {
     )
     this.ctx.clip()
 
-    // Build path for area and line
+    // Build area path
     this.ctx.beginPath()
-
     points.forEach((point, idx) => {
       const actualIdx = viewport.startIdx + idx
       const x = indexToX(actualIdx, pointWidth, offsetX, this.padding.left)
@@ -191,10 +216,6 @@ export class EquityCurveRenderer {
       }
     })
 
-    // Store the line path
-    const linePath = new Path2D()
-    linePath.addPath(this.ctx as any)
-
     // Complete area path to bottom
     const lastPoint = points[points.length - 1]
     const lastIdx = viewport.startIdx + points.length - 1
@@ -206,22 +227,20 @@ export class EquityCurveRenderer {
     this.ctx.lineTo(firstX, bottomY)
     this.ctx.closePath()
 
-    // Fill area with gradient using globalAlpha for transparency
+    // Fill area with gradient
     const gradient = this.ctx.createLinearGradient(
-      0, 
-      this.padding.top, 
-      0, 
+      0,
+      this.padding.top,
+      0,
       this.height - this.padding.bottom
     )
-    gradient.addColorStop(0, this.colors.line)
-    gradient.addColorStop(1, this.colors.bg)
+    gradient.addColorStop(0, rgba(lineColor, 0.3))
+    gradient.addColorStop(1, rgba(lineColor, 0))
 
     this.ctx.fillStyle = gradient
-    this.ctx.globalAlpha = 0.3
     this.ctx.fill()
-    this.ctx.globalAlpha = 1.0
 
-    // Draw line (rebuild path)
+    // Draw line
     this.ctx.beginPath()
     points.forEach((point, idx) => {
       const actualIdx = viewport.startIdx + idx
@@ -239,7 +258,7 @@ export class EquityCurveRenderer {
     this.ctx.lineWidth = 2
     this.ctx.stroke()
 
-    // Restore context (remove clipping)
+    // Restore context
     this.ctx.restore()
   }
 
@@ -375,11 +394,11 @@ export class EquityCurveRenderer {
       tooltipY = y - height - 15
     }
 
-    // Background with CSS variable
+    // Background
     this.ctx.fillStyle = this.colors.tooltipBg
     this.ctx.fillRect(tooltipX, tooltipY, width, height)
 
-    // Border with CSS variable
+    // Border
     this.ctx.strokeStyle = this.colors.tooltipBorder
     this.ctx.lineWidth = 1
     this.ctx.strokeRect(tooltipX, tooltipY, width, height)
