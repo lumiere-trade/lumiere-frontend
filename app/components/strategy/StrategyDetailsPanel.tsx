@@ -52,12 +52,12 @@ export function StrategyDetailsPanel({
     try {
       const result = await runBacktestMutation.mutateAsync({
         tsdl_document: strategy.tsdl_code,
-        symbol: 'SOL/USDC',  // Default symbol, TODO: make configurable
-        days_back: 30,       // Default 30 days, TODO: make configurable
-        initial_capital: 10000,  // Default $10k, TODO: make configurable
-        timeframe: '1h',     // Default 1h, TODO: make configurable
-        slippage: 0.001,     // 0.1% slippage
-        commission: 0.001,   // 0.1% commission
+        symbol: 'SOL/USDC',
+        days_back: 90,
+        initial_capital: 10000,
+        timeframe: '1h',
+        slippage: 0.001,
+        commission: 0.001,
         cache_results: true
       })
 
