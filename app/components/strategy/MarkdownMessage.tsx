@@ -43,11 +43,26 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
               {children}
             </code>
           ),
-          pre: ({ children }) => (
-            <pre className="p-3 rounded-lg bg-background border border-primary/20 overflow-x-auto mb-3">
-              {children}
-            </pre>
-          ),
+          pre: ({ children }) => {
+            const getTextContent = (node: any): string => {
+              if (typeof node === 'string') return node
+              if (Array.isArray(node)) return node.map(getTextContent).join('')
+              if (node?.props?.children) return getTextContent(node.props.children)
+              return ''
+            }
+
+            const textContent = getTextContent(children).trim()
+
+            if (!textContent || textContent.length === 0) {
+              return null
+            }
+
+            return (
+              <pre className="p-3 rounded-lg bg-background border border-primary/20 overflow-x-auto mb-3">
+                {children}
+              </pre>
+            )
+          },
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-3">
               {children}
@@ -57,8 +72,9 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
             <hr className="my-4 border-t border-primary/20" />
           ),
           a: ({ href, children }) => (
-            <a 
-              href={href} 
+            
+              <a
+ 		href={href}
               className="text-primary hover:text-primary/80 underline"
               target="_blank"
               rel="noopener noreferrer"
