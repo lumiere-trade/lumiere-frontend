@@ -101,11 +101,42 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
   }, [])
   
+  // ResizeObserver for immediate resize detection (better than window.resize)
+  useEffect(() => {
+    if (!containerRef.current) return
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (!canvasRef.current || !rendererRef.current) continue
+        
+        // Immediate resize (no debounce for monitor changes)
+        rendererRef.current.resize(canvasRef.current)
+        
+        const width = entry.contentRect.width
+        const viewport = calculateViewport(
+          stateRef.current.candles,
+          width,
+          stateRef.current.viewport.zoom,
+          stateRef.current.viewport.offsetX
+        )
+        
+        setState(prev => ({
+          ...prev,
+          viewport,
+          dirty: true
+        }))
+      }
+    })
+    
+    resizeObserver.observe(containerRef.current)
+    
+    return () => resizeObserver.disconnect()
+  }, [])
+  
   // Theme change detection
   useEffect(() => {
     if (!canvasRef.current || !rendererRef.current) return
     
-    // Watch for theme changes on html element
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
@@ -114,7 +145,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
            mutation.attributeName === 'data-theme' ||
            mutation.attributeName === 'style')
         ) {
-          // Theme changed - refresh colors and redraw
           if (rendererRef.current && canvasRef.current) {
             rendererRef.current.resize(canvasRef.current)
             setState(prev => ({ ...prev, dirty: true }))
@@ -328,32 +358,6 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const handleTouchEnd = useCallback(() => {
     touchStartRef.current = null
     setState(prev => ({ ...prev, isDragging: false }))
-  }, [])
-  
-  // Resize handler
-  useEffect(() => {
-    const handleResize = debounce(() => {
-      if (!canvasRef.current || !rendererRef.current || !containerRef.current) return
-      
-      rendererRef.current.resize(canvasRef.current)
-      
-      const width = containerRef.current.clientWidth
-      const viewport = calculateViewport(
-        stateRef.current.candles,
-        width,
-        stateRef.current.viewport.zoom,
-        stateRef.current.viewport.offsetX
-      )
-      
-      setState(prev => ({
-        ...prev,
-        viewport,
-        dirty: true
-      }))
-    }, 100)
-    
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
   }, [])
   
   // Keyboard shortcuts
