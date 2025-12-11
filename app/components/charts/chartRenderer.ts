@@ -27,6 +27,8 @@ export class ChartRenderer {
     line: string
     buy: string
     sell: string
+    tooltipBg: string
+    tooltipBorder: string
   }
   
   constructor(canvas: HTMLCanvasElement) {
@@ -45,7 +47,9 @@ export class ChartRenderer {
       down: getCSSColor('--chart-red', '#ef4444'),
       line: getCSSColor('--primary', '#8b5cf6'),
       buy: getCSSColor('--chart-green', '#22c55e'),
-      sell: getCSSColor('--chart-red', '#ef4444')
+      sell: getCSSColor('--chart-red', '#ef4444'),
+      tooltipBg: getCSSColor('--popover', '#1a1a1a'),
+      tooltipBorder: getCSSColor('--border', '#333333')
     }
   }
   
@@ -79,7 +83,9 @@ export class ChartRenderer {
       down: getCSSColor('--chart-red', '#ef4444'),
       line: getCSSColor('--primary', '#8b5cf6'),
       buy: getCSSColor('--chart-green', '#22c55e'),
-      sell: getCSSColor('--chart-red', '#ef4444')
+      sell: getCSSColor('--chart-red', '#ef4444'),
+      tooltipBg: getCSSColor('--popover', '#1a1a1a'),
+      tooltipBorder: getCSSColor('--border', '#333333')
     }
   }
   
@@ -379,12 +385,12 @@ export class ChartRenderer {
       tooltipY = y - height - 15
     }
     
-    // Background
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)'
+    // Background with CSS variable
+    this.ctx.fillStyle = this.colors.tooltipBg
     this.ctx.fillRect(tooltipX, tooltipY, width, height)
     
-    // Border
-    this.ctx.strokeStyle = this.colors.cross
+    // Border with CSS variable
+    this.ctx.strokeStyle = this.colors.tooltipBorder
     this.ctx.lineWidth = 1
     this.ctx.strokeRect(tooltipX, tooltipY, width, height)
     
