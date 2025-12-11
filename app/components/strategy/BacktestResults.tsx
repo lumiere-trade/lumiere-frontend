@@ -4,21 +4,19 @@ import { useMemo, memo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
-import { Button } from "@lumiere/shared/components/ui/button"
 import {
-  LineChart, Line, AreaChart, Area, ComposedChart, Bar, Brush,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter
+  LineChart, Line, AreaChart, Area, Brush,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
-import { TrendingUp, TrendingDown, Clock, CandlestickChart, LineChartIcon } from "lucide-react"
+import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
+import { PriceChart } from "@/components/charts/PriceChart"
 
 interface BacktestResultsProps {
   results: BacktestResponse
   onClose?: () => void
 }
-
-type ChartMode = 'line' | 'candles'
 
 // Decimate data to max N points for performance
 function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
@@ -39,42 +37,9 @@ function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
   return decimated
 }
 
-// Custom candlestick shape
-const CandleShape = (props: any) => {
-  const { x, y, width, height, low, high, open, close } = props
-  const isGreen = close > open
-  const color = isGreen ? '#22c55e' : '#ef4444'
-  const wickX = x + width / 2
-
-  return (
-    <g>
-      {/* Wick (high-low line) */}
-      <line
-        x1={wickX}
-        y1={y + (isGreen ? 0 : height)}
-        x2={wickX}
-        y2={y + (isGreen ? height : 0)}
-        stroke={color}
-        strokeWidth={1}
-      />
-      {/* Body (open-close box) */}
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={color}
-        stroke={color}
-        strokeWidth={1}
-      />
-    </g>
-  )
-}
-
 export const BacktestResults = memo(function BacktestResults({ results, onClose }: BacktestResultsProps) {
   const { metrics, equity_curve, trades, trade_analysis, market_data } = results
   const [activeTab, setActiveTab] = useState('price')
-  const [chartMode, setChartMode] = useState<ChartMode>('line')
 
   const normalizedMetrics = useMemo(() => ({
     ...metrics,
@@ -119,7 +84,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     })
   }, [tradesData])
 
-  // Decimated price chart - max 300 points
+  // Price chart data for lightweight-charts
   const priceChartData = useMemo(() => {
     if (!market_data || market_data.length === 0) {
       return []
@@ -143,11 +108,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     const full = market_data.map((candle) => {
       const ts = normalizeTimestamp(candle.timestamp)
       const trade = tradeMap.get(ts)
-      
-      // For candlestick: map OHLC to y-coordinates
-      const isGreen = candle.close > candle.open
-      const bodyTop = Math.max(candle.open, candle.close)
-      const bodyBottom = Math.min(candle.open, candle.close)
 
       return {
         timestamp: ts,
@@ -156,26 +116,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
         high: candle.high,
         low: candle.low,
         close: candle.close,
-        // For Bar component in candlestick mode
-        candleData: [bodyBottom, bodyTop],
         buy: trade?.side === 'BUY' ? trade.price : null,
         sell: trade?.side === 'SELL' ? trade.price : null,
-        sellPnl: trade?.side === 'SELL' ? trade.pnl : null
       }
     })
 
     return decimateData(full, 300)
   }, [market_data, trades])
-
-  const buyCount = useMemo(() =>
-    priceChartData.filter(d => d.buy !== null && d.buy !== undefined).length,
-    [priceChartData]
-  )
-
-  const sellCount = useMemo(() =>
-    priceChartData.filter(d => d.sell !== null && d.sell !== undefined).length,
-    [priceChartData]
-  )
 
   const isPositive = normalizedMetrics.total_return_pct > 0
 
@@ -259,163 +206,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           <TabsContent value="price" className="space-y-4">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Price Chart with Trade Signals</CardTitle>
-                    <CardDescription className="mt-2">
-                      <span className="inline-flex items-center gap-2 mr-4">
-                        <span className="inline-block w-3 h-3 rounded-full bg-green-500"></span>
-                        Buy Signals ({buyCount})
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <span className="inline-block w-3 h-3 rounded-full bg-red-500"></span>
-                        Sell Signals ({sellCount})
-                      </span>
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant={chartMode === 'line' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setChartMode('line')}
-                    >
-                      <LineChartIcon className="h-4 w-4 mr-2" />
-                      Line
-                    </Button>
-                    <Button
-                      variant={chartMode === 'candles' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setChartMode('candles')}
-                    >
-                      <CandlestickChart className="h-4 w-4 mr-2" />
-                      Candles
-                    </Button>
-                  </div>
-                </div>
+                <CardTitle>Price Chart with Trade Signals</CardTitle>
               </CardHeader>
               <CardContent>
                 {priceChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={450}>
-                    {chartMode === 'line' ? (
-                      <ComposedChart data={priceChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
-                        <XAxis
-                          dataKey="date"
-                          stroke="#888888"
-                          fontSize={12}
-                        />
-                        <YAxis
-                          stroke="#888888"
-                          fontSize={12}
-                          tickFormatter={(value) => `$${value.toFixed(0)}`}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#1a1a1a',
-                            border: '1px solid #333',
-                            borderRadius: '8px'
-                          }}
-                          formatter={(value: any, name: string) => {
-                            if (!value) return null
-                            if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
-                            if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
-                            if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
-                            return [value, name]
-                          }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="close"
-                          stroke="#8b5cf6"
-                          strokeWidth={2}
-                          dot={false}
-                        />
-                        <Scatter
-                          dataKey="buy"
-                          fill="#22c55e"
-                          stroke="#000"
-                          strokeWidth={1}
-                          shape="circle"
-                          r={5}
-                        />
-                        <Scatter
-                          dataKey="sell"
-                          fill="#ef4444"
-                          stroke="#000"
-                          strokeWidth={1}
-                          shape="circle"
-                          r={5}
-                        />
-                        <Brush
-                          dataKey="date"
-                          height={40}
-                          stroke="#8b5cf6"
-                          fill="#1a1a1a"
-                          travellerWidth={10}
-                        />
-                      </ComposedChart>
-                    ) : (
-                      <ComposedChart data={priceChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
-                        <XAxis
-                          dataKey="date"
-                          stroke="#888888"
-                          fontSize={12}
-                        />
-                        <YAxis
-                          stroke="#888888"
-                          fontSize={12}
-                          domain={['auto', 'auto']}
-                          tickFormatter={(value) => `$${value.toFixed(0)}`}
-                        />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#1a1a1a',
-                            border: '1px solid #333',
-                            borderRadius: '8px'
-                          }}
-                          formatter={(value: any, name: string) => {
-                            if (!value) return null
-                            if (name === 'open') return [`$${value.toFixed(2)}`, 'Open']
-                            if (name === 'high') return [`$${value.toFixed(2)}`, 'High']
-                            if (name === 'low') return [`$${value.toFixed(2)}`, 'Low']
-                            if (name === 'close') return [`$${value.toFixed(2)}`, 'Close']
-                            if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
-                            if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
-                            return [value, name]
-                          }}
-                        />
-                        <Bar
-                          dataKey="candleData"
-                          shape={<CandleShape />}
-                          maxBarSize={8}
-                        />
-                        <Scatter
-                          dataKey="buy"
-                          fill="#22c55e"
-                          stroke="#000"
-                          strokeWidth={1}
-                          shape="circle"
-                          r={5}
-                        />
-                        <Scatter
-                          dataKey="sell"
-                          fill="#ef4444"
-                          stroke="#000"
-                          strokeWidth={1}
-                          shape="circle"
-                          r={5}
-                        />
-                        <Brush
-                          dataKey="date"
-                          height={40}
-                          stroke="#8b5cf6"
-                          fill="#1a1a1a"
-                          travellerWidth={10}
-                        />
-                      </ComposedChart>
-                    )}
-                  </ResponsiveContainer>
+                  <PriceChart data={priceChartData} height={450} />
                 ) : (
                   <div className="h-[450px] flex items-center justify-center text-muted-foreground">
                     No price data available
