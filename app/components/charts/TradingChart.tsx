@@ -25,6 +25,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<ChartRenderer | null>(null)
   const rafRef = useRef<number | null>(null)
+  const lastWidthRef = useRef<number>(0)
 
   const [state, setState] = useState<ChartState>({
     mode: 'L',
@@ -89,12 +90,15 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     rendererRef.current = new ChartRenderer(canvasRef.current)
   }, [])
 
-  // Update container width helper
+  // Update container width helper (NO dependencies to avoid circular loop)
   const updateContainerWidth = useCallback(() => {
     if (!containerRef.current) return
 
     const width = containerRef.current.clientWidth
-    if (width > 0 && width !== containerWidth) {
+    
+    // Only update if width actually changed (use ref to avoid dependency)
+    if (width > 0 && width !== lastWidthRef.current) {
+      lastWidthRef.current = width
       setContainerWidth(width)
 
       // Force canvas resize
@@ -102,24 +106,14 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
         rendererRef.current.resize(canvasRef.current)
       }
     }
-  }, [containerWidth])
+  }, []) // EMPTY dependencies - stable function
 
   // ResizeObserver for container width tracking
   useEffect(() => {
     if (!containerRef.current) return
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width
-        if (width > 0 && width !== containerWidth) {
-          setContainerWidth(width)
-
-          // Force canvas resize
-          if (canvasRef.current && rendererRef.current) {
-            rendererRef.current.resize(canvasRef.current)
-          }
-        }
-      }
+    const resizeObserver = new ResizeObserver(() => {
+      updateContainerWidth()
     })
 
     resizeObserver.observe(containerRef.current)
@@ -128,7 +122,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     updateContainerWidth()
 
     return () => resizeObserver.disconnect()
-  }, [containerWidth, updateContainerWidth])
+  }, [updateContainerWidth])
 
   // Window resize listener (fallback for cases ResizeObserver misses)
   useEffect(() => {
