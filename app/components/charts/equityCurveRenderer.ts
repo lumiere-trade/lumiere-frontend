@@ -32,8 +32,6 @@ export class EquityCurveRenderer {
     text: string
     cross: string
     line: string
-    gradient1: string
-    gradient2: string
     tooltipBg: string
     tooltipBorder: string
   }
@@ -58,8 +56,6 @@ export class EquityCurveRenderer {
       text: getCSSColor('--muted-foreground', '#888888'),
       cross: getCSSColor('--primary', '#8b5cf6'),
       line: getCSSColor('--primary', '#8b5cf6'),
-      gradient1: getCSSColor('--primary', '#8b5cf6'),
-      gradient2: getCSSColor('--background', '#0a0a0a'),
       tooltipBg: getCSSColor('--popover', '#1a1a1a'),
       tooltipBorder: getCSSColor('--border', '#333333')
     }
@@ -101,8 +97,6 @@ export class EquityCurveRenderer {
       text: getCSSColor('--muted-foreground', '#888888'),
       cross: getCSSColor('--primary', '#8b5cf6'),
       line: getCSSColor('--primary', '#8b5cf6'),
-      gradient1: getCSSColor('--primary', '#8b5cf6'),
-      gradient2: getCSSColor('--background', '#0a0a0a'),
       tooltipBg: getCSSColor('--popover', '#1a1a1a'),
       tooltipBorder: getCSSColor('--border', '#333333')
     }
@@ -182,12 +176,7 @@ export class EquityCurveRenderer {
     )
     this.ctx.clip()
 
-    // Create gradient
-    const gradient = this.ctx.createLinearGradient(0, this.padding.top, 0, this.height - this.padding.bottom)
-    gradient.addColorStop(0, this.colors.gradient1 + '4D') // 30% opacity
-    gradient.addColorStop(1, this.colors.gradient1 + '00') // 0% opacity
-
-    // Draw filled area
+    // Build path for area and line
     this.ctx.beginPath()
 
     points.forEach((point, idx) => {
@@ -202,20 +191,37 @@ export class EquityCurveRenderer {
       }
     })
 
-    // Complete area path
+    // Store the line path
+    const linePath = new Path2D()
+    linePath.addPath(this.ctx as any)
+
+    // Complete area path to bottom
     const lastPoint = points[points.length - 1]
     const lastIdx = viewport.startIdx + points.length - 1
     const lastX = indexToX(lastIdx, pointWidth, offsetX, this.padding.left)
+    const firstX = indexToX(viewport.startIdx, pointWidth, offsetX, this.padding.left)
     const bottomY = this.height - this.padding.bottom
 
     this.ctx.lineTo(lastX, bottomY)
-    this.ctx.lineTo(indexToX(viewport.startIdx, pointWidth, offsetX, this.padding.left), bottomY)
+    this.ctx.lineTo(firstX, bottomY)
     this.ctx.closePath()
 
-    this.ctx.fillStyle = gradient
-    this.ctx.fill()
+    // Fill area with gradient using globalAlpha for transparency
+    const gradient = this.ctx.createLinearGradient(
+      0, 
+      this.padding.top, 
+      0, 
+      this.height - this.padding.bottom
+    )
+    gradient.addColorStop(0, this.colors.line)
+    gradient.addColorStop(1, this.colors.bg)
 
-    // Draw line
+    this.ctx.fillStyle = gradient
+    this.ctx.globalAlpha = 0.3
+    this.ctx.fill()
+    this.ctx.globalAlpha = 1.0
+
+    // Draw line (rebuild path)
     this.ctx.beginPath()
     points.forEach((point, idx) => {
       const actualIdx = viewport.startIdx + idx
