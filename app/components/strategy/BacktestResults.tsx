@@ -120,7 +120,17 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
       }
     })
     
-    return decimateData(full, 300)
+    const decimated = decimateData(full, 300)
+    
+    console.log('Price chart data:', {
+      original_length: full.length,
+      decimated_length: decimated.length,
+      first_point: decimated[0],
+      last_point: decimated[decimated.length - 1],
+      sample_points: decimated.slice(0, 5)
+    })
+    
+    return decimated
   }, [market_data, trades])
 
   const buyCount = useMemo(() => 
@@ -228,71 +238,77 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <ComposedChart data={priceChartData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
-                    <XAxis
-                      dataKey="date"
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
-                    />
-                    <YAxis
-                      yAxisId="price"
-                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
-                      stroke="hsl(var(--border))"
-                      domain={['auto', 'auto']}
-                      tickFormatter={(value) => `$${value.toFixed(0)}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--popover))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                        color: 'hsl(var(--popover-foreground))'
-                      }}
-                      formatter={(value: any, name: string) => {
-                        if (!value) return null
-                        if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
-                        if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
-                        if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
-                        return [value, name]
-                      }}
-                    />
-                    <Line
-                      yAxisId="price"
-                      type="monotone"
-                      dataKey="close"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      dot={false}
-                      name="close"
-                      connectNulls
-                      isAnimationActive={false}
-                    />
-                    <Scatter
-                      yAxisId="price"
-                      dataKey="buy"
-                      fill="hsl(var(--chart-2))"
-                      stroke="hsl(var(--background))"
-                      strokeWidth={2}
-                      shape="circle"
-                      r={6}
-                      name="buy"
-                      isAnimationActive={false}
-                    />
-                    <Scatter
-                      yAxisId="price"
-                      dataKey="sell"
-                      fill="hsl(var(--destructive))"
-                      stroke="hsl(var(--background))"
-                      strokeWidth={2}
-                      shape="circle"
-                      r={6}
-                      name="sell"
-                      isAnimationActive={false}
-                    />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                {priceChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <ComposedChart data={priceChartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                        stroke="hsl(var(--border))"
+                      />
+                      <YAxis
+                        yAxisId="price"
+                        tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                        stroke="hsl(var(--border))"
+                        domain={['dataMin - 10', 'dataMax + 10']}
+                        tickFormatter={(value) => `$${value.toFixed(0)}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--popover))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '8px',
+                          color: 'hsl(var(--popover-foreground))'
+                        }}
+                        formatter={(value: any, name: string) => {
+                          if (!value) return null
+                          if (name === 'close') return [`$${value.toFixed(2)}`, 'Price']
+                          if (name === 'buy') return [`$${value.toFixed(2)}`, 'Buy']
+                          if (name === 'sell') return [`$${value.toFixed(2)}`, 'Sell']
+                          return [value, name]
+                        }}
+                      />
+                      <Line
+                        yAxisId="price"
+                        type="monotone"
+                        dataKey="close"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        dot={false}
+                        name="close"
+                        connectNulls
+                        isAnimationActive={false}
+                      />
+                      <Scatter
+                        yAxisId="price"
+                        dataKey="buy"
+                        fill="hsl(var(--chart-2))"
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                        shape="circle"
+                        r={6}
+                        name="buy"
+                        isAnimationActive={false}
+                      />
+                      <Scatter
+                        yAxisId="price"
+                        dataKey="sell"
+                        fill="hsl(var(--destructive))"
+                        stroke="hsl(var(--background))"
+                        strokeWidth={2}
+                        shape="circle"
+                        r={6}
+                        name="sell"
+                        isAnimationActive={false}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-[400px] flex items-center justify-center text-muted-foreground">
+                    No price data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
