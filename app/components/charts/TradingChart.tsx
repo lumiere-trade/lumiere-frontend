@@ -90,58 +90,40 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     rendererRef.current = new ChartRenderer(canvasRef.current)
   }, [])
 
-  // Update container width helper (NO dependencies to avoid circular loop)
-  const updateContainerWidth = useCallback(() => {
-    if (!containerRef.current) return
-
-    const width = containerRef.current.clientWidth
-    
-    // Only update if width actually changed (use ref to avoid dependency)
-    if (width > 0 && width !== lastWidthRef.current) {
-      lastWidthRef.current = width
-      setContainerWidth(width)
-
-      // Force canvas resize
-      if (canvasRef.current && rendererRef.current) {
-        rendererRef.current.resize(canvasRef.current)
-      }
-    }
-  }, []) // EMPTY dependencies - stable function
-
-  // ResizeObserver for container width tracking
+  // ResizeObserver - setup once, no circular dependencies
   useEffect(() => {
     if (!containerRef.current) return
 
-    const resizeObserver = new ResizeObserver(() => {
-      updateContainerWidth()
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width } = entry.contentRect
+        
+        // Use ref to avoid reading stale state in closure
+        if (width > 0 && width !== lastWidthRef.current) {
+          lastWidthRef.current = width
+          setContainerWidth(width)
+
+          // Force canvas resize
+          if (canvasRef.current && rendererRef.current) {
+            rendererRef.current.resize(canvasRef.current)
+          }
+        }
+      }
     })
 
     resizeObserver.observe(containerRef.current)
 
     // Initial width
-    updateContainerWidth()
+    const initialWidth = containerRef.current.clientWidth
+    if (initialWidth > 0) {
+      lastWidthRef.current = initialWidth
+      setContainerWidth(initialWidth)
+    }
 
     return () => resizeObserver.disconnect()
-  }, [updateContainerWidth])
+  }, []) // EMPTY dependencies - setup once
 
-  // Window resize listener (fallback for cases ResizeObserver misses)
-  useEffect(() => {
-    const handleResize = () => {
-      updateContainerWidth()
-    }
-
-    window.addEventListener('resize', handleResize)
-    
-    // Also trigger on visibility change (tab switching)
-    document.addEventListener('visibilitychange', handleResize)
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      document.removeEventListener('visibilitychange', handleResize)
-    }
-  }, [updateContainerWidth])
-
-  // Unified viewport calculation - single source of truth
+  // Unified viewport calculation
   useEffect(() => {
     if (candles.length === 0 || containerWidth === 0) return
 
@@ -410,7 +392,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
       >
         <canvas
           ref={canvasRef}
-          className="w-full h-full"
+          className="block w-full h-full"
           style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
