@@ -74,11 +74,9 @@ export function MessageList({
         const isAtBottom = entry.isIntersecting
         setShowScrollButton(!isAtBottom)
 
-        // If user scrolled back to bottom, clear the flag
         if (isAtBottom) {
           setUserHasScrolledUp(false)
         } else if (isSending) {
-          // User scrolled up during streaming
           setUserHasScrolledUp(true)
         }
       },
@@ -94,12 +92,10 @@ export function MessageList({
 
   // Auto-scroll logic with streaming awareness
   useEffect(() => {
-    // Don't auto-scroll if user manually scrolled up during streaming
     if (isSending && userHasScrolledUp) {
       return
     }
 
-    // Auto-scroll if at bottom or no messages
     if (!showScrollButton || messages.length === 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
@@ -117,7 +113,18 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const visibleMessages = messages.filter(msg => msg.content.trim().length > 0)
+  // IMPROVED FILTER: Skip empty messages and streaming messages with no content
+  const visibleMessages = messages.filter(msg => {
+    const hasContent = msg.content && msg.content.trim().length > 0
+    
+    // Always filter out messages with no content
+    if (!hasContent) {
+      return false
+    }
+    
+    return true
+  })
+
   const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
