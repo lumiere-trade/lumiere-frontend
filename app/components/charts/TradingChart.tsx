@@ -89,6 +89,21 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     rendererRef.current = new ChartRenderer(canvasRef.current)
   }, [])
 
+  // Update container width helper
+  const updateContainerWidth = useCallback(() => {
+    if (!containerRef.current) return
+
+    const width = containerRef.current.clientWidth
+    if (width > 0 && width !== containerWidth) {
+      setContainerWidth(width)
+
+      // Force canvas resize
+      if (canvasRef.current && rendererRef.current) {
+        rendererRef.current.resize(canvasRef.current)
+      }
+    }
+  }, [containerWidth])
+
   // ResizeObserver for container width tracking
   useEffect(() => {
     if (!containerRef.current) return
@@ -96,7 +111,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const width = entry.contentRect.width
-        if (width > 0) {
+        if (width > 0 && width !== containerWidth) {
           setContainerWidth(width)
 
           // Force canvas resize
@@ -110,10 +125,27 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     resizeObserver.observe(containerRef.current)
 
     // Initial width
-    setContainerWidth(containerRef.current.clientWidth)
+    updateContainerWidth()
 
     return () => resizeObserver.disconnect()
-  }, [])
+  }, [containerWidth, updateContainerWidth])
+
+  // Window resize listener (fallback for cases ResizeObserver misses)
+  useEffect(() => {
+    const handleResize = () => {
+      updateContainerWidth()
+    }
+
+    window.addEventListener('resize', handleResize)
+    
+    // Also trigger on visibility change (tab switching)
+    document.addEventListener('visibilitychange', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('visibilitychange', handleResize)
+    }
+  }, [updateContainerWidth])
 
   // Unified viewport calculation - single source of truth
   useEffect(() => {
