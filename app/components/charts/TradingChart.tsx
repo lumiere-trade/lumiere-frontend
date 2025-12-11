@@ -101,6 +101,36 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
   }, [])
   
+  // Theme change detection
+  useEffect(() => {
+    if (!canvasRef.current || !rendererRef.current) return
+    
+    // Watch for theme changes on html element
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' || 
+           mutation.attributeName === 'data-theme' ||
+           mutation.attributeName === 'style')
+        ) {
+          // Theme changed - refresh colors and redraw
+          if (rendererRef.current && canvasRef.current) {
+            rendererRef.current.resize(canvasRef.current)
+            setState(prev => ({ ...prev, dirty: true }))
+          }
+        }
+      })
+    })
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'style']
+    })
+    
+    return () => observer.disconnect()
+  }, [])
+  
   // Render loop
   useEffect(() => {
     const render = () => {
