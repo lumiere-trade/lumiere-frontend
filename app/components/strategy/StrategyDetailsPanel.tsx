@@ -94,11 +94,11 @@ export function StrategyDetailsPanel({
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Close button - positioned at left edge, vertically centered */}
-        <div className="absolute left-0 top-0 h-full w-8 flex items-center justify-center pointer-events-none" style={{ marginTop: '54px' }}>
+        {/* Close button - centered on left edge border */}
+        <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px', marginTop: '54px' }}>
           <button
             onClick={onToggle}
-            className="h-16 w-8 bg-card border-r border-l border-primary/20 hover:bg-card/80 transition-colors rounded-r-lg pointer-events-auto"
+            className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
             title="Close sidebar"
           >
             <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
