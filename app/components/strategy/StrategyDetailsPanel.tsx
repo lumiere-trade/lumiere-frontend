@@ -88,12 +88,23 @@ export function StrategyDetailsPanel({
         </div>
       </div>
 
-      {/* Expanded state - fixed position like old version */}
+      {/* Expanded state - full panel */}
       <div
         className={`fixed right-0 top-0 h-screen w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
+        {/* Close button - positioned at left edge, vertically centered */}
+        <div className="absolute left-0 top-0 h-full w-8 flex items-center justify-center pointer-events-none" style={{ marginTop: '54px' }}>
+          <button
+            onClick={onToggle}
+            className="h-16 w-8 bg-card border-r border-l border-primary/20 hover:bg-card/80 transition-colors rounded-r-lg pointer-events-auto"
+            title="Close sidebar"
+          >
+            <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
+          </button>
+        </div>
+
         {/* Spacer for header */}
         <div className="h-[54px] shrink-0" />
 
@@ -101,14 +112,6 @@ export function StrategyDetailsPanel({
         <div className="border-b border-border flex-shrink-0 px-6 py-3">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onToggle}
-                className="gap-2"
-              >
-                <PanelRightClose className="h-4 w-4" />
-              </Button>
               <Button
                 variant={activeTab === 'parameters' ? 'default' : 'outline'}
                 size="sm"
