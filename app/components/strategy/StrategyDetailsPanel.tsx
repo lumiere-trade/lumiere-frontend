@@ -94,16 +94,18 @@ export function StrategyDetailsPanel({
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* Close button - centered on left edge border */}
-        <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px', marginTop: '54px' }}>
-          <button
-            onClick={onToggle}
-            className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
-            title="Close sidebar"
-          >
-            <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
-          </button>
-        </div>
+        {/* Close button - centered on left edge border - only visible when panel is open */}
+        {isOpen && (
+          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px', marginTop: '54px' }}>
+            <button
+              onClick={onToggle}
+              className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
+              title="Close sidebar"
+            >
+              <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
+            </button>
+          </div>
+        )}
 
         {/* Spacer for header */}
         <div className="h-[54px] shrink-0" />
