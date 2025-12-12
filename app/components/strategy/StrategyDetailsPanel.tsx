@@ -90,13 +90,13 @@ export function StrategyDetailsPanel({
 
       {/* Expanded state - full panel */}
       <div
-        className={`fixed right-0 top-0 h-screen w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-[54px] h-[calc(100vh-54px)] w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Close button - centered on left edge border - only visible when panel is open */}
         {isOpen && (
-          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px', marginTop: '54px' }}>
+          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
             <button
               onClick={onToggle}
               className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
@@ -107,11 +107,8 @@ export function StrategyDetailsPanel({
           </div>
         )}
 
-        {/* Spacer for header */}
-        <div className="h-[54px] shrink-0" />
-
         {/* Header with action buttons */}
-        <div className="border-b border-border flex-shrink-0 px-6 py-3 mt-4">
+        <div className="border-b border-border flex-shrink-0 px-6 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button
