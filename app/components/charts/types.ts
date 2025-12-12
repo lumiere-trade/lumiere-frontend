@@ -86,3 +86,27 @@ export interface DrawdownState {
   isDragging: boolean
   dirty: boolean
 }
+
+// PnL chart types
+export interface PnLPoint {
+  t: number  // timestamp
+  p: number  // cumulative PnL in dollars
+}
+
+export interface PnLViewport {
+  startIdx: number
+  endIdx: number
+  pnlMin: number
+  pnlMax: number
+  zoom: number
+  offsetX: number
+  width: number
+}
+
+export interface PnLState {
+  points: PnLPoint[]
+  viewport: PnLViewport
+  mouse: { x: number; y: number } | null
+  isDragging: boolean
+  dirty: boolean
+}

@@ -4,14 +4,10 @@ import { useMemo, memo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
-import {
-  LineChart, Line, Brush,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts'
 import { TrendingUp, TrendingDown, Clock } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
-import { TradingChart, EquityCurve, DrawdownChart } from "@/components/charts"
+import { TradingChart, EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -69,28 +65,21 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     return decimateData(full, 300)
   }, [equity_curve])
 
-  const tradesData = useMemo(() => {
-    return trades
-      .filter(t => t.side === 'SELL' && t.pnl !== null)
-      .map((trade) => ({
-        timestamp: new Date(trade.timestamp).getTime(),
-        date: format(new Date(trade.timestamp), 'MMM dd HH:mm'),
-        pnl: trade.pnl || 0,
-        pnl_pct: trade.pnl_pct ? trade.pnl_pct * 100 : 0,
-        price: trade.price
-      }))
-  }, [trades])
-
-  const cumulativePnL = useMemo(() => {
+  // PnL data for custom PnLChart component
+  const pnlChartData = useMemo(() => {
+    const tradesWithPnL = trades.filter(t => t.side === 'SELL' && t.pnl !== null)
+    
     let cumulative = 0
-    return tradesData.map((trade) => {
-      cumulative += trade.pnl
+    const full = tradesWithPnL.map((trade) => {
+      cumulative += trade.pnl || 0
       return {
-        ...trade,
-        cumulative_pnl: cumulative
+        timestamp: new Date(trade.timestamp).getTime(),
+        pnl: cumulative
       }
     })
-  }, [tradesData])
+    
+    return decimateData(full, 300)
+  }, [trades])
 
   // Price chart data for custom TradingChart
   const priceChartData = useMemo(() => {
@@ -277,42 +266,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardDescription>Profit and loss per trade</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={350}>
-                  <LineChart data={cumulativePnL}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.5} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#888888"
-                      fontSize={12}
-                    />
-                    <YAxis
-                      stroke="#888888"
-                      fontSize={12}
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#1a1a1a',
-                        border: '1px solid #333',
-                        borderRadius: '8px'
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="cumulative_pnl"
-                      stroke="#8b5cf6"
-                      strokeWidth={2}
-                      dot={false}
-                    />
-                    <Brush
-                      dataKey="date"
-                      height={40}
-                      stroke="#8b5cf6"
-                      fill="#1a1a1a"
-                      travellerWidth={10}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {pnlChartData.length > 0 ? (
+                  <PnLChart data={pnlChartData} height={450} />
+                ) : (
+                  <div className="h-[450px] flex items-center justify-center text-muted-foreground">
+                    No trade data available
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
