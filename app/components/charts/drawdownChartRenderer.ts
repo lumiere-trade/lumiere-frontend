@@ -107,25 +107,27 @@ export class DrawdownChartRenderer {
     return { ctx, width, height }
   }
 
-  public updateDestructiveColor() {
+  public resize(canvas: HTMLCanvasElement) {
+    const parent = canvas.parentElement
+    if (!parent) return
+
+    const rect = parent.getBoundingClientRect()
+    const { ctx, width, height } = this.setupCanvas(canvas, rect.width, rect.height)
+
+    this.ctx = ctx
+    this.width = width
+    this.height = height
+    this.padding = getPadding(width)
+    this.chartHeight = height - this.padding.top - this.padding.bottom
+
     this.colors = this.loadColors()
   }
 
   public render(
-    width: number,
-    height: number,
     points: DrawdownPoint[],
     viewport: DrawdownViewport,
     mouse: { x: number; y: number } | null
   ) {
-    // Update dimensions if changed
-    if (width !== this.width || height !== this.height) {
-      this.width = width
-      this.height = height
-      this.padding = getPadding(width)
-      this.chartHeight = height - this.padding.top - this.padding.bottom
-    }
-
     // Clear
     this.ctx.fillStyle = this.colors.bg
     this.ctx.fillRect(0, 0, this.width, this.height)
@@ -176,7 +178,7 @@ export class DrawdownChartRenderer {
     // Vertical lines
     const visiblePoints = viewport.endIdx - viewport.startIdx + 1
     const step = Math.max(1, Math.floor(visiblePoints / 6))
-    
+
     for (let i = 0; i <= 6; i++) {
       const idx = viewport.startIdx + Math.floor((visiblePoints * i) / 6)
       if (idx <= viewport.endIdx) {

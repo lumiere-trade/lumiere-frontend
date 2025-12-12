@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useMemo, memo } from 'react'
+import { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react'
 import { DrawdownChartRenderer } from './drawdownChartRenderer'
 import { calculateDrawdownViewport } from './drawdownChartUtils'
 import type { DrawdownPoint, DrawdownState } from './types'
@@ -20,9 +20,9 @@ export const DrawdownChart = memo(function DrawdownChart({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<DrawdownChartRenderer | null>(null)
-  const rafRef = useRef<number>()
+  const rafRef = useRef<number | null>(null)
   const lastWidthRef = useRef<number>(0)
-  const touchStartRef = useRef<{ x: number; dist: number } | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number; dist: number } | null>(null)
 
   const [state, setState] = useState<DrawdownState>({
     points: [],
@@ -53,47 +53,68 @@ export const DrawdownChart = memo(function DrawdownChart({
     setOffsetX(0)
   }, [data])
 
-  // Initialize renderer
+  // Initialize renderer once
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    rendererRef.current = new DrawdownChartRenderer(canvas)
+    if (!canvasRef.current) return
+    rendererRef.current = new DrawdownChartRenderer(canvasRef.current)
   }, [])
 
-  // ResizeObserver
+  // ResizeObserver - setup once, no circular dependencies
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
+    if (!containerRef.current) return
 
-    const observer = new ResizeObserver((entries) => {
+    const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const width = entry.contentRect.width
-        if (width !== lastWidthRef.current) {
+        const { width } = entry.contentRect
+
+        // Use ref to avoid reading stale state in closure
+        if (width > 0 && width !== lastWidthRef.current) {
           lastWidthRef.current = width
           setContainerWidth(width)
-          setState(s => ({ ...s, dirty: true }))
+
+          // Force canvas resize
+          if (canvasRef.current && rendererRef.current) {
+            rendererRef.current.resize(canvasRef.current)
+          }
         }
       }
     })
 
-    observer.observe(container)
-    return () => observer.disconnect()
-  }, [])
+    resizeObserver.observe(containerRef.current)
+
+    // Initial width
+    const initialWidth = containerRef.current.clientWidth
+    if (initialWidth > 0) {
+      lastWidthRef.current = initialWidth
+      setContainerWidth(initialWidth)
+    }
+
+    return () => resizeObserver.disconnect()
+  }, []) // EMPTY dependencies - setup once
 
   // Theme change detection
   useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const renderer = rendererRef.current
-      if (renderer) {
-        renderer.updateDestructiveColor()
-        setState(s => ({ ...s, dirty: true }))
-      }
+    if (!canvasRef.current || !rendererRef.current) return
+
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' ||
+           mutation.attributeName === 'data-theme' ||
+           mutation.attributeName === 'style')
+        ) {
+          if (rendererRef.current && canvasRef.current) {
+            rendererRef.current.resize(canvasRef.current)
+            setState(s => ({ ...s, dirty: true }))
+          }
+        }
+      })
     })
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ['class', 'data-theme', 'style']
     })
 
     return () => observer.disconnect()
@@ -115,19 +136,13 @@ export const DrawdownChart = memo(function DrawdownChart({
   // Render loop
   useEffect(() => {
     const render = () => {
-      const canvas = canvasRef.current
-      const renderer = rendererRef.current
-      const currentState = stateRef.current
-
-      if (canvas && renderer && currentState.dirty && containerWidth > 0) {
-        const rect = canvas.getBoundingClientRect()
-        renderer.render(
-          rect.width,
-          rect.height,
-          currentState.points,
-          currentState.viewport,
-          currentState.mouse
+      if (stateRef.current.dirty && rendererRef.current) {
+        rendererRef.current.render(
+          stateRef.current.points,
+          stateRef.current.viewport,
+          stateRef.current.mouse
         )
+
         setState(s => ({ ...s, dirty: false }))
       }
 
@@ -135,147 +150,176 @@ export const DrawdownChart = memo(function DrawdownChart({
     }
 
     rafRef.current = requestAnimationFrame(render)
+
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current)
+      }
     }
-  }, [containerWidth])
+  }, [])
 
   // Mouse wheel zoom
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault()
+
+    const delta = -e.deltaY
+    const zoomFactor = delta > 0 ? 1.1 : 0.9
+
+    setZoom(prev => Math.max(0.1, Math.min(10, prev * zoomFactor)))
+  }, [])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault()
-      const delta = e.deltaY
-      const factor = delta > 0 ? 0.9 : 1.1
-      setZoom(z => Math.max(1, Math.min(10, z * factor)))
-    }
 
     canvas.addEventListener('wheel', handleWheel, { passive: false })
     return () => canvas.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
+
+  // Mouse drag pan
+  const handleMouseDown = useCallback(() => {
+    setState(s => ({ ...s, isDragging: true }))
   }, [])
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault()
-        setZoom(z => Math.min(10, z * 1.2))
-      } else if (e.key === '-' || e.key === '_') {
-        e.preventDefault()
-        setZoom(z => Math.max(1, z / 1.2))
-      } else if (e.key === '0') {
-        e.preventDefault()
-        setZoom(1)
-        setOffsetX(0)
-      } else if (e.key === 'ArrowLeft') {
-        e.preventDefault()
-        setOffsetX(o => o - 50)
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault()
-        setOffsetX(o => o + 50)
-      }
-    }
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect()
+    if (!rect) return
 
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [])
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
-    if (state.isDragging) {
-      const dx = e.movementX
-      const visiblePoints = Math.max(10, Math.floor(points.length / zoom))
-      const pixelsPerPoint = containerWidth / visiblePoints
-      const pointDelta = dx / pixelsPerPoint
-      setOffsetX(o => o - pointDelta)
+    if (stateRef.current.isDragging) {
+      setOffsetX(prev => prev + e.movementX)
+      setState(s => ({ ...s, mouse: { x, y }, dirty: true }))
+    } else {
+      setState(s => ({ ...s, mouse: { x, y }, dirty: true }))
     }
+  }, [])
 
-    setState(s => ({
-      ...s,
-      mouse: { x, y },
-      dirty: true
-    }))
-  }
-
-  const handleMouseDown = () => {
-    setState(s => ({ ...s, isDragging: true }))
-  }
-
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setState(s => ({ ...s, isDragging: false }))
-  }
+  }, [])
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setState(s => ({
       ...s,
       mouse: null,
       isDragging: false,
       dirty: true
     }))
-  }
+  }, [])
 
   // Touch support
-  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 1) {
       const touch = e.touches[0]
       const rect = canvasRef.current?.getBoundingClientRect()
-      if (rect) {
-        touchStartRef.current = { x: touch.clientX, dist: 0 }
-      }
-    } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      touchStartRef.current = { x: 0, dist: Math.sqrt(dx * dx + dy * dy) }
-    }
-  }
+      if (!rect) return
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+      touchStartRef.current = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
+        dist: 0
+      }
+
+      setState(s => ({ ...s, isDragging: true }))
+    } else if (e.touches.length === 2) {
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const dist = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      )
+
+      touchStartRef.current = { x: 0, y: 0, dist }
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     e.preventDefault()
 
-    if (e.touches.length === 1 && touchStartRef.current) {
+    if (!touchStartRef.current) return
+
+    if (e.touches.length === 1 && stateRef.current.isDragging) {
       const touch = e.touches[0]
-      const dx = touch.clientX - touchStartRef.current.x
-      const visiblePoints = Math.max(10, Math.floor(points.length / zoom))
-      const pixelsPerPoint = containerWidth / visiblePoints
-      const pointDelta = dx / pixelsPerPoint
-      setOffsetX(o => o - pointDelta)
-      touchStartRef.current.x = touch.clientX
-    } else if (e.touches.length === 2 && touchStartRef.current) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      const factor = dist / touchStartRef.current.dist
-      setZoom(z => Math.max(1, Math.min(10, z * factor)))
+      const rect = canvasRef.current?.getBoundingClientRect()
+      if (!rect) return
+
+      const x = touch.clientX - rect.left
+      const dx = x - touchStartRef.current.x
+
+      setOffsetX(prev => prev + dx)
+      touchStartRef.current.x = x
+    } else if (e.touches.length === 2) {
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const dist = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      )
+
+      const zoomFactor = dist / touchStartRef.current.dist
+
+      setZoom(prev => Math.max(0.1, Math.min(10, prev * zoomFactor)))
       touchStartRef.current.dist = dist
     }
-  }
+  }, [])
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     touchStartRef.current = null
-  }
+    setState(s => ({ ...s, isDragging: false }))
+  }, [])
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case '+':
+        case '=':
+          setZoom(prev => Math.min(10, prev * 1.2))
+          break
+        case '-':
+          setZoom(prev => Math.max(0.1, prev * 0.8))
+          break
+        case '0':
+          setZoom(1)
+          setOffsetX(0)
+          break
+        case 'ArrowLeft':
+          setOffsetX(prev => prev + 50)
+          break
+        case 'ArrowRight':
+          setOffsetX(prev => prev - 50)
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
-    <div className="relative w-full" style={{ height }} ref={containerRef}>
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full cursor-crosshair"
-        onMouseMove={handleMouseMove}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      />
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
+    <div className="space-y-4">
+      <div
+        ref={containerRef}
+        className="relative w-full"
+        style={{ height: `${height}px` }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="block w-full h-full"
+          style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        />
+      </div>
+
+      <div className="text-xs text-muted-foreground text-center">
         Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset • Arrow keys to scroll
       </div>
     </div>
