@@ -82,12 +82,25 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
+        {/* Close button - centered on right edge border - only visible when panel is open */}
+        {isOpen && (
+          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ right: '-16px', marginTop: '54px' }}>
+            <button
+              onClick={onToggle}
+              className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
+              title="Close sidebar"
+            >
+              <PanelLeftClose className="h-5 w-5 text-primary mx-auto" />
+            </button>
+          </div>
+        )}
+
         {/* Spacer for header */}
         <div className="h-[54px] shrink-0" />
 
         {/* Scrollable Sections */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          {/* New Strategy Section with Close Button */}
+          {/* New Strategy Section */}
           <div className="border-b border-primary/20">
             <div className="flex items-center justify-between px-4 py-4">
               <button
@@ -98,13 +111,6 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 <span className="text-base text-primary whitespace-nowrap">
                   New Strategy
                 </span>
-              </button>
-              <button
-                onClick={onToggle}
-                className="p-1 rounded-lg hover:bg-primary/10 transition-colors ml-2 shrink-0"
-                title="Close sidebar"
-              >
-                <PanelLeftClose className="h-5 w-5 text-primary" />
               </button>
             </div>
           </div>
