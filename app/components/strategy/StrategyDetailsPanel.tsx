@@ -90,7 +90,7 @@ export function StrategyDetailsPanel({
 
       {/* Expanded state - full panel */}
       <div
-        className={`fixed right-0 top-[54px] h-[calc(100vh-54px)] w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-[58px] md:top-[68px] h-[calc(100vh-58px)] md:h-[calc(100vh-68px)] w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
