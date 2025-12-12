@@ -3,8 +3,9 @@
 import { useMemo, memo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
+import { Button } from "@lumiere/shared/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
-import { TrendingUp, TrendingDown, Clock } from "lucide-react"
+import { TrendingUp, TrendingDown, Clock, X } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 import { TradingChart, EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
@@ -345,6 +346,21 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Close Button - Centered at bottom */}
+      {onClose && (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
+            Close Results
+          </Button>
+        </div>
       )}
     </div>
   )
