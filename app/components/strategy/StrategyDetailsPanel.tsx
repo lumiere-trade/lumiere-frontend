@@ -111,7 +111,7 @@ export function StrategyDetailsPanel({
         <div className="h-[54px] shrink-0" />
 
         {/* Header with action buttons */}
-        <div className="border-b border-border flex-shrink-0 px-6 py-3">
+        <div className="border-b border-border flex-shrink-0 px-6 py-5">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <Button
