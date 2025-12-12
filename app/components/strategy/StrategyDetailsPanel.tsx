@@ -108,8 +108,8 @@ export function StrategyDetailsPanel({
         )}
 
         {/* Header with action buttons */}
-        <div className="border-b border-border flex-shrink-0 px-6 py-4">
-          <div className="flex items-center justify-between gap-4">
+        <div className="border-b border-border flex-shrink-0 px-6 py-6 flex items-center min-h-[88px]">
+          <div className="flex items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-2">
               <Button
                 variant={activeTab === 'parameters' ? 'default' : 'outline'}
