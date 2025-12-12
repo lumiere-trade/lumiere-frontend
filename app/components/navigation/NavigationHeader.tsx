@@ -62,8 +62,8 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
 
   return (
     <>
-      <header className="border-b border-primary/20 bg-background z-20 relative">
-        <div className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4">
+      <header className="border-b border-primary/20 bg-background z-20 relative h-[64px]">
+        <div className="flex items-center justify-between px-4 md:px-6 h-full">
           <Link href="/dashboard" className="transition-all hover:brightness-110">
             <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none whitespace-nowrap">
               LUMIÈRE
