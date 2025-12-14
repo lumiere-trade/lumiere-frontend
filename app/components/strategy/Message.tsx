@@ -14,7 +14,27 @@ interface MessageProps {
 
 export function Message({ role, content, isStreaming, hasStrategy, onViewStrategy }: MessageProps) {
   const showViewButton = role === "assistant" && !isStreaming && hasStrategy && onViewStrategy
+  const hasContent = content && content.trim().length > 0
 
+  // If no content but has strategy button, show ONLY the button
+  if (!hasContent && showViewButton) {
+    return (
+      <div className="flex gap-3 justify-start">
+        <div className="max-w-[80%]">
+          <Button
+            onClick={onViewStrategy}
+            size="lg"
+            className="gap-2"
+          >
+            <Eye className="h-5 w-5" />
+            View Strategy
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Normal message with content
   return (
     <div className={`flex gap-3 ${role === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[80%] ${role === "user" ? "" : "w-full"}`}>
