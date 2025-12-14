@@ -34,6 +34,11 @@ export function Message({ role, content, isStreaming, hasStrategy, onViewStrateg
     )
   }
 
+  // If no content and no button, don't show anything
+  if (!hasContent) {
+    return null
+  }
+
   // Normal message with content
   return (
     <div className={`flex gap-3 ${role === "user" ? "justify-end" : "justify-start"}`}>
