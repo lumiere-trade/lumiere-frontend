@@ -118,7 +118,7 @@ export function MessageList({
     const hasContent = msg.content && msg.content.trim().length > 0
 
     // If currently streaming, show it even if empty (will fill up)
-    if (msg.isStreaming) {
+    if (msg.isStreaming && hasContent) {
       return true
     }
 
