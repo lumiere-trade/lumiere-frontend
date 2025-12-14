@@ -113,13 +113,18 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // IMPROVED FILTER: Skip empty messages and streaming messages with no content
+  // IMPROVED FILTER: Skip empty messages
   const visibleMessages = messages.filter(msg => {
     const hasContent = msg.content && msg.content.trim().length > 0
 
-    // Always filter out messages with no content
+    // If currently streaming, show it even if empty (will fill up)
+    if (msg.isStreaming) {
+      return true
+    }
+
+    // If not streaming and no content, hide it UNLESS it has a strategy
     if (!hasContent) {
-      return false
+      return msg.hasStrategy === true
     }
 
     return true
