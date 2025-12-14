@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Sparkles, ArrowDown, Eye } from "lucide-react"
+import { Sparkles, ArrowDown } from "lucide-react"
 import { Message } from "./Message"
 import { StrategyGenerationProgress } from "./StrategyGenerationProgress"
 import { Button } from "@lumiere/shared/components/ui/button"
@@ -11,6 +11,7 @@ interface MessageData {
   role: "user" | "assistant"
   content: string
   isStreaming?: boolean
+  hasStrategy?: boolean
 }
 
 interface MessageListProps {
@@ -33,7 +34,6 @@ export function MessageList({
   progressStage,
   progressMessage,
   error,
-  generatedStrategy,
   onViewStrategy
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -116,12 +116,12 @@ export function MessageList({
   // IMPROVED FILTER: Skip empty messages and streaming messages with no content
   const visibleMessages = messages.filter(msg => {
     const hasContent = msg.content && msg.content.trim().length > 0
-    
+
     // Always filter out messages with no content
     if (!hasContent) {
       return false
     }
-    
+
     return true
   })
 
@@ -136,6 +136,9 @@ export function MessageList({
             key={message.id}
             role={message.role}
             content={message.content}
+            isStreaming={message.isStreaming}
+            hasStrategy={message.hasStrategy}
+            onViewStrategy={onViewStrategy}
           />
         ))}
 
@@ -167,19 +170,6 @@ export function MessageList({
                 Error: {error.message}
               </p>
             </div>
-          </div>
-        )}
-
-        {generatedStrategy && !isGeneratingStrategy && (
-          <div className="flex justify-start py-4">
-            <Button
-              onClick={onViewStrategy}
-              size="lg"
-              className="gap-2"
-            >
-              <Eye className="h-5 w-5" />
-              View Strategy
-            </Button>
           </div>
         )}
 

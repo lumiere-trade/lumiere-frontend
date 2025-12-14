@@ -22,6 +22,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   isStreaming?: boolean;
+  hasStrategy?: boolean;
 }
 
 export function useProphet() {
@@ -215,6 +216,15 @@ export function useProphet() {
               parameters: {},
               tsdl_code: strategy.tsdl_code,
             });
+
+            // Mark current assistant message as having strategy
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === assistantMessageId
+                  ? { ...msg, hasStrategy: true }
+                  : msg
+              )
+            );
           },
           // onComplete - stream finished
           (fullMessage, convId, newState) => {
