@@ -4,7 +4,6 @@ import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, Save, Loader2 } f
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
-import { useState } from "react"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import { useCreateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { useChat } from "@/contexts/ChatContext"
@@ -28,8 +27,8 @@ export function StrategyDetailsPanel({
   strategy
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting, conversationState } = useChat()
-  const { messages, conversationId } = useProphet()
+  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
+  const { messages } = useProphet()
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -49,10 +48,9 @@ export function StrategyDetailsPanel({
     }
 
     try {
-      log.info('Saving strategy to Architect', {
+      log.info('Saving strategy', {
         name: strategy.name,
-        hasMetadata: !!strategy.metadata,
-        hasMessages: messages.length > 0
+        messageCount: messages.length
       })
 
       // Extract base plugins from metadata
@@ -80,40 +78,27 @@ export function StrategyDetailsPanel({
         parameters
       })
 
-      log.info('Strategy saved successfully', {
-        strategy_id,
-        name: strategy.name
-      })
+      log.info('Strategy saved', { strategy_id })
 
       // Save conversation history if we have messages
       if (messages.length > 0) {
-        log.info('Saving conversation history', {
-          messageCount: messages.length,
-          strategyId: strategy_id
-        })
-
-        const conversationMessages = messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          conversation_state: conversationState,
-          timestamp: msg.timestamp.toISOString()
-        }))
-
         await createConversationMutation.mutateAsync({
           strategy_id: strategy_id,
-          state: conversationState,
-          messages: conversationMessages
+          state: 'completed',
+          messages: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            conversation_state: 'completed',
+            timestamp: msg.timestamp.toISOString()
+          }))
         })
 
-        log.info('Conversation history saved', {
-          strategyId: strategy_id,
-          messageCount: messages.length
-        })
+        log.info('Conversation saved', { messageCount: messages.length })
       }
 
       // Success toast is handled by mutation
     } catch (error) {
-      log.error('Failed to save strategy', { error })
+      log.error('Failed to save', { error })
       // Error toast is handled by mutation
     }
   }
