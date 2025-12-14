@@ -152,42 +152,16 @@ function CreatePageContent() {
 
   const loadConversationHistory = async (strategyId: string) => {
     try {
-      logger.info('DEBUG: Starting loadConversationHistory', { strategyId })
-      
       const { conversations } = await getStrategyConversations(strategyId)
-      logger.info('DEBUG: Fetched conversations', { count: conversations.length })
 
-      if (conversations.length === 0) {
-        logger.info('DEBUG: No conversations found')
-        return
-      }
+      if (conversations.length === 0) return
 
       const latestConversation = conversations.sort((a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )[0]
 
-      logger.info('DEBUG: Latest conversation', {
-        conversationId: latestConversation.id,
-        messageCount: latestConversation.message_count
-      })
-
       const fullConversation = await getConversation(latestConversation.id)
-      logger.info('DEBUG: Full conversation fetched', {
-        messagesLength: fullConversation.messages.length,
-        messages: fullConversation.messages
-      })
-
       loadHistory(fullConversation)
-
-      logger.info('DEBUG: loadHistory called')
-      
-      // Check messages state after a short delay
-      setTimeout(() => {
-        logger.info('DEBUG: Messages state after loadHistory', {
-          messagesLength: messages.length,
-          hasMessages: messages.length > 0
-        })
-      }, 100)
 
       logger.info('Conversation history loaded', {
         messageCount: fullConversation.messages.length
@@ -224,13 +198,6 @@ function CreatePageContent() {
 
   // Determine view state
   const hasMessages = messages.length > 0
-
-  logger.info('DEBUG: Rendering CreatePage', {
-    hasMessages,
-    messagesLength: messages.length,
-    strategyId,
-    currentStrategyId: currentStrategy?.id
-  })
 
   // Show conversation view
   if (hasMessages) {
