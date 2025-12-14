@@ -6,7 +6,10 @@ import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
 import { useState } from "react"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
+import { useCreateStrategy } from "@/hooks/mutations/use-architect-mutations"
 import { useChat } from "@/contexts/ChatContext"
+import { useLogger } from "@/hooks/use-logger"
+import { LogCategory } from "@/lib/debug"
 
 interface StrategyDetailsPanelProps {
   isOpen: boolean
@@ -23,9 +26,10 @@ export function StrategyDetailsPanel({
   onTabChange,
   strategy
 }: StrategyDetailsPanelProps) {
-  const [isSaving, setIsSaving] = useState(false)
+  const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
   const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
   const runBacktestMutation = useRunBacktest()
+  const createStrategyMutation = useCreateStrategy()
 
   // Transform generatedStrategy to StrategyParameters format
   const strategyForParams = strategy ? {
@@ -36,8 +40,51 @@ export function StrategyDetailsPanel({
   } : null
 
   const handleSaveStrategy = async () => {
-    // TODO: Trigger save from StrategyParameters
-    console.log('Save strategy clicked')
+    if (!strategy) {
+      log.error('No strategy to save')
+      return
+    }
+
+    try {
+      log.info('Saving strategy to Architect', {
+        name: strategy.name,
+        hasMetadata: !!strategy.metadata
+      })
+
+      // Extract base plugins from metadata
+      const basePlugins: string[] = []
+      if (strategy.metadata?.indicators && strategy.metadata.indicators.length > 0) {
+        basePlugins.push('indicator_based')
+      }
+
+      // Prepare parameters object
+      const parameters = {
+        indicators: strategy.metadata?.indicators || [],
+        asset: strategy.metadata?.asset || {},
+        exit_conditions: strategy.metadata?.exit_conditions || {},
+        risk_management: strategy.metadata?.risk_management || {},
+        position_sizing: strategy.metadata?.position_sizing || {}
+      }
+
+      // Create strategy via Architect API
+      await createStrategyMutation.mutateAsync({
+        name: strategy.name,
+        description: `AI-generated strategy`,
+        tsdl_code: strategy.tsdl_code,
+        version: '1.0.0',
+        base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
+        parameters
+      })
+
+      log.info('Strategy saved successfully', {
+        name: strategy.name
+      })
+
+      // Success toast is handled by mutation
+    } catch (error) {
+      log.error('Failed to save strategy', { error })
+      // Error toast is handled by mutation
+    }
   }
 
   const handleRunBacktest = async () => {
@@ -154,11 +201,11 @@ export function StrategyDetailsPanel({
               <Button
                 size="sm"
                 onClick={handleSaveStrategy}
-                disabled={isSaving}
+                disabled={createStrategyMutation.isPending}
                 className="gap-2"
               >
                 <Save className="h-4 w-4" />
-                Save Strategy
+                {createStrategyMutation.isPending ? 'Saving...' : 'Save Strategy'}
               </Button>
             </div>
           </div>
