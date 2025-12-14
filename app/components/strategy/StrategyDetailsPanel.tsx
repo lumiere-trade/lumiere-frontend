@@ -6,8 +6,9 @@ import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
 import { useState } from "react"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
-import { useCreateStrategy } from "@/hooks/mutations/use-architect-mutations"
+import { useCreateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { useChat } from "@/contexts/ChatContext"
+import { useProphet } from "@/hooks/use-prophet"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -27,9 +28,11 @@ export function StrategyDetailsPanel({
   strategy
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
+  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting, conversationState } = useChat()
+  const { messages, conversationId } = useProphet()
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
+  const createConversationMutation = useCreateConversation()
 
   // Transform generatedStrategy to StrategyParameters format
   const strategyForParams = strategy ? {
@@ -48,7 +51,8 @@ export function StrategyDetailsPanel({
     try {
       log.info('Saving strategy to Architect', {
         name: strategy.name,
-        hasMetadata: !!strategy.metadata
+        hasMetadata: !!strategy.metadata,
+        hasMessages: messages.length > 0
       })
 
       // Extract base plugins from metadata
@@ -67,7 +71,7 @@ export function StrategyDetailsPanel({
       }
 
       // Create strategy via Architect API
-      await createStrategyMutation.mutateAsync({
+      const { strategy_id } = await createStrategyMutation.mutateAsync({
         name: strategy.name,
         description: `AI-generated strategy`,
         tsdl_code: strategy.tsdl_code,
@@ -77,8 +81,35 @@ export function StrategyDetailsPanel({
       })
 
       log.info('Strategy saved successfully', {
+        strategy_id,
         name: strategy.name
       })
+
+      // Save conversation history if we have messages
+      if (messages.length > 0) {
+        log.info('Saving conversation history', {
+          messageCount: messages.length,
+          strategyId: strategy_id
+        })
+
+        const conversationMessages = messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          conversation_state: conversationState,
+          timestamp: msg.timestamp.toISOString()
+        }))
+
+        await createConversationMutation.mutateAsync({
+          strategy_id: strategy_id,
+          state: conversationState,
+          messages: conversationMessages
+        })
+
+        log.info('Conversation history saved', {
+          strategyId: strategy_id,
+          messageCount: messages.length
+        })
+      }
 
       // Success toast is handled by mutation
     } catch (error) {
@@ -115,6 +146,8 @@ export function StrategyDetailsPanel({
       setIsBacktesting(false)
     }
   }
+
+  const isSaving = createStrategyMutation.isPending || createConversationMutation.isPending
 
   return (
     <>
@@ -201,11 +234,11 @@ export function StrategyDetailsPanel({
               <Button
                 size="sm"
                 onClick={handleSaveStrategy}
-                disabled={createStrategyMutation.isPending}
+                disabled={isSaving}
                 className="gap-2"
               >
                 <Save className="h-4 w-4" />
-                {createStrategyMutation.isPending ? 'Saving...' : 'Save Strategy'}
+                {isSaving ? 'Saving...' : 'Save Strategy'}
               </Button>
             </div>
           </div>
