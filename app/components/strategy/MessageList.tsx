@@ -41,6 +41,15 @@ export function MessageList({
   const [thinkingText, setThinkingText] = useState("")
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
+
+  // Initial scroll to bottom when messages first load (instant, no animation)
+  useEffect(() => {
+    if (isInitialLoad && messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
+      setIsInitialLoad(false)
+    }
+  }, [messages.length, isInitialLoad])
 
   // Thinking animation
   useEffect(() => {
@@ -90,8 +99,10 @@ export function MessageList({
     return () => observer.disconnect()
   }, [isSending])
 
-  // Auto-scroll logic with streaming awareness
+  // Auto-scroll logic with streaming awareness (smooth for ongoing conversation)
   useEffect(() => {
+    if (isInitialLoad) return
+
     if (isSending && userHasScrolledUp) {
       return
     }
@@ -99,7 +110,7 @@ export function MessageList({
     if (!showScrollButton || messages.length === 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [messages, isSending, isGeneratingStrategy, showScrollButton, userHasScrolledUp])
+  }, [messages, isSending, isGeneratingStrategy, showScrollButton, userHasScrolledUp, isInitialLoad])
 
   // Reset userHasScrolledUp when streaming stops
   useEffect(() => {
