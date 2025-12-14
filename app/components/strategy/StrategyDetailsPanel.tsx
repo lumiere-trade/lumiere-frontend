@@ -27,7 +27,7 @@ export function StrategyDetailsPanel({
   strategy
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
+  const { backtestResults, isBacktesting, setBacktestResults, setIsBacktesting, strategyMetadata } = useChat()
   const { messages } = useProphet()
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
@@ -55,17 +55,19 @@ export function StrategyDetailsPanel({
 
       // Extract base plugins from metadata
       const basePlugins: string[] = []
-      if (strategy.metadata?.indicators && strategy.metadata.indicators.length > 0) {
+      if (strategyMetadata?.indicators && strategyMetadata.indicators.length > 0) {
         basePlugins.push('indicator_based')
       }
 
-      // Prepare parameters object
+      // Prepare parameters object - use strategyMetadata from ChatContext!
       const parameters = {
-        indicators: strategy.metadata?.indicators || [],
-        asset: strategy.metadata?.asset || {},
-        exit_conditions: strategy.metadata?.exit_conditions || {},
-        risk_management: strategy.metadata?.risk_management || {},
-        position_sizing: strategy.metadata?.position_sizing || {}
+        indicators: strategyMetadata?.indicators || [],
+        asset: strategyMetadata?.asset || {},
+        exit_conditions: strategyMetadata?.exit_conditions || {},
+        risk_management: strategyMetadata?.risk_management || {},
+        position_sizing: strategyMetadata?.position_sizing || {},
+        entry_description: strategyMetadata?.entry_description || null,
+        exit_description: strategyMetadata?.exit_description || null
       }
 
       // Create strategy via Architect API
