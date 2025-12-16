@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save, Loader2, X } from "lucide-react"
+import { Code, Play, Save, Loader2, X, TrendingUp, TrendingDown, Target, Wallet } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
-import { FieldParam, IndicatorParam, regenerateTSDL } from "@/lib/api/prophet"
+import { StrategyJSON } from "@/lib/api/prophet"
 import {
   useCreateStrategy,
   useUpdateStrategy,
@@ -26,215 +26,93 @@ import {
 } from "@/components/ui/select"
 
 interface StrategyParametersProps {
-  strategy: {
-    name: string
-    type: string
-    parameters: Record<string, any>
-    tsdl_code: string
-  }
   hideActions?: boolean
   compact?: boolean
 }
 
-export function StrategyParameters({ strategy, hideActions = false, compact = false }: StrategyParametersProps) {
+export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategyMetadata, messages, currentStrategy } = useChat()
+  const { strategyMetadata, generatedStrategy, messages, currentStrategy } = useChat()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
   const runBacktestMutation = useRunBacktest()
 
   const [showCode, setShowCode] = useState(false)
-  const [name, setName] = useState(strategy.name)
-  const [paramValues, setParamValues] = useState<Record<string, any>>({})
-  const [tsdlCode, setTsdlCode] = useState(strategy.tsdl_code)
-  const [isRegenerating, setIsRegenerating] = useState(false)
+  const [name, setName] = useState('')
+  const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
 
-  // Parse entry/exit descriptions from TSDL METADATA section
-  const parsedDescriptions = useMemo(() => {
-    // Parse ENTRY_DESCRIPTION and EXIT_DESCRIPTION from METADATA
-    const entryDescMatch = tsdlCode.match(/ENTRY_DESCRIPTION:\s*"([^"]+)"/)
-    const exitDescMatch = tsdlCode.match(/EXIT_DESCRIPTION:\s*"([^"]+)"/)
-
-    return {
-      entryDescription: entryDescMatch ? entryDescMatch[1] : '',
-      exitDescription: exitDescMatch ? exitDescMatch[1] : ''
-    }
-  }, [tsdlCode])
-
-  // Use descriptions from METADATA section in TSDL code
-  const strategyLogic = useMemo(() => {
-    return {
-      entryCondition: parsedDescriptions.entryDescription,
-      exitCondition: parsedDescriptions.exitDescription,
-      hasDescriptions: !!(parsedDescriptions.entryDescription || parsedDescriptions.exitDescription)
-    }
-  }, [parsedDescriptions])
-
-  // Initialize param values from metadata
   useEffect(() => {
-    if (!strategyMetadata) return
-
-    const initialValues: Record<string, any> = {}
-
-    // Indicators
-    strategyMetadata.indicators?.forEach((indicator) => {
-      Object.entries(indicator.params).forEach(([paramName, paramData]) => {
-        const key = `indicator_${indicator.name}_${paramName}`
-        initialValues[key] = paramData.value
-      })
-    })
-
-    // Asset fields
-    Object.entries(strategyMetadata.asset || {}).forEach(([fieldName, fieldData]) => {
-      initialValues[`asset_${fieldName}`] = fieldData.value
-    })
-
-    // Exit conditions
-    Object.entries(strategyMetadata.exit_conditions || {}).forEach(([fieldName, fieldData]) => {
-      initialValues[`exit_${fieldName}`] = fieldData.value
-    })
-
-    // Risk management
-    Object.entries(strategyMetadata.risk_management || {}).forEach(([fieldName, fieldData]) => {
-      initialValues[`risk_${fieldName}`] = fieldData.value
-    })
-
-    // Position sizing
-    Object.entries(strategyMetadata.position_sizing || {}).forEach(([fieldName, fieldData]) => {
-      initialValues[`position_${fieldName}`] = fieldData.value
-    })
-
-    setParamValues(initialValues)
-
-    log.info('Initialized parameter values from metadata', {
-      indicatorCount: strategyMetadata.indicators?.length || 0,
-      paramCount: Object.keys(initialValues).length
-    })
+    if (strategyMetadata) {
+      setName(strategyMetadata.name)
+      setEditedStrategy(strategyMetadata)
+    }
   }, [strategyMetadata])
 
-  // Update tsdl_code when strategy prop changes
-  useEffect(() => {
-    setTsdlCode(strategy.tsdl_code)
-  }, [strategy.tsdl_code])
+  if (!strategyMetadata || !editedStrategy) {
+    return (
+      <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
+        <div className="bg-card border border-primary/20 rounded-2xl p-6">
+          <p className="text-sm text-muted-foreground text-center">
+            No strategy generated yet. Start a conversation with Prophet AI to create a strategy.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
-  // Update name when strategy prop changes
-  useEffect(() => {
-    setName(strategy.name)
-  }, [strategy.name])
+  const hasIndicators = editedStrategy.indicators.length > 0
+  const hasWallet = editedStrategy.target_wallet !== null
+  const hasReversion = editedStrategy.reversion_target !== null
+  
+  const strategyType = hasWallet && hasIndicators ? 'hybrid' 
+    : hasWallet ? 'wallet_following'
+    : hasReversion ? 'mean_reversion'
+    : 'indicator_based'
 
-  const handleParamChange = (key: string, value: any) => {
-    setParamValues(prev => ({ ...prev, [key]: value }))
+  const handleFieldChange = (field: keyof StrategyJSON, value: any) => {
+    setEditedStrategy(prev => prev ? { ...prev, [field]: value } : null)
   }
 
   const handleSave = async () => {
+    if (!editedStrategy || !generatedStrategy) return
+
     try {
       const isEditing = !!currentStrategy?.id
 
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
         strategyId: currentStrategy?.id,
-        name,
-        paramCount: Object.keys(paramValues).length,
-        messageCount: messages.length
+        name
       })
-
-      // Extract base plugins from metadata
-      const basePlugins: string[] = []
-      if (strategyMetadata?.indicators && strategyMetadata.indicators.length > 0) {
-        basePlugins.push('indicator_based')
-      }
-
-      // Prepare parameters object
-      const parameters = {
-        indicators: strategyMetadata?.indicators || [],
-        asset: strategyMetadata?.asset || {},
-        exit_conditions: strategyMetadata?.exit_conditions || {},
-        risk_management: strategyMetadata?.risk_management || {},
-        position_sizing: strategyMetadata?.position_sizing || {},
-        entry_description: strategyMetadata?.entry_description || null,
-        exit_description: strategyMetadata?.exit_description || null,
-        values: paramValues
-      }
-
-      let finalTsdlCode = tsdlCode
-
-      // If editing and parameters changed, regenerate TSDL
-      if (isEditing && Object.keys(paramValues).length > 0) {
-        try {
-          setIsRegenerating(true)
-
-          log.info('Regenerating TSDL with updated parameters', {
-            paramCount: Object.keys(paramValues).length
-          })
-
-          const regenerateResponse = await regenerateTSDL({
-            current_tsdl: tsdlCode,
-            updated_values: paramValues
-          })
-
-          finalTsdlCode = regenerateResponse.tsdl_code
-          setTsdlCode(finalTsdlCode)
-
-          log.info('TSDL regenerated successfully', {
-            oldLength: tsdlCode.length,
-            newLength: finalTsdlCode.length
-          })
-
-          toast.success('Strategy code updated successfully')
-        } catch (error) {
-          log.error('Failed to regenerate TSDL', { error })
-          toast.error('Failed to update strategy code. Saving with original code.')
-        } finally {
-          setIsRegenerating(false)
-        }
-      }
 
       let strategyId: string
 
       if (isEditing) {
-        // UPDATE existing strategy
         await updateStrategyMutation.mutateAsync({
           strategyId: currentStrategy.id,
           updates: {
-            name: name || strategy.name,
-            description: `AI-generated ${strategy.type} strategy`,
-            tsdl_code: finalTsdlCode,
-            base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
-            parameters
+            name: name || editedStrategy.name,
+            description: editedStrategy.description,
+            tsdl_code: generatedStrategy.python_code,
+            base_plugins: [strategyType],
+            parameters: editedStrategy
           }
         })
         strategyId = currentStrategy.id
-
-        log.info('Strategy updated successfully', {
-          strategyId,
-          name: name || strategy.name
-        })
       } else {
-        // CREATE new strategy
         const strategyResponse = await createStrategyMutation.mutateAsync({
-          name: name || strategy.name,
-          description: `AI-generated ${strategy.type} strategy`,
-          tsdl_code: finalTsdlCode,
+          name: name || editedStrategy.name,
+          description: editedStrategy.description,
+          tsdl_code: generatedStrategy.python_code,
           version: '1.0.0',
-          base_plugins: basePlugins.length > 0 ? basePlugins : ['indicator_based'],
-          parameters
+          base_plugins: [strategyType],
+          parameters: editedStrategy
         })
         strategyId = strategyResponse.strategy_id
-
-        log.info('Strategy created successfully', {
-          strategyId,
-          name: name || strategy.name
-        })
       }
 
-      // Save conversation history if messages exist
       if (messages.length > 0) {
-        log.info('Saving conversation history', {
-          strategyId,
-          messageCount: messages.length
-        })
-
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
           state: 'completed',
@@ -245,158 +123,37 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
             timestamp: msg.timestamp.toISOString()
           }))
         })
-
-        log.info('Conversation history saved successfully', {
-          strategyId,
-          messageCount: messages.length
-        })
-      } else {
-        log.warn('No conversation history to save', {
-          strategyId
-        })
       }
 
-      // Success is handled by mutations (toasts)
+      toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
       log.error('Failed to save strategy', { error })
-      // Error is handled by mutations
     }
   }
 
   const handleBacktest = async () => {
+    if (!editedStrategy || !generatedStrategy) return
+
     try {
-      // Extract symbol and timeframe from asset metadata
-      const symbol = paramValues['asset_symbol'] || strategyMetadata?.asset?.symbol?.value || 'SOL/USDT'
-      const timeframe = paramValues['asset_timeframe'] || strategyMetadata?.asset?.timeframe?.value || '1h'
-
-      log.info('Starting backtest', {
-        name,
-        symbol,
-        timeframe,
-        tsdlLength: tsdlCode.length
-      })
-
       const results = await runBacktestMutation.mutateAsync({
-        tsdl_document: tsdlCode,
-        symbol,
+        tsdl_document: generatedStrategy.python_code,
+        symbol: editedStrategy.symbol,
         days_back: 90,
         initial_capital: 10000.0,
-        timeframe,
+        timeframe: editedStrategy.timeframe,
         slippage: 0.001,
         commission: 0.001,
         cache_results: true
       })
 
       setBacktestResults(results)
-      log.info('Backtest completed successfully', {
-        backtest_id: results.backtest_id,
-        total_return: results.metrics.total_return_pct
-      })
     } catch (error) {
       log.error('Backtest failed', { error })
     }
   }
 
-  const renderParamField = (
-    key: string,
-    label: string,
-    paramData: FieldParam,
-    description?: string
-  ) => {
-    const currentValue = paramValues[key] ?? paramData.value
-
-    // Enum type - render select dropdown
-    if (paramData.type === 'enum' && paramData.values) {
-      return (
-        <div key={key} className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-semibold text-foreground">{label}</label>
-              <span className="text-sm font-mono text-primary">{currentValue}</span>
-            </div>
-            <Select
-              value={currentValue}
-              onValueChange={(value) => handleParamChange(key, value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {paramData.values.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {(description || paramData.description) && (
-              <p className="text-sm text-muted-foreground">
-                {description || paramData.description}
-              </p>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    // Number types (int/float) - render slider
-    if (paramData.type === 'int' || paramData.type === 'float') {
-      const min = paramData.min ?? 0
-      const max = paramData.max ?? 100
-      const step = paramData.step ?? (paramData.type === 'int' ? 1 : 0.1)
-      const unit = paramData.unit || ''
-
-      return (
-        <div key={key} className="bg-card border border-primary/20 rounded-2xl p-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-base font-semibold text-foreground">{label}</label>
-              <span className="text-base font-mono text-primary">
-                {currentValue}{unit}
-              </span>
-            </div>
-            <Slider
-              value={[Number(currentValue)]}
-              onValueChange={(value) => handleParamChange(key, value[0])}
-              min={min}
-              max={max}
-              step={step}
-              className="w-full"
-            />
-            {(description || paramData.description) && (
-              <p className="text-sm text-muted-foreground">
-                {description || paramData.description}
-              </p>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    // Fallback for other types
-    return null
-  }
-
-  const renderIndicatorParams = (indicator: IndicatorParam) => {
-    return (
-      <div key={indicator.name} className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          {indicator.display_name || indicator.type} ({indicator.name})
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Object.entries(indicator.params).map(([paramName, paramData]) => {
-            const key = `indicator_${indicator.name}_${paramName}`
-            const label = paramName.charAt(0).toUpperCase() + paramName.slice(1).replace(/_/g, ' ')
-            return renderParamField(key, label, paramData)
-          })}
-        </div>
-      </div>
-    )
-  }
-
   const isEditing = !!currentStrategy?.id
-  const isSaving = isRegenerating ||
-                   createStrategyMutation.isPending ||
+  const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
@@ -418,7 +175,7 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
               variant="outline"
               size="sm"
               onClick={handleBacktest}
-              disabled={runBacktestMutation.isPending || !tsdlCode}
+              disabled={runBacktestMutation.isPending}
               className="gap-2"
             >
               {runBacktestMutation.isPending ? (
@@ -442,7 +199,7 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
               {isSaving ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  {isRegenerating ? 'Regenerating...' : 'Saving...'}
+                  Saving...
                 </>
               ) : (
                 <>
@@ -451,18 +208,6 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
                 </>
               )}
             </Button>
-          </div>
-        </div>
-      )}
-
-      {isRegenerating && (
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Updating strategy code...</p>
-              <p className="text-xs text-muted-foreground">AI is regenerating TSDL with your new parameters</p>
-            </div>
           </div>
         </div>
       )}
@@ -481,13 +226,24 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
         </div>
       )}
 
-      {showCode && (
+      {showCode && generatedStrategy && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <pre className="text-base text-muted-foreground whitespace-pre-wrap break-words font-mono">
-            <code>{tsdlCode}</code>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">Generated Python Code</h3>
+            <span className="text-sm text-muted-foreground font-mono">{generatedStrategy.strategy_class_name}</span>
+          </div>
+          <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words font-mono overflow-x-auto">
+            <code>{generatedStrategy.python_code}</code>
           </pre>
         </div>
       )}
+
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-semibold text-muted-foreground">Strategy Type:</span>
+        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+          {strategyType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+        </span>
+      </div>
 
       <div className="bg-card border border-primary/20 rounded-2xl p-6">
         <div className="space-y-1">
@@ -499,113 +255,381 @@ export function StrategyParameters({ strategy, hideActions = false, compact = fa
             className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
           <p className="text-sm text-muted-foreground">
-            Give your strategy a descriptive name
+            {editedStrategy.description}
           </p>
         </div>
       </div>
 
-      {!strategyMetadata && (
-        <div className="bg-card border border-primary/20 rounded-2xl p-6">
-          <p className="text-sm text-muted-foreground text-center">
-            No parameter metadata available. Parameters will appear after Prophet generates a strategy.
-          </p>
+      {hasIndicators && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            Technical Indicators
+          </h3>
+          
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
+            <div className="flex flex-wrap gap-2">
+              {editedStrategy.indicators.map((indicator, idx) => (
+                <div
+                  key={idx}
+                  className="px-3 py-1.5 bg-background border border-primary/30 rounded-lg text-sm font-mono text-foreground"
+                >
+                  {indicator}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              <h4 className="text-base font-semibold text-foreground">Entry Conditions</h4>
+            </div>
+            
+            <div className="space-y-2">
+              {editedStrategy.entry_rules.map((rule, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
+                  <span className="text-sm font-mono text-foreground">{rule}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-primary/20">
+              <p className="text-sm text-muted-foreground">Logic:</p>
+              <p className="text-sm font-mono text-primary">{editedStrategy.entry_logic}</p>
+            </div>
+          </div>
+
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
+            <div className="flex items-center gap-2">
+              <TrendingDown className="h-5 w-5 text-red-500" />
+              <h4 className="text-base font-semibold text-foreground">Exit Conditions</h4>
+            </div>
+            
+            <div className="space-y-2">
+              {editedStrategy.exit_rules.map((rule, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
+                  <span className="text-sm font-mono text-foreground">{rule}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-2 border-t border-primary/20">
+              <p className="text-sm text-muted-foreground">Logic:</p>
+              <p className="text-sm font-mono text-primary">{editedStrategy.exit_logic}</p>
+            </div>
+          </div>
+
+          <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
+            <p className="text-sm text-muted-foreground">
+              Want to change indicators or conditions? Ask Prophet AI: "Change RSI period to 21" or "Add volume filter"
+            </p>
+          </div>
         </div>
       )}
 
-      {strategyMetadata && (
-        <>
-          {/* Strategy Logic Section - Read-only display */}
-          {(strategyLogic.entryCondition || strategyLogic.exitCondition) && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Strategy Logic</h3>
-              <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 space-y-4">
-                <div>
-                  <p className="text-base font-semibold text-muted-foreground mb-2">Entry Conditions</p>
-                  <p className={`text-base text-foreground whitespace-pre-wrap break-words ${
-                    strategyLogic.hasDescriptions ? '' : 'font-mono'
-                  }`}>
-                    {strategyLogic.entryCondition || 'No entry conditions defined'}
-                  </p>
+      {hasWallet && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-primary" />
+            Wallet Following
+          </h3>
+          
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Target Wallet</p>
+              <p className="text-sm font-mono text-foreground break-all">{editedStrategy.target_wallet}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-foreground">Execution Settings</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Trading Pair</label>
+              <Select
+                value={editedStrategy.symbol}
+                onValueChange={(value) => handleFieldChange('symbol', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SOL/USDC">SOL/USDC</SelectItem>
+                  <SelectItem value="SOL/USDT">SOL/USDT</SelectItem>
+                  <SelectItem value="BTC/USDC">BTC/USDC</SelectItem>
+                  <SelectItem value="ETH/USDC">ETH/USDC</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">Asset to trade</p>
+            </div>
+          </div>
+
+          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Timeframe</label>
+              <Select
+                value={editedStrategy.timeframe}
+                onValueChange={(value) => handleFieldChange('timeframe', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 Minute</SelectItem>
+                  <SelectItem value="5m">5 Minutes</SelectItem>
+                  <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="4h">4 Hours</SelectItem>
+                  <SelectItem value="1d">1 Day</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">Candle interval</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-foreground">Risk Management</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {editedStrategy.stop_loss !== null && (
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Stop Loss</label>
+                  <span className="text-base font-mono text-primary">{editedStrategy.stop_loss.toFixed(1)}%</span>
                 </div>
-                <div>
-                  <p className="text-base font-semibold text-muted-foreground mb-2">Exit Conditions</p>
-                  <p className={`text-base text-foreground whitespace-pre-wrap break-words ${
-                    strategyLogic.hasDescriptions ? '' : 'font-mono'
-                  }`}>
-                    {strategyLogic.exitCondition || 'No exit conditions defined'}
-                  </p>
+                <Slider
+                  value={[editedStrategy.stop_loss]}
+                  onValueChange={([value]) => handleFieldChange('stop_loss', value)}
+                  min={0.1}
+                  max={10}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Maximum loss per trade</p>
+              </div>
+            </div>
+          )}
+
+          {editedStrategy.take_profit !== null && (
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Take Profit</label>
+                  <span className="text-base font-mono text-primary">{editedStrategy.take_profit.toFixed(1)}%</span>
                 </div>
-                <p className="text-sm text-muted-foreground italic">
-                  These conditions are part of the strategy logic and cannot be edited directly. Modify indicator parameters above to adjust the strategy behavior.
-                </p>
+                <Slider
+                  value={[editedStrategy.take_profit]}
+                  onValueChange={([value]) => handleFieldChange('take_profit', value)}
+                  min={0.1}
+                  max={20}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Target profit per trade</p>
               </div>
             </div>
           )}
 
-          {/* Indicators Section */}
-          {strategyMetadata.indicators && strategyMetadata.indicators.length > 0 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-foreground">Indicators</h3>
-              {strategyMetadata.indicators.map(renderIndicatorParams)}
-            </div>
-          )}
-
-          {/* Asset Section */}
-          {strategyMetadata.asset && Object.keys(strategyMetadata.asset).length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Asset Configuration</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(strategyMetadata.asset).map(([fieldName, fieldData]) => {
-                  const key = `asset_${fieldName}`
-                  const label = fieldName.replace(/_/g, ' ')
-                  return renderParamField(key, label, fieldData)
-                })}
+          {editedStrategy.trailing_stop !== null && (
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Trailing Stop</label>
+                  <span className="text-base font-mono text-primary">{editedStrategy.trailing_stop.toFixed(1)}%</span>
+                </div>
+                <Slider
+                  value={[editedStrategy.trailing_stop]}
+                  onValueChange={([value]) => handleFieldChange('trailing_stop', value)}
+                  min={0.1}
+                  max={5}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Dynamic stop loss distance</p>
               </div>
             </div>
           )}
 
-          {/* Exit Conditions Section */}
-          {strategyMetadata.exit_conditions && Object.keys(strategyMetadata.exit_conditions).length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Exit Conditions</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(strategyMetadata.exit_conditions).map(([fieldName, fieldData]) => {
-                  const key = `exit_${fieldName}`
-                  const label = fieldName.replace(/_/g, ' ')
-                  return renderParamField(key, label, fieldData)
-                })}
+          {editedStrategy.max_position_size !== null && (
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Max Position Size</label>
+                  <span className="text-base font-mono text-primary">{(editedStrategy.max_position_size * 100).toFixed(0)}%</span>
+                </div>
+                <Slider
+                  value={[editedStrategy.max_position_size * 100]}
+                  onValueChange={([value]) => handleFieldChange('max_position_size', value / 100)}
+                  min={1}
+                  max={100}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Maximum capital per trade</p>
               </div>
             </div>
           )}
 
-          {/* Risk Management Section */}
-          {strategyMetadata.risk_management && Object.keys(strategyMetadata.risk_management).length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Risk Management</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(strategyMetadata.risk_management).map(([fieldName, fieldData]) => {
-                  const key = `risk_${fieldName}`
-                  const label = fieldName.replace(/_/g, ' ')
-                  return renderParamField(key, label, fieldData)
-                })}
+          {editedStrategy.max_trades_per_day !== null && (
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Max Trades Per Day</label>
+                  <span className="text-base font-mono text-primary">{editedStrategy.max_trades_per_day}</span>
+                </div>
+                <Slider
+                  value={[editedStrategy.max_trades_per_day]}
+                  onValueChange={([value]) => handleFieldChange('max_trades_per_day', value)}
+                  min={1}
+                  max={50}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Daily trade limit</p>
               </div>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Position Sizing Section */}
-          {strategyMetadata.position_sizing && Object.keys(strategyMetadata.position_sizing).length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Position Sizing</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(strategyMetadata.position_sizing).map(([fieldName, fieldData]) => {
-                  const key = `position_${fieldName}`
-                  const label = fieldName.replace(/_/g, ' ')
-                  return renderParamField(key, label, fieldData)
-                })}
+      {hasWallet && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-foreground">Copy Trading Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {editedStrategy.copy_percentage !== null && (
+              <div className="bg-card border border-primary/20 rounded-2xl p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-foreground">Copy Percentage</label>
+                    <span className="text-base font-mono text-primary">{(editedStrategy.copy_percentage * 100).toFixed(0)}%</span>
+                  </div>
+                  <Slider
+                    value={[editedStrategy.copy_percentage * 100]}
+                    onValueChange={([value]) => handleFieldChange('copy_percentage', value / 100)}
+                    min={1}
+                    max={100}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">Percentage of whale trade to copy</p>
+                </div>
+              </div>
+            )}
+
+            {editedStrategy.min_copy_size !== null && (
+              <div className="bg-card border border-primary/20 rounded-2xl p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-foreground">Min Copy Size</label>
+                    <span className="text-base font-mono text-primary">${editedStrategy.min_copy_size.toFixed(0)}</span>
+                  </div>
+                  <Slider
+                    value={[editedStrategy.min_copy_size]}
+                    onValueChange={([value]) => handleFieldChange('min_copy_size', value)}
+                    min={10}
+                    max={1000}
+                    step={10}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">Ignore smaller trades</p>
+                </div>
+              </div>
+            )}
+
+            {editedStrategy.max_copy_size !== null && (
+              <div className="bg-card border border-primary/20 rounded-2xl p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-foreground">Max Copy Size</label>
+                    <span className="text-base font-mono text-primary">${editedStrategy.max_copy_size.toFixed(0)}</span>
+                  </div>
+                  <Slider
+                    value={[editedStrategy.max_copy_size]}
+                    onValueChange={([value]) => handleFieldChange('max_copy_size', value)}
+                    min={100}
+                    max={10000}
+                    step={100}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">Cap maximum trade size</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {hasReversion && editedStrategy.entry_threshold !== null && (
+        <div className="space-y-4">
+          <h3 className="text-xl font-semibold text-foreground">Mean Reversion Settings</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-card border border-primary/20 rounded-2xl p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-base font-semibold text-foreground">Entry Threshold</label>
+                  <span className="text-base font-mono text-primary">{editedStrategy.entry_threshold.toFixed(1)}</span>
+                </div>
+                <Slider
+                  value={[editedStrategy.entry_threshold]}
+                  onValueChange={([value]) => handleFieldChange('entry_threshold', value)}
+                  min={0.5}
+                  max={5}
+                  step={0.1}
+                  className="w-full"
+                />
+                <p className="text-sm text-muted-foreground">Standard deviations for entry</p>
               </div>
             </div>
-          )}
-        </>
+
+            {editedStrategy.exit_threshold !== null && (
+              <div className="bg-card border border-primary/20 rounded-2xl p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-foreground">Exit Threshold</label>
+                    <span className="text-base font-mono text-primary">{editedStrategy.exit_threshold.toFixed(1)}</span>
+                  </div>
+                  <Slider
+                    value={[editedStrategy.exit_threshold]}
+                    onValueChange={([value]) => handleFieldChange('exit_threshold', value)}
+                    min={0.1}
+                    max={3}
+                    step={0.1}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">Standard deviations for exit</p>
+                </div>
+              </div>
+            )}
+
+            {editedStrategy.lookback_period !== null && (
+              <div className="bg-card border border-primary/20 rounded-2xl p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-base font-semibold text-foreground">Lookback Period</label>
+                    <span className="text-base font-mono text-primary">{editedStrategy.lookback_period}</span>
+                  </div>
+                  <Slider
+                    value={[editedStrategy.lookback_period]}
+                    onValueChange={([value]) => handleFieldChange('lookback_period', value)}
+                    min={10}
+                    max={200}
+                    step={10}
+                    className="w-full"
+                  />
+                  <p className="text-sm text-muted-foreground">Historical periods to analyze</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   )
