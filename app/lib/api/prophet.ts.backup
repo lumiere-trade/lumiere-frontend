@@ -1,6 +1,7 @@
 /**
  * Prophet API Client - SSE Streaming
- * Updated for TSDL2 flat composable schema
+ * CRITICAL: Frontend does NOT detect TSDL or calculate progress.
+ * Prophet sends explicit events - frontend just visualizes them.
  */
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
@@ -31,61 +32,66 @@ export interface ProphetHealthResponse {
   service: string;
   version: string;
   mode?: string;
-  strategy_schema_loaded?: boolean;
+  compact_syntax_loaded?: boolean;
   platform_docs_tool?: string;
   embeddings_service?: string;
   redis_cache?: string;
 }
 
-// TSDL2 Flat Composable Schema - ALL fields always present
-export interface StrategyJSON {
-  // Core metadata
+export interface ParamMetadata {
+  type: 'int' | 'float' | 'enum' | 'string' | 'boolean';
+  min?: number;
+  max?: number;
+  default?: any;
+  step?: number;
+  unit?: string;
+  values?: string[];
+  description?: string;
+}
+
+export interface FieldParam extends ParamMetadata {
+  value: any;
+}
+
+export interface IndicatorParam {
   name: string;
-  description: string;
-  symbol: string;
-  timeframe: string;
-  
-  // Indicator-based strategy fields
-  indicators: string[];
-  entry_rules: string[];
-  entry_logic: string;
-  exit_rules: string[];
-  exit_logic: string;
-  
-  // Wallet following fields
-  target_wallet: string | null;
-  copy_percentage: number | null;
-  min_copy_size: number | null;
-  max_copy_size: number | null;
-  copy_delay: number | null;
-  
-  // Mean reversion fields
-  reversion_target: string | null;
-  entry_threshold: number | null;
-  exit_threshold: number | null;
-  lookback_period: number | null;
-  
-  // Risk management
-  stop_loss: number | null;
-  take_profit: number | null;
-  trailing_stop: number | null;
-  max_position_size: number | null;
-  max_trades_per_day: number | null;
+  type: string;
+  display_name?: string;
+  category?: string;
+  description?: string;
+  params: Record<string, FieldParam>;
+}
+
+export interface StrategyParameters {
+  indicators: IndicatorParam[];
+  asset: Record<string, FieldParam>;
+  exit_conditions: Record<string, FieldParam>;
+  risk_management: Record<string, FieldParam>;
+  position_sizing: Record<string, FieldParam>;
+  entry_description?: string | null;
+  exit_description?: string | null;
 }
 
 export interface ProgressEvent {
-  stage: 'generating_strategy' | 'compiling_strategy' | 'error';
+  stage: 'generating_strategy' | 'validating_strategy' | 'wrapping_up';
   message: string;
   percent: number;
 }
 
 export interface StrategyGeneratedEvent {
-  strategy_json: StrategyJSON;
-  python_code: string;
+  tsdl_code: string;
+  parameters: StrategyParameters;
   strategy_id: string;
   strategy_name: string;
-  strategy_class_name: string;
-  metadata?: any;
+}
+
+export interface RegenerateTSDLRequest {
+  current_tsdl: string;
+  updated_values: Record<string, any>;
+}
+
+export interface RegenerateTSDLResponse {
+  tsdl_code: string;
 }
 
 export type SSEEvent =
@@ -98,6 +104,7 @@ export type SSEEvent =
 
 /**
  * Send chat message to Prophet AI with SSE streaming.
+ * Prophet controls ALL strategy detection and progress - frontend just listens.
  */
 export async function sendChatMessageStream(
   request: ProphetChatRequest,
@@ -190,7 +197,27 @@ export async function getProphetHealth(): Promise<ProphetHealthResponse> {
   return response.json();
 }
 
+export async function regenerateTSDL(
+  request: RegenerateTSDLRequest
+): Promise<RegenerateTSDLResponse> {
+  const response = await fetch(`${PROPHET_URL}/regenerate-tsdl`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.detail || `Failed to regenerate TSDL: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export const prophetApi = {
   sendChatMessageStream,
   getProphetHealth,
+  regenerateTSDL,
 };

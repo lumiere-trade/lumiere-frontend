@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, ReactNode } from 'react'
-import { StrategyParameters } from '@/lib/api/prophet'
+import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
 
 export interface ChatMessage {
@@ -11,6 +11,14 @@ export interface ChatMessage {
   timestamp: Date
   isStreaming?: boolean
   hasStrategy?: boolean
+}
+
+export interface GeneratedStrategy {
+  id: string
+  name: string
+  strategy_json: StrategyJSON
+  python_code: string
+  strategy_class_name: string
 }
 
 export interface CurrentStrategy {
@@ -24,8 +32,8 @@ export type DetailsPanelTab = 'parameters' | 'code' | 'backtest'
 
 interface ChatContextType {
   isChatExpanded: boolean
-  generatedStrategy: any | null
-  strategyMetadata: StrategyParameters | null
+  generatedStrategy: GeneratedStrategy | null
+  strategyMetadata: StrategyJSON | null
   currentStrategy: CurrentStrategy | null
   inputValue: string
   messages: ChatMessage[]
@@ -42,8 +50,8 @@ interface ChatContextType {
 
   expandChat: () => void
   collapseChat: () => void
-  setGeneratedStrategy: (strategy: any) => void
-  setStrategyMetadata: (metadata: StrategyParameters | null) => void
+  setGeneratedStrategy: (strategy: GeneratedStrategy | null) => void
+  setStrategyMetadata: (metadata: StrategyJSON | null) => void
   setCurrentStrategy: (strategy: CurrentStrategy | null) => void
   setInputValue: (value: string) => void
   setMessages: (messages: ChatMessage[]) => void
@@ -65,8 +73,8 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined)
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
-  const [generatedStrategy, setGeneratedStrategy] = useState<any>(null)
-  const [strategyMetadata, setStrategyMetadata] = useState<StrategyParameters | null>(null)
+  const [generatedStrategy, setGeneratedStrategy] = useState<GeneratedStrategy | null>(null)
+  const [strategyMetadata, setStrategyMetadata] = useState<StrategyJSON | null>(null)
   const [currentStrategy, setCurrentStrategy] = useState<CurrentStrategy | null>(null)
   const [inputValue, setInputValue] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
