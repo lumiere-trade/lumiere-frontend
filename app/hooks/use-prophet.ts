@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useChat } from '@/contexts/ChatContext'
 import { useLogger } from './use-logger'
 import { LogCategory } from '@/lib/debug'
+import { useProphetHealthQuery } from './queries/use-prophet-queries'
 import {
   sendChatMessageStream,
   ProgressEvent,
   StrategyGeneratedEvent,
-  StrategyJSON
 } from '@/lib/api/prophet'
 
 export function useProphet() {
@@ -30,6 +30,10 @@ export function useProphet() {
 
   const [isStreaming, setIsStreaming] = useState(false)
   const log = useLogger('useProphet', LogCategory.HOOK)
+
+  // Health check query
+  const { data: healthData, error: healthError } = useProphetHealthQuery()
+  const isHealthy = healthData?.status === 'healthy'
 
   const sendMessage = async (message: string) => {
     if (!message.trim()) return
@@ -171,10 +175,24 @@ export function useProphet() {
     )
   }
 
+  // Stub functions for backward compatibility with create page
+  const loadHistory = async () => {
+    log.warn('loadHistory is deprecated - history loads via ChatContext')
+  }
+
+  const stopGeneration = () => {
+    log.warn('stopGeneration not yet implemented')
+  }
+
   return {
     messages,
     isStreaming,
+    isSending: isStreaming,
     isGeneratingStrategy,
-    sendMessage
+    isHealthy,
+    error: healthError,
+    sendMessage,
+    loadHistory,
+    stopGeneration
   }
 }
