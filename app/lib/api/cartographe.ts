@@ -1,6 +1,6 @@
 /**
  * Cartographe API Client
- * Backtesting service for TSDL strategies
+ * Backtesting service for JSON-based TSDL strategies
  * Communicates through Pourtier proxy (/api/cartographe/*)
  */
 
@@ -12,11 +12,9 @@ import { logger, LogCategory } from '@/lib/debug';
 // ============================================================================
 
 export interface BacktestRequest {
-  tsdl_document: string;
-  symbol: string;
+  strategy_json: Record<string, any>;  // Strategy JSON from Prophet
   days_back: number;
   initial_capital: number;
-  timeframe: string;
   slippage: number;
   commission: number;
   cache_results: boolean;
@@ -111,22 +109,22 @@ const LOG_CATEGORY = LogCategory.API;
 const BACKTEST_TIMEOUT = 90000; // 90 seconds for backtest
 
 /**
- * Run backtest on TSDL strategy
+ * Run backtest on Strategy JSON
  * Timeout: 90 seconds (Cartographe can take up to 60s)
  */
 export const runBacktest = async (
   request: BacktestRequest
 ): Promise<BacktestResponse> => {
   logger.info(LOG_CATEGORY, 'Running backtest', {
-    symbol: request.symbol,
+    strategy_name: request.strategy_json.name,
+    symbol: request.strategy_json.symbol,
     days_back: request.days_back,
-    timeframe: request.timeframe,
+    timeframe: request.strategy_json.timeframe,
     initial_capital: request.initial_capital,
-    tsdl_length: request.tsdl_document.length,
   });
 
-  // Log first 500 chars of TSDL for debugging
-  console.log('TSDL Document (first 500 chars):', request.tsdl_document.substring(0, 500));
+  // Log strategy JSON for debugging
+  console.log('Strategy JSON:', JSON.stringify(request.strategy_json, null, 2));
 
   try {
     const result = await apiRequest<BacktestResponse>(
@@ -137,7 +135,7 @@ export const runBacktest = async (
       },
       BACKTEST_TIMEOUT
     );
-    
+
     logger.info(LOG_CATEGORY, 'Backtest completed successfully', {
       backtest_id: result.backtest_id,
       total_return: result.metrics.total_return_pct,
@@ -148,7 +146,7 @@ export const runBacktest = async (
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to run backtest', {
       error,
-      symbol: request.symbol,
+      strategy_name: request.strategy_json.name,
       days_back: request.days_back,
     });
     throw error;

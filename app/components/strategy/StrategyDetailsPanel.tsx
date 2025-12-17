@@ -37,11 +37,9 @@ export function StrategyDetailsPanel({
 
     try {
       const result = await runBacktestMutation.mutateAsync({
-        tsdl_document: generatedStrategy.python_code,
-        symbol: strategyMetadata.symbol,
+        strategy_json: strategyMetadata,
         days_back: 90,
         initial_capital: 10000,
-        timeframe: strategyMetadata.timeframe,
         slippage: 0.001,
         commission: 0.001,
         cache_results: true
@@ -146,7 +144,7 @@ export function StrategyDetailsPanel({
               compact={true}
             />
           )}
-          
+
           {activeTab === 'code' && generatedStrategy && (
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="mb-4">
@@ -158,7 +156,7 @@ export function StrategyDetailsPanel({
               </pre>
             </div>
           )}
-          
+
           {activeTab === 'backtest' && (
             <div>
               {isBacktesting && (

@@ -65,8 +65,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const hasIndicators = editedStrategy.indicators.length > 0
   const hasWallet = editedStrategy.target_wallet !== null
   const hasReversion = editedStrategy.reversion_target !== null
-  
-  const strategyType = hasWallet && hasIndicators ? 'hybrid' 
+
+  const strategyType = hasWallet && hasIndicators ? 'hybrid'
     : hasWallet ? 'wallet_following'
     : hasReversion ? 'mean_reversion'
     : 'indicator_based'
@@ -136,11 +136,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
     try {
       const results = await runBacktestMutation.mutateAsync({
-        tsdl_document: generatedStrategy.python_code,
-        symbol: editedStrategy.symbol,
+        strategy_json: editedStrategy,
         days_back: 90,
         initial_capital: 10000.0,
-        timeframe: editedStrategy.timeframe,
         slippage: 0.001,
         commission: 0.001,
         cache_results: true
@@ -266,7 +264,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             <Target className="h-5 w-5 text-primary" />
             Technical Indicators
           </h3>
-          
+
           <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
             <div className="flex flex-wrap gap-2">
               {editedStrategy.indicators.map((indicator, idx) => (
@@ -285,7 +283,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               <TrendingUp className="h-5 w-5 text-green-500" />
               <h4 className="text-base font-semibold text-foreground">Entry Conditions</h4>
             </div>
-            
+
             <div className="space-y-2">
               {editedStrategy.entry_rules.map((rule, idx) => (
                 <div key={idx} className="flex items-start gap-2">
@@ -306,7 +304,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               <TrendingDown className="h-5 w-5 text-red-500" />
               <h4 className="text-base font-semibold text-foreground">Exit Conditions</h4>
             </div>
-            
+
             <div className="space-y-2">
               {editedStrategy.exit_rules.map((rule, idx) => (
                 <div key={idx} className="flex items-start gap-2">
@@ -336,7 +334,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             <Wallet className="h-5 w-5 text-primary" />
             Wallet Following
           </h3>
-          
+
           <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Target Wallet</p>
