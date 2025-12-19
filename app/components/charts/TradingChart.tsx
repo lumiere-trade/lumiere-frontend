@@ -78,11 +78,19 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     return { candles, trades }
   }, [data])
 
-  // Reset zoom/pan when data changes
+  // Reset zoom/pan when data changes - start from newest data
   useEffect(() => {
+    if (candles.length === 0 || containerWidth === 0) return
+    
     setZoom(1)
-    setOffsetX(0)
-  }, [data])
+    
+    // Calculate initial offset to show last candles (newest data)
+    const candleWidth = 8 // default candleWidth at zoom=1
+    const visibleCandles = Math.floor(containerWidth / candleWidth)
+    const initialOffsetX = -(candles.length - visibleCandles) * candleWidth
+    
+    setOffsetX(initialOffsetX)
+  }, [data, candles.length, containerWidth])
 
   // Initialize renderer once
   useEffect(() => {
@@ -97,7 +105,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width } = entry.contentRect
-        
+
         // Use ref to avoid reading stale state in closure
         if (width > 0 && width !== lastWidthRef.current) {
           lastWidthRef.current = width
@@ -121,7 +129,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
     }
 
     return () => resizeObserver.disconnect()
-  }, []) // EMPTY dependencies - setup once
+  }, [])
 
   // Unified viewport calculation
   useEffect(() => {
@@ -325,7 +333,13 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
           break
         case '0':
           setZoom(1)
-          setOffsetX(0)
+          // Reset to show newest data
+          if (candles.length > 0 && containerWidth > 0) {
+            const candleWidth = 8
+            const visibleCandles = Math.floor(containerWidth / candleWidth)
+            const initialOffsetX = -(candles.length - visibleCandles) * candleWidth
+            setOffsetX(initialOffsetX)
+          }
           break
         case 'ArrowLeft':
           setOffsetX(prev => prev + 50)
@@ -338,7 +352,7 @@ export function TradingChart({ data, height = 450 }: TradingChartProps) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  }, [candles.length, containerWidth])
 
   // Mode toggle
   const toggleMode = useCallback(() => {
