@@ -45,8 +45,8 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   const normalizedMetrics = useMemo(() => ({
     ...metrics,
     win_rate_pct: metrics.win_rate,
-    total_return_pct: metrics.total_return_pct * 100,
-    max_drawdown_pct: metrics.max_drawdown_pct * 100,
+    total_return_pct: metrics.total_return_pct,
+    max_drawdown_pct: metrics.max_drawdown_pct,
     cagr_pct: metrics.cagr * 100
   }), [metrics])
 
