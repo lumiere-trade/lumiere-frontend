@@ -473,26 +473,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               </div>
             </div>
           )}
-
-          {editedStrategy.max_trades_per_day !== null && (
-            <div className="bg-card border border-primary/20 rounded-2xl p-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-base font-semibold text-foreground">Max Trades Per Day</label>
-                  <span className="text-base font-mono text-primary">{editedStrategy.max_trades_per_day}</span>
-                </div>
-                <Slider
-                  value={[editedStrategy.max_trades_per_day]}
-                  onValueChange={([value]) => handleFieldChange('max_trades_per_day', value)}
-                  min={1}
-                  max={50}
-                  step={1}
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">Daily trade limit</p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

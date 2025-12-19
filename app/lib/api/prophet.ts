@@ -44,33 +44,32 @@ export interface StrategyJSON {
   description: string;
   symbol: string;
   timeframe: string;
-  
+
   // Indicator-based strategy fields
   indicators: string[];
   entry_rules: string[];
   entry_logic: string;
   exit_rules: string[];
   exit_logic: string;
-  
+
   // Wallet following fields
   target_wallet: string | null;
   copy_percentage: number | null;
   min_copy_size: number | null;
   max_copy_size: number | null;
   copy_delay: number | null;
-  
+
   // Mean reversion fields
   reversion_target: string | null;
   entry_threshold: number | null;
   exit_threshold: number | null;
   lookback_period: number | null;
-  
+
   // Risk management
   stop_loss: number | null;
   take_profit: number | null;
   trailing_stop: number | null;
   max_position_size: number | null;
-  max_trades_per_day: number | null;
 }
 
 export interface ProgressEvent {
