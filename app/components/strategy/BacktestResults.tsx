@@ -50,12 +50,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     cagr_pct: metrics.cagr * 100
   }), [metrics])
 
-  // Pagination for trades
+  // Pagination for trades - newest first
   const totalPages = Math.ceil(trades.length / tradesPerPage)
   const paginatedTrades = useMemo(() => {
+    const reversed = [...trades].reverse()
     const start = (currentPage - 1) * tradesPerPage
     const end = start + tradesPerPage
-    return trades.slice(start, end)
+    return reversed.slice(start, end)
   }, [trades, currentPage])
 
   // Reset page when switching to details tab
