@@ -263,6 +263,7 @@ export class ChartRenderer {
   private drawTrades(trades: Trade[], viewport: Viewport) {
     const { priceMin, priceMax, candleWidth, offsetX, startIdx, endIdx } = viewport
     const markerSize = 8
+    const markerOffset = 15
 
     trades.forEach(trade => {
       const idx = trade.t
@@ -270,21 +271,25 @@ export class ChartRenderer {
       if (idx < startIdx || idx > endIdx) return
 
       const x = indexToX(idx, candleWidth, offsetX, this.padding.left)
-      const y = priceToY(trade.p, priceMin, priceMax, this.chartHeight, this.padding.top)
+      const yPrice = priceToY(trade.p, priceMin, priceMax, this.chartHeight, this.padding.top)
 
       const color = trade.s === 'B' ? this.colors.buy : this.colors.sell
-      const yOffset = trade.s === 'B' ? markerSize : -markerSize
+      
+      // Position markers below for BUY, above for SELL (away from line)
+      const y = trade.s === 'B' ? yPrice + markerOffset : yPrice - markerOffset
 
       // Triangle marker
       this.ctx.fillStyle = color
       this.ctx.beginPath()
 
       if (trade.s === 'B') {
-        this.ctx.moveTo(x, y - yOffset)
+        // Up arrow for BUY (below line)
+        this.ctx.moveTo(x, y - markerSize)
         this.ctx.lineTo(x - markerSize / 2, y)
         this.ctx.lineTo(x + markerSize / 2, y)
       } else {
-        this.ctx.moveTo(x, y - yOffset)
+        // Down arrow for SELL (above line)
+        this.ctx.moveTo(x, y + markerSize)
         this.ctx.lineTo(x - markerSize / 2, y)
         this.ctx.lineTo(x + markerSize / 2, y)
       }
