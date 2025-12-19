@@ -6,7 +6,7 @@ import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { TrendingUp, TrendingDown, Clock, X, ChevronDown, ChevronUp } from "lucide-react"
+import { TrendingUp, TrendingDown, Clock, X, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 import { TradingChart, EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
@@ -39,6 +39,8 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   const { metrics, equity_curve, trades, trade_analysis, market_data } = results
   const [activeTab, setActiveTab] = useState('price')
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const tradesPerPage = 15
 
   const normalizedMetrics = useMemo(() => ({
     ...metrics,
@@ -47,6 +49,22 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     max_drawdown_pct: metrics.max_drawdown_pct * 100,
     cagr_pct: metrics.cagr * 100
   }), [metrics])
+
+  // Pagination for trades
+  const totalPages = Math.ceil(trades.length / tradesPerPage)
+  const paginatedTrades = useMemo(() => {
+    const start = (currentPage - 1) * tradesPerPage
+    const end = start + tradesPerPage
+    return trades.slice(start, end)
+  }, [trades, currentPage])
+
+  // Reset page when switching to details tab
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    if (tab === 'details') {
+      setCurrentPage(1)
+    }
+  }
 
   // Equity data for custom EquityCurve component
   const equityCurveData = useMemo(() => {
@@ -197,7 +215,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
       </div>
 
       {/* Charts */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="price">Price & Trades</TabsTrigger>
           <TabsTrigger value="details">Trade Details</TabsTrigger>
@@ -229,8 +247,15 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           <TabsContent value="details" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle>Trade Execution Details</CardTitle>
-                <CardDescription>Complete trade history with indicator values</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Trade Execution Details</CardTitle>
+                    <CardDescription>Complete trade history with indicator values</CardDescription>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentPage - 1) * tradesPerPage) + 1}-{Math.min(currentPage * tradesPerPage, trades.length)} of {trades.length} trades
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="rounded-lg border border-primary/20">
@@ -248,7 +273,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {trades.map((trade) => {
+                      {paginatedTrades.map((trade) => {
                         const isExpanded = expandedTrade === trade.id
                         const hasIndicators = Object.keys(trade.indicators || {}).length > 0
 
@@ -309,6 +334,60 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     </TableBody>
                   </Table>
                 </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="gap-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum: number
+                        if (totalPages <= 5) {
+                          pageNum = i + 1
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i
+                        } else {
+                          pageNum = currentPage - 2 + i
+                        }
+
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-10"
+                          >
+                            {pageNum}
+                          </Button>
+                        )
+                      })}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="gap-2"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
