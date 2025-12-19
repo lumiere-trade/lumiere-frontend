@@ -38,7 +38,7 @@ export function StrategyDetailsPanel({
     try {
       const result = await runBacktestMutation.mutateAsync({
         strategy_json: strategyMetadata,
-        days_back: 90,
+        candles: 2160,
         initial_capital: 10000,
         cache_results: true
       })
