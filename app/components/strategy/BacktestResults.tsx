@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumi
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
-import { TrendingUp, TrendingDown, Clock, X } from "lucide-react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { TrendingUp, TrendingDown, Clock, X, ChevronDown, ChevronUp } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 import { TradingChart, EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
@@ -37,6 +38,7 @@ function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
 export const BacktestResults = memo(function BacktestResults({ results, onClose }: BacktestResultsProps) {
   const { metrics, equity_curve, trades, trade_analysis, market_data } = results
   const [activeTab, setActiveTab] = useState('price')
+  const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
 
   const normalizedMetrics = useMemo(() => ({
     ...metrics,
@@ -69,7 +71,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   // PnL data for custom PnLChart component
   const pnlChartData = useMemo(() => {
     const tradesWithPnL = trades.filter(t => t.side === 'SELL' && t.pnl !== null)
-    
+
     let cumulative = 0
     const full = tradesWithPnL.map((trade) => {
       cumulative += trade.pnl || 0
@@ -78,7 +80,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
         pnl: cumulative
       }
     })
-    
+
     return decimateData(full, 300)
   }, [trades])
 
@@ -123,6 +125,10 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   }, [market_data, trades])
 
   const isPositive = normalizedMetrics.total_return_pct > 0
+
+  const toggleTradeExpansion = (tradeId: string) => {
+    setExpandedTrade(expandedTrade === tradeId ? null : tradeId)
+  }
 
   return (
     <div className="space-y-6">
@@ -193,8 +199,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
 
       {/* Charts */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="price">Price & Trades</TabsTrigger>
+          <TabsTrigger value="details">Trade Details</TabsTrigger>
           <TabsTrigger value="equity">Equity Curve</TabsTrigger>
           <TabsTrigger value="drawdown">Drawdown</TabsTrigger>
           <TabsTrigger value="trades">Trade PnL</TabsTrigger>
@@ -214,6 +221,95 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     No price data available
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+
+        {activeTab === 'details' && (
+          <TabsContent value="details" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trade Execution Details</CardTitle>
+                <CardDescription>Complete trade history with indicator values</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-lg border border-primary/20">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]"></TableHead>
+                        <TableHead>Time</TableHead>
+                        <TableHead>Side</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Quantity</TableHead>
+                        <TableHead className="text-right">Value</TableHead>
+                        <TableHead className="text-right">PnL</TableHead>
+                        <TableHead>Reason</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {trades.map((trade) => {
+                        const isExpanded = expandedTrade === trade.id
+                        const hasIndicators = Object.keys(trade.indicators || {}).length > 0
+
+                        return (
+                          <>
+                            <TableRow key={trade.id} className="cursor-pointer hover:bg-muted/50" onClick={() => hasIndicators && toggleTradeExpansion(trade.id)}>
+                              <TableCell>
+                                {hasIndicators && (
+                                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                  </Button>
+                                )}
+                              </TableCell>
+                              <TableCell className="font-mono text-xs">
+                                {format(new Date(trade.timestamp), 'MMM dd HH:mm')}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={trade.side === 'BUY' ? 'default' : 'destructive'} className="font-mono">
+                                  {trade.side}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right font-mono text-sm">
+                                ${trade.price.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono text-sm">
+                                {trade.quantity.toFixed(4)}
+                              </TableCell>
+                              <TableCell className="text-right font-mono text-sm">
+                                ${trade.value.toFixed(2)}
+                              </TableCell>
+                              <TableCell className={`text-right font-mono text-sm ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
+                                {trade.pnl !== null && trade.pnl !== undefined ? `$${trade.pnl.toFixed(2)}` : '-'}
+                              </TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {trade.reason}
+                              </TableCell>
+                            </TableRow>
+                            {isExpanded && hasIndicators && (
+                              <TableRow key={`${trade.id}-indicators`}>
+                                <TableCell colSpan={8} className="bg-muted/30">
+                                  <div className="p-4 space-y-2">
+                                    <p className="text-sm font-semibold text-foreground mb-3">Indicator Values at Execution:</p>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                      {Object.entries(trade.indicators).map(([name, value]) => (
+                                        <div key={name} className="bg-background border border-primary/20 rounded-lg p-3">
+                                          <p className="text-xs text-muted-foreground mb-1">{name.replace(/_/g, ' ').toUpperCase()}</p>
+                                          <p className="text-sm font-mono text-foreground">{value.toFixed(4)}</p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
