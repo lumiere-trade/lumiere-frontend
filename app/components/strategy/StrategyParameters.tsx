@@ -137,7 +137,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     try {
       const results = await runBacktestMutation.mutateAsync({
         strategy_json: editedStrategy,
-        days_back: 90,
+        candles: 2160,
         initial_capital: 10000.0,
         cache_results: true
       })

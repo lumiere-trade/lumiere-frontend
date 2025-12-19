@@ -13,7 +13,7 @@ import { logger, LogCategory } from '@/lib/debug';
 
 export interface BacktestRequest {
   strategy_json: Record<string, any>;  // Strategy JSON from Prophet
-  days_back: number;
+  candles: number;  // Number of candles to backtest
   initial_capital: number;
   cache_results: boolean;
 }
@@ -116,7 +116,7 @@ export const runBacktest = async (
   logger.info(LOG_CATEGORY, 'Running backtest', {
     strategy_name: request.strategy_json.name,
     symbol: request.strategy_json.symbol,
-    days_back: request.days_back,
+    candles: request.candles,
     timeframe: request.strategy_json.timeframe,
     initial_capital: request.initial_capital,
   });
@@ -145,7 +145,7 @@ export const runBacktest = async (
     logger.error(LOG_CATEGORY, 'Failed to run backtest', {
       error,
       strategy_name: request.strategy_json.name,
-      days_back: request.days_back,
+      candles: request.candles,
     });
     throw error;
   }
