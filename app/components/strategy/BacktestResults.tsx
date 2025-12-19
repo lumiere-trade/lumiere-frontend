@@ -263,13 +263,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-[50px]"></TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Side</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
-                        <TableHead className="text-right">Quantity</TableHead>
-                        <TableHead className="text-right">Value</TableHead>
-                        <TableHead className="text-right">PnL</TableHead>
-                        <TableHead>Reason</TableHead>
+                        <TableHead className="w-[120px]">Time</TableHead>
+                        <TableHead className="w-[80px]">Side</TableHead>
+                        <TableHead className="w-[100px] text-right">Price</TableHead>
+                        <TableHead className="w-[100px] text-right">Quantity</TableHead>
+                        <TableHead className="w-[110px] text-right">Value</TableHead>
+                        <TableHead className="w-[100px] text-right">PnL</TableHead>
+                        <TableHead className="w-[120px]">Reason</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -280,34 +280,34 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                         return (
                           <>
                             <TableRow key={trade.id} className="cursor-pointer hover:bg-muted/50" onClick={() => hasIndicators && toggleTradeExpansion(trade.id)}>
-                              <TableCell>
+                              <TableCell className="w-[50px]">
                                 {hasIndicators && (
                                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                                     {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                                   </Button>
                                 )}
                               </TableCell>
-                              <TableCell className="font-mono text-xs">
+                              <TableCell className="w-[120px] font-mono text-xs">
                                 {format(new Date(trade.timestamp), 'MMM dd HH:mm')}
                               </TableCell>
-                              <TableCell>
+                              <TableCell className="w-[80px]">
                                 <Badge variant={trade.side === 'BUY' ? 'default' : 'destructive'} className="font-mono">
                                   {trade.side}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
+                              <TableCell className="w-[100px] text-right font-mono text-sm">
                                 ${trade.price.toFixed(2)}
                               </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
+                              <TableCell className="w-[100px] text-right font-mono text-sm">
                                 {trade.quantity.toFixed(4)}
                               </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
+                              <TableCell className="w-[110px] text-right font-mono text-sm">
                                 ${trade.value.toFixed(2)}
                               </TableCell>
-                              <TableCell className={`text-right font-mono text-sm ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
+                              <TableCell className={`w-[100px] text-right font-mono text-sm ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
                                 {trade.pnl !== null && trade.pnl !== undefined ? `$${trade.pnl.toFixed(2)}` : '-'}
                               </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
+                              <TableCell className="w-[120px] text-sm text-muted-foreground">
                                 {trade.reason}
                               </TableCell>
                             </TableRow>
@@ -337,7 +337,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center justify-center gap-2 mt-4">
                     <Button
                       variant="outline"
                       size="sm"
@@ -349,32 +349,30 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       Previous
                     </Button>
 
-                    <div className="flex items-center gap-2">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum: number
-                        if (totalPages <= 5) {
-                          pageNum = i + 1
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i
-                        } else {
-                          pageNum = currentPage - 2 + i
-                        }
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number
+                      if (totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
 
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={currentPage === pageNum ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setCurrentPage(pageNum)}
-                            className="w-10"
-                          >
-                            {pageNum}
-                          </Button>
-                        )
-                      })}
-                    </div>
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-10"
+                        >
+                          {pageNum}
+                        </Button>
+                      )
+                    })}
 
                     <Button
                       variant="outline"
