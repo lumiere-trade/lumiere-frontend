@@ -40,8 +40,6 @@ export function StrategyDetailsPanel({
         strategy_json: strategyMetadata,
         days_back: 90,
         initial_capital: 10000,
-        slippage: 0.001,
-        commission: 0.001,
         cache_results: true
       })
 

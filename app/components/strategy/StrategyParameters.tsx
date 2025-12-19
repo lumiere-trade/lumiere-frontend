@@ -139,8 +139,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         strategy_json: editedStrategy,
         days_back: 90,
         initial_capital: 10000.0,
-        slippage: 0.001,
-        commission: 0.001,
         cache_results: true
       })
 

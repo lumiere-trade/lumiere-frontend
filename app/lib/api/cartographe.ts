@@ -15,8 +15,6 @@ export interface BacktestRequest {
   strategy_json: Record<string, any>;  // Strategy JSON from Prophet
   days_back: number;
   initial_capital: number;
-  slippage: number;
-  commission: number;
   cache_results: boolean;
 }
 
@@ -53,8 +51,8 @@ export interface Trade {
   price: number;
   quantity: number;
   value: number;
-  commission: number;
   reason: string;
+  indicators: Record<string, number>;
   pnl?: number | null;
   pnl_pct?: number | null;
 }
