@@ -85,6 +85,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   }, [trades])
 
   // Price chart data for custom TradingChart
+  // NO decimation - preserve all trade markers
   const priceChartData = useMemo(() => {
     if (!market_data || market_data.length === 0) {
       return []
@@ -105,7 +106,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
       })
     })
 
-    const full = market_data.map((candle) => {
+    return market_data.map((candle) => {
       const ts = normalizeTimestamp(candle.timestamp)
       const trade = tradeMap.get(ts)
 
@@ -120,8 +121,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
         sell: trade?.side === 'SELL' ? trade.price : null,
       }
     })
-
-    return decimateData(full, 300)
   }, [market_data, trades])
 
   const isPositive = normalizedMetrics.total_return_pct > 0
