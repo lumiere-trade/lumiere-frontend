@@ -265,6 +265,17 @@ export class ChartRenderer {
     const markerSize = 8
     const markerOffset = 15
 
+    // Save context and setup clipping region
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      this.padding.left,
+      this.padding.top,
+      this.width - this.padding.left - this.padding.right,
+      this.chartHeight
+    )
+    this.ctx.clip()
+
     trades.forEach(trade => {
       const idx = trade.t
 
@@ -274,7 +285,7 @@ export class ChartRenderer {
       const yPrice = priceToY(trade.p, priceMin, priceMax, this.chartHeight, this.padding.top)
 
       const color = trade.s === 'B' ? this.colors.buy : this.colors.sell
-      
+
       // Position markers below for BUY, above for SELL (away from line)
       const y = trade.s === 'B' ? yPrice + markerOffset : yPrice - markerOffset
 
@@ -297,6 +308,9 @@ export class ChartRenderer {
       this.ctx.closePath()
       this.ctx.fill()
     })
+
+    // Restore context (remove clipping)
+    this.ctx.restore()
   }
 
   private drawPriceAxis(viewport: Viewport) {
