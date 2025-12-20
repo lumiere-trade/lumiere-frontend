@@ -166,9 +166,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="py-3 gap-2">
+        <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription>Final Equity</CardDescription>
+            <CardDescription className="text-base">Final Equity</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-2xl font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -178,9 +178,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card className="py-3 gap-2">
+        <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription>Win Rate</CardDescription>
+            <CardDescription className="text-base">Win Rate</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-2xl font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
@@ -190,9 +190,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card className="py-3 gap-2">
+        <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription>Sharpe Ratio</CardDescription>
+            <CardDescription className="text-base">Sharpe Ratio</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-2xl font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
@@ -202,9 +202,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card className="py-3 gap-2">
+        <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription>Max Drawdown</CardDescription>
+            <CardDescription className="text-base">Max Drawdown</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-2xl font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
