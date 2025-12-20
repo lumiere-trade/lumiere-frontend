@@ -83,7 +83,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
       >
         {/* Close button - centered on right edge border - only visible when panel is open */}
         {isOpen && (
-          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ right: '-16px', marginTop: '54px' }}>
+          <div 
+            className="absolute h-full flex items-center justify-center pointer-events-none z-20 translate-x-1/2 top-[54px]"
+            style={{ right: '0' }}
+          >
             <button
               onClick={onToggle}
               className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
