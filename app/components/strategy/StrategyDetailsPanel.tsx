@@ -154,7 +154,7 @@ export function StrategyDetailsPanel({
 
         {/* Fullscreen mode - 1 button only */}
         {isOpen && isParametersFullscreen && (
-          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
+          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '44px' }}>
             <button
               onClick={handleToggleFullscreen}
               className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md pointer-events-auto"
