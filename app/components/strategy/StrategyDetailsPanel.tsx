@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers, ChevronsRight, ChevronsLeft } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -27,14 +27,16 @@ export function StrategyDetailsPanel({
   onOpenChat
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const { 
-    generatedStrategy, 
-    strategyMetadata, 
-    backtestResults, 
-    isBacktesting, 
-    setBacktestResults, 
+  const {
+    generatedStrategy,
+    strategyMetadata,
+    backtestResults,
+    isBacktesting,
+    setBacktestResults,
     setIsBacktesting,
-    isParametersFullscreen
+    isParametersFullscreen,
+    expandParametersFullscreen,
+    collapseParametersFullscreen
   } = useChat()
   const runBacktestMutation = useRunBacktest()
 
@@ -63,7 +65,14 @@ export function StrategyDetailsPanel({
     }
   }
 
-  // Calculate width based on fullscreen state
+  const handleToggleFullscreen = () => {
+    if (isParametersFullscreen) {
+      collapseParametersFullscreen()
+    } else {
+      expandParametersFullscreen()
+    }
+  }
+
   const panelWidth = isParametersFullscreen ? 'w-full' : 'w-1/2'
 
   return (
@@ -104,7 +113,7 @@ export function StrategyDetailsPanel({
                 <Layers className="h-5 w-5 text-primary" />
               </button>
             )}
-            
+
             {/* Chat Panel Toggle */}
             {onOpenChat && (
               <button
@@ -118,15 +127,40 @@ export function StrategyDetailsPanel({
           </div>
         )}
 
-        {/* Close button - centered on left edge border */}
+        {/* Close button and Fullscreen button - centered on left edge border, stacked vertically */}
         {isOpen && !isParametersFullscreen && (
           <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
+            <div className="flex flex-col gap-2 pointer-events-auto">
+              {/* Close Button */}
+              <button
+                onClick={onToggle}
+                className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
+                title="Close sidebar"
+              >
+                <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
+              </button>
+
+              {/* Fullscreen Button */}
+              <button
+                onClick={handleToggleFullscreen}
+                className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
+                title="Fullscreen"
+              >
+                <ChevronsRight className="h-5 w-5 text-primary mx-auto" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Exit Fullscreen button - when in fullscreen mode */}
+        {isOpen && isParametersFullscreen && (
+          <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
             <button
-              onClick={onToggle}
-              className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
-              title="Close sidebar"
+              onClick={handleToggleFullscreen}
+              className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md pointer-events-auto"
+              title="Exit fullscreen"
             >
-              <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
+              <ChevronsLeft className="h-5 w-5 text-primary mx-auto" />
             </button>
           </div>
         )}
