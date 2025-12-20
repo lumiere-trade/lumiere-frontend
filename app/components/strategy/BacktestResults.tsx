@@ -166,7 +166,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="py-3 gap-2">
           <CardHeader className="pb-1">
             <CardDescription>Final Equity</CardDescription>
           </CardHeader>
@@ -178,7 +178,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="py-3 gap-2">
           <CardHeader className="pb-1">
             <CardDescription>Win Rate</CardDescription>
           </CardHeader>
@@ -190,7 +190,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="py-3 gap-2">
           <CardHeader className="pb-1">
             <CardDescription>Sharpe Ratio</CardDescription>
           </CardHeader>
@@ -202,7 +202,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="py-3 gap-2">
           <CardHeader className="pb-1">
             <CardDescription>Max Drawdown</CardDescription>
           </CardHeader>
