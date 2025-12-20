@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers, ChevronsRight, ChevronsLeft } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers, Maximize2, Minimize2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -146,7 +146,7 @@ export function StrategyDetailsPanel({
                 className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
                 title="Fullscreen"
               >
-                <ChevronsRight className="h-5 w-5 text-primary mx-auto" />
+                <Maximize2 className="h-5 w-5 text-primary mx-auto" />
               </button>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function StrategyDetailsPanel({
               className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md pointer-events-auto"
               title="Exit fullscreen"
             >
-              <ChevronsLeft className="h-5 w-5 text-primary mx-auto" />
+              <Minimize2 className="h-5 w-5 text-primary mx-auto" />
             </button>
           </div>
         )}
