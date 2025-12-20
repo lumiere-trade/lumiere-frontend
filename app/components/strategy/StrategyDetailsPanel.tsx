@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -140,13 +140,13 @@ export function StrategyDetailsPanel({
                 <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
               </button>
 
-              {/* Fullscreen Button - flipped horizontally */}
+              {/* Expand to Fullscreen Button */}
               <button
                 onClick={handleToggleFullscreen}
                 className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
-                title="Fullscreen"
+                title="Expand to fullscreen"
               >
-                <PanelRightClose className="h-5 w-5 text-primary mx-auto -scale-x-100" />
+                <ChevronsLeft className="h-5 w-5 text-primary mx-auto" />
               </button>
             </div>
           </div>
@@ -160,7 +160,7 @@ export function StrategyDetailsPanel({
               className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md pointer-events-auto"
               title="Exit fullscreen"
             >
-              <PanelRightClose className="h-5 w-5 text-primary mx-auto" />
+              <ChevronsRight className="h-5 w-5 text-primary mx-auto" />
             </button>
           </div>
         )}
