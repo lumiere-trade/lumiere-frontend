@@ -13,9 +13,10 @@ import { MarkdownMessage } from "./MarkdownMessage"
 
 interface ChatPanelProps {
   isSidebarOpen: boolean
+  isFullscreen: boolean
 }
 
-export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
+export function ChatPanel({ isSidebarOpen, isFullscreen }: ChatPanelProps) {
   const log = useLogger('ChatPanel', LogCategory.COMPONENT)
   const {
     isChatExpanded,
@@ -57,7 +58,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
 
   // Handle visibility and pre-scroll
   useEffect(() => {
-    if (isChatExpanded) {
+    if (isChatExpanded && !isFullscreen) {
       setIsVisible(true)
       setIsReady(false)
 
@@ -73,7 +74,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
       setIsVisible(false)
       setIsReady(false)
     }
-  }, [isChatExpanded, messages.length])
+  }, [isChatExpanded, isFullscreen, messages.length])
 
   // Thinking animation - only show if not generating strategy
   useEffect(() => {
@@ -125,16 +126,18 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   useEffect(() => {
-    if (isChatExpanded) {
+    if (isChatExpanded && !isFullscreen) {
       log.info('Chat panel opened', {
         messagesCount: messages.length,
         prophetHealthy: isHealthy,
         redisCache,
       })
+    } else if (isFullscreen) {
+      log.info('Chat panel collapsed to sidebar due to fullscreen')
     } else {
       log.info('Chat panel closed')
     }
-  }, [isChatExpanded, isHealthy, redisCache, messages.length, log])
+  }, [isChatExpanded, isFullscreen, isHealthy, redisCache, messages.length, log])
 
   const handleViewStrategy = () => {
     log.info('View Strategy button clicked - marking strategy as viewed and closing chat')
@@ -150,7 +153,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   }
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (isChatExpanded && e.target === e.currentTarget) {
+    if (isChatExpanded && !isFullscreen && e.target === e.currentTarget) {
       collapseChat()
     }
   }
@@ -162,14 +165,14 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
   const hasStreamingContent = messages.some(m => m.isStreaming && m.content.length > 0)
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
-  // Don't render anything if chat is not expanded
-  if (!isChatExpanded || !isVisible) {
-    return null
-  }
+  // Render with transition animation
+  const shouldRender = isChatExpanded
 
   return (
     <div
-      className="fixed z-60 transition-all duration-300"
+      className={`fixed z-60 transition-all duration-300 ${
+        shouldRender && !isFullscreen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-full pointer-events-none'
+      }`}
       style={{
         left: isSidebarOpen ? '300px' : '32px',
         right: 0,
@@ -181,7 +184,7 @@ export function ChatPanel({ isSidebarOpen }: ChatPanelProps) {
     >
       <div className="h-full flex flex-col max-w-5xl mx-auto px-6 gap-4">
         <div
-          className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0 transition-all duration-200 ease-out opacity-100 translate-y-0"
+          className="flex-1 flex flex-col bg-card border border-primary/30 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto min-h-0"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close Button - Top Right */}

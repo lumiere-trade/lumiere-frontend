@@ -84,21 +84,26 @@ function AuthenticatedLayoutContent({
 
   const handleOpenChat = () => {
     if (chatContext) {
+      // If in fullscreen mode, collapse to half-width first
+      if (chatContext.isParametersFullscreen) {
+        chatContext.collapseParametersFullscreen()
+      }
+      // Then expand chat
       chatContext.expandChat()
     }
   }
 
   // Calculate padding based on fullscreen state
   const isFullscreen = chatContext?.isParametersFullscreen || false
-  const leftPadding = isFullscreen 
-    ? '32px' 
-    : isSidebarOpen && !isDetailsPanelOpen 
-      ? '300px' 
+  const leftPadding = isFullscreen
+    ? '32px'
+    : isSidebarOpen && !isDetailsPanelOpen
+      ? '300px'
       : '32px'
   const rightPadding = isFullscreen
     ? '32px'
-    : isDetailsPanelOpen 
-      ? 'calc(50% + 32px)' 
+    : isDetailsPanelOpen
+      ? 'calc(50% + 32px)'
       : '32px'
 
   return (
@@ -137,9 +142,9 @@ function AuthenticatedLayoutContent({
         />
       )}
 
-      {/* Chat Overlay - Higher z-index (hidden in fullscreen) */}
-      {isCreatePage && !isFullscreen && (
-        <ChatPanel isSidebarOpen={isSidebarOpen} />
+      {/* Chat Overlay - Slides left when fullscreen */}
+      {isCreatePage && (
+        <ChatPanel isSidebarOpen={isSidebarOpen} isFullscreen={isFullscreen} />
       )}
     </div>
   )
