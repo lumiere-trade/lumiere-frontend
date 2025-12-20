@@ -32,10 +32,10 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { 
-    strategyMetadata, 
-    generatedStrategy, 
-    messages, 
+  const {
+    strategyMetadata,
+    generatedStrategy,
+    messages,
     currentStrategy,
     isParametersFullscreen,
     expandParametersFullscreen,
@@ -171,29 +171,30 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   return (
     <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
-      {!hideActions && (
-        <div className="flex items-center justify-between">
-          {/* Fullscreen Toggle Button - Left */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleFullscreen}
-            className="gap-2"
-          >
-            {isParametersFullscreen ? (
-              <>
-                <ChevronsLeft className="h-4 w-4" />
-                Exit Fullscreen
-              </>
-            ) : (
-              <>
-                <ChevronsRight className="h-4 w-4" />
-                Fullscreen
-              </>
-            )}
-          </Button>
+      {/* Action Bar - Fullscreen винаги видим, останалите според hideActions */}
+      <div className="flex items-center justify-between">
+        {/* Fullscreen Toggle Button - Left (ВИНАГИ ВИДИМ) */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleToggleFullscreen}
+          className="gap-2"
+        >
+          {isParametersFullscreen ? (
+            <>
+              <ChevronsLeft className="h-4 w-4" />
+              Exit Fullscreen
+            </>
+          ) : (
+            <>
+              <ChevronsRight className="h-4 w-4" />
+              Fullscreen
+            </>
+          )}
+        </Button>
 
-          {/* Action Buttons - Right */}
+        {/* Action Buttons - Right (само ако hideActions е false) */}
+        {!hideActions && (
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -242,8 +243,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               )}
             </Button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {backtestResults && (
         <div className="relative">
