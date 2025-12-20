@@ -1,6 +1,6 @@
 "use client"
 
-import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, ChevronsRight } from "lucide-react"
+import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -127,19 +127,10 @@ export function StrategyDetailsPanel({
           </div>
         )}
 
-        {/* Close button and Fullscreen button - centered on left edge border, stacked vertically */}
+        {/* Half-width mode - 2 buttons stacked */}
         {isOpen && !isParametersFullscreen && (
           <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
             <div className="flex flex-col gap-2 pointer-events-auto">
-              {/* Close Button */}
-              <button
-                onClick={onToggle}
-                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
-                title="Close sidebar"
-              >
-                <ChevronRight className="h-4 w-4 text-primary mx-auto" />
-              </button>
-
               {/* Expand to Fullscreen Button */}
               <button
                 onClick={handleToggleFullscreen}
@@ -148,19 +139,28 @@ export function StrategyDetailsPanel({
               >
                 <ChevronLeft className="h-4 w-4 text-primary mx-auto" />
               </button>
+
+              {/* Close Button */}
+              <button
+                onClick={onToggle}
+                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md"
+                title="Close sidebar"
+              >
+                <ChevronRight className="h-4 w-4 text-primary mx-auto" />
+              </button>
             </div>
           </div>
         )}
 
-        {/* Exit Fullscreen button - when in fullscreen mode */}
+        {/* Fullscreen mode - 1 button only */}
         {isOpen && isParametersFullscreen && (
           <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
             <button
               onClick={handleToggleFullscreen}
               className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg shadow-md pointer-events-auto"
-              title="Exit fullscreen"
+              title="Collapse to half"
             >
-              <ChevronsRight className="h-4 w-4 text-primary mx-auto" />
+              <ChevronRight className="h-4 w-4 text-primary mx-auto" />
             </button>
           </div>
         )}
