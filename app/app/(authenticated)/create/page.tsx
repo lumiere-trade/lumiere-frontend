@@ -15,7 +15,7 @@ import { toast } from "sonner"
 const EXAMPLE_PROMPTS = [
   "Create a momentum strategy for SOL/USD",
   "Build a mean reversion strategy using RSI",
-  "Design a breakout strategy for volatile tokens",
+  "Design a breakout strategy",
   "Copy a successful whale wallet's trades",
 ]
 
