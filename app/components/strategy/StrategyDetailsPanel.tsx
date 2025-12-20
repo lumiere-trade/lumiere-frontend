@@ -130,8 +130,8 @@ export function StrategyDetailsPanel({
         {/* Half-width mode - 2 buttons stacked */}
         {isOpen && !isParametersFullscreen && (
           <div 
-            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20" 
-            style={{ left: '0', transform: 'translateX(-50%)' }}
+            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20 -translate-x-1/2"
+            style={{ left: '0' }}
           >
             <div className="flex flex-col gap-2 pointer-events-auto">
               {/* Expand to Fullscreen Button */}
@@ -158,8 +158,8 @@ export function StrategyDetailsPanel({
         {/* Fullscreen mode - 1 button only */}
         {isOpen && isParametersFullscreen && (
           <div 
-            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-30" 
-            style={{ left: '48px', transform: 'translateX(-50%)' }}
+            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-30 -translate-x-1/2"
+            style={{ left: 'calc(3rem)' }}
           >
             <button
               onClick={handleToggleFullscreen}
