@@ -84,12 +84,10 @@ function AuthenticatedLayoutContent({
 
   const handleOpenChat = () => {
     if (chatContext) {
-      // If in fullscreen mode, collapse to half-width first
+      // Collapse fullscreen to restore normal layout where chat is visible
       if (chatContext.isParametersFullscreen) {
         chatContext.collapseParametersFullscreen()
       }
-      // Then expand chat
-      chatContext.expandChat()
     }
   }
 
