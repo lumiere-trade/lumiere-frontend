@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelRightOpen, Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, ChevronsRight } from "lucide-react"
+import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, ChevronsRight } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -89,7 +89,7 @@ export function StrategyDetailsPanel({
             className="h-full w-full px-2 hover:bg-card/80 transition-colors"
             title="Open strategy details"
           >
-            <PanelRightOpen className="h-5 w-5 text-primary" />
+            <ChevronLeft className="h-5 w-5 text-primary" />
           </button>
         </div>
       </div>
