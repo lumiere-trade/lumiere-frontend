@@ -219,7 +219,7 @@ export function StrategyDetailsPanel({
         </div>
 
         {/* Scrollable content area */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 ${
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
           {activeTab === 'parameters' && (
