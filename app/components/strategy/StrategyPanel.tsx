@@ -4,12 +4,11 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronLeft,
+  ChevronRight,
   Plus,
   Layers,
   ChevronDown,
-  ChevronRight,
   Pencil,
   Trash2
 } from "lucide-react"
@@ -71,7 +70,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
             className="h-full w-full px-2 hover:bg-card/80 transition-colors"
             title="Open sidebar"
           >
-            <PanelLeftOpen className="h-5 w-5 text-primary" />
+            <ChevronRight className="h-5 w-5 text-primary" />
           </button>
         </div>
       </div>
@@ -90,7 +89,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
               className="h-16 w-8 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
               title="Close sidebar"
             >
-              <PanelLeftClose className="h-5 w-5 text-primary mx-auto" />
+              <ChevronLeft className="h-5 w-5 text-primary mx-auto" />
             </button>
           </div>
         )}
