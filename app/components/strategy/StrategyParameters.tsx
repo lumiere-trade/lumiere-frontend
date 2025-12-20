@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save, Loader2, X, TrendingUp, TrendingDown, Target, Wallet } from "lucide-react"
+import { Code, Play, Save, Loader2, X, TrendingUp, TrendingDown, Target, Wallet, ChevronsRight, ChevronsLeft } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useChat } from "@/contexts/ChatContext"
@@ -32,7 +32,15 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategyMetadata, generatedStrategy, messages, currentStrategy } = useChat()
+  const { 
+    strategyMetadata, 
+    generatedStrategy, 
+    messages, 
+    currentStrategy,
+    isParametersFullscreen,
+    expandParametersFullscreen,
+    collapseParametersFullscreen
+  } = useChat()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -148,6 +156,14 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     }
   }
 
+  const handleToggleFullscreen = () => {
+    if (isParametersFullscreen) {
+      collapseParametersFullscreen()
+    } else {
+      expandParametersFullscreen()
+    }
+  }
+
   const isEditing = !!currentStrategy?.id
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
@@ -156,7 +172,28 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   return (
     <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
       {!hideActions && (
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          {/* Fullscreen Toggle Button - Left */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToggleFullscreen}
+            className="gap-2"
+          >
+            {isParametersFullscreen ? (
+              <>
+                <ChevronsLeft className="h-4 w-4" />
+                Exit Fullscreen
+              </>
+            ) : (
+              <>
+                <ChevronsRight className="h-4 w-4" />
+                Fullscreen
+              </>
+            )}
+          </Button>
+
+          {/* Action Buttons - Right */}
           <div className="flex gap-2">
             <Button
               variant="outline"

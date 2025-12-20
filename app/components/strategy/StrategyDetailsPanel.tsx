@@ -1,6 +1,6 @@
 "use client"
 
-import { PanelRightOpen, PanelRightClose, Sliders, Code, Play } from "lucide-react"
+import { PanelRightOpen, PanelRightClose, Sliders, Code, Play, MessageSquare, Layers } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { BacktestResults } from "./BacktestResults"
@@ -14,16 +14,28 @@ interface StrategyDetailsPanelProps {
   onToggle: () => void
   activeTab: 'parameters' | 'code' | 'backtest'
   onTabChange: (tab: 'parameters' | 'code' | 'backtest') => void
+  onOpenStrategies?: () => void
+  onOpenChat?: () => void
 }
 
 export function StrategyDetailsPanel({
   isOpen,
   onToggle,
   activeTab,
-  onTabChange
+  onTabChange,
+  onOpenStrategies,
+  onOpenChat
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const { generatedStrategy, strategyMetadata, backtestResults, isBacktesting, setBacktestResults, setIsBacktesting } = useChat()
+  const { 
+    generatedStrategy, 
+    strategyMetadata, 
+    backtestResults, 
+    isBacktesting, 
+    setBacktestResults, 
+    setIsBacktesting,
+    isParametersFullscreen
+  } = useChat()
   const runBacktestMutation = useRunBacktest()
 
   const handleRunBacktest = async () => {
@@ -51,6 +63,9 @@ export function StrategyDetailsPanel({
     }
   }
 
+  // Calculate width based on fullscreen state
+  const panelWidth = isParametersFullscreen ? 'w-full' : 'w-1/2'
+
   return (
     <>
       {/* Collapsed state - thin strip on right */}
@@ -70,14 +85,41 @@ export function StrategyDetailsPanel({
         </div>
       </div>
 
-      {/* Expanded state - full panel */}
+      {/* Expanded state - responsive width */}
       <div
-        className={`fixed right-0 top-[54px] h-[calc(100vh-54px)] w-1/2 bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-[54px] h-[calc(100vh-54px)] ${panelWidth} bg-background border-l border-border z-10 flex flex-col transition-all duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
+        {/* Fullscreen mode - Left sidebar with collapsed panels */}
+        {isParametersFullscreen && isOpen && (
+          <div className="absolute left-0 top-0 h-full w-12 bg-card border-r border-primary/20 flex flex-col gap-2 py-4 items-center z-20">
+            {/* Strategies Panel Toggle */}
+            {onOpenStrategies && (
+              <button
+                onClick={onOpenStrategies}
+                className="p-2 rounded-lg hover:bg-primary/10 transition-colors group"
+                title="Open strategies"
+              >
+                <Layers className="h-5 w-5 text-primary" />
+              </button>
+            )}
+            
+            {/* Chat Panel Toggle */}
+            {onOpenChat && (
+              <button
+                onClick={onOpenChat}
+                className="p-2 rounded-lg hover:bg-primary/10 transition-colors group"
+                title="Open chat"
+              >
+                <MessageSquare className="h-5 w-5 text-primary" />
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Close button - centered on left edge border */}
-        {isOpen && (
+        {isOpen && !isParametersFullscreen && (
           <div className="absolute top-0 h-full flex items-center justify-center pointer-events-none" style={{ left: '-16px' }}>
             <button
               onClick={onToggle}
@@ -90,7 +132,9 @@ export function StrategyDetailsPanel({
         )}
 
         {/* Header with tab navigation */}
-        <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-center">
+        <div className={`border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-center ${
+          isParametersFullscreen ? 'ml-12' : ''
+        }`}>
           <div className="flex items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-2">
               <Button
@@ -135,7 +179,9 @@ export function StrategyDetailsPanel({
         </div>
 
         {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden px-6 py-4 ${
+          isParametersFullscreen ? 'ml-12' : ''
+        }`}>
           {activeTab === 'parameters' && (
             <StrategyParameters
               hideActions={true}

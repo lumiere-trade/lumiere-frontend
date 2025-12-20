@@ -47,6 +47,7 @@ interface ChatContextType {
   detailsPanelTab: DetailsPanelTab
   backtestResults: BacktestResponse | null
   isBacktesting: boolean
+  isParametersFullscreen: boolean
 
   expandChat: () => void
   collapseChat: () => void
@@ -66,6 +67,8 @@ interface ChatContextType {
   setDetailsPanelTab: (tab: DetailsPanelTab) => void
   setBacktestResults: (results: BacktestResponse | null) => void
   setIsBacktesting: (value: boolean) => void
+  expandParametersFullscreen: () => void
+  collapseParametersFullscreen: () => void
   clearChat: () => void
 }
 
@@ -88,11 +91,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
   const [isBacktesting, setIsBacktesting] = useState(false)
+  const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
 
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
   const openDetailsPanel = () => setIsDetailsPanelOpen(true)
-  const closeDetailsPanel = () => setIsDetailsPanelOpen(false)
+  const closeDetailsPanel = () => {
+    setIsDetailsPanelOpen(false)
+    setIsParametersFullscreen(false)
+  }
+  const expandParametersFullscreen = () => setIsParametersFullscreen(true)
+  const collapseParametersFullscreen = () => setIsParametersFullscreen(false)
 
   const clearChat = () => {
     setMessages([])
@@ -110,6 +119,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     setDetailsPanelTab('parameters')
     setBacktestResults(null)
     setIsBacktesting(false)
+    setIsParametersFullscreen(false)
   }
 
   return (
@@ -131,6 +141,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         detailsPanelTab,
         backtestResults,
         isBacktesting,
+        isParametersFullscreen,
         expandChat,
         collapseChat,
         setGeneratedStrategy,
@@ -149,6 +160,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         setDetailsPanelTab,
         setBacktestResults,
         setIsBacktesting,
+        expandParametersFullscreen,
+        collapseParametersFullscreen,
         clearChat,
       }}
     >

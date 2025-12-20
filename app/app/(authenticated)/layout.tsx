@@ -57,9 +57,9 @@ function AuthenticatedLayoutContent({
     }
   }, [isDetailsPanelOpen])
 
-  // Auto-close DetailsPanel when StrategyPanel opens
+  // Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
   useEffect(() => {
-    if (isSidebarOpen && isDetailsPanelOpen) {
+    if (isSidebarOpen && isDetailsPanelOpen && !chatContext?.isParametersFullscreen) {
       chatContext?.closeDetailsPanel()
     }
   }, [isSidebarOpen])
@@ -78,41 +78,69 @@ function AuthenticatedLayoutContent({
     }
   }
 
+  const handleOpenStrategies = () => {
+    setIsSidebarOpen(true)
+  }
+
+  const handleOpenChat = () => {
+    if (chatContext) {
+      chatContext.expandChat()
+    }
+  }
+
+  // Calculate padding based on fullscreen state
+  const isFullscreen = chatContext?.isParametersFullscreen || false
+  const leftPadding = isFullscreen 
+    ? '32px' 
+    : isSidebarOpen && !isDetailsPanelOpen 
+      ? '300px' 
+      : '32px'
+  const rightPadding = isFullscreen
+    ? '32px'
+    : isDetailsPanelOpen 
+      ? 'calc(50% + 32px)' 
+      : '32px'
+
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       {/* Header - Fixed at top */}
       <NavigationHeader currentPage={currentPage} />
 
-      {/* Sidebar - Fixed positioning */}
-      <StrategyPanel
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
+      {/* Sidebar - Fixed positioning (hidden in fullscreen) */}
+      {!isFullscreen && (
+        <StrategyPanel
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+      )}
 
       {/* Main Content Area */}
       <main
         className="flex-1 overflow-y-auto bg-background transition-all duration-300"
         style={{
-          paddingLeft: isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px',
-          paddingRight: isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+          paddingLeft: leftPadding,
+          paddingRight: rightPadding
         }}
       >
         {children}
       </main>
 
-      {/* Details Panel - Fixed positioning (renders separately) */}
+      {/* Details Panel - Fixed positioning */}
       {isCreatePage && chatContext && (
         <StrategyDetailsPanel
           isOpen={isDetailsPanelOpen}
           onToggle={handleDetailsPanelToggle}
           activeTab={chatContext.detailsPanelTab}
           onTabChange={chatContext.setDetailsPanelTab}
-          strategy={chatContext.generatedStrategy}
+          onOpenStrategies={handleOpenStrategies}
+          onOpenChat={handleOpenChat}
         />
       )}
 
-      {/* Chat Overlay - Higher z-index */}
-      {isCreatePage && <ChatPanel isSidebarOpen={isSidebarOpen} />}
+      {/* Chat Overlay - Higher z-index (hidden in fullscreen) */}
+      {isCreatePage && !isFullscreen && (
+        <ChatPanel isSidebarOpen={isSidebarOpen} />
+      )}
     </div>
   )
 }
