@@ -8,7 +8,7 @@ import { MessageList } from "@/components/strategy/MessageList"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-import { getStrategy, getStrategyConversations, getConversation } from "@/lib/api/architect"
+import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from "@/lib/api/architect"
 import { useProphet } from "@/hooks/use-prophet"
 import { toast } from "sonner"
 
@@ -23,6 +23,7 @@ function CreatePageContent() {
   const logger = useLogger('CreatePage', LogCategory.COMPONENT)
   const searchParams = useSearchParams()
   const strategyId = searchParams.get('strategy')
+  const libraryId = searchParams.get('library')
 
   const {
     generatedStrategy,
@@ -50,20 +51,23 @@ function CreatePageContent() {
 
   const [inputValue, setInputValue] = useState("")
 
-  // Load strategy when strategyId changes
+  // Load strategy when strategyId or libraryId changes
   useEffect(() => {
     if (strategyId) {
       const isDifferentStrategy = !currentStrategy || currentStrategy.id !== strategyId
 
       if (isDifferentStrategy) {
-        logger.info('Loading strategy', { strategyId })
+        logger.info('Loading user strategy', { strategyId })
         loadStrategy(strategyId)
       }
-    } else if (!strategyId && generatedStrategy) {
+    } else if (libraryId) {
+      logger.info('Loading library strategy', { libraryId })
+      loadLibraryStrategy(libraryId)
+    } else if (!strategyId && !libraryId && generatedStrategy) {
       logger.info('Clearing chat state')
       clearChat()
     }
-  }, [strategyId])
+  }, [strategyId, libraryId])
 
   const loadStrategy = async (id: string) => {
     try {
@@ -92,6 +96,47 @@ function CreatePageContent() {
     } catch (error) {
       logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
+    }
+  }
+
+  const loadLibraryStrategy = async (id: string) => {
+    try {
+      const lib = await getLibraryStrategy(id)
+
+      // Convert library strategy to TSDL v2.0 JSON format
+      const tsdlCode = JSON.stringify({
+        indicators: lib.indicators,
+        entry_rules: lib.entry_rules,
+        entry_logic: lib.entry_logic,
+        exit_rules: lib.exit_rules,
+        exit_logic: lib.exit_logic,
+        symbol: lib.symbol,
+        timeframe: lib.timeframe,
+        parameters: lib.parameters,
+      }, null, 2)
+
+      setGeneratedStrategy({
+        name: lib.name,
+        description: lib.description,
+        tsdl_code: tsdlCode,
+        metadata: lib.parameters
+      })
+
+      const updatedMetadata = mergeParameterValues(lib.parameters)
+      setStrategyMetadata(updatedMetadata)
+
+      // No currentStrategy (library template, not saved)
+      setCurrentStrategy(null)
+
+      // No conversation history (library template)
+      
+      toast.success(`Library strategy "${lib.name}" loaded as template`)
+      
+      // Automatically open details panel to show the strategy
+      setTimeout(() => openDetailsPanel(), 100)
+    } catch (error) {
+      logger.error('Failed to load library strategy', { error })
+      toast.error('Failed to load library strategy')
     }
   }
 
@@ -198,6 +243,54 @@ function CreatePageContent() {
 
   // Determine view state
   const hasMessages = messages.length > 0
+  const hasLoadedLibraryStrategy = !strategyId && libraryId && generatedStrategy
+
+  // Show library strategy preview (no messages, but has loaded library)
+  if (hasLoadedLibraryStrategy) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6">
+        <div className="w-full max-w-3xl mx-auto space-y-6">
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight">
+              {generatedStrategy.name}
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              {generatedStrategy.description}
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button
+                onClick={handleViewStrategy}
+                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+              >
+                View Strategy Details
+              </button>
+            </div>
+          </div>
+
+          <div className="border-t border-primary/20 pt-6">
+            <p className="text-center text-sm text-muted-foreground mb-4">
+              Want to customize this strategy? Start a conversation with Prophet AI:
+            </p>
+            <MessageInput
+              value={inputValue}
+              onChange={setInputValue}
+              onSend={handleSend}
+              disabled={!isHealthy || isSending}
+              placeholder="Ask Prophet to modify this strategy..."
+            />
+          </div>
+
+          {!isHealthy && (
+            <div className="text-center">
+              <p className="text-sm text-destructive">
+                Prophet AI is not responding. Please check the connection.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   // Show conversation view
   if (hasMessages) {
