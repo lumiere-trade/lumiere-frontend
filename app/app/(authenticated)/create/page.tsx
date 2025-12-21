@@ -77,10 +77,10 @@ function CreatePageContent() {
       const strategyJson = JSON.parse(strategy.tsdl_code)
 
       setGeneratedStrategy({
+        id: strategy.id,
         name: strategy.name,
         description: strategy.description,
-        tsdl_code: strategy.tsdl_code,
-        metadata: strategy.parameters
+        tsdl_code: strategy.tsdl_code
       })
 
       // Directly use flat StrategyJSON from parameters
@@ -124,10 +124,10 @@ function CreatePageContent() {
       const tsdlCode = JSON.stringify(strategyJson, null, 2)
 
       setGeneratedStrategy({
+        id: lib.id,
         name: lib.name,
         description: lib.description,
-        tsdl_code: tsdlCode,
-        metadata: lib.parameters
+        tsdl_code: tsdlCode
       })
 
       // Directly use flat StrategyJSON
