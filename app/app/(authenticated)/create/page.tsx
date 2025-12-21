@@ -73,6 +73,9 @@ function CreatePageContent() {
     try {
       const strategy = await getStrategy(id)
 
+      // Parse TSDL code to StrategyJSON
+      const strategyJson = JSON.parse(strategy.tsdl_code)
+
       setGeneratedStrategy({
         name: strategy.name,
         description: strategy.description,
@@ -80,8 +83,8 @@ function CreatePageContent() {
         metadata: strategy.parameters
       })
 
-      const updatedMetadata = mergeParameterValues(strategy.parameters)
-      setStrategyMetadata(updatedMetadata)
+      // Directly use flat StrategyJSON from parameters
+      setStrategyMetadata(strategyJson)
 
       setCurrentStrategy({
         id: strategy.id,
@@ -104,16 +107,21 @@ function CreatePageContent() {
       const lib = await getLibraryStrategy(id)
 
       // Convert library strategy to TSDL v2.0 JSON format
-      const tsdlCode = JSON.stringify({
+      const strategyJson = {
+        name: lib.name,
+        description: lib.description,
+        symbol: lib.symbol,
+        timeframe: lib.timeframe,
         indicators: lib.indicators,
         entry_rules: lib.entry_rules,
         entry_logic: lib.entry_logic,
         exit_rules: lib.exit_rules,
         exit_logic: lib.exit_logic,
-        symbol: lib.symbol,
-        timeframe: lib.timeframe,
-        parameters: lib.parameters,
-      }, null, 2)
+        // Spread flat parameters (stop_loss, take_profit, etc.)
+        ...lib.parameters,
+      }
+
+      const tsdlCode = JSON.stringify(strategyJson, null, 2)
 
       setGeneratedStrategy({
         name: lib.name,
@@ -122,77 +130,20 @@ function CreatePageContent() {
         metadata: lib.parameters
       })
 
-      const updatedMetadata = mergeParameterValues(lib.parameters)
-      setStrategyMetadata(updatedMetadata)
+      // Directly use flat StrategyJSON
+      setStrategyMetadata(strategyJson as any)
 
       // No currentStrategy (library template, not saved)
       setCurrentStrategy(null)
 
-      // No conversation history (library template)
-      
       toast.success(`Library strategy "${lib.name}" loaded as template`)
-      
+
       // Automatically open details panel to show the strategy
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       logger.error('Failed to load library strategy', { error })
       toast.error('Failed to load library strategy')
     }
-  }
-
-  const mergeParameterValues = (parameters: any) => {
-    if (!parameters) return null
-
-    const updatedValues = parameters.values || {}
-
-    const metadata = {
-      indicators: JSON.parse(JSON.stringify(parameters.indicators || [])),
-      asset: JSON.parse(JSON.stringify(parameters.asset || {})),
-      exit_conditions: JSON.parse(JSON.stringify(parameters.exit_conditions || {})),
-      risk_management: JSON.parse(JSON.stringify(parameters.risk_management || {})),
-      position_sizing: JSON.parse(JSON.stringify(parameters.position_sizing || {})),
-      entry_description: parameters.entry_description || null,
-      exit_description: parameters.exit_description || null
-    }
-
-    metadata.indicators?.forEach((indicator: any) => {
-      Object.keys(indicator.params || {}).forEach((paramName) => {
-        const key = `indicator_${indicator.name}_${paramName}`
-        if (key in updatedValues) {
-          indicator.params[paramName].value = updatedValues[key]
-        }
-      })
-    })
-
-    Object.keys(metadata.asset).forEach((fieldName) => {
-      const key = `asset_${fieldName}`
-      if (key in updatedValues) {
-        metadata.asset[fieldName].value = updatedValues[key]
-      }
-    })
-
-    Object.keys(metadata.exit_conditions).forEach((fieldName) => {
-      const key = `exit_${fieldName}`
-      if (key in updatedValues) {
-        metadata.exit_conditions[fieldName].value = updatedValues[key]
-      }
-    })
-
-    Object.keys(metadata.risk_management).forEach((fieldName) => {
-      const key = `risk_${fieldName}`
-      if (key in updatedValues) {
-        metadata.risk_management[fieldName].value = updatedValues[key]
-      }
-    })
-
-    Object.keys(metadata.position_sizing).forEach((fieldName) => {
-      const key = `position_${fieldName}`
-      if (key in updatedValues) {
-        metadata.position_sizing[fieldName].value = updatedValues[key]
-      }
-    })
-
-    return metadata
   }
 
   const loadConversationHistory = async (strategyId: string) => {
