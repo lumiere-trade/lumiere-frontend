@@ -89,6 +89,33 @@ export interface StrategyListResponse {
   offset: number;
 }
 
+// Library Types
+export interface LibraryCategory {
+  value: string;
+  display_name: string;
+}
+
+export interface LibraryStrategy {
+  id: string;
+  name: string;
+  category: string;
+}
+
+export interface LibraryStrategyDetail {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  symbol: string;
+  timeframe: string;
+  indicators: string[];
+  entry_rules: string[];
+  entry_logic: string;
+  exit_rules: string[];
+  exit_logic: string;
+  parameters: Record<string, any>;
+}
+
 // ============================================================================
 // STRATEGY API (through Pourtier proxy)
 // ============================================================================
@@ -365,6 +392,96 @@ export const getUserAnalytics = async (): Promise<{
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to fetch user analytics', { error });
+    throw error;
+  }
+};
+
+// ============================================================================
+// LIBRARY API (through Pourtier proxy)
+// ============================================================================
+
+/**
+ * Get available library categories
+ */
+export const getLibraryCategories = async (): Promise<LibraryCategory[]> => {
+  logger.debug(LOG_CATEGORY, 'Fetching library categories');
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/library/categories`);
+    logger.info(LOG_CATEGORY, 'Library categories fetched', { count: result.length });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch library categories', { error });
+    throw error;
+  }
+};
+
+/**
+ * Get library strategies
+ */
+export const getLibraryStrategies = async (params?: {
+  category?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<LibraryStrategy[]> => {
+  logger.debug(LOG_CATEGORY, 'Fetching library strategies', params);
+
+  try {
+    const query = new URLSearchParams();
+    if (params?.category) query.append('category', params.category);
+    if (params?.limit) query.append('limit', params.limit.toString());
+    if (params?.offset) query.append('offset', params.offset.toString());
+
+    const queryString = query.toString();
+    const endpoint = queryString
+      ? `${ARCHITECT_PREFIX}/library/strategies?${queryString}`
+      : `${ARCHITECT_PREFIX}/library/strategies`;
+
+    const result = await get(endpoint);
+    logger.info(LOG_CATEGORY, 'Library strategies fetched', { count: result.length, params });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch library strategies', { error, params });
+    throw error;
+  }
+};
+
+/**
+ * Get library strategy detail
+ */
+export const getLibraryStrategy = async (
+  strategyId: string
+): Promise<LibraryStrategyDetail> => {
+  logger.debug(LOG_CATEGORY, 'Fetching library strategy', { strategyId });
+
+  try {
+    const result = await get(`${ARCHITECT_PREFIX}/library/strategies/${strategyId}`);
+    logger.info(LOG_CATEGORY, 'Library strategy fetched', { strategyId, name: result.name });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch library strategy', { error, strategyId });
+    throw error;
+  }
+};
+
+/**
+ * Search library strategies
+ */
+export const searchLibraryStrategies = async (
+  query: string,
+  limit?: number
+): Promise<LibraryStrategy[]> => {
+  logger.debug(LOG_CATEGORY, 'Searching library strategies', { query, limit });
+
+  try {
+    const params = new URLSearchParams({ q: query });
+    if (limit) params.append('limit', limit.toString());
+
+    const result = await get(`${ARCHITECT_PREFIX}/library/strategies/search?${params.toString()}`);
+    logger.info(LOG_CATEGORY, 'Library search completed', { query, count: result.length });
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to search library strategies', { error, query });
     throw error;
   }
 };
