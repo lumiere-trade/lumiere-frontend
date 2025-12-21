@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
 import { StrategyDetailsPanel } from "@/components/strategy/StrategyDetailsPanel"
-import { ChatPanel } from "@/components/strategy/ChatPanel"
 import { ChatProvider, useChat } from "@/contexts/ChatContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
@@ -138,11 +137,6 @@ function AuthenticatedLayoutContent({
           onOpenStrategies={handleOpenStrategies}
           onOpenChat={handleOpenChat}
         />
-      )}
-
-      {/* Chat Overlay - Slides left when fullscreen */}
-      {isCreatePage && (
-        <ChatPanel isSidebarOpen={isSidebarOpen} isFullscreen={isFullscreen} />
       )}
     </div>
   )
