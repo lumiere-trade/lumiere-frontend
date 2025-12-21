@@ -485,3 +485,38 @@ export const searchLibraryStrategies = async (
     throw error;
   }
 };
+
+/**
+ * Compile strategy JSON to Python code
+ */
+export const compileStrategy = async (
+  strategyJson: Record<string, any>
+): Promise<{
+  compiles: boolean
+  python_code?: string
+  strategy_class_name?: string
+  compile_error?: string
+}> => {
+  logger.debug(LOG_CATEGORY, 'Compiling strategy', { name: strategyJson.name })
+
+  try {
+    const result = await post(`${ARCHITECT_PREFIX}/strategies/compile`, {
+      strategy_json: strategyJson
+    })
+    
+    if (result.compiles) {
+      logger.info(LOG_CATEGORY, 'Strategy compiled successfully', { 
+        className: result.strategy_class_name 
+      })
+    } else {
+      logger.warn(LOG_CATEGORY, 'Strategy compilation failed', { 
+        error: result.compile_error 
+      })
+    }
+    
+    return result
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to compile strategy', { error })
+    throw error
+  }
+}
