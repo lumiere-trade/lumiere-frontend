@@ -3,6 +3,7 @@
 import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
+import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import { useChat } from "@/contexts/ChatContext"
@@ -129,7 +130,7 @@ export function StrategyDetailsPanel({
 
         {/* Half-width mode - 2 buttons stacked */}
         {isOpen && !isParametersFullscreen && (
-          <div 
+          <div
             className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20 -translate-x-1/2"
             style={{ left: '0' }}
           >
@@ -157,7 +158,7 @@ export function StrategyDetailsPanel({
 
         {/* Fullscreen mode - 1 button only */}
         {isOpen && isParametersFullscreen && (
-          <div 
+          <div
             className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-30 -translate-x-1/2"
             style={{ left: 'calc(3rem)' }}
           >
@@ -229,16 +230,8 @@ export function StrategyDetailsPanel({
             />
           )}
 
-          {activeTab === 'code' && generatedStrategy && (
-            <div className="bg-card border border-border rounded-lg p-4">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-foreground mb-2">Generated Python Code</h3>
-                <p className="text-sm text-muted-foreground">Class: <span className="font-mono">{generatedStrategy.strategy_class_name}</span></p>
-              </div>
-              <pre className="text-sm font-mono whitespace-pre-wrap overflow-x-auto">
-                {generatedStrategy.python_code}
-              </pre>
-            </div>
+          {activeTab === 'code' && (
+            <StrategyCodeView />
           )}
 
           {activeTab === 'backtest' && (
