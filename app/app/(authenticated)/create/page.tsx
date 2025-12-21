@@ -199,28 +199,32 @@ function CreatePageContent() {
   // Show library strategy preview (no messages, but has loaded library)
   if (hasLoadedLibraryStrategy) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6">
-        <div className="w-full max-w-3xl mx-auto space-y-6">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-foreground tracking-tight">
-              {generatedStrategy.name}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              {generatedStrategy.description}
-            </p>
-            <div className="flex gap-3 justify-center">
-              <button
-                onClick={handleViewStrategy}
-                className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-              >
-                View Strategy Details
-              </button>
+      <div className="flex flex-col min-h-[calc(100vh-80px)]">
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="w-full max-w-3xl mx-auto space-y-6">
+            <div className="text-center space-y-4">
+              <h1 className="text-4xl font-bold text-foreground tracking-tight">
+                {generatedStrategy.name}
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                {generatedStrategy.description}
+              </p>
+              <div className="flex gap-3 justify-center pt-4">
+                <button
+                  onClick={handleViewStrategy}
+                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  View Strategy Details
+                </button>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="border-t border-primary/20 pt-6">
-            <p className="text-center text-sm text-muted-foreground mb-4">
-              Want to customize this strategy? Start a conversation with Prophet AI:
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-primary/20">
+          <div className="w-full max-w-3xl mx-auto px-6 py-4">
+            <p className="text-center text-sm text-muted-foreground mb-3">
+              Want to customize this strategy? Start a conversation with Prophet AI
             </p>
             <MessageInput
               value={inputValue}
@@ -229,15 +233,12 @@ function CreatePageContent() {
               disabled={!isHealthy || isSending}
               placeholder="Ask Prophet to modify this strategy..."
             />
-          </div>
-
-          {!isHealthy && (
-            <div className="text-center">
-              <p className="text-sm text-destructive">
+            {!isHealthy && (
+              <p className="text-center text-sm text-destructive mt-2">
                 Prophet AI is not responding. Please check the connection.
               </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     )
