@@ -37,7 +37,6 @@ function CreatePageContent() {
     progressStage,
     progressMessage,
     openDetailsPanel,
-    expandChat,
   } = useChat()
 
   const {
@@ -176,11 +175,6 @@ function CreatePageContent() {
 
     logger.info('Sending message', { messageLength: userMessage.length })
 
-    // Expand chat when sending from library preview
-    if (libraryId && !messages.length) {
-      expandChat()
-    }
-
     try {
       await sendMessage(userMessage)
     } catch (err) {
@@ -200,7 +194,44 @@ function CreatePageContent() {
 
   // Determine view state
   const hasMessages = messages.length > 0
-  const hasLoadedLibraryStrategy = !strategyId && libraryId && generatedStrategy
+  // Only show library preview when NO messages exist
+  const hasLoadedLibraryStrategy = !strategyId && libraryId && generatedStrategy && !hasMessages
+
+  // Show conversation view (takes priority over library preview)
+  if (hasMessages) {
+    return (
+      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)', scrollbarGutter: 'stable' }}>
+        <div className="flex-1 pb-4">
+          <MessageList
+            messages={messages}
+            isSending={isSending}
+            isGeneratingStrategy={isGeneratingStrategy}
+            strategyGenerationProgress={strategyGenerationProgress}
+            progressStage={progressStage}
+            progressMessage={progressMessage}
+            error={error}
+            generatedStrategy={generatedStrategy}
+            onViewStrategy={handleViewStrategy}
+          />
+        </div>
+
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
+          <div className="w-full max-w-3xl mx-auto px-6 py-4">
+            <MessageInput
+              value={inputValue}
+              onChange={setInputValue}
+              onSend={handleSend}
+              onStop={handleStop}
+              disabled={!isHealthy}
+              isSending={isSending}
+              placeholder="Reply..."
+              autoFocus={true}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Show library strategy preview (no messages, but has loaded library)
   if (hasLoadedLibraryStrategy) {
@@ -241,42 +272,6 @@ function CreatePageContent() {
                 Prophet AI is not responding. Please check the connection.
               </p>
             )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show conversation view
-  if (hasMessages) {
-    return (
-      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)', scrollbarGutter: 'stable' }}>
-        <div className="flex-1 pb-4">
-          <MessageList
-            messages={messages}
-            isSending={isSending}
-            isGeneratingStrategy={isGeneratingStrategy}
-            strategyGenerationProgress={strategyGenerationProgress}
-            progressStage={progressStage}
-            progressMessage={progressMessage}
-            error={error}
-            generatedStrategy={generatedStrategy}
-            onViewStrategy={handleViewStrategy}
-          />
-        </div>
-
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
-          <div className="w-full max-w-3xl mx-auto px-6 py-4">
-            <MessageInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSend={handleSend}
-              onStop={handleStop}
-              disabled={!isHealthy}
-              isSending={isSending}
-              placeholder="Reply..."
-              autoFocus={true}
-            />
           </div>
         </div>
       </div>
