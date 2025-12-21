@@ -132,10 +132,15 @@ export function useProphet() {
         // Store flat JSON strategy
         setStrategyMetadata(strategy.strategy_json)
 
+        // Convert strategy_json to tsdl_code (JSON string)
+        const tsdlCode = JSON.stringify(strategy.strategy_json, null, 2)
+
         // Store for display
         setGeneratedStrategy({
           id: strategy.strategy_id,
           name: strategy.strategy_name,
+          description: strategy.strategy_json.description,
+          tsdl_code: tsdlCode,
           strategy_json: strategy.strategy_json,
           python_code: strategy.python_code,
           strategy_class_name: strategy.strategy_class_name

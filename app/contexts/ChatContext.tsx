@@ -16,9 +16,11 @@ export interface ChatMessage {
 export interface GeneratedStrategy {
   id: string
   name: string
-  strategy_json: StrategyJSON
-  python_code: string
-  strategy_class_name: string
+  description: string
+  tsdl_code: string
+  strategy_json?: StrategyJSON
+  python_code?: string
+  strategy_class_name?: string
 }
 
 export interface CurrentStrategy {
