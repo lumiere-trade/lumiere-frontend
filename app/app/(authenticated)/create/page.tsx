@@ -37,6 +37,7 @@ function CreatePageContent() {
     progressStage,
     progressMessage,
     openDetailsPanel,
+    expandChat,
   } = useChat()
 
   const {
@@ -175,6 +176,11 @@ function CreatePageContent() {
 
     logger.info('Sending message', { messageLength: userMessage.length })
 
+    // Expand chat when sending from library preview
+    if (libraryId && !messages.length) {
+      expandChat()
+    }
+
     try {
       await sendMessage(userMessage)
     } catch (err) {
@@ -221,11 +227,8 @@ function CreatePageContent() {
           </div>
         </div>
 
-        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-primary/20">
+        <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
           <div className="w-full max-w-3xl mx-auto px-6 py-4">
-            <p className="text-center text-sm text-muted-foreground mb-3">
-              Want to customize this strategy? Start a conversation with Prophet AI
-            </p>
             <MessageInput
               value={inputValue}
               onChange={setInputValue}
