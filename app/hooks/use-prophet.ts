@@ -24,6 +24,8 @@ export function useProphet() {
     setProgressMessage,
     setGeneratedStrategy,
     setStrategyMetadata,
+    currentStrategy,
+    generatedStrategy,
     openDetailsPanel,
     setDetailsPanelTab
   } = useChat()
@@ -60,6 +62,27 @@ export function useProphet() {
     setMessages([...messages, userMessage, assistantMessage])
     setIsStreaming(true)
 
+    // Build strategy context if strategy is loaded
+    let strategyContext = undefined
+    if (currentStrategy) {
+      // User strategy (saved)
+      strategyContext = {
+        strategy_id: currentStrategy.id,
+        current_tsdl: currentStrategy.tsdl_code,
+        strategy_name: currentStrategy.name,
+        last_updated: currentStrategy.updated_at
+      }
+      log.info('Sending with user strategy context', { strategyId: currentStrategy.id })
+    } else if (generatedStrategy) {
+      // Library strategy or newly generated (not saved yet)
+      strategyContext = {
+        strategy_id: 'template',
+        current_tsdl: generatedStrategy.tsdl_code,
+        strategy_name: generatedStrategy.name
+      }
+      log.info('Sending with library/generated strategy context', { strategyName: generatedStrategy.name })
+    }
+
     let fullResponse = ''
 
     await sendChatMessageStream(
@@ -71,7 +94,8 @@ export function useProphet() {
         history: messages.map(msg => ({
           role: msg.role,
           content: msg.content
-        }))
+        })),
+        strategy_context: strategyContext
       },
       // onToken
       (token: string) => {
