@@ -93,7 +93,7 @@ export function StrategyCodeView() {
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="mb-4">
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              Strategy Definition (TSDL v2.0)
+              Strategy Definition
             </h3>
             <p className="text-sm text-muted-foreground">
               This is the declarative strategy configuration that will be compiled and executed
