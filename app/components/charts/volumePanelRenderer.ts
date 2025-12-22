@@ -32,9 +32,12 @@ export class VolumePanelRenderer extends PanelRenderer {
       }
     }
 
-    // Check indicator values
+    // Check indicator values (for SMA/EMA range)
     config.indicators.forEach(indicator => {
       if (!indicator.visible) return
+      // Skip raw volume indicator (already in bars)
+      if (indicator.name.toLowerCase() === 'volume') return
+      
       for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
         if (i < indicator.points.length) {
           const point = indicator.points[i]
@@ -56,9 +59,9 @@ export class VolumePanelRenderer extends PanelRenderer {
     // Draw volume bars
     this.drawVolumeBars(candles, viewport, volumeMin, volumeMax, padding)
 
-    // Draw indicators (volume_sma lines)
+    // Draw indicators (volume_sma lines) - skip raw volume
     config.indicators.forEach(indicator => {
-      if (indicator.visible) {
+      if (indicator.visible && indicator.name.toLowerCase() !== 'volume') {
         this.drawIndicatorLine(indicator, viewport, volumeMin, volumeMax, padding)
       }
     })
