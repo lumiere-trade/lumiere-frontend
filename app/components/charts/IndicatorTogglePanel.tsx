@@ -22,16 +22,16 @@ export function IndicatorTogglePanel() {
 
   return (
     <div className="flex flex-wrap gap-2 mb-4 p-3 bg-muted/30 rounded-lg">
-      <div className="w-full text-xs font-medium text-muted-foreground mb-1">
+      <div className="w-full text-sm font-medium text-muted-foreground mb-1">
         Indicators
       </div>
-      
+
       {allIndicators.map((indicator) => (
         <button
           key={`${indicator.panelId}-${indicator.name}`}
           onClick={() => toggleIndicator(indicator.name, indicator.panelId)}
           className={`
-            flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium
+            flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium
             transition-all duration-200
             ${indicator.visible
               ? 'bg-background border border-border shadow-sm'
@@ -41,19 +41,19 @@ export function IndicatorTogglePanel() {
           `}
         >
           {indicator.visible ? (
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-4 h-4" />
           ) : (
-            <EyeOff className="w-3.5 h-3.5" />
+            <EyeOff className="w-4 h-4" />
           )}
-          
+
           <div
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: indicator.color }}
           />
-          
+
           <span>{indicator.name}</span>
-          
-          <span className="text-[10px] text-muted-foreground">
+
+          <span className="text-xs text-muted-foreground">
             ({indicator.panelTitle})
           </span>
         </button>
