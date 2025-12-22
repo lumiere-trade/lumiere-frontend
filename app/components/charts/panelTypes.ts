@@ -64,6 +64,17 @@ export type IndicatorPlacement =
 export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement {
   const name = indicatorName.toUpperCase()
 
+  // Volume-based indicators - check FIRST before general SMA/EMA
+  if (name.includes('VOLUME_SMA') || name.includes('VOLUME_EMA') || 
+      (name.includes('VOLUME') && (name.includes('SMA') || name.includes('EMA')))) {
+    return { type: 'volume', panelId: 'volume' }
+  }
+
+  // Raw volume indicator
+  if (name.includes('VOLUME')) {
+    return { type: 'volume', panelId: 'volume' }
+  }
+
   // MACD indicators - ALL go to oscillator panel
   if (name.includes('MACD')) {
     return { type: 'oscillator', panelId: 'macd', range: [-10, 10] }
@@ -82,11 +93,6 @@ export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement
   // ADX (0-100 range)
   if (name.includes('ADX')) {
     return { type: 'oscillator', panelId: 'adx', range: [0, 100] }
-  }
-
-  // Volume
-  if (name.includes('VOLUME') && !name.includes('SMA') && !name.includes('EMA')) {
-    return { type: 'volume', panelId: 'volume' }
   }
 
   // Overlay indicators (on price chart) - EMA, SMA, Bollinger, etc.
