@@ -1,5 +1,5 @@
-import { Candle, Trade, Viewport, Mode } from './types'
-import { priceToY, indexToX, formatPrice, formatTime, getVisibleCandles } from './chartUtils'
+import { Candle, Trade, Viewport, Mode, Indicator } from './types'
+import { priceToY, indexToX, formatPrice, formatTime, getVisibleCandles, getVisibleIndicators } from './chartUtils'
 
 // Read CSS variables from document
 function getCSSColor(varName: string, fallback: string): string {
@@ -119,7 +119,8 @@ export class ChartRenderer {
     trades: Trade[],
     viewport: Viewport,
     mode: Mode,
-    mouse: { x: number; y: number } | null
+    mouse: { x: number; y: number } | null,
+    indicators: Indicator[] = []
   ) {
     // Clear
     this.ctx.fillStyle = this.colors.bg
@@ -136,6 +137,9 @@ export class ChartRenderer {
     } else {
       this.drawLine(visible, viewport)
     }
+
+    // Draw indicators (AFTER candles/line, BEFORE trades)
+    this.drawIndicators(indicators, viewport)
 
     // Draw trades
     this.drawTrades(trades, viewport)
@@ -255,6 +259,56 @@ export class ChartRenderer {
     })
 
     this.ctx.stroke()
+
+    // Restore context (remove clipping)
+    this.ctx.restore()
+  }
+
+  private drawIndicators(indicators: Indicator[], viewport: Viewport) {
+    if (indicators.length === 0) return
+
+    const { priceMin, priceMax, candleWidth, offsetX } = viewport
+    const visibleIndicators = getVisibleIndicators(indicators, viewport)
+
+    // Save context and setup clipping region
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      this.padding.left,
+      this.padding.top,
+      this.width - this.padding.left - this.padding.right,
+      this.chartHeight
+    )
+    this.ctx.clip()
+
+    // Draw each visible indicator
+    visibleIndicators.forEach(indicator => {
+      if (indicator.points.length === 0) return
+
+      this.ctx.strokeStyle = indicator.color
+      this.ctx.lineWidth = 2
+      this.ctx.beginPath()
+
+      let firstPoint = true
+
+      indicator.points.forEach((point, idx) => {
+        const actualIdx = viewport.startIdx + idx
+        const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
+        const y = priceToY(point.v, priceMin, priceMax, this.chartHeight, this.padding.top)
+
+        // Skip NaN/Infinity values
+        if (!isFinite(y)) return
+
+        if (firstPoint) {
+          this.ctx.moveTo(x, y)
+          firstPoint = false
+        } else {
+          this.ctx.lineTo(x, y)
+        }
+      })
+
+      this.ctx.stroke()
+    })
 
     // Restore context (remove clipping)
     this.ctx.restore()

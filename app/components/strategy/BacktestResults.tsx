@@ -9,7 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TrendingUp, TrendingDown, Clock, X, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
-import { TradingChart, EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
+import { MultiPanelChart } from "@/components/charts/MultiPanelChart"
+import { IndicatorTogglePanel } from "@/components/charts/IndicatorTogglePanel"
+import { EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
+import { Candle, Trade } from "@/components/charts/types"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -36,7 +39,7 @@ function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
 }
 
 export const BacktestResults = memo(function BacktestResults({ results, onClose }: BacktestResultsProps) {
-  const { metrics, equity_curve, trades, trade_analysis, market_data } = results
+  const { metrics, equity_curve, trades, trade_analysis, market_data, indicator_data } = results
   const [activeTab, setActiveTab] = useState('price')
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -66,6 +69,29 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
       setCurrentPage(1)
     }
   }
+
+  // Transform market data to Candle format
+  const candles: Candle[] = useMemo(() => {
+    if (!market_data || market_data.length === 0) return []
+    
+    return market_data.map((candle) => ({
+      t: new Date(candle.timestamp).getTime(),
+      o: candle.open,
+      h: candle.high,
+      l: candle.low,
+      c: candle.close,
+      v: candle.volume
+    }))
+  }, [market_data])
+
+  // Transform trades to Trade format
+  const chartTrades: Trade[] = useMemo(() => {
+    return trades.map((trade, idx) => ({
+      t: idx, // index in candles array
+      p: trade.price,
+      s: trade.side === 'BUY' ? 'B' : 'S'
+    }))
+  }, [trades])
 
   // Equity data for custom EquityCurve component
   const equityCurveData = useMemo(() => {
@@ -102,45 +128,6 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
 
     return decimateData(full, 300)
   }, [trades])
-
-  // Price chart data for custom TradingChart
-  // NO decimation - preserve all trade markers
-  const priceChartData = useMemo(() => {
-    if (!market_data || market_data.length === 0) {
-      return []
-    }
-
-    const normalizeTimestamp = (ts: string): number => {
-      return new Date(ts).getTime()
-    }
-
-    const tradeMap = new Map<number, { side: 'BUY' | 'SELL', price: number, pnl?: number }>()
-
-    trades.forEach(trade => {
-      const ts = normalizeTimestamp(trade.timestamp)
-      tradeMap.set(ts, {
-        side: trade.side,
-        price: trade.price,
-        pnl: trade.pnl || undefined
-      })
-    })
-
-    return market_data.map((candle) => {
-      const ts = normalizeTimestamp(candle.timestamp)
-      const trade = tradeMap.get(ts)
-
-      return {
-        timestamp: ts,
-        date: format(new Date(candle.timestamp), 'MMM dd HH:mm'),
-        open: candle.open,
-        high: candle.high,
-        low: candle.low,
-        close: candle.close,
-        buy: trade?.side === 'BUY' ? trade.price : null,
-        sell: trade?.side === 'SELL' ? trade.price : null,
-      }
-    })
-  }, [market_data, trades])
 
   const isPositive = normalizedMetrics.total_return_pct > 0
 
@@ -230,12 +217,30 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
             <Card>
               <CardHeader>
                 <CardTitle>Price Chart with Trade Signals</CardTitle>
+                <CardDescription>
+                  {indicator_data && indicator_data.length > 0 
+                    ? `${indicator_data.length} indicators loaded • Click indicators below to toggle visibility`
+                    : 'Price chart with buy/sell signals'}
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                {priceChartData.length > 0 ? (
-                  <TradingChart data={priceChartData} height={450} />
+              <CardContent className="space-y-4">
+                {/* Indicator Toggle Panel */}
+                {indicator_data && indicator_data.length > 0 && (
+                  <IndicatorTogglePanel />
+                )}
+
+                {/* Multi-Panel Chart */}
+                {candles.length > 0 ? (
+                  <div className="h-[600px]">
+                    <MultiPanelChart
+                      candles={candles}
+                      trades={chartTrades}
+                      indicatorData={indicator_data || []}
+                      mode="C"
+                    />
+                  </div>
                 ) : (
-                  <div className="h-[450px] flex items-center justify-center text-muted-foreground">
+                  <div className="h-[600px] flex items-center justify-center text-muted-foreground">
                     No price data available
                   </div>
                 )}

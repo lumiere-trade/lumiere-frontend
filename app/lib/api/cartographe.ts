@@ -76,6 +76,16 @@ export interface TradeAnalysis {
   longest_losing_streak: number;
 }
 
+export interface IndicatorValue {
+  timestamp: string;
+  value: number;
+}
+
+export interface IndicatorData {
+  name: string;
+  values: IndicatorValue[];
+}
+
 export interface BacktestResponse {
   backtest_id: string;
   symbol: string;
@@ -88,6 +98,7 @@ export interface BacktestResponse {
   trades: Trade[];
   trade_analysis: TradeAnalysis;
   market_data: Candle[];
+  indicator_data: IndicatorData[];
   execution_time_seconds?: number | null;
   error_message?: string | null;
 }
@@ -139,6 +150,7 @@ export const runBacktest = async (
       total_return: result.metrics.total_return_pct,
       total_trades: result.metrics.total_trades,
       win_rate: result.metrics.win_rate,
+      indicator_count: result.indicator_data?.length || 0,
     });
     return result;
   } catch (error) {

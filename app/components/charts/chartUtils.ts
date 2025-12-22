@@ -1,4 +1,4 @@
-import { Candle, Trade, Viewport } from './types'
+import { Candle, Trade, Viewport, Indicator } from './types'
 
 // Binary search for timestamp (O(log n))
 export function findCandleIndex(candles: Candle[], timestamp: number): number {
@@ -24,6 +24,63 @@ export function getVisibleCandles(
     Math.max(0, startIdx - 2),
     Math.min(candles.length, endIdx + 2)
   )
+}
+
+// Get visible indicators (viewport culling)
+export function getVisibleIndicators(
+  indicators: Indicator[],
+  viewport: Viewport
+): Indicator[] {
+  return indicators
+    .filter(ind => ind.visible)
+    .map(ind => ({
+      ...ind,
+      points: ind.points.slice(
+        Math.max(0, viewport.startIdx - 2),
+        Math.min(ind.points.length, viewport.endIdx + 2)
+      )
+    }))
+}
+
+// Calculate price range including indicators
+export function calculatePriceRangeWithIndicators(
+  candles: Candle[],
+  indicators: Indicator[],
+  startIdx: number,
+  endIdx: number
+): { priceMin: number; priceMax: number } {
+  let priceMin = Infinity
+  let priceMax = -Infinity
+
+  // Price range from candles
+  for (let i = startIdx; i <= endIdx; i++) {
+    if (i < candles.length) {
+      priceMin = Math.min(priceMin, candles[i].l)
+      priceMax = Math.max(priceMax, candles[i].h)
+    }
+  }
+
+  // Price range from visible indicators
+  for (const indicator of indicators) {
+    if (!indicator.visible) continue
+    
+    for (let i = startIdx; i <= endIdx; i++) {
+      if (i < indicator.points.length) {
+        const value = indicator.points[i].v
+        if (!isNaN(value) && isFinite(value)) {
+          priceMin = Math.min(priceMin, value)
+          priceMax = Math.max(priceMax, value)
+        }
+      }
+    }
+  }
+
+  // Add 5% padding to price range
+  const padding = (priceMax - priceMin) * 0.05
+  priceMin -= padding
+  priceMax += padding
+
+  return { priceMin, priceMax }
 }
 
 // Price to Y coordinate (hot path - optimized)
@@ -67,7 +124,8 @@ export function calculateViewport(
   candles: Candle[],
   width: number,
   zoom: number,
-  offsetX: number
+  offsetX: number,
+  indicators: Indicator[] = []
 ): Viewport {
   const candleWidth = Math.max(2, 8 * zoom)
   const visibleCandles = Math.floor(width / candleWidth)
@@ -78,21 +136,13 @@ export function calculateViewport(
   )
   const startIdx = Math.max(0, endIdx - visibleCandles)
 
-  // Calculate price range from visible candles
-  let priceMin = Infinity
-  let priceMax = -Infinity
-
-  for (let i = startIdx; i <= endIdx; i++) {
-    if (i < candles.length) {
-      priceMin = Math.min(priceMin, candles[i].l)
-      priceMax = Math.max(priceMax, candles[i].h)
-    }
-  }
-
-  // Add 5% padding to price range
-  const padding = (priceMax - priceMin) * 0.05
-  priceMin -= padding
-  priceMax += padding
+  // Calculate price range including indicators
+  const { priceMin, priceMax } = calculatePriceRangeWithIndicators(
+    candles,
+    indicators,
+    startIdx,
+    endIdx
+  )
 
   return {
     startIdx,
@@ -120,4 +170,20 @@ export function formatTime(timestamp: number): string {
   const hours = date.getHours().toString().padStart(2, '0')
   const mins = date.getMinutes().toString().padStart(2, '0')
   return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${mins}`
+}
+
+// Assign colors to indicators
+const INDICATOR_COLORS = [
+  '#3b82f6', // blue
+  '#10b981', // green
+  '#f59e0b', // amber
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#06b6d4', // cyan
+]
+
+export function assignIndicatorColor(index: number): string {
+  return INDICATOR_COLORS[index % INDICATOR_COLORS.length]
 }

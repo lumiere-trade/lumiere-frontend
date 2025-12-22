@@ -13,6 +13,19 @@ export interface Trade {
   s: 'B' | 'S'  // side (B=buy, S=sell)
 }
 
+export interface IndicatorPoint {
+  t: number   // timestamp (index in candles array)
+  v: number   // value
+}
+
+export interface Indicator {
+  name: string
+  color: string
+  visible: boolean
+  points: IndicatorPoint[]
+  type: 'line' | 'area'  // future: support different types
+}
+
 export type Mode = 'L' | 'C'  // Line | Candles
 export type TF = '5m' | '15m' | '30m' | '1h' | '4h' | '1d'
 
@@ -31,6 +44,7 @@ export interface ChartState {
   timeframe: TF
   candles: Candle[]
   trades: Trade[]
+  indicators: Indicator[]
   viewport: Viewport
   mouse: { x: number; y: number } | null
   isDragging: boolean
