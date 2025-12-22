@@ -83,9 +83,13 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       panelTop
     }
 
+    // Pass mouse to ALL panels (not just the one being hovered)
     let panelMouse: { x: number; y: number } | null = null
-    if (state.mouse && state.mouse.panelId === config.id) {
-      panelMouse = { x: state.mouse.x, y: state.mouse.y - panelTop }
+    if (state.mouse) {
+      panelMouse = { 
+        x: state.mouse.x, 
+        y: state.mouse.y - panelTop  // Adjust Y relative to this panel
+      }
     }
 
     renderer.render(candles, panelViewport, config, panelMouse)
