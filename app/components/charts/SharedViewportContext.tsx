@@ -18,6 +18,7 @@ interface SharedViewportContextValue {
   removePanel: (panelId: string) => void
   updatePanel: (panelId: string, updates: Partial<PanelConfig>) => void
   resizePanel: (panelId: string, newHeight: number) => void
+  togglePanelVisibility: (panelId: string) => void
   
   // Indicator management
   addIndicator: (indicator: Indicator, panelId: string) => void
@@ -161,7 +162,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   // Zoom handler - MULTIPLICATIVE like old TradingChart
   const handleZoom = useCallback((delta: number, mouseX: number) => {
     setState(prev => {
-      // Use multiplicative zoom factor (10% per step)
       const zoomFactor = delta > 0 ? 1.1 : 0.9
       const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom * zoomFactor))
       
@@ -177,7 +177,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   // Pan handler - DIRECT movement like old TradingChart
   const handlePan = useCallback((movementX: number) => {
     setState(prev => {
-      // Direct addition of movement
       const newOffsetX = prev.sharedViewport.offsetX + movementX
       const maxOffset = 0
       const minOffset = -(candlesRef.current.length * prev.sharedViewport.candleWidth)
@@ -255,6 +254,25 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     })
   }, [])
 
+  // Toggle panel visibility - also toggles all indicators in panel
+  const togglePanelVisibility = useCallback((panelId: string) => {
+    setState(prev => ({
+      ...prev,
+      panels: prev.panels.map(p => {
+        if (p.id === panelId) {
+          const newVisibility = !p.visible
+          // Toggle all indicators when panel toggles
+          return {
+            ...p,
+            visible: newVisibility,
+            indicators: p.indicators.map(ind => ({ ...ind, visible: newVisibility }))
+          }
+        }
+        return p
+      })
+    }))
+  }, [])
+
   // Indicator management
   const addIndicator = useCallback((indicator: Indicator, panelId: string) => {
     setState(prev => ({
@@ -327,6 +345,7 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     removePanel,
     updatePanel,
     resizePanel,
+    togglePanelVisibility,
     addIndicator,
     removeIndicator,
     toggleIndicator,

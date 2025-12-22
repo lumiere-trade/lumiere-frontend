@@ -18,26 +18,30 @@ interface MultiPanelChartProps {
   showIndicatorToggles?: boolean
 }
 
+const PANEL_GAP = 2 // px gap between panels
+
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { state, handleZoom, handlePan, handleReset, setDragging } = useSharedViewport()
 
-  // Calculate panel positions
+  // Calculate panel positions with gaps
   const panelLayout = useMemo(() => {
     const containerHeight = containerRef.current?.clientHeight || 500
     const visiblePanels = state.panels.filter(p => p.visible)
+    const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
+    const availableHeight = containerHeight - totalGaps
     const totalHeight = visiblePanels.reduce((sum, p) => sum + p.height, 0)
 
     let currentTop = 0
-    return visiblePanels.map(panel => {
-      const pixelHeight = (panel.height / totalHeight) * containerHeight
+    return visiblePanels.map((panel, idx) => {
+      const pixelHeight = (panel.height / totalHeight) * availableHeight
       const layout = {
         config: panel,
         top: currentTop,
         height: pixelHeight
       }
-      currentTop += pixelHeight
+      currentTop += pixelHeight + PANEL_GAP
       return layout
     })
   }, [state.panels])
@@ -65,7 +69,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     if (!rect) return
 
     const mouseX = e.clientX - rect.left
-    const delta = -e.deltaY > 0 ? 1 : -1  // Use sign of deltaY
+    const delta = -e.deltaY > 0 ? 1 : -1
     handleZoom(delta, mouseX)
   }, [handleZoom])
 
@@ -77,14 +81,13 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     return () => container.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
-  // Mouse drag pan - FIXED: use movementX directly
+  // Mouse drag pan
   const handleMouseDown = useCallback(() => {
     setDragging(true)
   }, [setDragging])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (state.isDragging) {
-      // Use e.movementX directly like old TradingChart
       handlePan(e.movementX)
     }
   }, [state.isDragging, handlePan])

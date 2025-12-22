@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useCallback } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface PanelProps {
   config: PanelConfig
@@ -15,7 +16,7 @@ interface PanelProps {
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rendererRef = useRef<PanelRenderer | null>(null)
-  const { state, candles, updateMouse, clearMouse } = useSharedViewport()
+  const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
 
   // Setup canvas and create renderer
@@ -40,7 +41,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       ctx.scale(dpr, dpr)
     }
 
-    // Create renderer with actual canvas
     rendererRef.current = createRenderer(canvas)
   }, [panelHeight, createRenderer])
 
@@ -50,7 +50,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const renderer = rendererRef.current
     if (!canvas || !renderer) return
 
-    // Create panel viewport
     const panelViewport: PanelViewport = {
       ...state.sharedViewport,
       priceMin: config.yAxis.min,
@@ -59,13 +58,11 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       panelTop
     }
 
-    // Get mouse position relative to this panel
     let panelMouse: { x: number; y: number } | null = null
     if (state.mouse && state.mouse.panelId === config.id) {
       panelMouse = { x: state.mouse.x, y: state.mouse.y - panelTop }
     }
 
-    // Render
     renderer.render(candles, panelViewport, config, panelMouse)
   }, [state, candles, config, panelHeight, panelTop])
 
@@ -99,14 +96,42 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     clearMouse()
   }, [clearMouse])
 
+  // Toggle panel visibility
+  const handleToggleVisibility = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    togglePanelVisibility(config.id)
+  }, [config.id, togglePanelVisibility])
+
+  // Don't render volume/oscillator panels if not visible
+  if (!config.visible && config.type !== 'price') {
+    return null
+  }
+
   return (
     <div 
       className="relative border-b border-border"
       style={{ height: `${panelHeight}px` }}
     >
-      {/* Panel title */}
-      <div className="absolute top-2 left-4 z-10 text-xs font-medium text-muted-foreground">
-        {config.title}
+      {/* Panel title with eye icon */}
+      <div className="absolute top-2 left-4 z-10 flex items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          {config.title}
+        </span>
+        
+        {/* Eye icon - only for volume/oscillator panels */}
+        {config.type !== 'price' && (
+          <button
+            onClick={handleToggleVisibility}
+            className="p-0.5 hover:bg-muted rounded transition-colors"
+            title={config.visible ? 'Hide panel' : 'Show panel'}
+          >
+            {config.visible ? (
+              <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+            ) : (
+              <EyeOff className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Canvas */}
