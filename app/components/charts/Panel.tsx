@@ -9,16 +9,16 @@ interface PanelProps {
   config: PanelConfig
   panelTop: number
   panelHeight: number
-  renderer: PanelRenderer
-  onResize?: (panelId: string, newHeight: number) => void
+  createRenderer: (canvas: HTMLCanvasElement) => PanelRenderer
 }
 
-export function Panel({ config, panelTop, panelHeight, renderer, onResize }: PanelProps) {
+export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { state, candles, updateMouse, clearMouse, setDragging } = useSharedViewport()
+  const rendererRef = useRef<PanelRenderer | null>(null)
+  const { state, candles, updateMouse, clearMouse } = useSharedViewport()
   const animationFrameRef = useRef<number>()
 
-  // Setup canvas
+  // Setup canvas and create renderer
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -39,14 +39,16 @@ export function Panel({ config, panelTop, panelHeight, renderer, onResize }: Pan
     if (ctx) {
       ctx.scale(dpr, dpr)
     }
-  }, [panelHeight])
+
+    // Create renderer with actual canvas
+    rendererRef.current = createRenderer(canvas)
+  }, [panelHeight, createRenderer])
 
   // Render loop
   const render = useCallback(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
-
-    const rect = canvas.getBoundingClientRect()
+    const renderer = rendererRef.current
+    if (!canvas || !renderer) return
 
     // Create panel viewport
     const panelViewport: PanelViewport = {
@@ -65,7 +67,7 @@ export function Panel({ config, panelTop, panelHeight, renderer, onResize }: Pan
 
     // Render
     renderer.render(candles, panelViewport, config, panelMouse)
-  }, [state, candles, config, panelHeight, panelTop, renderer])
+  }, [state, candles, config, panelHeight, panelTop])
 
   // Trigger render on state change
   useEffect(() => {

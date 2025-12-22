@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useCallback } from 'react'
 import { Panel } from './Panel'
 import { PricePanelRenderer } from './pricePanelRenderer'
 import { PanelConfig } from './panelTypes'
@@ -12,21 +12,16 @@ interface PricePanelProps {
 }
 
 export function PricePanel({ config, panelTop, panelHeight }: PricePanelProps) {
-  // Create renderer once
-  const renderer = useMemo(() => {
-    if (typeof window === 'undefined') return null
-    const canvas = document.createElement('canvas')
+  const createRenderer = useCallback((canvas: HTMLCanvasElement) => {
     return new PricePanelRenderer(canvas)
   }, [])
-
-  if (!renderer) return null
 
   return (
     <Panel
       config={config}
       panelTop={panelTop}
       panelHeight={panelHeight}
-      renderer={renderer}
+      createRenderer={createRenderer}
     />
   )
 }
