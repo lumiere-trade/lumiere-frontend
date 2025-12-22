@@ -19,8 +19,8 @@ interface MultiPanelChartProps {
 }
 
 const PANEL_GAP = 2 // px gap between panels
-const BASE_PANEL_HEIGHT = 350 // Base height for price panel (по-висок)
-const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels (по-висок)
+const BASE_PANEL_HEIGHT = 350 // Base height for price panel
+const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
 
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
@@ -199,16 +199,21 @@ export function MultiPanelChart({
 
   // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
-    return indicatorData.map((ind, idx) => ({
-      name: ind.name,
-      color: assignIndicatorColor(idx),
-      visible: true,
-      points: ind.values.map((val, i) => ({
-        t: i,
-        v: val.value
-      })),
-      type: 'line'
-    }))
+    return indicatorData.map((ind, idx) => {
+      // MACD signal is invisible by default (too cluttered)
+      const isVisible = !ind.name.toLowerCase().includes('macd_signal')
+      
+      return {
+        name: ind.name,
+        color: assignIndicatorColor(idx),
+        visible: isVisible,
+        points: ind.values.map((val, i) => ({
+          t: i,
+          v: val.value
+        })),
+        type: 'line'
+      }
+    })
   }, [indicatorData])
 
   return (
