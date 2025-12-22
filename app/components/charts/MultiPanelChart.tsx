@@ -6,6 +6,7 @@ import { PricePanel } from './PricePanel'
 import { OscillatorPanel } from './OscillatorPanel'
 import { VolumePanel } from './VolumePanel'
 import { IndicatorTogglePanel } from './IndicatorTogglePanel'
+import { DateAxisStrip } from './DateAxisStrip'
 import { Candle, Trade, Indicator } from './types'
 import { assignIndicatorColor } from './chartUtils'
 import { IndicatorData } from '@/lib/api/cartographe'
@@ -163,6 +164,9 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
           Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
         </div>
       </div>
+
+      {/* Date Axis Strip - shared across all panels */}
+      <DateAxisStrip />
 
       {/* Indicator Toggle Panel - MOVED TO BOTTOM */}
       {showIndicatorToggles && <IndicatorTogglePanel />}

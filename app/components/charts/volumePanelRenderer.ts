@@ -7,7 +7,7 @@ function getPadding(width: number) {
   return {
     top: 5,
     right: Math.max(70, width * 0.08),
-    bottom: 40,  // More space for X axis dates
+    bottom: 5,
     left: Math.max(15, width * 0.02)
   }
 }
@@ -72,7 +72,7 @@ export class VolumePanelRenderer extends PanelRenderer {
     this.drawYAxis(volumeMin, volumeMax, viewport.panelHeight, padding, this.formatVolume)
 
     // Draw X-axis with dates
-    this.drawXAxis(candles, viewport, padding)
+    // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
 
     // Draw crosshair
     if (mouse) {
