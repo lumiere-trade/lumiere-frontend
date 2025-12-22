@@ -27,7 +27,7 @@ const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { state, handleZoom, handlePan, handleReset, setDragging } = useSharedViewport()
+  const { state, handleZoom, handlePan, handleReset, setDragging, updateMouse, clearMouse } = useSharedViewport()
 
   // Calculate dynamic container height based on visible panels
   const containerHeight = useMemo(() => {
@@ -102,15 +102,30 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     setDragging(true)
   }, [setDragging])
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+  const handleContainerMouseMove = useCallback((e: React.MouseEvent) => {
+    // Update mouse position for all components (panels, overlay, date strip)
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    updateMouse(x, y, 'container')
+
+    // Handle pan if dragging
     if (state.isDragging) {
       handlePan(e.movementX)
     }
-  }, [state.isDragging, handlePan])
+  }, [state.isDragging, handlePan, updateMouse])
 
   const handleMouseUp = useCallback(() => {
     setDragging(false)
   }, [setDragging])
+
+  const handleMouseLeave = useCallback(() => {
+    setDragging(false)
+    clearMouse()
+  }, [setDragging, clearMouse])
 
   return (
     <div className="flex flex-col">
@@ -125,9 +140,9 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
             cursor: state.isDragging ? 'grabbing' : 'crosshair'
           }}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
+          onMouseMove={handleContainerMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
         >
           {/* Render panels */}
           {panelLayout.map(({ config, top, height }) => {
