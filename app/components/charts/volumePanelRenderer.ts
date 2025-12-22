@@ -7,7 +7,7 @@ function getPadding(width: number) {
   return {
     top: 5,
     right: Math.max(70, width * 0.08),
-    bottom: 5,
+    bottom: 25,  // Increased for X axis dates
     left: Math.max(15, width * 0.02)
   }
 }
@@ -26,7 +26,7 @@ export class VolumePanelRenderer extends PanelRenderer {
 
     // Calculate volume range (include indicators)
     let volumeMax = 0
-    
+
     // Check candle volumes
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i < candles.length && candles[i].v) {
@@ -39,7 +39,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (!indicator.visible) return
       // Skip raw volume indicator (already in bars)
       if (indicator.name.toLowerCase() === 'volume') return
-      
+
       for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
         if (i < indicator.points.length) {
           const point = indicator.points[i]
@@ -70,6 +70,9 @@ export class VolumePanelRenderer extends PanelRenderer {
 
     // Draw Y-axis
     this.drawYAxis(volumeMin, volumeMax, viewport.panelHeight, padding, this.formatVolume)
+
+    // Draw X-axis with dates
+    this.drawXAxis(candles, viewport, padding)
 
     // Draw crosshair
     if (mouse) {
@@ -135,7 +138,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
       if (x < padding.left || x > this.width - padding.right) continue
 
-      const y = padding.top + viewport.panelHeight - 
+      const y = padding.top + viewport.panelHeight -
                 ((point.v - volumeMin) / (volumeMax - volumeMin)) * viewport.panelHeight
 
       if (firstPoint) {
@@ -147,6 +150,36 @@ export class VolumePanelRenderer extends PanelRenderer {
     }
 
     this.ctx.stroke()
+  }
+
+  private drawXAxis(
+    candles: Candle[],
+    viewport: PanelViewport,
+    padding: any
+  ) {
+    this.ctx.fillStyle = this.colors.text
+    this.ctx.font = '10px monospace'
+    this.ctx.textAlign = 'center'
+    this.ctx.textBaseline = 'top'
+
+    // Draw date labels at intervals
+    const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
+    const yPosition = this.height - padding.bottom + 5
+
+    for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
+      if (i >= candles.length) break
+
+      const candle = candles[i]
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+
+      if (x < padding.left || x > this.width - padding.right) continue
+
+      // Format timestamp to date
+      const date = new Date(candle.t * 1000)
+      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+
+      this.ctx.fillText(dateStr, x, yPosition)
+    }
   }
 
   private formatVolume(volume: number): string {
