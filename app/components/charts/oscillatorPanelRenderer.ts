@@ -18,6 +18,8 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     config: PanelConfig,
     mouse: { x: number; y: number } | null
   ) {
+    this.updateColors()
+
     const padding = getPadding(this.width)
     
     this.clearCanvas()

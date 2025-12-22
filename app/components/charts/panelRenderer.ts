@@ -32,13 +32,18 @@ export abstract class PanelRenderer {
   constructor(canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d', { alpha: false })
     if (!ctx) throw new Error('Failed to get canvas context')
-    
+
     this.ctx = ctx
     this.width = canvas.width
     this.height = canvas.height
 
     // Initialize colors from CSS variables
-    this.colors = {
+    this.colors = this.getColors()
+  }
+
+  // Get colors from CSS variables
+  private getColors(): PanelColors {
+    return {
       bg: getCSSColor('--background', '#0a0a0a'),
       grid: getCSSColor('--border', '#1a1a1a'),
       text: getCSSColor('--muted-foreground', '#888888'),
@@ -49,6 +54,11 @@ export abstract class PanelRenderer {
       tooltipBg: getCSSColor('--popover', '#1a1a1a'),
       tooltipBorder: getCSSColor('--border', '#333333')
     }
+  }
+
+  // Update colors from CSS (call before each render)
+  protected updateColors() {
+    this.colors = this.getColors()
   }
 
   // Abstract method - each panel type implements its own rendering

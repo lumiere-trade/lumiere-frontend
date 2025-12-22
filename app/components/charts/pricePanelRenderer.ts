@@ -1,11 +1,11 @@
-import { Candle, Trade, Mode } from './types'
+import { Candle, Trade, Indicator } from './types'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
-import { indexToX, formatPrice } from './chartUtils'
+import { priceToY, indexToX } from './chartUtils'
 
 function getPadding(width: number) {
   return {
-    top: 10,
+    top: 30,
     right: Math.max(70, width * 0.08),
     bottom: 5,
     left: Math.max(15, width * 0.02)
@@ -19,8 +19,10 @@ export class PricePanelRenderer extends PanelRenderer {
     config: PanelConfig,
     mouse: { x: number; y: number } | null
   ) {
-    const padding = getPadding(this.width)
+    // Update colors for theme changes
+    this.updateColors()
     
+    const padding = getPadding(this.width)
     this.clearCanvas()
 
     // Calculate price range
@@ -29,28 +31,15 @@ export class PricePanelRenderer extends PanelRenderer {
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i < candles.length) {
-        priceMin = Math.min(priceMin, candles[i].l)
-        priceMax = Math.max(priceMax, candles[i].h)
+        const candle = candles[i]
+        priceMin = Math.min(priceMin, candle.l)
+        priceMax = Math.max(priceMax, candle.h)
       }
     }
 
-    // Include visible indicators in range
-    config.indicators.filter(ind => ind.visible).forEach(indicator => {
-      for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
-        if (i < indicator.points.length) {
-          const value = indicator.points[i].v
-          if (isFinite(value)) {
-            priceMin = Math.min(priceMin, value)
-            priceMax = Math.max(priceMax, value)
-          }
-        }
-      }
-    })
-
-    // Add padding
-    const pricePadding = (priceMax - priceMin) * 0.05
-    priceMin -= pricePadding
-    priceMax += pricePadding
+    const priceRange = priceMax - priceMin
+    priceMin -= priceRange * 0.05
+    priceMax += priceRange * 0.05
 
     // Draw grid
     if (config.showGrid) {
@@ -60,11 +49,11 @@ export class PricePanelRenderer extends PanelRenderer {
     // Draw candles
     this.drawCandles(candles, viewport, priceMin, priceMax, padding)
 
-    // Draw indicators
+    // Draw indicator lines
     this.drawIndicatorLines(config.indicators, viewport, priceMin, priceMax, padding)
 
     // Draw Y-axis
-    this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding, (v) => `$${formatPrice(v)}`)
+    this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
 
     // Draw crosshair
     if (mouse) {
@@ -79,8 +68,8 @@ export class PricePanelRenderer extends PanelRenderer {
     priceMax: number,
     padding: any
   ) {
+    const bodyWidth = Math.max(1, viewport.candleWidth * 0.8)
     const wickWidth = Math.max(1, viewport.candleWidth * 0.1)
-    const bodyWidth = Math.max(2, viewport.candleWidth * 0.8)
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i >= candles.length) break
@@ -93,12 +82,12 @@ export class PricePanelRenderer extends PanelRenderer {
       const isUp = candle.c >= candle.o
       const color = isUp ? this.colors.up : this.colors.down
 
-      const yHigh = this.valueToY(candle.h, priceMin, priceMax, viewport.panelHeight, padding.top)
-      const yLow = this.valueToY(candle.l, priceMin, priceMax, viewport.panelHeight, padding.top)
-      const yOpen = this.valueToY(candle.o, priceMin, priceMax, viewport.panelHeight, padding.top)
-      const yClose = this.valueToY(candle.c, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const yHigh = priceToY(candle.h, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const yLow = priceToY(candle.l, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const yOpen = priceToY(candle.o, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const yClose = priceToY(candle.c, priceMin, priceMax, viewport.panelHeight, padding.top)
 
-      // Wick
+      // Draw wick
       this.ctx.strokeStyle = color
       this.ctx.lineWidth = wickWidth
       this.ctx.beginPath()
@@ -106,16 +95,16 @@ export class PricePanelRenderer extends PanelRenderer {
       this.ctx.lineTo(x, yLow)
       this.ctx.stroke()
 
-      // Body
+      // Draw body
+      const bodyHeight = Math.abs(yClose - yOpen)
       const bodyY = Math.min(yOpen, yClose)
-      const bodyHeight = Math.max(1, Math.abs(yClose - yOpen))
 
       this.ctx.fillStyle = color
       this.ctx.fillRect(
         x - bodyWidth / 2,
         bodyY,
         bodyWidth,
-        bodyHeight
+        Math.max(1, bodyHeight)
       )
     }
   }
