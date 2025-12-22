@@ -5,6 +5,7 @@ import { SharedViewportProvider, useSharedViewport } from './SharedViewportConte
 import { PricePanel } from './PricePanel'
 import { OscillatorPanel } from './OscillatorPanel'
 import { VolumePanel } from './VolumePanel'
+import { IndicatorTogglePanel } from './IndicatorTogglePanel'
 import { Candle, Trade, Indicator, IndicatorPoint } from './types'
 import { getIndicatorPlacement, createOscillatorPanel, PanelConfig } from './panelTypes'
 import { assignIndicatorColor } from './chartUtils'
@@ -15,12 +16,13 @@ interface MultiPanelChartProps {
   trades: Trade[]
   indicatorData: IndicatorData[]
   mode?: 'L' | 'C'
+  showIndicatorToggles?: boolean
 }
 
 // Inner component that uses the context
-function MultiPanelChartInner() {
+function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { state, handleZoom, handlePan, handleReset, addPanel, toggleIndicator } = useSharedViewport()
+  const { state, handleZoom, handlePan, handleReset } = useSharedViewport()
 
   // Calculate panel positions
   const panelLayout = useMemo(() => {
@@ -90,7 +92,6 @@ function MultiPanelChartInner() {
     if (!mouseDownRef.current) return
 
     const deltaX = e.clientX - mouseDownRef.current.x
-    const newOffsetX = mouseDownRef.current.startOffsetX + deltaX
     handlePan(deltaX)
   }, [handlePan])
 
@@ -99,57 +100,69 @@ function MultiPanelChartInner() {
   }, [])
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full bg-background"
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-    >
-      {/* Render panels */}
-      {panelLayout.map(({ config, top, height }) => {
-        if (config.type === 'price') {
-          return (
-            <PricePanel
-              key={config.id}
-              config={config}
-              panelTop={top}
-              panelHeight={height}
-            />
-          )
-        } else if (config.type === 'volume') {
-          return (
-            <VolumePanel
-              key={config.id}
-              config={config}
-              panelTop={top}
-              panelHeight={height}
-            />
-          )
-        } else if (config.type === 'oscillator') {
-          return (
-            <OscillatorPanel
-              key={config.id}
-              config={config}
-              panelTop={top}
-              panelHeight={height}
-            />
-          )
-        }
-        return null
-      })}
+    <div className="space-y-4">
+      {/* Indicator Toggle Panel - NOW INSIDE PROVIDER */}
+      {showIndicatorToggles && <IndicatorTogglePanel />}
 
-      {/* Keyboard shortcuts hint */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
-        Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
+      {/* Chart Container */}
+      <div 
+        ref={containerRef}
+        className="relative w-full h-full bg-background"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        {/* Render panels */}
+        {panelLayout.map(({ config, top, height }) => {
+          if (config.type === 'price') {
+            return (
+              <PricePanel
+                key={config.id}
+                config={config}
+                panelTop={top}
+                panelHeight={height}
+              />
+            )
+          } else if (config.type === 'volume') {
+            return (
+              <VolumePanel
+                key={config.id}
+                config={config}
+                panelTop={top}
+                panelHeight={height}
+              />
+            )
+          } else if (config.type === 'oscillator') {
+            return (
+              <OscillatorPanel
+                key={config.id}
+                config={config}
+                panelTop={top}
+                panelHeight={height}
+              />
+            )
+          }
+          return null
+        })}
+
+        {/* Keyboard shortcuts hint */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
+          Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
+        </div>
       </div>
     </div>
   )
 }
 
 // Main component with provider
-export function MultiPanelChart({ candles, trades, indicatorData, mode = 'C' }: MultiPanelChartProps) {
+export function MultiPanelChart({ 
+  candles, 
+  trades, 
+  indicatorData, 
+  mode = 'C',
+  showIndicatorToggles = true 
+}: MultiPanelChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = React.useState(800)
 
@@ -183,62 +196,6 @@ export function MultiPanelChart({ candles, trades, indicatorData, mode = 'C' }: 
     }))
   }, [indicatorData])
 
-  // Create panels based on indicators
-  const initialPanels = useMemo(() => {
-    const panels: PanelConfig[] = [
-      {
-        id: 'price',
-        type: 'price',
-        title: 'Price',
-        height: 60,
-        visible: true,
-        indicators: [],
-        yAxis: { min: 0, max: 100, auto: true },
-        showGrid: true
-      }
-    ]
-
-    const oscillatorPanels = new Map<string, PanelConfig>()
-
-    // Distribute indicators to panels
-    indicators.forEach(indicator => {
-      const placement = getIndicatorPlacement(indicator.name)
-
-      if (placement.type === 'overlay') {
-        // Add to price panel
-        panels[0].indicators.push(indicator)
-      } else if (placement.type === 'oscillator') {
-        // Create or add to oscillator panel
-        if (!oscillatorPanels.has(placement.panelId)) {
-          oscillatorPanels.set(
-            placement.panelId,
-            createOscillatorPanel(indicator.name, placement.range)
-          )
-        }
-        oscillatorPanels.get(placement.panelId)!.indicators.push(indicator)
-      } else if (placement.type === 'volume') {
-        // Add volume panel if not exists
-        if (!panels.find(p => p.id === 'volume')) {
-          panels.push({
-            id: 'volume',
-            type: 'volume',
-            title: 'Volume',
-            height: 20,
-            visible: true,
-            indicators: [indicator],
-            yAxis: { min: 0, max: 100, auto: true },
-            showGrid: true
-          })
-        }
-      }
-    })
-
-    // Add oscillator panels
-    oscillatorPanels.forEach(panel => panels.push(panel))
-
-    return panels
-  }, [indicators])
-
   return (
     <div ref={containerRef} className="w-full h-full">
       <SharedViewportProvider
@@ -246,7 +203,7 @@ export function MultiPanelChart({ candles, trades, indicatorData, mode = 'C' }: 
         indicators={indicators}
         containerWidth={containerWidth}
       >
-        <MultiPanelChartInner />
+        <MultiPanelChartInner showIndicatorToggles={showIndicatorToggles} />
       </SharedViewportProvider>
     </div>
   )

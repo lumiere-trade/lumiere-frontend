@@ -10,7 +10,6 @@ import { TrendingUp, TrendingDown, Clock, X, ChevronDown, ChevronUp, ChevronLeft
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { format } from "date-fns"
 import { MultiPanelChart } from "@/components/charts/MultiPanelChart"
-import { IndicatorTogglePanel } from "@/components/charts/IndicatorTogglePanel"
 import { EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
 import { Candle, Trade } from "@/components/charts/types"
 
@@ -219,17 +218,12 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 <CardTitle>Price Chart with Trade Signals</CardTitle>
                 <CardDescription>
                   {indicator_data && indicator_data.length > 0 
-                    ? `${indicator_data.length} indicators loaded • Click indicators below to toggle visibility`
+                    ? `${indicator_data.length} indicators loaded • Toggle visibility below`
                     : 'Price chart with buy/sell signals'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Indicator Toggle Panel */}
-                {indicator_data && indicator_data.length > 0 && (
-                  <IndicatorTogglePanel />
-                )}
-
-                {/* Multi-Panel Chart */}
+              <CardContent>
+                {/* Multi-Panel Chart with built-in indicator toggles */}
                 {candles.length > 0 ? (
                   <div className="h-[600px]">
                     <MultiPanelChart
@@ -237,6 +231,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                       trades={chartTrades}
                       indicatorData={indicator_data || []}
                       mode="C"
+                      showIndicatorToggles={true}
                     />
                   </div>
                 ) : (
