@@ -1,4 +1,4 @@
-import { Candle } from './types'
+import { Candle, Indicator } from './types'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
 import { indexToX } from './chartUtils'
@@ -20,17 +20,30 @@ export class VolumePanelRenderer extends PanelRenderer {
     mouse: { x: number; y: number } | null
   ) {
     const padding = getPadding(this.width)
-    
     this.clearCanvas()
 
-    // Calculate volume range
+    // Calculate volume range (include indicators)
     let volumeMax = 0
-
+    
+    // Check candle volumes
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i < candles.length && candles[i].v) {
         volumeMax = Math.max(volumeMax, candles[i].v!)
       }
     }
+
+    // Check indicator values
+    config.indicators.forEach(indicator => {
+      if (!indicator.visible) return
+      for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+        if (i < indicator.points.length) {
+          const point = indicator.points[i]
+          if (point && point.v !== null && point.v !== undefined) {
+            volumeMax = Math.max(volumeMax, point.v)
+          }
+        }
+      }
+    })
 
     const volumeMin = 0
     volumeMax = volumeMax * 1.1 // Add 10% padding
@@ -42,6 +55,13 @@ export class VolumePanelRenderer extends PanelRenderer {
 
     // Draw volume bars
     this.drawVolumeBars(candles, viewport, volumeMin, volumeMax, padding)
+
+    // Draw indicators (volume_sma lines)
+    config.indicators.forEach(indicator => {
+      if (indicator.visible) {
+        this.drawIndicatorLine(indicator, viewport, volumeMin, volumeMax, padding)
+      }
+    })
 
     // Draw Y-axis
     this.drawYAxis(volumeMin, volumeMax, viewport.panelHeight, padding, this.formatVolume)
@@ -68,7 +88,6 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (!candle.v) continue
 
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
-
       if (x < padding.left || x > this.width - padding.right) continue
 
       const isUp = candle.c >= candle.o
@@ -87,6 +106,42 @@ export class VolumePanelRenderer extends PanelRenderer {
       )
       this.ctx.globalAlpha = 1.0
     }
+  }
+
+  private drawIndicatorLine(
+    indicator: Indicator,
+    viewport: PanelViewport,
+    volumeMin: number,
+    volumeMax: number,
+    padding: any
+  ) {
+    this.ctx.strokeStyle = indicator.color
+    this.ctx.lineWidth = 2
+    this.ctx.beginPath()
+
+    let firstPoint = true
+
+    for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+      if (i >= indicator.points.length) break
+
+      const point = indicator.points[i]
+      if (!point || point.v === null || point.v === undefined) continue
+
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      if (x < padding.left || x > this.width - padding.right) continue
+
+      const y = padding.top + viewport.panelHeight - 
+                ((point.v - volumeMin) / (volumeMax - volumeMin)) * viewport.panelHeight
+
+      if (firstPoint) {
+        this.ctx.moveTo(x, y)
+        firstPoint = false
+      } else {
+        this.ctx.lineTo(x, y)
+      }
+    }
+
+    this.ctx.stroke()
   }
 
   private formatVolume(volume: number): string {
