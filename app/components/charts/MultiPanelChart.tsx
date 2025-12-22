@@ -7,6 +7,7 @@ import { OscillatorPanel } from './OscillatorPanel'
 import { VolumePanel } from './VolumePanel'
 import { IndicatorTogglePanel } from './IndicatorTogglePanel'
 import { DateAxisStrip } from './DateAxisStrip'
+import { CrosshairOverlay } from './CrosshairOverlay'
 import { Candle, Trade, Indicator } from './types'
 import { assignIndicatorColor } from './chartUtils'
 import { IndicatorData } from '@/lib/api/cartographe'
@@ -161,6 +162,8 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
             return null
           })}
 
+          {/* Crosshair Overlay - spans all panels including gaps */}
+          <CrosshairOverlay containerHeight={containerHeight} />
         </div>
 
         {/* Date Axis Strip - part of chart visual unit */}

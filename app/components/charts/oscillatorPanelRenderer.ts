@@ -69,10 +69,10 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     // Draw X-axis with dates
     // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
 
-    // Draw crosshair
-    if (mouse) {
-      this.drawCrosshair(mouse, viewport, yMin, yMax, padding)
-    }
+    // Draw crosshair - DISABLED (now handled by CrosshairOverlay)
+    // if (mouse) {
+    //   this.drawCrosshair(mouse, viewport, yMin, yMax, padding)
+    // }
   }
 
   private drawRSIReferences(
@@ -123,7 +123,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
 
     // Draw date labels at intervals
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
-    const yPosition = padding.top + viewport.panelHeight + 10
+    const yPosition = padding.top + viewport.panelHeight + padding.bottom / 2 - 5
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
       if (i >= candles.length) break
