@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
@@ -18,6 +18,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const rendererRef = useRef<PanelRenderer | null>(null)
   const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
+  const [themeVersion, setThemeVersion] = useState(0)
 
   // Setup canvas and create renderer
   useEffect(() => {
@@ -44,6 +45,30 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     rendererRef.current = createRenderer(canvas)
   }, [panelHeight, createRenderer])
 
+  // Theme change detection
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' ||
+           mutation.attributeName === 'data-theme' ||
+           mutation.attributeName === 'style')
+        ) {
+          // Force re-render by updating theme version
+          setThemeVersion(v => v + 1)
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'style']
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   // Render loop
   const render = useCallback(() => {
     const canvas = canvasRef.current
@@ -64,9 +89,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
 
     renderer.render(candles, panelViewport, config, panelMouse)
-  }, [state, candles, config, panelHeight, panelTop])
+  }, [state, candles, config, panelHeight, panelTop, themeVersion])
 
-  // Trigger render on state change
+  // Trigger render on state change OR theme change
   useEffect(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
