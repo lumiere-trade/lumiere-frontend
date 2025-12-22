@@ -69,9 +69,6 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     // Draw X-axis with dates
     // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
 
-    // Draw crosshair
-    if (mouse) {
-      this.drawCrosshair(mouse, viewport, yMin, yMax, padding)
     }
   }
 
