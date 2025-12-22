@@ -18,7 +18,7 @@ interface MultiPanelChartProps {
   showIndicatorToggles?: boolean
 }
 
-const PANEL_GAP = 2 // px gap between panels
+const PANEL_GAP = 10 // px gap between panels
 const BASE_PANEL_HEIGHT = 350 // Base height for price panel
 const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
 
