@@ -19,22 +19,36 @@ interface MultiPanelChartProps {
 }
 
 const PANEL_GAP = 2 // px gap between panels
+const BASE_PANEL_HEIGHT = 300 // Base height for price panel
+const SECONDARY_PANEL_HEIGHT = 100 // Height for volume/oscillator panels
 
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { state, handleZoom, handlePan, handleReset, setDragging } = useSharedViewport()
 
+  // Calculate dynamic container height based on visible panels
+  const containerHeight = useMemo(() => {
+    const visiblePanels = state.panels.filter(p => p.visible)
+    const pricePanel = visiblePanels.find(p => p.type === 'price')
+    const secondaryPanels = visiblePanels.filter(p => p.type !== 'price')
+    
+    const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
+    const baseHeight = pricePanel ? BASE_PANEL_HEIGHT : 0
+    const secondaryHeight = secondaryPanels.length * SECONDARY_PANEL_HEIGHT
+    
+    return baseHeight + secondaryHeight + totalGaps
+  }, [state.panels])
+
   // Calculate panel positions with gaps
   const panelLayout = useMemo(() => {
-    const containerHeight = containerRef.current?.clientHeight || 500
     const visiblePanels = state.panels.filter(p => p.visible)
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
     const availableHeight = containerHeight - totalGaps
     const totalHeight = visiblePanels.reduce((sum, p) => sum + p.height, 0)
 
     let currentTop = 0
-    return visiblePanels.map((panel, idx) => {
+    return visiblePanels.map((panel) => {
       const pixelHeight = (panel.height / totalHeight) * availableHeight
       const layout = {
         config: panel,
@@ -44,7 +58,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
       currentTop += pixelHeight + PANEL_GAP
       return layout
     })
-  }, [state.panels])
+  }, [state.panels, containerHeight])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -101,11 +115,14 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
       {/* Indicator Toggle Panel */}
       {showIndicatorToggles && <IndicatorTogglePanel />}
 
-      {/* Chart Container with fixed height */}
+      {/* Chart Container with DYNAMIC height */}
       <div 
         ref={containerRef}
-        className="relative w-full h-[500px] bg-background rounded-lg overflow-hidden"
-        style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
+        className="relative w-full bg-background rounded-lg overflow-hidden transition-all duration-300"
+        style={{ 
+          height: `${containerHeight}px`,
+          cursor: state.isDragging ? 'grabbing' : 'crosshair'
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
