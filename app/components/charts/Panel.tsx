@@ -163,10 +163,10 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         )}
       </div>
 
-      {/* Canvas */}
+      {/* Canvas - inherits cursor from parent container */}
       <canvas
         ref={canvasRef}
-        className="w-full h-full cursor-crosshair"
+        className="w-full h-full"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
       />
