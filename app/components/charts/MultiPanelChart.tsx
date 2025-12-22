@@ -27,6 +27,7 @@ const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const { state, handleZoom, handlePan, handleReset, setDragging, updateMouse, clearMouse } = useSharedViewport()
 
   // Calculate dynamic container height based on visible panels
@@ -102,15 +103,16 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     setDragging(true)
   }, [setDragging])
 
-  const handleContainerMouseMove = useCallback((e: React.MouseEvent) => {
-    // Update mouse position for all components (panels, overlay, date strip)
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
+  // Mouse tracking for wrapper (chart + date strip)
+  const handleWrapperMouseMove = useCallback((e: React.MouseEvent) => {
+    const wrapper = wrapperRef.current
+    if (!wrapper) return
 
+    const rect = wrapper.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
 
-    updateMouse(x, y, 'container')
+    updateMouse(x, y, 'wrapper')
 
     // Handle pan if dragging
     if (state.isDragging) {
@@ -129,20 +131,21 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 
   return (
     <div className="flex flex-col">
-      {/* Chart Container + DateAxisStrip as single visual unit */}
-      <div className="bg-background rounded-lg overflow-hidden">
+      {/* Chart Container + DateAxisStrip as single visual unit with mouse tracking */}
+      <div 
+        ref={wrapperRef}
+        className="bg-background rounded-lg overflow-hidden"
+        style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
+        onMouseMove={handleWrapperMouseMove}
+        onMouseLeave={handleMouseLeave}
+      >
         {/* Chart Container with DYNAMIC height */}
         <div 
           ref={containerRef}
           className="relative w-full transition-all duration-300"
-          style={{ 
-            height: `${containerHeight}px`,
-            cursor: state.isDragging ? 'grabbing' : 'crosshair'
-          }}
+          style={{ height: `${containerHeight}px` }}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleContainerMouseMove}
           onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
         >
           {/* Render panels */}
           {panelLayout.map(({ config, top, height }) => {
