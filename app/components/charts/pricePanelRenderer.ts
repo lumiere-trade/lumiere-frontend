@@ -7,7 +7,7 @@ function getPadding(width: number) {
   return {
     top: 30,
     right: Math.max(70, width * 0.08),
-    bottom: 5,
+    bottom: 25,  // Increased for X axis dates
     left: Math.max(15, width * 0.02)
   }
 }
@@ -54,6 +54,9 @@ export class PricePanelRenderer extends PanelRenderer {
 
     // Draw Y-axis
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
+
+    // Draw X-axis with dates
+    this.drawXAxis(candles, viewport, padding)
 
     // Draw crosshair
     if (mouse) {
@@ -106,6 +109,36 @@ export class PricePanelRenderer extends PanelRenderer {
         bodyWidth,
         Math.max(1, bodyHeight)
       )
+    }
+  }
+
+  private drawXAxis(
+    candles: Candle[],
+    viewport: PanelViewport,
+    padding: any
+  ) {
+    this.ctx.fillStyle = this.colors.text
+    this.ctx.font = '10px monospace'
+    this.ctx.textAlign = 'center'
+    this.ctx.textBaseline = 'top'
+
+    // Draw date labels at intervals
+    const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
+    const yPosition = viewport.panelHeight + padding.top + 5
+
+    for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
+      if (i >= candles.length) break
+
+      const candle = candles[i]
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+
+      if (x < padding.left || x > this.width - padding.right) continue
+
+      // Format timestamp to date
+      const date = new Date(candle.t * 1000)
+      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+
+      this.ctx.fillText(dateStr, x, yPosition)
     }
   }
 }

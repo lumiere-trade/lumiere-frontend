@@ -112,9 +112,6 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Indicator Toggle Panel */}
-      {showIndicatorToggles && <IndicatorTogglePanel />}
-
       {/* Chart Container with DYNAMIC height */}
       <div 
         ref={containerRef}
@@ -166,6 +163,9 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
           Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
         </div>
       </div>
+
+      {/* Indicator Toggle Panel - MOVED TO BOTTOM */}
+      {showIndicatorToggles && <IndicatorTogglePanel />}
     </div>
   )
 }
