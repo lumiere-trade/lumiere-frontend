@@ -262,7 +262,7 @@ export class ChartRenderer {
 
   private drawTrades(trades: Trade[], viewport: Viewport) {
     const { priceMin, priceMax, candleWidth, offsetX, startIdx, endIdx } = viewport
-    const markerSize = 8
+    const markerRadius = 5
     const markerOffset = 15
 
     // Save context and setup clipping region
@@ -289,24 +289,16 @@ export class ChartRenderer {
       // Position markers below for BUY, above for SELL (away from line)
       const y = trade.s === 'B' ? yPrice + markerOffset : yPrice - markerOffset
 
-      // Triangle marker
+      // Draw circle marker
       this.ctx.fillStyle = color
       this.ctx.beginPath()
-
-      if (trade.s === 'B') {
-        // Up arrow for BUY (below line)
-        this.ctx.moveTo(x, y - markerSize)
-        this.ctx.lineTo(x - markerSize / 2, y)
-        this.ctx.lineTo(x + markerSize / 2, y)
-      } else {
-        // Down arrow for SELL (above line)
-        this.ctx.moveTo(x, y + markerSize)
-        this.ctx.lineTo(x - markerSize / 2, y)
-        this.ctx.lineTo(x + markerSize / 2, y)
-      }
-
-      this.ctx.closePath()
+      this.ctx.arc(x, y, markerRadius, 0, Math.PI * 2)
       this.ctx.fill()
+
+      // Optional: Add white border for better visibility
+      this.ctx.strokeStyle = this.colors.bg
+      this.ctx.lineWidth = 2
+      this.ctx.stroke()
     })
 
     // Restore context (remove clipping)
