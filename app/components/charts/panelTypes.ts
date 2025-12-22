@@ -1,9 +1,9 @@
 /**
  * Multi-Panel Chart Types
- * 
+ *
  * Supports:
  * - Main price chart with overlay indicators (EMA, SMA, Bollinger)
- * - Oscillator panels (RSI, Stochastic, ADX)
+ * - Oscillator panels (RSI, Stochastic, ADX, MACD)
  * - Volume panel
  * - Shared time axis with synchronized zoom/pan
  */
@@ -55,47 +55,45 @@ export interface MultiPanelState {
 }
 
 // Indicator placement strategy
-export type IndicatorPlacement = 
+export type IndicatorPlacement =
   | { type: 'overlay'; panelId: 'price' }  // EMA, SMA, Bollinger
-  | { type: 'oscillator'; panelId: string; range: [number, number] }  // RSI, Stochastic
+  | { type: 'oscillator'; panelId: string; range: [number, number] }  // RSI, Stochastic, MACD
   | { type: 'volume'; panelId: 'volume' }  // Volume bars
 
 // Helper to determine indicator placement
 export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement {
   const name = indicatorName.toUpperCase()
-  
-  // Overlay indicators (on price chart)
-  if (name.includes('EMA') || name.includes('SMA') || 
-      name.includes('BOLLINGER') || name.includes('MACD_LINE') ||
-      name.includes('MACD_SIGNAL')) {
-    return { type: 'overlay', panelId: 'price' }
+
+  // MACD indicators - ALL go to oscillator panel
+  if (name.includes('MACD')) {
+    return { type: 'oscillator', panelId: 'macd', range: [-10, 10] }
   }
-  
+
   // RSI (0-100 range)
   if (name.includes('RSI')) {
     return { type: 'oscillator', panelId: 'rsi', range: [0, 100] }
   }
-  
+
   // Stochastic (0-100 range)
-  if (name.includes('STOCHASTIC')) {
+  if (name.includes('STOCHASTIC') || name.includes('STOCH')) {
     return { type: 'oscillator', panelId: 'stochastic', range: [0, 100] }
   }
-  
-  // MACD Histogram (separate panel)
-  if (name.includes('MACD_HISTOGRAM')) {
-    return { type: 'oscillator', panelId: 'macd', range: [-5, 5] }
-  }
-  
+
   // ADX (0-100 range)
   if (name.includes('ADX')) {
     return { type: 'oscillator', panelId: 'adx', range: [0, 100] }
   }
-  
+
   // Volume
-  if (name.includes('VOLUME')) {
+  if (name.includes('VOLUME') && !name.includes('SMA') && !name.includes('EMA')) {
     return { type: 'volume', panelId: 'volume' }
   }
-  
+
+  // Overlay indicators (on price chart) - EMA, SMA, Bollinger, etc.
+  if (name.includes('EMA') || name.includes('SMA') || name.includes('BOLLINGER')) {
+    return { type: 'overlay', panelId: 'price' }
+  }
+
   // Default: overlay on price
   return { type: 'overlay', panelId: 'price' }
 }
@@ -131,20 +129,38 @@ export function createOscillatorPanel(
   indicatorName: string,
   range: [number, number]
 ): PanelConfig {
-  const id = indicatorName.toLowerCase().replace(/_/g, '-')
+  const name = indicatorName.toLowerCase()
   
+  // Extract clean panel ID
+  let id = 'oscillator'
+  let title = indicatorName
+  
+  if (name.includes('macd')) {
+    id = 'macd'
+    title = 'MACD'
+  } else if (name.includes('rsi')) {
+    id = 'rsi'
+    title = 'RSI'
+  } else if (name.includes('stoch')) {
+    id = 'stochastic'
+    title = 'Stochastic'
+  } else if (name.includes('adx')) {
+    id = 'adx'
+    title = 'ADX'
+  }
+
   return {
     id,
     type: 'oscillator',
-    title: indicatorName,
+    title,
     height: 20,
     visible: true,
     indicators: [],
-    yAxis: { 
-      min: range[0], 
-      max: range[1], 
-      auto: false,
-      fixed: { min: range[0], max: range[1] }
+    yAxis: {
+      min: range[0],
+      max: range[1],
+      auto: id === 'macd',  // MACD uses auto range
+      fixed: id !== 'macd' ? { min: range[0], max: range[1] } : undefined
     },
     showGrid: true
   }
