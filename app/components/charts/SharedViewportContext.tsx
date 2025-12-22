@@ -1,9 +1,8 @@
 'use client'
 
 import React, { createContext, useContext, useCallback, useState, useRef, useMemo, useEffect } from 'react'
-import { SharedViewport, MultiPanelState, PanelConfig, createDefaultPanels, getIndicatorPlacement, createOscillatorPanel } from './panelTypes'
+import { SharedViewport, MultiPanelState, PanelConfig, getIndicatorPlacement, createOscillatorPanel } from './panelTypes'
 import { Candle, Indicator } from './types'
-import { assignIndicatorColor } from './chartUtils'
 
 interface SharedViewportContextValue {
   state: MultiPanelState
@@ -11,7 +10,7 @@ interface SharedViewportContextValue {
   
   // Viewport controls (synchronized across panels)
   handleZoom: (delta: number, mouseX: number) => void
-  handlePan: (deltaX: number) => void
+  handlePan: (movementX: number) => void
   handleReset: () => void
   
   // Panel management
@@ -83,10 +82,8 @@ export function SharedViewportProvider({ candles, indicators, children, containe
       const placement = getIndicatorPlacement(indicator.name)
 
       if (placement.type === 'overlay') {
-        // Add to price panel
         panels[0].indicators.push(indicator)
       } else if (placement.type === 'oscillator') {
-        // Create or add to oscillator panel
         if (!oscillatorPanels.has(placement.panelId)) {
           oscillatorPanels.set(
             placement.panelId,
@@ -95,7 +92,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
         }
         oscillatorPanels.get(placement.panelId)!.indicators.push(indicator)
       } else if (placement.type === 'volume') {
-        // Add volume panel if not exists
         if (!panels.find(p => p.id === 'volume')) {
           panels.push({
             id: 'volume',
@@ -111,7 +107,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
       }
     })
 
-    // Add oscillator panels
     oscillatorPanels.forEach(panel => panels.push(panel))
 
     return panels
@@ -163,10 +158,12 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     }
   }, [])
 
-  // Zoom handler (synchronized)
+  // Zoom handler - MULTIPLICATIVE like old TradingChart
   const handleZoom = useCallback((delta: number, mouseX: number) => {
     setState(prev => {
-      const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom + delta * 0.1))
+      // Use multiplicative zoom factor (10% per step)
+      const zoomFactor = delta > 0 ? 1.1 : 0.9
+      const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom * zoomFactor))
       
       const newOffsetX = prev.sharedViewport.offsetX * (newZoom / prev.sharedViewport.zoom)
       
@@ -177,10 +174,11 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     })
   }, [containerWidth, recalculateViewport])
 
-  // Pan handler (synchronized)
-  const handlePan = useCallback((deltaX: number) => {
+  // Pan handler - DIRECT movement like old TradingChart
+  const handlePan = useCallback((movementX: number) => {
     setState(prev => {
-      const newOffsetX = prev.sharedViewport.offsetX + deltaX
+      // Direct addition of movement
+      const newOffsetX = prev.sharedViewport.offsetX + movementX
       const maxOffset = 0
       const minOffset = -(candlesRef.current.length * prev.sharedViewport.candleWidth)
       const clampedOffset = Math.max(minOffset, Math.min(maxOffset, newOffsetX))

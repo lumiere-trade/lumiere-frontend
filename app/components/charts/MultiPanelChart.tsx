@@ -21,7 +21,7 @@ interface MultiPanelChartProps {
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const { state, handleZoom, handlePan, handleReset } = useSharedViewport()
+  const { state, handleZoom, handlePan, handleReset, setDragging } = useSharedViewport()
 
   // Calculate panel positions
   const panelLayout = useMemo(() => {
@@ -65,7 +65,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     if (!rect) return
 
     const mouseX = e.clientX - rect.left
-    const delta = e.deltaY > 0 ? -1 : 1
+    const delta = -e.deltaY > 0 ? 1 : -1  // Use sign of deltaY
     handleZoom(delta, mouseX)
   }, [handleZoom])
 
@@ -77,26 +77,21 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     return () => container.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
-  // Mouse drag pan
-  const mouseDownRef = useRef<{ x: number; startOffsetX: number } | null>(null)
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    mouseDownRef.current = {
-      x: e.clientX,
-      startOffsetX: state.sharedViewport.offsetX
-    }
-  }, [state.sharedViewport.offsetX])
+  // Mouse drag pan - FIXED: use movementX directly
+  const handleMouseDown = useCallback(() => {
+    setDragging(true)
+  }, [setDragging])
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!mouseDownRef.current) return
-
-    const deltaX = e.clientX - mouseDownRef.current.x
-    handlePan(deltaX)
-  }, [handlePan])
+    if (state.isDragging) {
+      // Use e.movementX directly like old TradingChart
+      handlePan(e.movementX)
+    }
+  }, [state.isDragging, handlePan])
 
   const handleMouseUp = useCallback(() => {
-    mouseDownRef.current = null
-  }, [])
+    setDragging(false)
+  }, [setDragging])
 
   return (
     <div className="flex flex-col gap-3">
@@ -107,6 +102,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
       <div 
         ref={containerRef}
         className="relative w-full h-[500px] bg-background rounded-lg overflow-hidden"
+        style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
