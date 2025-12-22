@@ -17,12 +17,38 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<PanelRenderer | null>(null)
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastResizeTimeRef = useRef<number>(0)
   const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
-  // Setup canvas size with ResizeObserver
+  // Render function
+  const renderChart = useCallback(() => {
+    const canvas = canvasRef.current
+    const renderer = rendererRef.current
+    if (!canvas || !renderer) return
+
+    const panelViewport: PanelViewport = {
+      ...state.sharedViewport,
+      priceMin: config.yAxis.min,
+      priceMax: config.yAxis.max,
+      panelHeight,
+      panelTop
+    }
+
+    let panelMouse: { x: number; y: number } | null = null
+    if (state.mouse) {
+      panelMouse = { 
+        x: state.mouse.x, 
+        y: state.mouse.y - panelTop
+      }
+    }
+
+    renderer.render(candles, panelViewport, config, panelMouse)
+  }, [state, candles, config, panelHeight, panelTop])
+
+  // Setup canvas size with THROTTLED ResizeObserver (smooth during animation)
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
@@ -35,8 +61,11 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       const newWidth = rect.width * dpr
       const newHeight = panelHeight * dpr
 
-      // Only update if size changed (avoid unnecessary redraws)
-      if (canvas.width !== newWidth || canvas.height !== newHeight) {
+      // Only update if size changed significantly (avoid tiny changes)
+      const widthDiff = Math.abs(canvas.width - newWidth)
+      const heightDiff = Math.abs(canvas.height - newHeight)
+      
+      if (widthDiff > 2 || heightDiff > 2) {
         canvas.width = newWidth
         canvas.height = newHeight
 
@@ -51,22 +80,44 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         // Recreate renderer with new canvas size
         rendererRef.current = createRenderer(canvas)
         
-        setCanvasSize({ width: newWidth, height: newHeight })
+        // Render immediately (no black flash)
+        renderChart()
       }
     }
 
     // Initial size
     updateCanvasSize()
 
-    // Watch for container resize
+    // Watch for container resize with THROTTLE (max 60fps during animation)
     const observer = new ResizeObserver(() => {
-      updateCanvasSize()
+      const now = Date.now()
+      const timeSinceLastResize = now - lastResizeTimeRef.current
+
+      // Throttle: Update max once per 50ms (20fps during resize)
+      if (timeSinceLastResize >= 50) {
+        lastResizeTimeRef.current = now
+        updateCanvasSize()
+      }
+
+      // Also schedule final update after animation stops
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+      
+      resizeTimeoutRef.current = setTimeout(() => {
+        updateCanvasSize()
+      }, 100)
     })
 
     observer.observe(container)
 
-    return () => observer.disconnect()
-  }, [panelHeight, createRenderer])
+    return () => {
+      observer.disconnect()
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+    }
+  }, [panelHeight, createRenderer, renderChart])
 
   // Theme change detection
   useEffect(() => {
@@ -78,7 +129,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
            mutation.attributeName === 'data-theme' ||
            mutation.attributeName === 'style')
         ) {
-          // Force re-render by updating theme version
           setThemeVersion(v => v + 1)
         }
       })
@@ -92,45 +142,19 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     return () => observer.disconnect()
   }, [])
 
-  // Render loop
-  const render = useCallback(() => {
-    const canvas = canvasRef.current
-    const renderer = rendererRef.current
-    if (!canvas || !renderer) return
-
-    const panelViewport: PanelViewport = {
-      ...state.sharedViewport,
-      priceMin: config.yAxis.min,
-      priceMax: config.yAxis.max,
-      panelHeight,
-      panelTop
-    }
-
-    // Pass mouse to ALL panels (not just the one being hovered)
-    let panelMouse: { x: number; y: number } | null = null
-    if (state.mouse) {
-      panelMouse = { 
-        x: state.mouse.x, 
-        y: state.mouse.y - panelTop  // Adjust Y relative to this panel
-      }
-    }
-
-    renderer.render(candles, panelViewport, config, panelMouse)
-  }, [state, candles, config, panelHeight, panelTop, themeVersion, canvasSize])
-
-  // Trigger render on state change OR theme change OR size change
+  // Trigger render on state/theme change
   useEffect(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
     }
-    animationFrameRef.current = requestAnimationFrame(render)
+    animationFrameRef.current = requestAnimationFrame(renderChart)
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [render])
+  }, [renderChart, themeVersion])
 
   // Mouse handlers
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
