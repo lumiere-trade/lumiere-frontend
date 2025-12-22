@@ -296,19 +296,36 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     }))
   }, [])
 
+  // Toggle indicator - if turning ON, also show the panel
   const toggleIndicator = useCallback((indicatorName: string, panelId: string) => {
     setState(prev => ({
       ...prev,
-      panels: prev.panels.map(p => 
-        p.id === panelId
-          ? {
-              ...p,
-              indicators: p.indicators.map(i =>
-                i.name === indicatorName ? { ...i, visible: !i.visible } : i
-              )
+      panels: prev.panels.map(p => {
+        if (p.id === panelId) {
+          const updatedIndicators = p.indicators.map(i => {
+            if (i.name === indicatorName) {
+              const newVisibility = !i.visible
+              // If turning indicator ON, also show panel
+              if (newVisibility && !p.visible) {
+                return { ...i, visible: newVisibility }
+              }
+              return { ...i, visible: newVisibility }
             }
-          : p
-      )
+            return i
+          })
+          
+          // Check if any indicator is now visible
+          const anyVisible = updatedIndicators.some(ind => ind.visible)
+          
+          return {
+            ...p,
+            indicators: updatedIndicators,
+            // Show panel if any indicator is visible
+            visible: anyVisible ? true : p.visible
+          }
+        }
+        return p
+      })
     }))
   }, [])
 
