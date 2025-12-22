@@ -77,6 +77,7 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     ]
 
     const oscillatorPanels = new Map<string, PanelConfig>()
+    let volumePanel: PanelConfig | null = null
 
     // Distribute indicators to panels
     indicators.forEach(indicator => {
@@ -93,21 +94,30 @@ export function SharedViewportProvider({ candles, indicators, children, containe
         }
         oscillatorPanels.get(placement.panelId)!.indicators.push(indicator)
       } else if (placement.type === 'volume') {
-        if (!panels.find(p => p.id === 'volume')) {
-          panels.push({
+        // Create volume panel if doesn't exist
+        if (!volumePanel) {
+          volumePanel = {
             id: 'volume',
             type: 'volume',
             title: 'Volume',
             height: 20,
             visible: true,
-            indicators: [indicator],
+            indicators: [],
             yAxis: { min: 0, max: 100, auto: true },
             showGrid: true
-          })
+          }
         }
+        // Add indicator to volume panel
+        volumePanel.indicators.push(indicator)
       }
     })
 
+    // Add volume panel if it was created
+    if (volumePanel) {
+      panels.push(volumePanel)
+    }
+
+    // Add oscillator panels
     oscillatorPanels.forEach(panel => panels.push(panel))
 
     return panels
