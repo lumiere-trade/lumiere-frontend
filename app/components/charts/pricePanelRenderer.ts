@@ -126,7 +126,7 @@ export class PricePanelRenderer extends PanelRenderer {
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
     
     // Position dates below the chart (at actual canvas bottom)
-    const yPosition = this.height - padding.bottom + 5
+    const yPosition = padding.top + viewport.panelHeight + 10
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
       if (i >= candles.length) break

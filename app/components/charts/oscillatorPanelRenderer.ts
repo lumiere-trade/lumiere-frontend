@@ -123,7 +123,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
 
     // Draw date labels at intervals
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
-    const yPosition = this.height - padding.bottom + 5
+    const yPosition = padding.top + viewport.panelHeight + 10
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
       if (i >= candles.length) break
