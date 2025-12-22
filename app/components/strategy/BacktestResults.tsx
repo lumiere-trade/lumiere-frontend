@@ -223,17 +223,15 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Multi-Panel Chart with built-in indicator toggles */}
+                {/* Multi-Panel Chart - NO fixed height wrapper */}
                 {candles.length > 0 ? (
-                  <div className="h-[600px]">
-                    <MultiPanelChart
-                      candles={candles}
-                      trades={chartTrades}
-                      indicatorData={indicator_data || []}
-                      mode="C"
-                      showIndicatorToggles={true}
-                    />
-                  </div>
+                  <MultiPanelChart
+                    candles={candles}
+                    trades={chartTrades}
+                    indicatorData={indicator_data || []}
+                    mode="C"
+                    showIndicatorToggles={true}
+                  />
                 ) : (
                   <div className="h-[600px] flex items-center justify-center text-muted-foreground">
                     No price data available

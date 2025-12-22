@@ -6,8 +6,7 @@ import { PricePanel } from './PricePanel'
 import { OscillatorPanel } from './OscillatorPanel'
 import { VolumePanel } from './VolumePanel'
 import { IndicatorTogglePanel } from './IndicatorTogglePanel'
-import { Candle, Trade, Indicator, IndicatorPoint } from './types'
-import { getIndicatorPlacement, createOscillatorPanel, PanelConfig } from './panelTypes'
+import { Candle, Trade, Indicator } from './types'
 import { assignIndicatorColor } from './chartUtils'
 import { IndicatorData } from '@/lib/api/cartographe'
 
@@ -26,7 +25,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 
   // Calculate panel positions
   const panelLayout = useMemo(() => {
-    const containerHeight = containerRef.current?.clientHeight || 600
+    const containerHeight = containerRef.current?.clientHeight || 500
     const visiblePanels = state.panels.filter(p => p.visible)
     const totalHeight = visiblePanels.reduce((sum, p) => sum + p.height, 0)
 
@@ -100,14 +99,14 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
   }, [])
 
   return (
-    <div className="space-y-4">
-      {/* Indicator Toggle Panel - NOW INSIDE PROVIDER */}
+    <div className="flex flex-col gap-3">
+      {/* Indicator Toggle Panel */}
       {showIndicatorToggles && <IndicatorTogglePanel />}
 
-      {/* Chart Container */}
+      {/* Chart Container with fixed height */}
       <div 
         ref={containerRef}
-        className="relative w-full h-full bg-background"
+        className="relative w-full h-[500px] bg-background rounded-lg overflow-hidden"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -156,12 +155,12 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 }
 
 // Main component with provider
-export function MultiPanelChart({ 
-  candles, 
-  trades, 
-  indicatorData, 
+export function MultiPanelChart({
+  candles,
+  trades,
+  indicatorData,
   mode = 'C',
-  showIndicatorToggles = true 
+  showIndicatorToggles = true
 }: MultiPanelChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = React.useState(800)
@@ -197,7 +196,7 @@ export function MultiPanelChart({
   }, [indicatorData])
 
   return (
-    <div ref={containerRef} className="w-full h-full">
+    <div ref={containerRef} className="w-full">
       <SharedViewportProvider
         candles={candles}
         indicators={indicators}
