@@ -15,34 +15,57 @@ interface PanelProps {
 
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<PanelRenderer | null>(null)
   const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 })
 
-  // Setup canvas and create renderer
+  // Setup canvas size with ResizeObserver
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current
+    if (!canvas || !container) return
 
-    const parent = canvas.parentElement
-    if (!parent) return
+    const updateCanvasSize = () => {
+      const rect = container.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
 
-    const rect = parent.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
+      const newWidth = rect.width * dpr
+      const newHeight = panelHeight * dpr
 
-    canvas.width = rect.width * dpr
-    canvas.height = panelHeight * dpr
+      // Only update if size changed (avoid unnecessary redraws)
+      if (canvas.width !== newWidth || canvas.height !== newHeight) {
+        canvas.width = newWidth
+        canvas.height = newHeight
 
-    canvas.style.width = `${rect.width}px`
-    canvas.style.height = `${panelHeight}px`
+        canvas.style.width = `${rect.width}px`
+        canvas.style.height = `${panelHeight}px`
 
-    const ctx = canvas.getContext('2d', { alpha: false })
-    if (ctx) {
-      ctx.scale(dpr, dpr)
+        const ctx = canvas.getContext('2d', { alpha: false })
+        if (ctx) {
+          ctx.scale(dpr, dpr)
+        }
+
+        // Recreate renderer with new canvas size
+        rendererRef.current = createRenderer(canvas)
+        
+        setCanvasSize({ width: newWidth, height: newHeight })
+      }
     }
 
-    rendererRef.current = createRenderer(canvas)
+    // Initial size
+    updateCanvasSize()
+
+    // Watch for container resize
+    const observer = new ResizeObserver(() => {
+      updateCanvasSize()
+    })
+
+    observer.observe(container)
+
+    return () => observer.disconnect()
   }, [panelHeight, createRenderer])
 
   // Theme change detection
@@ -93,9 +116,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
 
     renderer.render(candles, panelViewport, config, panelMouse)
-  }, [state, candles, config, panelHeight, panelTop, themeVersion])
+  }, [state, candles, config, panelHeight, panelTop, themeVersion, canvasSize])
 
-  // Trigger render on state change OR theme change
+  // Trigger render on state change OR theme change OR size change
   useEffect(() => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current)
@@ -138,6 +161,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
   return (
     <div 
+      ref={containerRef}
       className="relative border-b border-border"
       style={{ height: `${panelHeight}px` }}
     >
