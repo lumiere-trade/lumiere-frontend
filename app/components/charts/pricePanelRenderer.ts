@@ -7,7 +7,7 @@ function getPadding(width: number) {
   return {
     top: 30,
     right: Math.max(70, width * 0.08),
-    bottom: 25,  // Increased for X axis dates
+    bottom: 40,  // More space for X axis dates
     left: Math.max(15, width * 0.02)
   }
 }
