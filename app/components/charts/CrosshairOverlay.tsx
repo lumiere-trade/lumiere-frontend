@@ -9,29 +9,44 @@ interface CrosshairOverlayProps {
 
 export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { state } = useSharedViewport()
 
-  // Setup canvas
+  // Setup canvas with resize detection
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas) return
+    const container = containerRef.current
+    if (!canvas || !container) return
 
-    const parent = canvas.parentElement
-    if (!parent) return
+    const updateCanvasSize = () => {
+      const rect = container.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
 
-    const rect = parent.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
+      canvas.width = rect.width * dpr
+      canvas.height = containerHeight * dpr
 
-    canvas.width = rect.width * dpr
-    canvas.height = containerHeight * dpr
+      canvas.style.width = `${rect.width}px`
+      canvas.style.height = `${containerHeight}px`
 
-    canvas.style.width = `${rect.width}px`
-    canvas.style.height = `${containerHeight}px`
+      const ctx = canvas.getContext('2d', { alpha: true })
+      if (ctx) {
+        ctx.scale(dpr, dpr)
+      }
 
-    const ctx = canvas.getContext('2d', { alpha: true })
-    if (ctx) {
-      ctx.scale(dpr, dpr)
+      // Re-render after resize
+      render()
     }
+
+    updateCanvasSize()
+
+    // Watch for resize
+    const observer = new ResizeObserver(() => {
+      updateCanvasSize()
+    })
+
+    observer.observe(container)
+
+    return () => observer.disconnect()
   }, [containerHeight])
 
   // Render crosshair
@@ -48,7 +63,7 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height)
 
-    // Draw vertical crosshair line across ALL panels
+    // Draw crosshair (both vertical and horizontal lines)
     if (state.mouse) {
       const crossColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary').trim() || '#8b5cf6'
@@ -57,9 +72,16 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
       ctx.lineWidth = 1
       ctx.setLineDash([4, 4])
 
+      // Vertical line (full height)
       ctx.beginPath()
       ctx.moveTo(state.mouse.x, 0)
       ctx.lineTo(state.mouse.x, height)
+      ctx.stroke()
+
+      // Horizontal line (full width)
+      ctx.beginPath()
+      ctx.moveTo(0, state.mouse.y)
+      ctx.lineTo(width, state.mouse.y)
       ctx.stroke()
 
       ctx.setLineDash([])
@@ -72,9 +94,11 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
   }, [render])
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="absolute inset-0 pointer-events-none"
-    />
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+      <canvas
+        ref={canvasRef}
+        className="w-full h-full"
+      />
+    </div>
   )
 }

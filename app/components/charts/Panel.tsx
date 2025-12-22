@@ -39,8 +39,8 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
     let panelMouse: { x: number; y: number } | null = null
     if (state.mouse) {
-      panelMouse = { 
-        x: state.mouse.x, 
+      panelMouse = {
+        x: state.mouse.x,
         y: state.mouse.y - panelTop
       }
     }
@@ -64,7 +64,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       // Only update if size changed significantly (avoid tiny changes)
       const widthDiff = Math.abs(canvas.width - newWidth)
       const heightDiff = Math.abs(canvas.height - newHeight)
-      
+
       if (widthDiff > 2 || heightDiff > 2) {
         canvas.width = newWidth
         canvas.height = newHeight
@@ -79,7 +79,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         // Recreate renderer with new canvas size
         rendererRef.current = createRenderer(canvas)
-        
+
         // Render immediately (no black flash)
         renderChart()
       }
@@ -103,7 +103,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current)
       }
-      
+
       resizeTimeoutRef.current = setTimeout(() => {
         updateCanvasSize()
       }, 100)
@@ -184,17 +184,17 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative border-b border-border"
       style={{ height: `${panelHeight}px` }}
     >
       {/* Panel title with eye icon */}
       <div className="absolute top-2 left-4 z-10 flex items-center gap-2">
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
-        
+
         {/* Eye icon - only for volume/oscillator panels */}
         {config.type !== 'price' && (
           <button
@@ -203,9 +203,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
             title={config.visible ? 'Hide panel' : 'Show panel'}
           >
             {config.visible ? (
-              <Eye className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+              <Eye className="w-4 h-4 text-muted-foreground hover:text-foreground" />
             ) : (
-              <EyeOff className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
+              <EyeOff className="w-4 h-4 text-muted-foreground hover:text-foreground" />
             )}
           </button>
         )}
