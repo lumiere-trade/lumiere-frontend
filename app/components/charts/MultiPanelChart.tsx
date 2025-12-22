@@ -112,64 +112,71 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
   }, [setDragging])
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Chart Container with DYNAMIC height */}
-      <div 
-        ref={containerRef}
-        className="relative w-full bg-background rounded-lg overflow-hidden transition-all duration-300"
-        style={{ 
-          height: `${containerHeight}px`,
-          cursor: state.isDragging ? 'grabbing' : 'crosshair'
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
-        {/* Render panels */}
-        {panelLayout.map(({ config, top, height }) => {
-          if (config.type === 'price') {
-            return (
-              <PricePanel
-                key={config.id}
-                config={config}
-                panelTop={top}
-                panelHeight={height}
-              />
-            )
-          } else if (config.type === 'volume') {
-            return (
-              <VolumePanel
-                key={config.id}
-                config={config}
-                panelTop={top}
-                panelHeight={height}
-              />
-            )
-          } else if (config.type === 'oscillator') {
-            return (
-              <OscillatorPanel
-                key={config.id}
-                config={config}
-                panelTop={top}
-                panelHeight={height}
-              />
-            )
-          }
-          return null
-        })}
+    <div className="flex flex-col">
+      {/* Chart Container + DateAxisStrip as single visual unit */}
+      <div className="bg-background rounded-lg overflow-hidden">
+        {/* Chart Container with DYNAMIC height */}
+        <div 
+          ref={containerRef}
+          className="relative w-full transition-all duration-300"
+          style={{ 
+            height: `${containerHeight}px`,
+            cursor: state.isDragging ? 'grabbing' : 'crosshair'
+          }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {/* Render panels */}
+          {panelLayout.map(({ config, top, height }) => {
+            if (config.type === 'price') {
+              return (
+                <PricePanel
+                  key={config.id}
+                  config={config}
+                  panelTop={top}
+                  panelHeight={height}
+                />
+              )
+            } else if (config.type === 'volume') {
+              return (
+                <VolumePanel
+                  key={config.id}
+                  config={config}
+                  panelTop={top}
+                  panelHeight={height}
+                />
+              )
+            } else if (config.type === 'oscillator') {
+              return (
+                <OscillatorPanel
+                  key={config.id}
+                  config={config}
+                  panelTop={top}
+                  panelHeight={height}
+                />
+              )
+            }
+            return null
+          })}
 
-        {/* Keyboard shortcuts hint */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
-          Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
+          {/* Keyboard shortcuts hint */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
+            Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
+          </div>
         </div>
+
+        {/* Date Axis Strip - part of chart visual unit */}
+        <DateAxisStrip />
       </div>
 
-      {/* Date Axis Strip - shared across all panels */}
-      <DateAxisStrip />
-
-      {/* Indicator Toggle Panel - MOVED TO BOTTOM */}
-      {showIndicatorToggles && <IndicatorTogglePanel />}
+      {/* Indicator Toggle Panel - separate below */}
+      {showIndicatorToggles && (
+        <div className="mt-3">
+          <IndicatorTogglePanel />
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { indexToX } from './chartUtils'
 
@@ -9,27 +9,97 @@ const DATE_STRIP_HEIGHT = 30 // Height of the date strip
 export function DateAxisStrip() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastResizeTimeRef = useRef<number>(0)
   const { state, candles } = useSharedViewport()
+  const [themeVersion, setThemeVersion] = useState(0)
 
-  // Setup canvas
+  // Setup canvas with resize detection
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
 
-    const rect = container.getBoundingClientRect()
-    const dpr = window.devicePixelRatio || 1
+    const updateCanvasSize = () => {
+      const rect = container.getBoundingClientRect()
+      const dpr = window.devicePixelRatio || 1
 
-    canvas.width = rect.width * dpr
-    canvas.height = DATE_STRIP_HEIGHT * dpr
+      const newWidth = rect.width * dpr
+      const newHeight = DATE_STRIP_HEIGHT * dpr
 
-    canvas.style.width = `${rect.width}px`
-    canvas.style.height = `${DATE_STRIP_HEIGHT}px`
+      const widthDiff = Math.abs(canvas.width - newWidth)
+      const heightDiff = Math.abs(canvas.height - newHeight)
 
-    const ctx = canvas.getContext('2d', { alpha: false })
-    if (ctx) {
-      ctx.scale(dpr, dpr)
+      if (widthDiff > 2 || heightDiff > 2) {
+        canvas.width = newWidth
+        canvas.height = newHeight
+
+        canvas.style.width = `${rect.width}px`
+        canvas.style.height = `${DATE_STRIP_HEIGHT}px`
+
+        const ctx = canvas.getContext('2d', { alpha: false })
+        if (ctx) {
+          ctx.scale(dpr, dpr)
+        }
+
+        // Render immediately after resize
+        render()
+      }
     }
+
+    // Initial size
+    updateCanvasSize()
+
+    // Watch for resize with throttle
+    const observer = new ResizeObserver(() => {
+      const now = Date.now()
+      const timeSinceLastResize = now - lastResizeTimeRef.current
+
+      if (timeSinceLastResize >= 50) {
+        lastResizeTimeRef.current = now
+        updateCanvasSize()
+      }
+
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+
+      resizeTimeoutRef.current = setTimeout(() => {
+        updateCanvasSize()
+      }, 100)
+    })
+
+    observer.observe(container)
+
+    return () => {
+      observer.disconnect()
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Theme detection
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (
+          mutation.type === 'attributes' &&
+          (mutation.attributeName === 'class' ||
+           mutation.attributeName === 'data-theme' ||
+           mutation.attributeName === 'style')
+        ) {
+          setThemeVersion(v => v + 1)
+        }
+      })
+    })
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class', 'data-theme', 'style']
+    })
+
+    return () => observer.disconnect()
   }, [])
 
   // Render function
@@ -105,9 +175,9 @@ export function DateAxisStrip() {
         ctx.fillText(dateStr, mouseX, height / 2)
       }
     }
-  }, [state, candles])
+  }, [state, candles, themeVersion])
 
-  // Trigger render on state change
+  // Trigger render on state/theme change
   useEffect(() => {
     render()
   }, [render])
