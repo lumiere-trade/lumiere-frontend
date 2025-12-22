@@ -1,7 +1,7 @@
 'use client'
 
-import React, { createContext, useContext, useCallback, useState, useRef } from 'react'
-import { SharedViewport, MultiPanelState, PanelConfig, createDefaultPanels } from './panelTypes'
+import React, { createContext, useContext, useCallback, useState, useRef, useMemo, useEffect } from 'react'
+import { SharedViewport, MultiPanelState, PanelConfig, createDefaultPanels, getIndicatorPlacement, createOscillatorPanel } from './panelTypes'
 import { Candle, Indicator } from './types'
 import { assignIndicatorColor } from './chartUtils'
 
@@ -61,14 +61,78 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     totalCandles: candles.length
   }
 
-  // Initialize panels with default configuration
+  // Create panels with indicators distributed
+  const initialPanels = useMemo(() => {
+    const panels: PanelConfig[] = [
+      {
+        id: 'price',
+        type: 'price',
+        title: 'Price',
+        height: 60,
+        visible: true,
+        indicators: [],
+        yAxis: { min: 0, max: 100, auto: true },
+        showGrid: true
+      }
+    ]
+
+    const oscillatorPanels = new Map<string, PanelConfig>()
+
+    // Distribute indicators to panels
+    indicators.forEach(indicator => {
+      const placement = getIndicatorPlacement(indicator.name)
+
+      if (placement.type === 'overlay') {
+        // Add to price panel
+        panels[0].indicators.push(indicator)
+      } else if (placement.type === 'oscillator') {
+        // Create or add to oscillator panel
+        if (!oscillatorPanels.has(placement.panelId)) {
+          oscillatorPanels.set(
+            placement.panelId,
+            createOscillatorPanel(indicator.name, placement.range)
+          )
+        }
+        oscillatorPanels.get(placement.panelId)!.indicators.push(indicator)
+      } else if (placement.type === 'volume') {
+        // Add volume panel if not exists
+        if (!panels.find(p => p.id === 'volume')) {
+          panels.push({
+            id: 'volume',
+            type: 'volume',
+            title: 'Volume',
+            height: 20,
+            visible: true,
+            indicators: [indicator],
+            yAxis: { min: 0, max: 100, auto: true },
+            showGrid: true
+          })
+        }
+      }
+    })
+
+    // Add oscillator panels
+    oscillatorPanels.forEach(panel => panels.push(panel))
+
+    return panels
+  }, [indicators])
+
+  // Initialize state with panels
   const [state, setState] = useState<MultiPanelState>({
     sharedViewport: initialViewport,
-    panels: createDefaultPanels(),
+    panels: initialPanels,
     mouse: null,
     isDragging: false,
     isResizing: null
   })
+
+  // Update panels when indicators change
+  useEffect(() => {
+    setState(prev => ({
+      ...prev,
+      panels: initialPanels
+    }))
+  }, [initialPanels])
 
   // Store candles ref for calculations
   const candlesRef = useRef(candles)
@@ -103,11 +167,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const handleZoom = useCallback((delta: number, mouseX: number) => {
     setState(prev => {
       const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom + delta * 0.1))
-      
-      // Zoom towards mouse position
-      const mouseRatio = (mouseX - 60) / (containerWidth - 130)
-      const candleAtMouse = prev.sharedViewport.startIdx + 
-        Math.floor(mouseRatio * (prev.sharedViewport.endIdx - prev.sharedViewport.startIdx))
       
       const newOffsetX = prev.sharedViewport.offsetX * (newZoom / prev.sharedViewport.zoom)
       
@@ -191,7 +250,6 @@ export function SharedViewportProvider({ candles, indicators, children, containe
           if (p.id === panelId) {
             return { ...p, height: newHeight }
           }
-          // Redistribute height proportionally
           const ratio = p.height / otherPanelsHeight
           return { ...p, height: p.height - (heightDiff * ratio) }
         })
