@@ -161,10 +161,6 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
             return null
           })}
 
-          {/* Keyboard shortcuts hint */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-muted-foreground bg-background/80 px-3 py-1 rounded">
-            Mouse wheel to zoom • Drag to pan • +/- keys • 0 to reset
-          </div>
         </div>
 
         {/* Date Axis Strip - part of chart visual unit */}
