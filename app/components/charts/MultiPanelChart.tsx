@@ -19,8 +19,8 @@ interface MultiPanelChartProps {
 }
 
 const PANEL_GAP = 2 // px gap between panels
-const BASE_PANEL_HEIGHT = 300 // Base height for price panel
-const SECONDARY_PANEL_HEIGHT = 100 // Height for volume/oscillator panels
+const BASE_PANEL_HEIGHT = 350 // Base height for price panel (по-висок)
+const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels (по-висок)
 
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
