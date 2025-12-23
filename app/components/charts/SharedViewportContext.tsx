@@ -51,13 +51,17 @@ interface Props {
 }
 
 export function SharedViewportProvider({ candles, indicators, children, containerWidth }: Props) {
-  // Initialize shared viewport - start at BEGINNING (first 100 candles)
+  // Initialize shared viewport - show LAST candles (newest data)
+  const candleWidth = 8
+  const visibleCandles = Math.floor(containerWidth / candleWidth)
+  const initialOffsetX = -(candles.length - visibleCandles) * candleWidth
+
   const initialViewport: SharedViewport = {
-    startIdx: 0,
-    endIdx: Math.min(99, candles.length - 1),
-    candleWidth: 8,
+    startIdx: Math.max(0, candles.length - visibleCandles),
+    endIdx: candles.length - 1,
+    candleWidth,
     zoom: 1,
-    offsetX: 0,
+    offsetX: initialOffsetX,
     totalCandles: candles.length
   }
 
@@ -189,16 +193,16 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const handlePan = useCallback((movementX: number) => {
     setState(prev => {
       const newOffsetX = prev.sharedViewport.offsetX + movementX
-      
+
       // Clamp bounds:
       // maxOffset = -(totalCandles - visibleCandles) * candleWidth
       // This allows panning until the LAST candle is visible on right edge
       const visibleCandles = Math.floor(containerWidth / prev.sharedViewport.candleWidth)
       const maxOffset = -(candlesRef.current.length - visibleCandles) * prev.sharedViewport.candleWidth
-      
+
       // minOffset = 0 (show first candles on left edge)
       const minOffset = 0
-      
+
       const clampedOffset = Math.max(maxOffset, Math.min(minOffset, newOffsetX))
 
       return {
@@ -212,20 +216,24 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     })
   }, [containerWidth, recalculateViewport])
 
-  // Reset viewport - back to start (first 100 candles)
+  // Reset viewport - back to LAST candles (newest data)
   const handleReset = useCallback(() => {
+    const candleWidth = 8
+    const visibleCandles = Math.floor(containerWidth / candleWidth)
+    const initialOffsetX = -(candlesRef.current.length - visibleCandles) * candleWidth
+
     setState(prev => ({
       ...prev,
       sharedViewport: {
-        startIdx: 0,
-        endIdx: Math.min(99, candlesRef.current.length - 1),
-        candleWidth: 8,
+        startIdx: Math.max(0, candlesRef.current.length - visibleCandles),
+        endIdx: candlesRef.current.length - 1,
+        candleWidth,
         zoom: 1,
-        offsetX: 0,
+        offsetX: initialOffsetX,
         totalCandles: candlesRef.current.length
       }
     }))
-  }, [])
+  }, [containerWidth])
 
   // Panel management
   const addPanel = useCallback((panel: PanelConfig) => {
