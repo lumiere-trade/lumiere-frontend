@@ -28,6 +28,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const canvas = canvasRef.current
     const renderer = rendererRef.current
     if (!canvas || !renderer) return
+    
+    // Don't render if no data
+    if (candles.length === 0) return
 
     const panelViewport: PanelViewport = {
       ...state.sharedViewport,
@@ -56,6 +59,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
     const updateCanvasSize = () => {
       const rect = container.getBoundingClientRect()
+      
+      // Skip if container not ready (width/height = 0)
+      if (rect.width === 0 || rect.height === 0) {
+        // Retry after a frame
+        requestAnimationFrame(updateCanvasSize)
+        return
+      }
+      
       const dpr = window.devicePixelRatio || 1
 
       const newWidth = rect.width * dpr
@@ -85,8 +96,10 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       }
     }
 
-    // Initial size
-    updateCanvasSize()
+    // Initial size (delayed to ensure layout is ready)
+    requestAnimationFrame(() => {
+      requestAnimationFrame(updateCanvasSize)
+    })
 
     // Watch for container resize with THROTTLE (max 60fps during animation)
     const observer = new ResizeObserver(() => {
