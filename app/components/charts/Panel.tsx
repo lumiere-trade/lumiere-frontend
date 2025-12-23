@@ -216,6 +216,16 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const x = e.clientX - wrapperRect.left
     const y = e.clientY - wrapperRect.top - headerHeight
 
+    // DEBUG
+    if (config.id === 'volume' || config.id === 'macd') {
+      console.log(`\n[${config.id}] RECEIVED panelTop from MultiPanel: ${panelTop}`)
+      console.log(`  headerHeight: ${headerHeight}`)
+      console.log(`  mouseClientY: ${e.clientY}`)
+      console.log(`  wrapperRect.top: ${wrapperRect.top}`)
+      console.log(`  y (after subtracting header): ${y}`)
+      console.log(`  FINAL globalY sent to updateMouse: ${panelTop + y}`)
+    }
+
     updateMouse(x, panelTop + y, config.id)
   }, [updateMouse, config.id, panelTop])
 
