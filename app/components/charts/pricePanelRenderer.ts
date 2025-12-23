@@ -49,8 +49,14 @@ export class PricePanelRenderer extends PanelRenderer {
     // Draw candles
     this.drawCandles(candles, viewport, priceMin, priceMax, padding)
 
-    // Draw indicator lines
-    this.drawIndicatorLines(config.indicators, viewport, priceMin, priceMax, padding)
+    // Draw Bollinger Bands first (with fill)
+    this.drawBollingerBands(config.indicators, viewport, priceMin, priceMax, padding)
+
+    // Draw other indicator lines (excluding Bollinger)
+    const nonBollingerIndicators = config.indicators.filter(
+      ind => !ind.name.toLowerCase().includes('bollinger')
+    )
+    this.drawIndicatorLines(nonBollingerIndicators, viewport, priceMin, priceMax, padding)
 
     // Draw Y-axis
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
@@ -107,5 +113,180 @@ export class PricePanelRenderer extends PanelRenderer {
         Math.max(1, bodyHeight)
       )
     }
+  }
+
+  private drawBollingerBands(
+    indicators: Indicator[],
+    viewport: PanelViewport,
+    priceMin: number,
+    priceMax: number,
+    padding: any
+  ) {
+    // Find Bollinger Band indicators
+    const bollingerIndicators = indicators.filter(ind => 
+      ind.visible && ind.name.toLowerCase().includes('bollinger')
+    )
+
+    if (bollingerIndicators.length === 0) return
+
+    // Group by base name (e.g., "bollinger_20_2")
+    const bollingerGroups = new Map<string, { upper?: Indicator; middle?: Indicator; lower?: Indicator }>()
+
+    bollingerIndicators.forEach(ind => {
+      const name = ind.name.toLowerCase()
+      // Extract base name (remove _upper, _middle, _lower suffix)
+      const baseName = name.replace(/_upper|_middle|_lower/g, '')
+      
+      if (!bollingerGroups.has(baseName)) {
+        bollingerGroups.set(baseName, {})
+      }
+
+      const group = bollingerGroups.get(baseName)!
+      if (name.includes('upper')) {
+        group.upper = ind
+      } else if (name.includes('middle')) {
+        group.middle = ind
+      } else if (name.includes('lower')) {
+        group.lower = ind
+      }
+    })
+
+    // Draw each Bollinger Band group
+    bollingerGroups.forEach((group, baseName) => {
+      if (!group.upper || !group.lower) return
+
+      // Save context and setup clipping
+      this.ctx.save()
+      this.ctx.beginPath()
+      this.ctx.rect(
+        padding.left,
+        padding.top,
+        this.width - padding.left - padding.right,
+        viewport.panelHeight
+      )
+      this.ctx.clip()
+
+      // Draw filled area between upper and lower bands
+      this.ctx.beginPath()
+      this.ctx.fillStyle = group.upper.color + '20' // 20 = ~12% opacity
+
+      // Draw upper band path
+      let firstPoint = true
+      for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+        if (i >= group.upper.points.length) break
+
+        const point = group.upper.points[i]
+        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+        const y = priceToY(point.v, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+        if (!isFinite(y)) continue
+
+        if (firstPoint) {
+          this.ctx.moveTo(x, y)
+          firstPoint = false
+        } else {
+          this.ctx.lineTo(x, y)
+        }
+      }
+
+      // Draw lower band path in reverse
+      for (let i = viewport.endIdx; i >= viewport.startIdx; i--) {
+        if (i >= group.lower.points.length) continue
+
+        const point = group.lower.points[i]
+        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+        const y = priceToY(point.v, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+        if (!isFinite(y)) continue
+
+        this.ctx.lineTo(x, y)
+      }
+
+      this.ctx.closePath()
+      this.ctx.fill()
+
+      // Draw upper band line
+      this.ctx.strokeStyle = group.upper.color
+      this.ctx.lineWidth = 1.5
+      this.ctx.globalAlpha = 0.7
+      this.ctx.beginPath()
+
+      firstPoint = true
+      for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+        if (i >= group.upper.points.length) break
+
+        const point = group.upper.points[i]
+        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+        const y = priceToY(point.v, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+        if (!isFinite(y)) continue
+
+        if (firstPoint) {
+          this.ctx.moveTo(x, y)
+          firstPoint = false
+        } else {
+          this.ctx.lineTo(x, y)
+        }
+      }
+
+      this.ctx.stroke()
+
+      // Draw middle band line
+      if (group.middle) {
+        this.ctx.strokeStyle = group.middle.color
+        this.ctx.lineWidth = 1.5
+        this.ctx.globalAlpha = 0.7
+        this.ctx.beginPath()
+
+        firstPoint = true
+        for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+          if (i >= group.middle.points.length) break
+
+          const point = group.middle.points[i]
+          const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+          const y = priceToY(point.v, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+          if (!isFinite(y)) continue
+
+          if (firstPoint) {
+            this.ctx.moveTo(x, y)
+            firstPoint = false
+          } else {
+            this.ctx.lineTo(x, y)
+          }
+        }
+
+        this.ctx.stroke()
+      }
+
+      // Draw lower band line
+      this.ctx.strokeStyle = group.lower.color
+      this.ctx.lineWidth = 1.5
+      this.ctx.globalAlpha = 0.7
+      this.ctx.beginPath()
+
+      firstPoint = true
+      for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+        if (i >= group.lower.points.length) break
+
+        const point = group.lower.points[i]
+        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+        const y = priceToY(point.v, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+        if (!isFinite(y)) continue
+
+        if (firstPoint) {
+          this.ctx.moveTo(x, y)
+          firstPoint = false
+        } else {
+          this.ctx.lineTo(x, y)
+        }
+      }
+
+      this.ctx.stroke()
+
+      this.ctx.globalAlpha = 1.0
+      this.ctx.restore()
+    })
   }
 }
