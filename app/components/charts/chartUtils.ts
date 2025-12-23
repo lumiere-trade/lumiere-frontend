@@ -97,6 +97,7 @@ export function priceToY(
 }
 
 // Index to X coordinate - FIXED to use relative positioning
+// NOTE: offsetX is NOT used here because startIdx/endIdx already incorporate it
 export function indexToX(
   index: number,
   candleWidth: number,
@@ -106,7 +107,8 @@ export function indexToX(
 ): number {
   // Use relative index from viewport startIdx
   const relativeIndex = index - startIdx
-  return paddingLeft + offsetX + (relativeIndex * candleWidth)
+  // offsetX is already incorporated in startIdx/endIdx calculation
+  return paddingLeft + (relativeIndex * candleWidth)
 }
 
 // Debounce (optimization for resize/scroll)
