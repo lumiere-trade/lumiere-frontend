@@ -27,6 +27,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   // Calculate hovered candle for OHLC display
   const hoveredCandle = useMemo(() => {
     if (!state.mouse || candles.length === 0 || config.type !== 'price') return null
+    if (!containerRef.current) return null
 
     // Check if mouse is within this panel vertically
     if (state.mouse.y < panelTop || state.mouse.y > panelTop + panelHeight) {
@@ -34,10 +35,13 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
 
     const { candleWidth, startIdx } = state.sharedViewport
-    const padding = { left: Math.max(15, window.innerWidth * 0.02) }
+    
+    // Calculate padding EXACTLY as renderer does (match getPadding function)
+    const containerWidth = containerRef.current.getBoundingClientRect().width
+    const paddingLeft = Math.max(15, containerWidth * 0.02)
 
     // Calculate RELATIVE index within viewport (centered on candle)
-    const relativeIdx = Math.floor((state.mouse.x - padding.left + candleWidth / 2) / candleWidth)
+    const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
     
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
