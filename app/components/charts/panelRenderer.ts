@@ -143,52 +143,39 @@ export abstract class PanelRenderer {
     }
   }
 
-  protected drawCrosshair(
+  // Draw price value label on Y-axis (without crosshair lines)
+  // Crosshair lines are drawn by CrosshairOverlay component
+  protected drawPriceValueLabel(
     mouse: { x: number; y: number },
     viewport: PanelViewport,
     yMin: number,
     yMax: number,
-    padding: any
+    padding: any,
+    formatFn?: (val: number) => string
   ) {
-    this.ctx.strokeStyle = this.colors.cross
-    this.ctx.lineWidth = 1
-    this.ctx.setLineDash([4, 4])
-
-    // ALWAYS draw vertical line (across ALL panels)
-    this.ctx.beginPath()
-    this.ctx.moveTo(mouse.x, padding.top)
-    this.ctx.lineTo(mouse.x, viewport.panelHeight + padding.top)
-    this.ctx.stroke()
-
-    // Only draw horizontal line + value label if mouse is WITHIN this panel
+    // Only draw if mouse is WITHIN this panel vertically
     const mouseInPanel = mouse.y >= padding.top && mouse.y <= viewport.panelHeight + padding.top
-    if (mouseInPanel) {
-      // Horizontal line
-      this.ctx.beginPath()
-      this.ctx.moveTo(padding.left, mouse.y)
-      this.ctx.lineTo(this.width - padding.right, mouse.y)
-      this.ctx.stroke()
+    if (!mouseInPanel) return
 
-      this.ctx.setLineDash([])
+    const formatter = formatFn || ((v: number) => v.toFixed(2))
 
-      // Value label
-      const value = yMax - ((mouse.y - padding.top) / viewport.panelHeight) * (yMax - yMin)
+    // Calculate value at mouse Y position
+    const value = yMax - ((mouse.y - padding.top) / viewport.panelHeight) * (yMax - yMin)
 
-      this.ctx.fillStyle = this.colors.cross
-      this.ctx.fillRect(this.width - padding.right, mouse.y - 10, padding.right, 20)
+    // Draw background box
+    this.ctx.fillStyle = this.colors.cross
+    this.ctx.fillRect(this.width - padding.right, mouse.y - 10, padding.right, 20)
 
-      this.ctx.fillStyle = this.colors.bg
-      this.ctx.font = '11px monospace'
-      this.ctx.textAlign = 'center'
-      this.ctx.textBaseline = 'middle'
-      this.ctx.fillText(
-        value.toFixed(2),
-        this.width - padding.right / 2,
-        mouse.y
-      )
-    } else {
-      this.ctx.setLineDash([])
-    }
+    // Draw value text
+    this.ctx.fillStyle = this.colors.bg
+    this.ctx.font = 'bold 11px monospace'
+    this.ctx.textAlign = 'center'
+    this.ctx.textBaseline = 'middle'
+    this.ctx.fillText(
+      formatter(value),
+      this.width - padding.right / 2,
+      mouse.y
+    )
   }
 
   protected drawIndicatorLines(
