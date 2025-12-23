@@ -37,6 +37,12 @@ export abstract class PanelRenderer {
     this.width = canvas.width
     this.height = canvas.height
 
+    console.log('[PanelRenderer] Constructor', {
+      width: this.width,
+      height: this.height,
+      hasContext: !!this.ctx
+    })
+
     // Initialize colors from CSS variables
     this.colors = this.getColors()
   }
@@ -71,11 +77,27 @@ export abstract class PanelRenderer {
 
   // Shared utilities
   protected clearCanvas() {
+    console.log('[PanelRenderer] clearCanvas', {
+      width: this.width,
+      height: this.height,
+      bgColor: this.colors.bg,
+      contextValid: !!this.ctx
+    })
+    
     this.ctx.fillStyle = this.colors.bg
     this.ctx.fillRect(0, 0, this.width, this.height)
+    
+    console.log('[PanelRenderer] clearCanvas completed')
   }
 
   protected drawGrid(viewport: PanelViewport, yMin: number, yMax: number, padding: any) {
+    console.log('[PanelRenderer] drawGrid', {
+      yMin,
+      yMax,
+      padding,
+      gridColor: this.colors.grid
+    })
+    
     this.ctx.strokeStyle = this.colors.grid
     this.ctx.lineWidth = 1
 
@@ -102,6 +124,8 @@ export abstract class PanelRenderer {
         this.ctx.stroke()
       }
     }
+    
+    console.log('[PanelRenderer] drawGrid completed')
   }
 
   protected valueToY(
@@ -199,6 +223,11 @@ export abstract class PanelRenderer {
     padding: any
   ) {
     const visibleIndicators = indicators.filter(ind => ind.visible)
+
+    console.log('[PanelRenderer] drawIndicatorLines', {
+      totalIndicators: indicators.length,
+      visibleCount: visibleIndicators.length
+    })
 
     // Save context and setup clipping
     this.ctx.save()

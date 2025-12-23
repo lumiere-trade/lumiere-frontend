@@ -19,10 +19,19 @@ export class PricePanelRenderer extends PanelRenderer {
     config: PanelConfig,
     mouse: { x: number; y: number } | null
   ) {
+    console.log('[PricePanelRenderer] render START', {
+      candlesCount: candles.length,
+      viewport,
+      width: this.width,
+      height: this.height
+    })
+    
     // Update colors for theme changes
     this.updateColors()
-    
+
     const padding = getPadding(this.width)
+    console.log('[PricePanelRenderer] padding', padding)
+    
     this.clearCanvas()
 
     // Calculate price range
@@ -41,27 +50,29 @@ export class PricePanelRenderer extends PanelRenderer {
     priceMin -= priceRange * 0.05
     priceMax += priceRange * 0.05
 
+    console.log('[PricePanelRenderer] price range', { priceMin, priceMax, priceRange })
+
     // Draw grid
     if (config.showGrid) {
+      console.log('[PricePanelRenderer] drawing grid')
       this.drawGrid(viewport, priceMin, priceMax, padding)
     }
 
     // Draw candles
+    console.log('[PricePanelRenderer] drawing candles')
     this.drawCandles(candles, viewport, priceMin, priceMax, padding)
 
     // Draw indicator lines
+    console.log('[PricePanelRenderer] drawing indicators', {
+      indicatorCount: config.indicators.length
+    })
     this.drawIndicatorLines(config.indicators, viewport, priceMin, priceMax, padding)
 
     // Draw Y-axis
+    console.log('[PricePanelRenderer] drawing Y axis')
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
 
-    // Draw X-axis with dates
-    // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
-
-    // Draw crosshair - DISABLED (now handled by CrosshairOverlay)
-    // if (mouse) {
-    //   this.drawCrosshair(mouse, viewport, priceMin, priceMax, padding)
-    // }
+    console.log('[PricePanelRenderer] render COMPLETE')
   }
 
   private drawCandles(
@@ -71,8 +82,18 @@ export class PricePanelRenderer extends PanelRenderer {
     priceMax: number,
     padding: any
   ) {
+    console.log('[PricePanelRenderer] drawCandles START', {
+      startIdx: viewport.startIdx,
+      endIdx: viewport.endIdx,
+      candleWidth: viewport.candleWidth,
+      upColor: this.colors.up,
+      downColor: this.colors.down
+    })
+    
     const bodyWidth = Math.max(1, viewport.candleWidth * 0.8)
     const wickWidth = Math.max(1, viewport.candleWidth * 0.1)
+
+    let candlesDrawn = 0
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i >= candles.length) break
@@ -109,7 +130,14 @@ export class PricePanelRenderer extends PanelRenderer {
         bodyWidth,
         Math.max(1, bodyHeight)
       )
+      
+      candlesDrawn++
     }
+    
+    console.log('[PricePanelRenderer] drawCandles COMPLETE', {
+      candlesDrawn,
+      totalInViewport: viewport.endIdx - viewport.startIdx + 1
+    })
   }
 
   private drawXAxis(
