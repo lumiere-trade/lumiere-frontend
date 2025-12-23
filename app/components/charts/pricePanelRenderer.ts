@@ -86,6 +86,10 @@ export class PricePanelRenderer extends PanelRenderer {
       startIdx: viewport.startIdx,
       endIdx: viewport.endIdx,
       candleWidth: viewport.candleWidth,
+      offsetX: viewport.offsetX,
+      paddingLeft: padding.left,
+      paddingRight: padding.right,
+      canvasWidth: this.width,
       upColor: this.colors.up,
       downColor: this.colors.down
     })
@@ -94,6 +98,27 @@ export class PricePanelRenderer extends PanelRenderer {
     const wickWidth = Math.max(1, viewport.candleWidth * 0.1)
 
     let candlesDrawn = 0
+    let candlesSkipped = 0
+    let skipReasons: { tooLeft: number; tooRight: number } = { tooLeft: 0, tooRight: 0 }
+
+    // Sample first 3 candles for detailed debug
+    for (let i = viewport.startIdx; i <= Math.min(viewport.startIdx + 2, viewport.endIdx); i++) {
+      if (i >= candles.length) break
+
+      const candle = candles[i]
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+
+      console.log(`[PricePanelRenderer] Candle ${i}:`, {
+        x,
+        candleWidth: viewport.candleWidth,
+        offsetX: viewport.offsetX,
+        paddingLeft: padding.left,
+        canvasWidth: this.width,
+        paddingRight: padding.right,
+        visibleRange: `${padding.left} - ${this.width - padding.right}`,
+        isVisible: x >= padding.left && x <= this.width - padding.right
+      })
+    }
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i >= candles.length) break
@@ -101,7 +126,17 @@ export class PricePanelRenderer extends PanelRenderer {
       const candle = candles[i]
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
 
-      if (x < padding.left || x > this.width - padding.right) continue
+      if (x < padding.left) {
+        skipReasons.tooLeft++
+        candlesSkipped++
+        continue
+      }
+      
+      if (x > this.width - padding.right) {
+        skipReasons.tooRight++
+        candlesSkipped++
+        continue
+      }
 
       const isUp = candle.c >= candle.o
       const color = isUp ? this.colors.up : this.colors.down
@@ -136,6 +171,8 @@ export class PricePanelRenderer extends PanelRenderer {
     
     console.log('[PricePanelRenderer] drawCandles COMPLETE', {
       candlesDrawn,
+      candlesSkipped,
+      skipReasons,
       totalInViewport: viewport.endIdx - viewport.startIdx + 1
     })
   }
