@@ -140,7 +140,8 @@ export function DateAxisStrip() {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      // FIXED: Pass startIdx parameter
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       if (x < padding.left || x > width - padding.right) continue
 
@@ -154,10 +155,11 @@ export function DateAxisStrip() {
     if (state.mouse) {
       const mouseX = state.mouse.x
 
-      // Find candle index at mouse position
-      const candleIndex = Math.round(
-        (mouseX - padding.left - viewport.offsetX) / viewport.candleWidth
-      )
+      // FIXED: Calculate candle index from mouse position using new formula
+      // Formula: startIdx = Math.floor(-offsetX / candleWidth)
+      // So: index = startIdx + relativePosition
+      const relativePosition = Math.floor((mouseX - padding.left) / viewport.candleWidth)
+      const candleIndex = viewport.startIdx + relativePosition
 
       if (candleIndex >= 0 && candleIndex < candles.length) {
         const candle = candles[candleIndex]
@@ -183,7 +185,7 @@ export function DateAxisStrip() {
   }, [render])
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative border-t border-border"
       style={{ height: `${DATE_STRIP_HEIGHT}px` }}
