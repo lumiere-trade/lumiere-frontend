@@ -16,13 +16,11 @@ interface PanelProps {
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<PanelRenderer | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
   const retryCountRef = useRef(0)
-  const { state, candles, trades, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
+  const { state, candles, trades, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
 
@@ -204,35 +202,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
   }, [renderChart, themeVersion])
 
-  // Mouse handlers - track from WRAPPER (includes header)
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const wrapper = wrapperRef.current
-    const header = headerRef.current
-    if (!wrapper || !header) return
-
-    const wrapperRect = wrapper.getBoundingClientRect()
-    const headerHeight = header.getBoundingClientRect().height
-
-    const x = e.clientX - wrapperRect.left
-    const y = e.clientY - wrapperRect.top - headerHeight
-
-    // DEBUG
-    if (config.id === 'volume' || config.id === 'macd') {
-      console.log(`\n[${config.id}] RECEIVED panelTop from MultiPanel: ${panelTop}`)
-      console.log(`  headerHeight: ${headerHeight}`)
-      console.log(`  mouseClientY: ${e.clientY}`)
-      console.log(`  wrapperRect.top: ${wrapperRect.top}`)
-      console.log(`  y (after subtracting header): ${y}`)
-      console.log(`  FINAL globalY sent to updateMouse: ${panelTop + y}`)
-    }
-
-    updateMouse(x, panelTop + y, config.id)
-  }, [updateMouse, config.id, panelTop])
-
-  const handleMouseLeave = useCallback(() => {
-    clearMouse()
-  }, [clearMouse])
-
   // Toggle panel visibility
   const handleToggleVisibility = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
@@ -249,14 +218,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const textColor = isUp ? 'text-green-500' : 'text-red-500'
 
   return (
-    <div 
-      ref={wrapperRef}
-      className="mb-2"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-    >
+    <div className="mb-2">
       {/* Panel header - OUTSIDE canvas, above panel */}
-      <div ref={headerRef} className="flex items-center gap-3 px-2 pt-1">
+      <div className="flex items-center gap-3 px-2 pt-1">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
