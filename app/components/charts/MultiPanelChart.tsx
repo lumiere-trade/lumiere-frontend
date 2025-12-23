@@ -21,6 +21,7 @@ interface MultiPanelChartProps {
 }
 
 const PANEL_GAP = 10 // px gap between panels
+const PANEL_HEADER_HEIGHT = 18 // px height of panel header (title + OHLC/eye)
 const BASE_PANEL_HEIGHT = 350 // Base height for price panel
 const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
 
@@ -43,7 +44,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     return baseHeight + secondaryHeight + totalGaps
   }, [state.panels])
 
-  // Calculate panel positions - panelTop is CANVAS-only coordinates (no headers)
+  // Calculate panel positions - panelTop now includes ALL visual heights (header + canvas + gap)
   const panelLayout = useMemo(() => {
     const visiblePanels = state.panels.filter(p => p.visible)
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
@@ -60,12 +61,12 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
       }
       // DEBUG: Log panel layout calculation
       console.log(`[MultiPanel] ${panel.id}: top=${currentTop}, height=${pixelHeight}`)
-      
-      // Add ONLY canvas + gap for next panel (headers are inside Panel component)
-      currentTop += pixelHeight + PANEL_GAP
+
+      // Add HEADER + canvas + gap for next panel
+      currentTop += PANEL_HEADER_HEIGHT + pixelHeight + PANEL_GAP
       return layout
     })
-    
+
     console.log(`[MultiPanel] Total panels: ${layouts.length}, container height: ${containerHeight}`)
     return layouts
   }, [state.panels, containerHeight])

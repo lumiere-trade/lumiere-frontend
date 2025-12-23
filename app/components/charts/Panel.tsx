@@ -13,6 +13,8 @@ interface PanelProps {
   createRenderer: (canvas: HTMLCanvasElement) => PanelRenderer
 }
 
+const PANEL_HEADER_HEIGHT = 18 // px height of panel header (must match MultiPanelChart.tsx)
+
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -71,9 +73,11 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
     let panelMouse: { x: number; y: number } | null = null
     if (state.mouse) {
+      // Convert wrapper-relative mouse Y to canvas-relative Y
+      // panelTop now includes header height, so we subtract both panelTop AND header
       panelMouse = {
         x: state.mouse.x,
-        y: state.mouse.y - panelTop
+        y: state.mouse.y - panelTop - PANEL_HEADER_HEIGHT
       }
     }
 
