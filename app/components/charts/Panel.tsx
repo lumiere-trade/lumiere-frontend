@@ -19,7 +19,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const rendererRef = useRef<PanelRenderer | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
-  const initializedRef = useRef(false)
+  const retryCountRef = useRef(0)
   const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
@@ -61,10 +61,17 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const updateCanvasSize = () => {
       const rect = container.getBoundingClientRect()
       
-      // Skip if container not ready (width/height = 0)
+      // If container not ready, retry up to 10 times (every 50ms)
       if (rect.width === 0 || rect.height === 0) {
+        if (retryCountRef.current < 10) {
+          retryCountRef.current++
+          setTimeout(updateCanvasSize, 50)
+        }
         return
       }
+      
+      // Reset retry count on successful setup
+      retryCountRef.current = 0
       
       const dpr = window.devicePixelRatio || 1
 
@@ -93,14 +100,11 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         // Render immediately (no black flash)
         renderChart()
-        initializedRef.current = true
       }
     }
 
-    // Initial size - wait for next paint (16ms = one frame at 60fps)
-    const initTimer = setTimeout(() => {
-      updateCanvasSize()
-    }, 16)
+    // Initial size - start immediately
+    updateCanvasSize()
 
     // Watch for container resize with THROTTLE (max 60fps during animation)
     const observer = new ResizeObserver(() => {
@@ -126,7 +130,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     observer.observe(container)
 
     return () => {
-      clearTimeout(initTimer)
       observer.disconnect()
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current)
