@@ -12,18 +12,19 @@ interface GroupedIndicator {
   panelId: string
   panelTitle: string
   isGrouped: boolean
-  groupType?: 'bollinger' | 'macd'
+  groupType?: 'bollinger' | 'macd' | 'volume'
   groupNames?: string[]
 }
 
 export function IndicatorTogglePanel() {
   const { state, toggleIndicator } = useSharedViewport()
 
-  // Group indicators (Bollinger Bands and MACD as groups)
+  // Group indicators (Bollinger, MACD, Volume as groups)
   const groupedIndicators = useMemo(() => {
     const indicators: GroupedIndicator[] = []
     const bollingerGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
     const macdGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
+    const volumeGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
 
     state.panels.forEach(panel => {
       panel.indicators.forEach(ind => {
@@ -31,7 +32,6 @@ export function IndicatorTogglePanel() {
 
         // Check if Bollinger Band indicator
         if (name.includes('bollinger')) {
-          // Extract base name (remove _upper, _middle, _lower)
           const baseName = name.replace(/_upper|_middle|_lower/g, '')
 
           if (!bollingerGroups.has(baseName)) {
@@ -44,9 +44,8 @@ export function IndicatorTogglePanel() {
 
           bollingerGroups.get(baseName)!.indicators.push(ind)
         }
-        // Check if MACD indicator (macd or macd_signal)
+        // Check if MACD indicator
         else if (name.includes('macd')) {
-          // Extract base name (remove _signal suffix)
           const baseName = name.replace(/_signal/g, '')
 
           if (!macdGroups.has(baseName)) {
@@ -58,6 +57,20 @@ export function IndicatorTogglePanel() {
           }
 
           macdGroups.get(baseName)!.indicators.push(ind)
+        }
+        // Check if Volume indicator (volume or volume_sma_*)
+        else if (name.startsWith('volume')) {
+          const baseName = 'volume' // Group all volume variants under "volume"
+
+          if (!volumeGroups.has(baseName)) {
+            volumeGroups.set(baseName, {
+              indicators: [],
+              panelId: panel.id,
+              panelTitle: panel.title
+            })
+          }
+
+          volumeGroups.get(baseName)!.indicators.push(ind)
         }
         else {
           // Non-grouped indicator - add directly
@@ -74,7 +87,7 @@ export function IndicatorTogglePanel() {
       })
     })
 
-    // Add Bollinger groups as single indicators
+    // Add Bollinger groups
     bollingerGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
       const displayName = baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
@@ -93,7 +106,7 @@ export function IndicatorTogglePanel() {
       })
     })
 
-    // Add MACD groups as single indicators
+    // Add MACD groups
     macdGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
       const displayName = baseName.replace(/_/g, ' ').toUpperCase()
@@ -112,12 +125,31 @@ export function IndicatorTogglePanel() {
       })
     })
 
+    // Add Volume groups
+    volumeGroups.forEach((group, baseName) => {
+      const firstInd = group.indicators[0]
+      const displayName = 'Volume' // Clean display name
+      const anyVisible = group.indicators.some(ind => ind.visible)
+
+      indicators.push({
+        name: baseName,
+        displayName,
+        color: firstInd.color,
+        visible: anyVisible,
+        panelId: group.panelId,
+        panelTitle: group.panelTitle,
+        isGrouped: true,
+        groupType: 'volume',
+        groupNames: group.indicators.map(ind => ind.name)
+      })
+    })
+
     return indicators
   }, [state.panels])
 
   const handleToggle = (indicator: GroupedIndicator) => {
     if (indicator.isGrouped && indicator.groupNames) {
-      // Toggle all grouped indicators together (Bollinger or MACD)
+      // Toggle all grouped indicators together
       indicator.groupNames.forEach(name => {
         toggleIndicator(name, indicator.panelId)
       })
