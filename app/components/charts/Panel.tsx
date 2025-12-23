@@ -240,7 +240,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         {/* OHLC data - only for price panel when hovering */}
         {config.type === 'price' && hoveredCandle && (
-          <div className="flex items-center gap-2 text-xs font-mono">
+          <div className="flex items-center gap-1.5 text-sm font-mono">
             {/* O - Open */}
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground w-3">O</span>
