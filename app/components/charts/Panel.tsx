@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useEffect, useCallback, useState } from 'react'
+import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
@@ -23,6 +23,27 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const { state, candles, trades, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
+
+  // Calculate hovered candle for OHLC display
+  const hoveredCandle = useMemo(() => {
+    if (!state.mouse || candles.length === 0 || config.type !== 'price') return null
+
+    // Check if mouse is within this panel vertically
+    if (state.mouse.y < panelTop || state.mouse.y > panelTop + panelHeight) {
+      return null
+    }
+
+    const { candleWidth, offsetX } = state.sharedViewport
+    const padding = { left: Math.max(15, window.innerWidth * 0.02) }
+
+    // Calculate candle index from mouse X position
+    const candleIdx = Math.floor((state.mouse.x - padding.left - offsetX) / candleWidth)
+
+    // Clamp to valid range
+    if (candleIdx < 0 || candleIdx >= candles.length) return null
+
+    return candles[candleIdx]
+  }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight, config.type])
 
   // Render function
   const renderChart = useCallback(() => {
@@ -201,17 +222,49 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     return null
   }
 
+  // OHLC colors
+  const isUp = hoveredCandle ? hoveredCandle.c >= hoveredCandle.o : false
+  const textColor = isUp ? 'text-green-500' : 'text-red-500'
+
   return (
     <div
       ref={containerRef}
       className="relative border-b border-border"
       style={{ height: `${panelHeight}px` }}
     >
-      {/* Panel title with eye icon */}
-      <div className="absolute top-2 left-4 z-10 flex items-center gap-2">
+      {/* Panel title with OHLC data (price panel only) */}
+      <div className="absolute top-2 left-4 z-10 flex items-center gap-3">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
+
+        {/* OHLC data - only for price panel when hovering */}
+        {config.type === 'price' && hoveredCandle && (
+          <div className="flex items-center gap-3 text-xs font-mono">
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">O</span>
+              <span className={textColor}>{hoveredCandle.o.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">H</span>
+              <span className={textColor}>{hoveredCandle.h.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">L</span>
+              <span className={textColor}>{hoveredCandle.l.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">C</span>
+              <span className={textColor}>{hoveredCandle.c.toFixed(2)}</span>
+            </div>
+            {hoveredCandle.v !== undefined && (
+              <div className="flex items-center gap-1 ml-1 pl-2 border-l border-border">
+                <span className="text-muted-foreground">Vol</span>
+                <span className="text-foreground">{hoveredCandle.v.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Eye icon - only for volume/oscillator panels */}
         {config.type !== 'price' && (
