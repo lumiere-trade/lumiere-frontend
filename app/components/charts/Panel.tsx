@@ -33,11 +33,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       return null
     }
 
-    const { candleWidth, offsetX } = state.sharedViewport
+    const { candleWidth, startIdx } = state.sharedViewport
     const padding = { left: Math.max(15, window.innerWidth * 0.02) }
 
-    // Calculate candle index from mouse X position
-    const candleIdx = Math.floor((state.mouse.x - padding.left - offsetX) / candleWidth)
+    // Calculate RELATIVE index within viewport (matches indexToX logic)
+    const relativeIdx = Math.floor((state.mouse.x - padding.left) / candleWidth)
+    
+    // Convert to ABSOLUTE index in candles array
+    const candleIdx = startIdx + relativeIdx
 
     // Clamp to valid range
     if (candleIdx < 0 || candleIdx >= candles.length) return null
