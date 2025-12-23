@@ -247,6 +247,7 @@ export function MultiPanelChart({
         candles={candles}
         indicators={indicators}
         containerWidth={containerWidth}
+        trades={trades}
       >
         <MultiPanelChartInner showIndicatorToggles={showIndicatorToggles} />
       </SharedViewportProvider>

@@ -17,7 +17,8 @@ export class VolumePanelRenderer extends PanelRenderer {
     candles: Candle[],
     viewport: PanelViewport,
     config: PanelConfig,
-    mouse: { x: number; y: number } | null
+    mouse: { x: number; y: number } | null,
+    trades?: Trade[]
   ) {
     this.updateColors()
 

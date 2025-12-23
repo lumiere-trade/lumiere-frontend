@@ -2,11 +2,12 @@
 
 import React, { createContext, useContext, useCallback, useState, useRef, useMemo, useEffect } from 'react'
 import { SharedViewport, MultiPanelState, PanelConfig, getIndicatorPlacement, createOscillatorPanel } from './panelTypes'
-import { Candle, Indicator } from './types'
+import { Candle, Indicator, Trade } from './types'
 
 interface SharedViewportContextValue {
   state: MultiPanelState
   candles: Candle[]
+  trades: Trade[]
 
   // Viewport controls (synchronized across panels)
   handleZoom: (delta: number, mouseX: number) => void
@@ -46,11 +47,12 @@ export function useSharedViewport() {
 interface Props {
   candles: Candle[]
   indicators: Indicator[]
+  trades: Trade[]
   children: React.ReactNode
   containerWidth: number
 }
 
-export function SharedViewportProvider({ candles, indicators, children, containerWidth }: Props) {
+export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth }: Props) {
   // Initialize shared viewport - show LAST candles (newest data)
   const candleWidth = 8
   const visibleCandles = Math.floor(containerWidth / candleWidth)
@@ -377,6 +379,7 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const value: SharedViewportContextValue = {
     state,
     candles,
+    trades,
     handleZoom,
     handlePan,
     handleReset,

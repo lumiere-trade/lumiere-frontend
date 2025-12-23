@@ -17,7 +17,8 @@ export class PricePanelRenderer extends PanelRenderer {
     candles: Candle[],
     viewport: PanelViewport,
     config: PanelConfig,
-    mouse: { x: number; y: number } | null
+    mouse: { x: number; y: number } | null,
+    trades?: Trade[]
   ) {
     // Update colors for theme changes
     this.updateColors()
@@ -46,10 +47,15 @@ export class PricePanelRenderer extends PanelRenderer {
       this.drawGrid(viewport, priceMin, priceMax, padding)
     }
 
+    // Draw trade areas FIRST (behind everything)
+    if (trades && trades.length > 0) {
+      this.drawTradeAreas(trades, viewport, priceMin, priceMax, padding)
+    }
+
     // Draw candles
     this.drawCandles(candles, viewport, priceMin, priceMax, padding)
 
-    // Draw Bollinger Bands first (with fill)
+    // Draw Bollinger Bands (with fill)
     this.drawBollingerBands(config.indicators, viewport, priceMin, priceMax, padding)
 
     // Draw other indicator lines (excluding Bollinger)
@@ -57,6 +63,11 @@ export class PricePanelRenderer extends PanelRenderer {
       ind => !ind.name.toLowerCase().includes('bollinger')
     )
     this.drawIndicatorLines(nonBollingerIndicators, viewport, priceMin, priceMax, padding)
+
+    // Draw trade arrows LAST (on top)
+    if (trades && trades.length > 0) {
+      this.drawTradeArrows(trades, viewport, priceMin, priceMax, padding)
+    }
 
     // Draw Y-axis
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
@@ -115,6 +126,128 @@ export class PricePanelRenderer extends PanelRenderer {
     }
   }
 
+  private drawTradeAreas(
+    trades: Trade[],
+    viewport: PanelViewport,
+    priceMin: number,
+    priceMax: number,
+    padding: any
+  ) {
+    // Pair buy/sell trades
+    const buyTrades = trades.filter(t => t.s === 'B').sort((a, b) => a.t - b.t)
+    const sellTrades = trades.filter(t => t.s === 'S').sort((a, b) => a.t - b.t)
+
+    // Save context and setup clipping
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      padding.left,
+      padding.top,
+      this.width - padding.left - padding.right,
+      viewport.panelHeight
+    )
+    this.ctx.clip()
+
+    // Pair each buy with next sell
+    for (let i = 0; i < buyTrades.length; i++) {
+      const buyTrade = buyTrades[i]
+      const sellTrade = sellTrades[i] // may be undefined if position still open
+
+      if (!sellTrade) continue // Skip if no matching sell
+
+      // Only draw if within viewport
+      if (sellTrade.t < viewport.startIdx || buyTrade.t > viewport.endIdx) continue
+
+      const xBuy = indexToX(buyTrade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+      const xSell = indexToX(sellTrade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+
+      const yBuy = priceToY(buyTrade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const ySell = priceToY(sellTrade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+      // Determine profit/loss
+      const isProfit = sellTrade.p > buyTrade.p
+
+      // Set fill color (green for profit, red for loss)
+      if (isProfit) {
+        this.ctx.fillStyle = 'rgba(34, 197, 94, 0.15)' // green with 15% opacity
+      } else {
+        this.ctx.fillStyle = 'rgba(239, 68, 68, 0.15)' // red with 15% opacity
+      }
+
+      // Draw filled area from buy to sell
+      this.ctx.beginPath()
+      this.ctx.moveTo(xBuy, padding.top)
+      this.ctx.lineTo(xSell, padding.top)
+      this.ctx.lineTo(xSell, padding.top + viewport.panelHeight)
+      this.ctx.lineTo(xBuy, padding.top + viewport.panelHeight)
+      this.ctx.closePath()
+      this.ctx.fill()
+    }
+
+    this.ctx.restore()
+  }
+
+  private drawTradeArrows(
+    trades: Trade[],
+    viewport: PanelViewport,
+    priceMin: number,
+    priceMax: number,
+    padding: any
+  ) {
+    // Save context and setup clipping
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      padding.left,
+      padding.top,
+      this.width - padding.left - padding.right,
+      viewport.panelHeight
+    )
+    this.ctx.clip()
+
+    const arrowSize = 8
+
+    trades.forEach(trade => {
+      // Only draw if within viewport
+      if (trade.t < viewport.startIdx || trade.t > viewport.endIdx) return
+
+      const x = indexToX(trade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+      const yPrice = priceToY(trade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
+
+      const isBuy = trade.s === 'B'
+      const color = isBuy ? this.colors.up : this.colors.down
+
+      // Position arrow below price for BUY (↑), above for SELL (↓)
+      const yArrow = isBuy ? yPrice + 15 : yPrice - 15
+
+      // Draw triangle arrow
+      this.ctx.fillStyle = color
+      this.ctx.beginPath()
+
+      if (isBuy) {
+        // Up arrow (▲)
+        this.ctx.moveTo(x, yArrow - arrowSize)
+        this.ctx.lineTo(x - arrowSize, yArrow + arrowSize)
+        this.ctx.lineTo(x + arrowSize, yArrow + arrowSize)
+      } else {
+        // Down arrow (▼)
+        this.ctx.moveTo(x, yArrow + arrowSize)
+        this.ctx.lineTo(x - arrowSize, yArrow - arrowSize)
+        this.ctx.lineTo(x + arrowSize, yArrow - arrowSize)
+      }
+
+      this.ctx.closePath()
+      this.ctx.fill()
+
+      // Optional: white border for better visibility
+      this.ctx.strokeStyle = this.colors.bg
+      this.ctx.lineWidth = 1.5
+      this.ctx.stroke()
+    })
+
+    this.ctx.restore()
+  }
+
   private drawBollingerBands(
     indicators: Indicator[],
     viewport: PanelViewport,
@@ -123,7 +256,7 @@ export class PricePanelRenderer extends PanelRenderer {
     padding: any
   ) {
     // Find Bollinger Band indicators
-    const bollingerIndicators = indicators.filter(ind => 
+    const bollingerIndicators = indicators.filter(ind =>
       ind.visible && ind.name.toLowerCase().includes('bollinger')
     )
 
@@ -136,7 +269,7 @@ export class PricePanelRenderer extends PanelRenderer {
       const name = ind.name.toLowerCase()
       // Extract base name (remove _upper, _middle, _lower suffix)
       const baseName = name.replace(/_upper|_middle|_lower/g, '')
-      
+
       if (!bollingerGroups.has(baseName)) {
         bollingerGroups.set(baseName, {})
       }

@@ -20,7 +20,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
   const retryCountRef = useRef(0)
-  const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
+  const { state, candles, trades, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
 
@@ -49,8 +49,8 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       }
     }
 
-    renderer.render(candles, panelViewport, config, panelMouse)
-  }, [state, candles, config, panelHeight, panelTop])
+    renderer.render(candles, panelViewport, config, panelMouse, trades)
+  }, [state, candles, trades, config, panelHeight, panelTop])
 
   // Setup canvas size with THROTTLED ResizeObserver (smooth during animation)
   useEffect(() => {
