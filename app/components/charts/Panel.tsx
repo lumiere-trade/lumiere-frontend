@@ -216,6 +216,13 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const x = e.clientX - wrapperRect.left
     const y = e.clientY - wrapperRect.top - headerHeight
 
+    // DEBUG - log for oscillator panels
+    if (config.type === 'oscillator' || config.type === 'volume') {
+      console.log(`[${config.id}] panelTop=${panelTop}, headerHeight=${headerHeight}`)
+      console.log(`  wrapperRect.top=${wrapperRect.top}, mouseClientY=${e.clientY}`)
+      console.log(`  calculated y=${y}, final globalY=${panelTop + y}`)
+    }
+
     updateMouse(x, panelTop + y, config.id)
   }, [updateMouse, config.id, panelTop])
 
