@@ -55,9 +55,11 @@ export class OscillatorPanelRenderer extends PanelRenderer {
       this.drawGrid(viewport, yMin, yMax, padding)
     }
 
-    // Draw reference lines (for RSI: 30, 50, 70)
+    // Draw reference lines based on oscillator type
     if (config.id === 'rsi') {
       this.drawRSIReferences(yMin, yMax, viewport.panelHeight, padding)
+    } else if (config.id.toLowerCase().includes('stochastic')) {
+      this.drawStochasticReferences(yMin, yMax, viewport.panelHeight, padding)
     }
 
     // Draw indicator lines
@@ -95,6 +97,42 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     this.ctx.beginPath()
     this.ctx.moveTo(padding.left, y30)
     this.ctx.lineTo(this.width - padding.right, y30)
+    this.ctx.stroke()
+
+    // Middle (50) - gray
+    this.ctx.strokeStyle = 'rgba(136, 136, 136, 0.5)'
+    const y50 = this.valueToY(50, yMin, yMax, panelHeight, padding.top)
+    this.ctx.beginPath()
+    this.ctx.moveTo(padding.left, y50)
+    this.ctx.lineTo(this.width - padding.right, y50)
+    this.ctx.stroke()
+
+    this.ctx.setLineDash([])
+  }
+
+  private drawStochasticReferences(
+    yMin: number,
+    yMax: number,
+    panelHeight: number,
+    padding: any
+  ) {
+    this.ctx.lineWidth = 1.5
+    this.ctx.setLineDash([5, 3])
+
+    // Overbought (80) - red
+    this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)'
+    const y80 = this.valueToY(80, yMin, yMax, panelHeight, padding.top)
+    this.ctx.beginPath()
+    this.ctx.moveTo(padding.left, y80)
+    this.ctx.lineTo(this.width - padding.right, y80)
+    this.ctx.stroke()
+
+    // Oversold (20) - green
+    this.ctx.strokeStyle = 'rgba(34, 197, 94, 0.6)'
+    const y20 = this.valueToY(20, yMin, yMax, panelHeight, padding.top)
+    this.ctx.beginPath()
+    this.ctx.moveTo(padding.left, y20)
+    this.ctx.lineTo(this.width - padding.right, y20)
     this.ctx.stroke()
 
     // Middle (50) - gray
