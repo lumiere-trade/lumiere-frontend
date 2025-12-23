@@ -35,11 +35,11 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     const visiblePanels = state.panels.filter(p => p.visible)
     const pricePanel = visiblePanels.find(p => p.type === 'price')
     const secondaryPanels = visiblePanels.filter(p => p.type !== 'price')
-    
+
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
     const baseHeight = pricePanel ? BASE_PANEL_HEIGHT : 0
     const secondaryHeight = secondaryPanels.length * SECONDARY_PANEL_HEIGHT
-    
+
     return baseHeight + secondaryHeight + totalGaps
   }, [state.panels])
 
@@ -132,7 +132,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
   return (
     <div className="flex flex-col">
       {/* Chart Container + DateAxisStrip as single visual unit with mouse tracking */}
-      <div 
+      <div
         ref={wrapperRef}
         className="bg-background rounded-lg overflow-hidden"
         style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
@@ -140,7 +140,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
         onMouseLeave={handleMouseLeave}
       >
         {/* Chart Container with DYNAMIC height */}
-        <div 
+        <div
           ref={containerRef}
           className="relative w-full transition-all duration-300"
           style={{ height: `${containerHeight}px` }}
@@ -228,13 +228,10 @@ export function MultiPanelChart({
   // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
     return indicatorData.map((ind, idx) => {
-      // MACD signal is invisible by default (too cluttered)
-      const isVisible = !ind.name.toLowerCase().includes('macd_signal')
-      
       return {
         name: ind.name,
         color: assignIndicatorColor(idx),
-        visible: isVisible,
+        visible: true,
         points: ind.values.map((val, i) => ({
           t: i,
           v: val.value
