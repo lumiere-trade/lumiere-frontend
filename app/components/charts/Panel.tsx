@@ -16,6 +16,8 @@ interface PanelProps {
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const headerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<PanelRenderer | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
@@ -202,14 +204,17 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
   }, [renderChart, themeVersion])
 
-  // Mouse handlers
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas) return
+  // Mouse handlers - track from WRAPPER (includes header)
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const wrapper = wrapperRef.current
+    const header = headerRef.current
+    if (!wrapper || !header) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const wrapperRect = wrapper.getBoundingClientRect()
+    const headerHeight = header.getBoundingClientRect().height
+
+    const x = e.clientX - wrapperRect.left
+    const y = e.clientY - wrapperRect.top - headerHeight
 
     updateMouse(x, panelTop + y, config.id)
   }, [updateMouse, config.id, panelTop])
@@ -234,9 +239,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const textColor = isUp ? 'text-green-500' : 'text-red-500'
 
   return (
-    <div className="mb-2">
+    <div 
+      ref={wrapperRef}
+      className="mb-2"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
       {/* Panel header - OUTSIDE canvas, above panel */}
-      <div className="flex items-center gap-3 px-2 pt-1">
+      <div ref={headerRef} className="flex items-center gap-3 px-2 pt-1">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
@@ -309,8 +319,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         <canvas
           ref={canvasRef}
           className="w-full h-full"
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
         />
       </div>
     </div>

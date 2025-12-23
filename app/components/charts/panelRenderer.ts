@@ -163,12 +163,9 @@ export abstract class PanelRenderer {
     // Calculate value at mouse Y position
     const value = yMax - ((mouse.y - padding.top) / viewport.panelHeight) * (yMax - yMin)
 
-    // Canvas Y position (mouse.y is panel-relative, add padding.top for canvas coords)
-    const canvasY = mouse.y + padding.top
-
-    // Draw background box
+    // Draw background box (mouse.y is already in canvas coordinates)
     this.ctx.fillStyle = this.colors.cross
-    this.ctx.fillRect(this.width - padding.right, canvasY - 10, padding.right, 20)
+    this.ctx.fillRect(this.width - padding.right, mouse.y - 10, padding.right, 20)
 
     // Draw value text
     this.ctx.fillStyle = this.colors.bg
@@ -178,7 +175,7 @@ export abstract class PanelRenderer {
     this.ctx.fillText(
       formatter(value),
       this.width - padding.right / 2,
-      canvasY
+      mouse.y
     )
   }
 
