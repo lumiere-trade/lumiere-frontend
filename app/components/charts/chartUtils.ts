@@ -63,7 +63,7 @@ export function calculatePriceRangeWithIndicators(
   // Price range from visible indicators
   for (const indicator of indicators) {
     if (!indicator.visible) continue
-    
+
     for (let i = startIdx; i <= endIdx; i++) {
       if (i < indicator.points.length) {
         const value = indicator.points[i].v
@@ -93,18 +93,20 @@ export function priceToY(
 ): number {
   const priceRange = priceMax - priceMin
   if (priceRange === 0) return chartHeight / 2 + paddingTop
-  // chartHeight is already adjusted for padding, so just add paddingTop offset
   return paddingTop + ((priceMax - price) / priceRange) * chartHeight
 }
 
-// Index to X coordinate
+// Index to X coordinate - FIXED to use relative positioning
 export function indexToX(
   index: number,
   candleWidth: number,
   offsetX: number,
-  paddingLeft: number
+  paddingLeft: number,
+  startIdx: number = 0
 ): number {
-  return paddingLeft + offsetX + (index * candleWidth)
+  // Use relative index from viewport startIdx
+  const relativeIndex = index - startIdx
+  return paddingLeft + offsetX + (relativeIndex * candleWidth)
 }
 
 // Debounce (optimization for resize/scroll)

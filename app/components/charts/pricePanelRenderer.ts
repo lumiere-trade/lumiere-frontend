@@ -19,19 +19,10 @@ export class PricePanelRenderer extends PanelRenderer {
     config: PanelConfig,
     mouse: { x: number; y: number } | null
   ) {
-    console.log('[PricePanelRenderer] render START', {
-      candlesCount: candles.length,
-      viewport,
-      width: this.width,
-      height: this.height
-    })
-    
     // Update colors for theme changes
     this.updateColors()
 
     const padding = getPadding(this.width)
-    console.log('[PricePanelRenderer] padding', padding)
-    
     this.clearCanvas()
 
     // Calculate price range
@@ -50,29 +41,19 @@ export class PricePanelRenderer extends PanelRenderer {
     priceMin -= priceRange * 0.05
     priceMax += priceRange * 0.05
 
-    console.log('[PricePanelRenderer] price range', { priceMin, priceMax, priceRange })
-
     // Draw grid
     if (config.showGrid) {
-      console.log('[PricePanelRenderer] drawing grid')
       this.drawGrid(viewport, priceMin, priceMax, padding)
     }
 
     // Draw candles
-    console.log('[PricePanelRenderer] drawing candles')
     this.drawCandles(candles, viewport, priceMin, priceMax, padding)
 
     // Draw indicator lines
-    console.log('[PricePanelRenderer] drawing indicators', {
-      indicatorCount: config.indicators.length
-    })
     this.drawIndicatorLines(config.indicators, viewport, priceMin, priceMax, padding)
 
     // Draw Y-axis
-    console.log('[PricePanelRenderer] drawing Y axis')
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
-
-    console.log('[PricePanelRenderer] render COMPLETE')
   }
 
   private drawCandles(
@@ -82,61 +63,17 @@ export class PricePanelRenderer extends PanelRenderer {
     priceMax: number,
     padding: any
   ) {
-    console.log('[PricePanelRenderer] drawCandles START', {
-      startIdx: viewport.startIdx,
-      endIdx: viewport.endIdx,
-      candleWidth: viewport.candleWidth,
-      offsetX: viewport.offsetX,
-      paddingLeft: padding.left,
-      paddingRight: padding.right,
-      canvasWidth: this.width,
-      upColor: this.colors.up,
-      downColor: this.colors.down
-    })
-    
     const bodyWidth = Math.max(1, viewport.candleWidth * 0.8)
     const wickWidth = Math.max(1, viewport.candleWidth * 0.1)
-
-    let candlesDrawn = 0
-    let candlesSkipped = 0
-    let skipReasons: { tooLeft: number; tooRight: number } = { tooLeft: 0, tooRight: 0 }
-
-    // Sample first 3 candles for detailed debug
-    for (let i = viewport.startIdx; i <= Math.min(viewport.startIdx + 2, viewport.endIdx); i++) {
-      if (i >= candles.length) break
-
-      const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
-
-      console.log(`[PricePanelRenderer] Candle ${i}:`, {
-        x,
-        candleWidth: viewport.candleWidth,
-        offsetX: viewport.offsetX,
-        paddingLeft: padding.left,
-        canvasWidth: this.width,
-        paddingRight: padding.right,
-        visibleRange: `${padding.left} - ${this.width - padding.right}`,
-        isVisible: x >= padding.left && x <= this.width - padding.right
-      })
-    }
 
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      // FIXED: Pass startIdx to indexToX for relative positioning
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
-      if (x < padding.left) {
-        skipReasons.tooLeft++
-        candlesSkipped++
-        continue
-      }
-      
-      if (x > this.width - padding.right) {
-        skipReasons.tooRight++
-        candlesSkipped++
-        continue
-      }
+      if (x < padding.left || x > this.width - padding.right) continue
 
       const isUp = candle.c >= candle.o
       const color = isUp ? this.colors.up : this.colors.down
@@ -165,16 +102,7 @@ export class PricePanelRenderer extends PanelRenderer {
         bodyWidth,
         Math.max(1, bodyHeight)
       )
-      
-      candlesDrawn++
     }
-    
-    console.log('[PricePanelRenderer] drawCandles COMPLETE', {
-      candlesDrawn,
-      candlesSkipped,
-      skipReasons,
-      totalInViewport: viewport.endIdx - viewport.startIdx + 1
-    })
   }
 
   private drawXAxis(
@@ -195,7 +123,7 @@ export class PricePanelRenderer extends PanelRenderer {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       if (x < padding.left || x > this.width - padding.right) continue
 

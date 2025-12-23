@@ -70,14 +70,6 @@ export class VolumePanelRenderer extends PanelRenderer {
 
     // Draw Y-axis
     this.drawYAxis(volumeMin, volumeMax, viewport.panelHeight, padding, this.formatVolume)
-
-    // Draw X-axis with dates
-    // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
-
-    // Draw crosshair - DISABLED (now handled by CrosshairOverlay)
-    // if (mouse) {
-    //   this.drawCrosshair(mouse, viewport, volumeMin, volumeMax, padding)
-    // }
   }
 
   private drawVolumeBars(
@@ -95,7 +87,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       const candle = candles[i]
       if (!candle.v) continue
 
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       if (x < padding.left || x > this.width - padding.right) continue
 
       const isUp = candle.c >= candle.o
@@ -135,7 +127,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       const point = indicator.points[i]
       if (!point || point.v === null || point.v === undefined) continue
 
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       if (x < padding.left || x > this.width - padding.right) continue
 
       const y = padding.top + viewport.panelHeight -
@@ -170,7 +162,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       if (x < padding.left || x > this.width - padding.right) continue
 

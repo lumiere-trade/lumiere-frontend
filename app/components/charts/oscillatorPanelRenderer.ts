@@ -20,7 +20,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     mouse: { x: number; y: number } | null
   ) {
     this.updateColors()
-    
+
     const padding = getPadding(this.width)
     this.clearCanvas()
 
@@ -65,14 +65,6 @@ export class OscillatorPanelRenderer extends PanelRenderer {
 
     // Draw Y-axis
     this.drawYAxis(yMin, yMax, viewport.panelHeight, padding)
-
-    // Draw X-axis with dates
-    // this.drawXAxis(candles, viewport, padding) - Moved to DateAxisStrip
-
-    // Draw crosshair - DISABLED (now handled by CrosshairOverlay)
-    // if (mouse) {
-    //   this.drawCrosshair(mouse, viewport, yMin, yMax, padding)
-    // }
   }
 
   private drawRSIReferences(
@@ -129,7 +121,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       if (x < padding.left || x > this.width - padding.right) continue
 

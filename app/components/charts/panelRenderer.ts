@@ -37,12 +37,6 @@ export abstract class PanelRenderer {
     this.width = canvas.width
     this.height = canvas.height
 
-    console.log('[PanelRenderer] Constructor', {
-      width: this.width,
-      height: this.height,
-      hasContext: !!this.ctx
-    })
-
     // Initialize colors from CSS variables
     this.colors = this.getColors()
   }
@@ -77,27 +71,11 @@ export abstract class PanelRenderer {
 
   // Shared utilities
   protected clearCanvas() {
-    console.log('[PanelRenderer] clearCanvas', {
-      width: this.width,
-      height: this.height,
-      bgColor: this.colors.bg,
-      contextValid: !!this.ctx
-    })
-    
     this.ctx.fillStyle = this.colors.bg
     this.ctx.fillRect(0, 0, this.width, this.height)
-    
-    console.log('[PanelRenderer] clearCanvas completed')
   }
 
   protected drawGrid(viewport: PanelViewport, yMin: number, yMax: number, padding: any) {
-    console.log('[PanelRenderer] drawGrid', {
-      yMin,
-      yMax,
-      padding,
-      gridColor: this.colors.grid
-    })
-    
     this.ctx.strokeStyle = this.colors.grid
     this.ctx.lineWidth = 1
 
@@ -116,7 +94,7 @@ export abstract class PanelRenderer {
     // Vertical lines (time)
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       if (x >= padding.left && x <= this.width - padding.right) {
         this.ctx.beginPath()
         this.ctx.moveTo(x, padding.top)
@@ -124,8 +102,6 @@ export abstract class PanelRenderer {
         this.ctx.stroke()
       }
     }
-    
-    console.log('[PanelRenderer] drawGrid completed')
   }
 
   protected valueToY(
@@ -224,11 +200,6 @@ export abstract class PanelRenderer {
   ) {
     const visibleIndicators = indicators.filter(ind => ind.visible)
 
-    console.log('[PanelRenderer] drawIndicatorLines', {
-      totalIndicators: indicators.length,
-      visibleCount: visibleIndicators.length
-    })
-
     // Save context and setup clipping
     this.ctx.save()
     this.ctx.beginPath()
@@ -253,7 +224,7 @@ export abstract class PanelRenderer {
         if (i >= indicator.points.length) break
 
         const point = indicator.points[i]
-        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left)
+        const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
         const y = this.valueToY(point.v, yMin, yMax, viewport.panelHeight, padding.top)
 
         if (!isFinite(y)) continue
