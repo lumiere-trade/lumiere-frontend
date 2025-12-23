@@ -78,27 +78,27 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     panelHeight: number,
     padding: any
   ) {
-    this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)' // red transparent
-    this.ctx.lineWidth = 1
-    this.ctx.setLineDash([2, 2])
+    this.ctx.lineWidth = 1.5
+    this.ctx.setLineDash([5, 3])
 
-    // Overbought (70)
+    // Overbought (70) - red
+    this.ctx.strokeStyle = 'rgba(239, 68, 68, 0.6)'
     const y70 = this.valueToY(70, yMin, yMax, panelHeight, padding.top)
     this.ctx.beginPath()
     this.ctx.moveTo(padding.left, y70)
     this.ctx.lineTo(this.width - padding.right, y70)
     this.ctx.stroke()
 
-    // Oversold (30)
-    this.ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)' // green transparent
+    // Oversold (30) - green
+    this.ctx.strokeStyle = 'rgba(34, 197, 94, 0.6)'
     const y30 = this.valueToY(30, yMin, yMax, panelHeight, padding.top)
     this.ctx.beginPath()
     this.ctx.moveTo(padding.left, y30)
     this.ctx.lineTo(this.width - padding.right, y30)
     this.ctx.stroke()
 
-    // Middle (50)
-    this.ctx.strokeStyle = 'rgba(136, 136, 136, 0.3)' // gray transparent
+    // Middle (50) - gray
+    this.ctx.strokeStyle = 'rgba(136, 136, 136, 0.5)'
     const y50 = this.valueToY(50, yMin, yMax, panelHeight, padding.top)
     this.ctx.beginPath()
     this.ctx.moveTo(padding.left, y50)
