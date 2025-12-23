@@ -35,14 +35,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
 
     const { candleWidth, startIdx } = state.sharedViewport
-    
+
     // Calculate padding EXACTLY as renderer does (match getPadding function)
     const containerWidth = containerRef.current.getBoundingClientRect().width
     const paddingLeft = Math.max(15, containerWidth * 0.02)
 
     // Calculate RELATIVE index within viewport (centered on candle)
     const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
-    
+
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
 
@@ -234,13 +234,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const textColor = isUp ? 'text-green-500' : 'text-red-500'
 
   return (
-    <div
-      ref={containerRef}
-      className="relative border-b border-border"
-      style={{ height: `${panelHeight}px` }}
-    >
-      {/* Panel title with OHLC data (price panel only) */}
-      <div className="absolute top-2 left-4 z-10 flex items-center gap-3">
+    <div className="mb-2">
+      {/* Panel header - OUTSIDE canvas, above panel */}
+      <div className="flex items-center gap-3 px-2 pb-1">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
@@ -304,13 +300,19 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         )}
       </div>
 
-      {/* Canvas - inherits cursor from parent container */}
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      />
+      {/* Canvas container - panel itself */}
+      <div
+        ref={containerRef}
+        className="relative border-b border-border"
+        style={{ height: `${panelHeight}px` }}
+      >
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        />
+      </div>
     </div>
   )
 }
