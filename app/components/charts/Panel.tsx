@@ -56,6 +56,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
+    
+    // Don't setup if no data yet
+    if (candles.length === 0) return
 
     const updateCanvasSize = () => {
       const rect = container.getBoundingClientRect()
@@ -130,7 +133,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         clearTimeout(resizeTimeoutRef.current)
       }
     }
-  }, [panelHeight, createRenderer, renderChart])
+  }, [panelHeight, createRenderer, renderChart, candles.length])
 
   // Theme change detection
   useEffect(() => {
