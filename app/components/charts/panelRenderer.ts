@@ -154,14 +154,32 @@ export abstract class PanelRenderer {
     padding: any,
     formatFn?: (val: number) => string
   ) {
+    // DEBUG
+    if (viewport.panelTop > 0) {  // Only log for non-price panels
+      console.log(`\n[PanelRenderer] Panel at panelTop=${viewport.panelTop}`)
+      console.log(`  mouse.y=${mouse.y} (canvas coords)`)
+      console.log(`  padding.top=${padding.top}, panelHeight=${viewport.panelHeight}`)
+      console.log(`  Range check: ${padding.top} <= ${mouse.y} <= ${viewport.panelHeight + padding.top}`)
+    }
+
     // Only draw if mouse is WITHIN this panel vertically
     const mouseInPanel = mouse.y >= padding.top && mouse.y <= viewport.panelHeight + padding.top
+    
+    if (viewport.panelTop > 0) {
+      console.log(`  mouseInPanel=${mouseInPanel}`)
+    }
+    
     if (!mouseInPanel) return
 
     const formatter = formatFn || ((v: number) => v.toFixed(2))
 
     // Calculate value at mouse Y position
     const value = yMax - ((mouse.y - padding.top) / viewport.panelHeight) * (yMax - yMin)
+
+    if (viewport.panelTop > 0) {
+      console.log(`  Calculated value=${value.toFixed(2)}`)
+      console.log(`  Drawing label at Y=${mouse.y}`)
+    }
 
     // Draw background box (mouse.y is already in canvas coordinates)
     this.ctx.fillStyle = this.colors.cross
