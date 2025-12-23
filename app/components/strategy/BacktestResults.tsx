@@ -222,7 +222,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     : 'Price chart with buy/sell signals'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pt-0">
                 {/* Multi-Panel Chart - NO fixed height wrapper */}
                 {candles.length > 0 ? (
                   <MultiPanelChart
