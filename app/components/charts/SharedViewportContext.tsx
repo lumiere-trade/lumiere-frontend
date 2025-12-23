@@ -341,9 +341,9 @@ export function SharedViewportProvider({ candles, indicators, children, containe
           return {
             ...p,
             indicators: updatedIndicators,
-            // Show panel ONLY if at least one indicator is visible
-            // Hide panel if NO indicators are visible
-            visible: anyVisible
+            // Price panel ALWAYS visible (shows candles even without indicators)
+            // Other panels only visible if they have visible indicators
+            visible: p.type === 'price' ? true : anyVisible
           }
         }
         return p
