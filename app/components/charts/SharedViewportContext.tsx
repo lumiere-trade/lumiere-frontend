@@ -7,28 +7,28 @@ import { Candle, Indicator } from './types'
 interface SharedViewportContextValue {
   state: MultiPanelState
   candles: Candle[]
-  
+
   // Viewport controls (synchronized across panels)
   handleZoom: (delta: number, mouseX: number) => void
   handlePan: (movementX: number) => void
   handleReset: () => void
-  
+
   // Panel management
   addPanel: (panel: PanelConfig) => void
   removePanel: (panelId: string) => void
   updatePanel: (panelId: string, updates: Partial<PanelConfig>) => void
   resizePanel: (panelId: string, newHeight: number) => void
   togglePanelVisibility: (panelId: string) => void
-  
+
   // Indicator management
   addIndicator: (indicator: Indicator, panelId: string) => void
   removeIndicator: (indicatorName: string, panelId: string) => void
   toggleIndicator: (indicatorName: string, panelId: string) => void
-  
+
   // Mouse tracking
   updateMouse: (x: number, y: number, panelId: string) => void
   clearMouse: () => void
-  
+
   // Dragging state
   setDragging: (dragging: boolean) => void
 }
@@ -51,10 +51,10 @@ interface Props {
 }
 
 export function SharedViewportProvider({ candles, indicators, children, containerWidth }: Props) {
-  // Initialize shared viewport
+  // Initialize shared viewport - start at BEGINNING (first 100 candles)
   const initialViewport: SharedViewport = {
-    startIdx: Math.max(0, candles.length - 100),
-    endIdx: candles.length - 1,
+    startIdx: 0,
+    endIdx: Math.min(99, candles.length - 1),
     candleWidth: 8,
     zoom: 1,
     offsetX: 0,
@@ -152,12 +152,13 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   ): SharedViewport => {
     const candleWidth = Math.max(2, 8 * zoom)
     const visibleCandles = Math.floor(width / candleWidth)
-    
-    const endIdx = Math.min(
-      candlesRef.current.length - 1,
-      Math.floor(-offsetX / candleWidth) + visibleCandles
-    )
-    const startIdx = Math.max(0, endIdx - visibleCandles)
+
+    // Calculate startIdx from offsetX
+    // offsetX = 0 means show first candles
+    // offsetX < 0 means pan left (show later candles)
+    // offsetX > 0 means pan right (show earlier candles, but clamped to 0)
+    const startIdx = Math.max(0, Math.floor(-offsetX / candleWidth))
+    const endIdx = Math.min(candlesRef.current.length - 1, startIdx + visibleCandles - 1)
 
     return {
       startIdx,
@@ -174,9 +175,9 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     setState(prev => {
       const zoomFactor = delta > 0 ? 1.1 : 0.9
       const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom * zoomFactor))
-      
+
       const newOffsetX = prev.sharedViewport.offsetX * (newZoom / prev.sharedViewport.zoom)
-      
+
       return {
         ...prev,
         sharedViewport: recalculateViewport(newZoom, newOffsetX, containerWidth)
@@ -188,10 +189,18 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const handlePan = useCallback((movementX: number) => {
     setState(prev => {
       const newOffsetX = prev.sharedViewport.offsetX + movementX
-      const maxOffset = 0
-      const minOffset = -(candlesRef.current.length * prev.sharedViewport.candleWidth)
-      const clampedOffset = Math.max(minOffset, Math.min(maxOffset, newOffsetX))
       
+      // Clamp bounds:
+      // maxOffset = -(totalCandles - visibleCandles) * candleWidth
+      // This allows panning until the LAST candle is visible on right edge
+      const visibleCandles = Math.floor(containerWidth / prev.sharedViewport.candleWidth)
+      const maxOffset = -(candlesRef.current.length - visibleCandles) * prev.sharedViewport.candleWidth
+      
+      // minOffset = 0 (show first candles on left edge)
+      const minOffset = 0
+      
+      const clampedOffset = Math.max(maxOffset, Math.min(minOffset, newOffsetX))
+
       return {
         ...prev,
         sharedViewport: recalculateViewport(
@@ -203,13 +212,13 @@ export function SharedViewportProvider({ candles, indicators, children, containe
     })
   }, [containerWidth, recalculateViewport])
 
-  // Reset viewport
+  // Reset viewport - back to start (first 100 candles)
   const handleReset = useCallback(() => {
     setState(prev => ({
       ...prev,
       sharedViewport: {
-        startIdx: Math.max(0, candlesRef.current.length - 100),
-        endIdx: candlesRef.current.length - 1,
+        startIdx: 0,
+        endIdx: Math.min(99, candlesRef.current.length - 1),
         candleWidth: 8,
         zoom: 1,
         offsetX: 0,
@@ -236,7 +245,7 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const updatePanel = useCallback((panelId: string, updates: Partial<PanelConfig>) => {
     setState(prev => ({
       ...prev,
-      panels: prev.panels.map(p => 
+      panels: prev.panels.map(p =>
         p.id === panelId ? { ...p, ...updates } : p
       )
     }))
@@ -247,10 +256,10 @@ export function SharedViewportProvider({ candles, indicators, children, containe
       const totalHeight = prev.panels.reduce((sum, p) => sum + p.height, 0)
       const panel = prev.panels.find(p => p.id === panelId)
       if (!panel) return prev
-      
+
       const heightDiff = newHeight - panel.height
       const otherPanelsHeight = totalHeight - panel.height
-      
+
       return {
         ...prev,
         panels: prev.panels.map(p => {
@@ -286,8 +295,8 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const addIndicator = useCallback((indicator: Indicator, panelId: string) => {
     setState(prev => ({
       ...prev,
-      panels: prev.panels.map(p => 
-        p.id === panelId 
+      panels: prev.panels.map(p =>
+        p.id === panelId
           ? { ...p, indicators: [...p.indicators, indicator] }
           : p
       )
@@ -297,7 +306,7 @@ export function SharedViewportProvider({ candles, indicators, children, containe
   const removeIndicator = useCallback((indicatorName: string, panelId: string) => {
     setState(prev => ({
       ...prev,
-      panels: prev.panels.map(p => 
+      panels: prev.panels.map(p =>
         p.id === panelId
           ? { ...p, indicators: p.indicators.filter(i => i.name !== indicatorName) }
           : p
@@ -317,10 +326,10 @@ export function SharedViewportProvider({ candles, indicators, children, containe
             }
             return i
           })
-          
+
           // Check if any indicator is visible
           const anyVisible = updatedIndicators.some(ind => ind.visible)
-          
+
           return {
             ...p,
             indicators: updatedIndicators,
