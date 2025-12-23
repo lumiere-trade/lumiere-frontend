@@ -19,6 +19,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const rendererRef = useRef<PanelRenderer | null>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
+  const initializedRef = useRef(false)
   const { state, candles, updateMouse, clearMouse, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
@@ -92,13 +93,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         // Render immediately (no black flash)
         renderChart()
+        initializedRef.current = true
       }
     }
 
-    // Initial size - use setTimeout to ensure DOM is ready
-    setTimeout(() => {
+    // Initial size - wait for next paint (16ms = one frame at 60fps)
+    const initTimer = setTimeout(() => {
       updateCanvasSize()
-    }, 0)
+    }, 16)
 
     // Watch for container resize with THROTTLE (max 60fps during animation)
     const observer = new ResizeObserver(() => {
@@ -124,6 +126,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     observer.observe(container)
 
     return () => {
+      clearTimeout(initTimer)
       observer.disconnect()
       if (resizeTimeoutRef.current) {
         clearTimeout(resizeTimeoutRef.current)
