@@ -36,8 +36,8 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const { candleWidth, startIdx } = state.sharedViewport
     const padding = { left: Math.max(15, window.innerWidth * 0.02) }
 
-    // Calculate RELATIVE index within viewport (matches indexToX logic)
-    const relativeIdx = Math.floor((state.mouse.x - padding.left) / candleWidth)
+    // Calculate RELATIVE index within viewport (centered on candle)
+    const relativeIdx = Math.floor((state.mouse.x - padding.left + candleWidth / 2) / candleWidth)
     
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
