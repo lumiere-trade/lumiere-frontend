@@ -3,6 +3,7 @@
 import React, { useCallback } from 'react'
 import { Panel } from './Panel'
 import { PricePanelRenderer } from './pricePanelRenderer'
+import { OHLCOverlay } from './OHLCOverlay'
 import { PanelConfig } from './panelTypes'
 
 interface PricePanelProps {
@@ -17,11 +18,14 @@ export function PricePanel({ config, panelTop, panelHeight }: PricePanelProps) {
   }, [])
 
   return (
-    <Panel
-      config={config}
-      panelTop={panelTop}
-      panelHeight={panelHeight}
-      createRenderer={createRenderer}
-    />
+    <>
+      <Panel
+        config={config}
+        panelTop={panelTop}
+        panelHeight={panelHeight}
+        createRenderer={createRenderer}
+      />
+      <OHLCOverlay panelTop={panelTop} panelHeight={panelHeight} />
+    </>
   )
 }
