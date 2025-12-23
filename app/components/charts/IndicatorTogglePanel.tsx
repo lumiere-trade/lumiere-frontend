@@ -11,17 +11,19 @@ interface GroupedIndicator {
   visible: boolean
   panelId: string
   panelTitle: string
-  isBollingerGroup: boolean
-  bollingerNames?: string[]
+  isGrouped: boolean
+  groupType?: 'bollinger' | 'macd'
+  groupNames?: string[]
 }
 
 export function IndicatorTogglePanel() {
   const { state, toggleIndicator } = useSharedViewport()
 
-  // Group indicators (Bollinger Bands as 1 group)
+  // Group indicators (Bollinger Bands and MACD as groups)
   const groupedIndicators = useMemo(() => {
     const indicators: GroupedIndicator[] = []
     const bollingerGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
+    const macdGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
 
     state.panels.forEach(panel => {
       panel.indicators.forEach(ind => {
@@ -41,8 +43,24 @@ export function IndicatorTogglePanel() {
           }
 
           bollingerGroups.get(baseName)!.indicators.push(ind)
-        } else {
-          // Non-Bollinger indicator - add directly
+        }
+        // Check if MACD indicator (macd or macd_signal)
+        else if (name.includes('macd')) {
+          // Extract base name (remove _signal suffix)
+          const baseName = name.replace(/_signal/g, '')
+
+          if (!macdGroups.has(baseName)) {
+            macdGroups.set(baseName, {
+              indicators: [],
+              panelId: panel.id,
+              panelTitle: panel.title
+            })
+          }
+
+          macdGroups.get(baseName)!.indicators.push(ind)
+        }
+        else {
+          // Non-grouped indicator - add directly
           indicators.push({
             name: ind.name,
             displayName: ind.name,
@@ -50,7 +68,7 @@ export function IndicatorTogglePanel() {
             visible: ind.visible,
             panelId: panel.id,
             panelTitle: panel.title,
-            isBollingerGroup: false
+            isGrouped: false
           })
         }
       })
@@ -58,11 +76,8 @@ export function IndicatorTogglePanel() {
 
     // Add Bollinger groups as single indicators
     bollingerGroups.forEach((group, baseName) => {
-      // Get display name from first indicator
       const firstInd = group.indicators[0]
       const displayName = baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-
-      // Visible if ANY of the 3 bands is visible
       const anyVisible = group.indicators.some(ind => ind.visible)
 
       indicators.push({
@@ -72,8 +87,28 @@ export function IndicatorTogglePanel() {
         visible: anyVisible,
         panelId: group.panelId,
         panelTitle: group.panelTitle,
-        isBollingerGroup: true,
-        bollingerNames: group.indicators.map(ind => ind.name)
+        isGrouped: true,
+        groupType: 'bollinger',
+        groupNames: group.indicators.map(ind => ind.name)
+      })
+    })
+
+    // Add MACD groups as single indicators
+    macdGroups.forEach((group, baseName) => {
+      const firstInd = group.indicators[0]
+      const displayName = baseName.replace(/_/g, ' ').toUpperCase()
+      const anyVisible = group.indicators.some(ind => ind.visible)
+
+      indicators.push({
+        name: baseName,
+        displayName,
+        color: firstInd.color,
+        visible: anyVisible,
+        panelId: group.panelId,
+        panelTitle: group.panelTitle,
+        isGrouped: true,
+        groupType: 'macd',
+        groupNames: group.indicators.map(ind => ind.name)
       })
     })
 
@@ -81,9 +116,9 @@ export function IndicatorTogglePanel() {
   }, [state.panels])
 
   const handleToggle = (indicator: GroupedIndicator) => {
-    if (indicator.isBollingerGroup && indicator.bollingerNames) {
-      // Toggle all 3 Bollinger bands together
-      indicator.bollingerNames.forEach(name => {
+    if (indicator.isGrouped && indicator.groupNames) {
+      // Toggle all grouped indicators together (Bollinger or MACD)
+      indicator.groupNames.forEach(name => {
         toggleIndicator(name, indicator.panelId)
       })
     } else {
