@@ -72,7 +72,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
   // Transform market data to Candle format
   const candles: Candle[] = useMemo(() => {
     if (!market_data || market_data.length === 0) return []
-    
+
     return market_data.map((candle) => ({
       t: new Date(candle.timestamp).getTime(),
       o: candle.open,
@@ -83,10 +83,10 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
     }))
   }, [market_data])
 
-  // Transform trades to Trade format
+  // Transform trades to Trade format - USE TIMESTAMP not index
   const chartTrades: Trade[] = useMemo(() => {
-    return trades.map((trade, idx) => ({
-      t: idx, // index in candles array
+    return trades.map((trade) => ({
+      t: new Date(trade.timestamp).getTime(),
       p: trade.price,
       s: trade.side === 'BUY' ? 'B' : 'S'
     }))
@@ -217,7 +217,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
               <CardHeader>
                 <CardTitle>Price Chart with Trade Signals</CardTitle>
                 <CardDescription>
-                  {indicator_data && indicator_data.length > 0 
+                  {indicator_data && indicator_data.length > 0
                     ? `${indicator_data.length} indicators loaded • Toggle visibility below`
                     : 'Price chart with buy/sell signals'}
                 </CardDescription>
