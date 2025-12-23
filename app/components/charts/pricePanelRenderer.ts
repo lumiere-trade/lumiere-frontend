@@ -1,7 +1,7 @@
 import { Candle, Trade, Indicator } from './types'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
-import { priceToY, indexToX } from './chartUtils'
+import { priceToY, indexToX, findCandleIndex } from './chartUtils'
 
 function getPadding(width: number) {
   return {
@@ -49,7 +49,7 @@ export class PricePanelRenderer extends PanelRenderer {
 
     // Draw trade areas FIRST (behind everything)
     if (trades && trades.length > 0) {
-      this.drawTradeAreas(trades, viewport, priceMin, priceMax, padding)
+      this.drawTradeAreas(trades, candles, viewport, priceMin, priceMax, padding)
     }
 
     // Draw candles
@@ -66,7 +66,7 @@ export class PricePanelRenderer extends PanelRenderer {
 
     // Draw trade arrows LAST (on top)
     if (trades && trades.length > 0) {
-      this.drawTradeArrows(trades, viewport, priceMin, priceMax, padding)
+      this.drawTradeArrows(trades, candles, viewport, priceMin, priceMax, padding)
     }
 
     // Draw Y-axis
@@ -128,6 +128,7 @@ export class PricePanelRenderer extends PanelRenderer {
 
   private drawTradeAreas(
     trades: Trade[],
+    candles: Candle[],
     viewport: PanelViewport,
     priceMin: number,
     priceMax: number,
@@ -155,14 +156,15 @@ export class PricePanelRenderer extends PanelRenderer {
 
       if (!sellTrade) continue // Skip if no matching sell
 
+      // Convert timestamps to candle indices
+      const buyIdx = findCandleIndex(candles, buyTrade.t)
+      const sellIdx = findCandleIndex(candles, sellTrade.t)
+
       // Only draw if within viewport
-      if (sellTrade.t < viewport.startIdx || buyTrade.t > viewport.endIdx) continue
+      if (sellIdx < viewport.startIdx || buyIdx > viewport.endIdx) continue
 
-      const xBuy = indexToX(buyTrade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
-      const xSell = indexToX(sellTrade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
-
-      const yBuy = priceToY(buyTrade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
-      const ySell = priceToY(sellTrade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
+      const xBuy = indexToX(buyIdx, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+      const xSell = indexToX(sellIdx, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       // Determine profit/loss
       const isProfit = sellTrade.p > buyTrade.p
@@ -189,6 +191,7 @@ export class PricePanelRenderer extends PanelRenderer {
 
   private drawTradeArrows(
     trades: Trade[],
+    candles: Candle[],
     viewport: PanelViewport,
     priceMin: number,
     priceMax: number,
@@ -208,10 +211,13 @@ export class PricePanelRenderer extends PanelRenderer {
     const arrowSize = 8
 
     trades.forEach(trade => {
-      // Only draw if within viewport
-      if (trade.t < viewport.startIdx || trade.t > viewport.endIdx) return
+      // Convert timestamp to candle index
+      const tradeIdx = findCandleIndex(candles, trade.t)
 
-      const x = indexToX(trade.t, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+      // Only draw if within viewport
+      if (tradeIdx < viewport.startIdx || tradeIdx > viewport.endIdx) return
+
+      const x = indexToX(tradeIdx, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       const yPrice = priceToY(trade.p, priceMin, priceMax, viewport.panelHeight, padding.top)
 
       const isBuy = trade.s === 'B'
