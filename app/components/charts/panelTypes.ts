@@ -65,7 +65,7 @@ export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement
   const name = indicatorName.toUpperCase()
 
   // Volume-based indicators - check FIRST before general SMA/EMA
-  if (name.includes('VOLUME_SMA') || name.includes('VOLUME_EMA') || 
+  if (name.includes('VOLUME_SMA') || name.includes('VOLUME_EMA') ||
       (name.includes('VOLUME') && (name.includes('SMA') || name.includes('EMA')))) {
     return { type: 'volume', panelId: 'volume' }
   }
@@ -73,6 +73,11 @@ export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement
   // Raw volume indicator
   if (name.includes('VOLUME')) {
     return { type: 'volume', panelId: 'volume' }
+  }
+
+  // Bollinger Width - oscillator (measures band width/volatility)
+  if (name.includes('BOLLINGER') && name.includes('WIDTH')) {
+    return { type: 'oscillator', panelId: 'bollinger_width', range: [0, 10] }
   }
 
   // MACD indicators - ALL go to oscillator panel
@@ -95,7 +100,7 @@ export function getIndicatorPlacement(indicatorName: string): IndicatorPlacement
     return { type: 'oscillator', panelId: 'adx', range: [0, 100] }
   }
 
-  // Overlay indicators (on price chart) - EMA, SMA, Bollinger, etc.
+  // Overlay indicators (on price chart) - EMA, SMA, Bollinger Bands, etc.
   if (name.includes('EMA') || name.includes('SMA') || name.includes('BOLLINGER')) {
     return { type: 'overlay', panelId: 'price' }
   }
@@ -136,11 +141,11 @@ export function createOscillatorPanel(
   range: [number, number]
 ): PanelConfig {
   const name = indicatorName.toLowerCase()
-  
+
   // Extract clean panel ID
   let id = 'oscillator'
   let title = indicatorName
-  
+
   if (name.includes('macd')) {
     id = 'macd'
     title = 'MACD'
@@ -153,6 +158,9 @@ export function createOscillatorPanel(
   } else if (name.includes('adx')) {
     id = 'adx'
     title = 'ADX'
+  } else if (name.includes('bollinger') && name.includes('width')) {
+    id = 'bollinger_width'
+    title = 'Bollinger Width'
   }
 
   return {
@@ -165,8 +173,8 @@ export function createOscillatorPanel(
     yAxis: {
       min: range[0],
       max: range[1],
-      auto: id === 'macd',  // MACD uses auto range
-      fixed: id !== 'macd' ? { min: range[0], max: range[1] } : undefined
+      auto: true,  // Bollinger Width and MACD use auto range
+      fixed: undefined
     },
     showGrid: true
   }
