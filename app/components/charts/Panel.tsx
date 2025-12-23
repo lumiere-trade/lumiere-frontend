@@ -56,17 +56,12 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const canvas = canvasRef.current
     const container = containerRef.current
     if (!canvas || !container) return
-    
-    // Don't setup if no data yet
-    if (candles.length === 0) return
 
     const updateCanvasSize = () => {
       const rect = container.getBoundingClientRect()
       
       // Skip if container not ready (width/height = 0)
       if (rect.width === 0 || rect.height === 0) {
-        // Retry after a frame
-        requestAnimationFrame(updateCanvasSize)
         return
       }
       
@@ -75,11 +70,12 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       const newWidth = rect.width * dpr
       const newHeight = panelHeight * dpr
 
-      // Only update if size changed significantly (avoid tiny changes)
+      // Always update on first setup or significant changes
+      const isFirstSetup = canvas.width === 0 || canvas.height === 0
       const widthDiff = Math.abs(canvas.width - newWidth)
       const heightDiff = Math.abs(canvas.height - newHeight)
 
-      if (widthDiff > 2 || heightDiff > 2) {
+      if (isFirstSetup || widthDiff > 2 || heightDiff > 2) {
         canvas.width = newWidth
         canvas.height = newHeight
 
@@ -99,10 +95,10 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
       }
     }
 
-    // Initial size (delayed to ensure layout is ready)
-    requestAnimationFrame(() => {
-      requestAnimationFrame(updateCanvasSize)
-    })
+    // Initial size - use setTimeout to ensure DOM is ready
+    setTimeout(() => {
+      updateCanvasSize()
+    }, 0)
 
     // Watch for container resize with THROTTLE (max 60fps during animation)
     const observer = new ResizeObserver(() => {
