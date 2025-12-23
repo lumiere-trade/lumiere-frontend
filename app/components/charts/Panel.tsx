@@ -240,27 +240,42 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         {/* OHLC data - only for price panel when hovering */}
         {config.type === 'price' && hoveredCandle && (
-          <div className="flex items-center gap-3 text-xs font-mono">
+          <div className="flex items-center gap-2 text-xs font-mono">
+            {/* O - Open */}
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">O</span>
-              <span className={textColor}>{hoveredCandle.o.toFixed(2)}</span>
+              <span className="text-muted-foreground w-3">O</span>
+              <span className={`${textColor} w-14 text-right`}>
+                {hoveredCandle.o.toFixed(2)}
+              </span>
             </div>
+            {/* H - High */}
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">H</span>
-              <span className={textColor}>{hoveredCandle.h.toFixed(2)}</span>
+              <span className="text-muted-foreground w-3">H</span>
+              <span className={`${textColor} w-14 text-right`}>
+                {hoveredCandle.h.toFixed(2)}
+              </span>
             </div>
+            {/* L - Low */}
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">L</span>
-              <span className={textColor}>{hoveredCandle.l.toFixed(2)}</span>
+              <span className="text-muted-foreground w-3">L</span>
+              <span className={`${textColor} w-14 text-right`}>
+                {hoveredCandle.l.toFixed(2)}
+              </span>
             </div>
+            {/* C - Close */}
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">C</span>
-              <span className={textColor}>{hoveredCandle.c.toFixed(2)}</span>
+              <span className="text-muted-foreground w-3">C</span>
+              <span className={`${textColor} w-14 text-right`}>
+                {hoveredCandle.c.toFixed(2)}
+              </span>
             </div>
+            {/* Volume */}
             {hoveredCandle.v !== undefined && (
               <div className="flex items-center gap-1 ml-1 pl-2 border-l border-border">
                 <span className="text-muted-foreground">Vol</span>
-                <span className="text-foreground">{hoveredCandle.v.toLocaleString()}</span>
+                <span className="text-foreground w-24 text-right">
+                  {hoveredCandle.v.toLocaleString()}
+                </span>
               </div>
             )}
           </div>
