@@ -236,7 +236,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   return (
     <div className="mb-2">
       {/* Panel header - OUTSIDE canvas, above panel */}
-      <div className="flex items-center gap-3 px-2 pb-1">
+      <div className="flex items-center gap-3 px-2">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
