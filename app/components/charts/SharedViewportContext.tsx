@@ -119,13 +119,17 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       }
     })
 
-    // Add volume panel if it was created
+    // Add volume panel if it was created - set visible based on indicators
     if (volumePanel) {
+      volumePanel.visible = volumePanel.indicators.some(ind => ind.visible)
       panels.push(volumePanel)
     }
 
-    // Add oscillator panels
-    oscillatorPanels.forEach(panel => panels.push(panel))
+    // Add oscillator panels - set visible based on indicators
+    oscillatorPanels.forEach(panel => {
+      panel.visible = panel.indicators.some(ind => ind.visible)
+      panels.push(panel)
+    })
 
     return panels
   }, [indicators])
