@@ -61,6 +61,17 @@ export abstract class PanelRenderer {
     this.colors = this.getColors()
   }
 
+  // DEBUG: Log padding info
+  protected debugPadding(padding: any, label: string = '') {
+    console.log(`[${label || this.constructor.name}] Padding:`, {
+      width: this.width,
+      height: this.height,
+      padding,
+      rightSpace: this.width - padding.right,
+      dpr: window.devicePixelRatio
+    })
+  }
+
   // Abstract method - each panel type implements its own rendering
   abstract render(
     candles: Candle[],
@@ -124,6 +135,9 @@ export abstract class PanelRenderer {
     padding: any,
     formatFn?: (val: number) => string
   ) {
+    // DEBUG: Log padding
+    this.debugPadding(padding, 'Y-Axis Draw')
+    
     this.ctx.fillStyle = this.colors.text
     this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'left'
@@ -135,13 +149,32 @@ export abstract class PanelRenderer {
     for (let i = 0; i <= 5; i++) {
       const value = yMin + (yStep * i)
       const y = this.valueToY(value, yMin, yMax, panelHeight, padding.top)
+      
+      const text = formatter(value)
+      const xPos = this.width - padding.right + 5
+      
+      // DEBUG: Draw bounding box around text
+      const metrics = this.ctx.measureText(text)
+      this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'
+      this.ctx.lineWidth = 1
+      this.ctx.strokeRect(xPos, y - 6, metrics.width, 12)
+      
+      // DEBUG: Draw green line where right padding starts
+      this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)'
+      this.ctx.beginPath()
+      this.ctx.moveTo(this.width - padding.right, 0)
+      this.ctx.lineTo(this.width - padding.right, panelHeight)
+      this.ctx.stroke()
 
-      this.ctx.fillText(
-        formatter(value),
-        this.width - padding.right + 5,
-        y
-      )
+      // Actual text
+      this.ctx.fillStyle = this.colors.text
+      this.ctx.fillText(text, xPos, y)
     }
+    
+    // DEBUG: Draw canvas boundary
+    this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)'
+    this.ctx.lineWidth = 2
+    this.ctx.strokeRect(0, 0, this.width, panelHeight)
   }
 
   // Draw price value label on Y-axis (without crosshair lines)

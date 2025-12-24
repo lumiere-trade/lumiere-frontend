@@ -25,6 +25,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const { state, candles, trades, togglePanelVisibility } = useSharedViewport()
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
+  
+  // DEBUG: Enable debug mode
+  const [debug] = useState(true)
 
   // Calculate hovered candle for OHLC display
   const hoveredCandle = useMemo(() => {
@@ -93,6 +96,18 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const updateCanvasSize = () => {
       const rect = container.getBoundingClientRect()
 
+      // DEBUG LOG
+      if (debug) {
+        console.log('[Panel Resize]', {
+          panel: config.title,
+          containerWidth: rect.width.toFixed(0),
+          containerHeight: rect.height.toFixed(0),
+          panelHeight,
+          dpr: window.devicePixelRatio,
+          canvasBefore: { w: canvas.width, h: canvas.height }
+        })
+      }
+
       // If container not ready, retry up to 10 times (every 50ms)
       if (rect.width === 0 || rect.height === 0) {
         if (retryCountRef.current < 10) {
@@ -129,6 +144,15 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
         // Recreate renderer with new canvas size
         rendererRef.current = createRenderer(canvas)
+
+        // DEBUG LOG
+        if (debug) {
+          console.log('[Canvas Updated]', {
+            panel: config.title,
+            canvasAfter: { w: canvas.width, h: canvas.height },
+            styleSize: { w: canvas.style.width, h: canvas.style.height }
+          })
+        }
 
         // Render immediately (no black flash)
         renderChart()
@@ -167,7 +191,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         clearTimeout(resizeTimeoutRef.current)
       }
     }
-  }, [panelHeight, createRenderer, renderChart, candles.length])
+  }, [panelHeight, createRenderer, renderChart, candles.length, config.title, debug])
 
   // Theme change detection
   useEffect(() => {
@@ -294,9 +318,18 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         className="relative border-b border-border"
         style={{ height: `${panelHeight}px` }}
       >
+        {/* DEBUG: Container dimensions overlay */}
+        {debug && (
+          <div className="absolute top-2 left-2 z-10 bg-black/80 text-white text-xs p-2 rounded font-mono pointer-events-none">
+            <div>Container: {containerRef.current?.getBoundingClientRect().width.toFixed(0)}px</div>
+            <div>Canvas: {canvasRef.current?.width}px (DPR: {window.devicePixelRatio})</div>
+            <div>Panel: {config.title}</div>
+          </div>
+        )}
+        
         <canvas
           ref={canvasRef}
-          className="w-full h-full"
+          className={`w-full h-full ${debug ? 'border-2 border-red-500' : ''}`}
         />
       </div>
     </div>
