@@ -54,6 +54,34 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     return candles[candleIdx]
   }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight])
 
+  // Calculate hovered candle INDEX for indicator values
+  const hoveredCandleIdx = useMemo(() => {
+    if (!state.mouse || candles.length === 0) return null
+    if (!containerRef.current) return null
+
+    // Check if mouse is within this panel vertically
+    if (state.mouse.y < panelTop || state.mouse.y > panelTop + panelHeight) {
+      return null
+    }
+
+    const { candleWidth, startIdx } = state.sharedViewport
+
+    // Calculate padding EXACTLY as renderer does
+    const containerWidth = containerRef.current.getBoundingClientRect().width
+    const paddingLeft = Math.max(15, containerWidth * 0.02)
+
+    // Calculate RELATIVE index within viewport (centered on candle)
+    const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
+
+    // Convert to ABSOLUTE index in candles array
+    const candleIdx = startIdx + relativeIdx
+
+    // Clamp to valid range
+    if (candleIdx < 0 || candleIdx >= candles.length) return null
+
+    return candleIdx
+  }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight])
+
   // Render function
   const renderChart = useCallback(() => {
     const canvas = canvasRef.current
@@ -285,6 +313,26 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
             <span className="text-foreground w-24 text-right">
               {hoveredCandle.v.toLocaleString()}
             </span>
+          </div>
+        )}
+
+        {/* Oscillator data - show all indicator values when hovering */}
+        {config.type === 'oscillator' && hoveredCandleIdx !== null && config.indicators.length > 0 && (
+          <div className="flex items-center gap-3 text-sm font-mono ml-3">
+            {config.indicators.map((indicator) => {
+              // Find indicator value at hovered candle index
+              const point = indicator.points.find(p => p.t === hoveredCandleIdx)
+              if (!point) return null
+
+              return (
+                <div key={indicator.name} className="flex items-center gap-1">
+                  <span className="text-muted-foreground">{indicator.name}</span>
+                  <span className="text-foreground w-16 text-right">
+                    {point.v.toFixed(2)}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
