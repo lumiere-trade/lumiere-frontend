@@ -38,17 +38,18 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     const secondaryPanels = visiblePanels.filter(p => p.type !== 'price')
 
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
+    const totalHeaders = visiblePanels.length * PANEL_HEADER_HEIGHT // FIXED: Add headers
     const baseHeight = pricePanel ? BASE_PANEL_HEIGHT : 0
     const secondaryHeight = secondaryPanels.length * SECONDARY_PANEL_HEIGHT
 
-    return baseHeight + secondaryHeight + totalGaps
+    return baseHeight + secondaryHeight + totalGaps + totalHeaders // FIXED: Include headers
   }, [state.panels])
 
   // Calculate panel positions - panelTop now includes ALL visual heights (header + canvas + gap)
   const panelLayout = useMemo(() => {
     const visiblePanels = state.panels.filter(p => p.visible)
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
-    const availableHeight = containerHeight - totalGaps
+    const availableHeight = containerHeight - totalGaps - (visiblePanels.length * PANEL_HEADER_HEIGHT) // FIXED: Subtract headers from available
     const totalHeight = visiblePanels.reduce((sum, p) => sum + p.height, 0)
 
     let currentTop = 0
