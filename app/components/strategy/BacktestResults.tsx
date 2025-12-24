@@ -223,21 +223,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                     : 'Price chart with buy/sell signals'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0 relative">
-                {/* Blur overlay during transition - ONLY over chart */}
-                {isTransitioning && (
-                  <div 
-                    className="absolute inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-lg"
-                    style={{
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    <div className="text-muted-foreground text-sm">Resizing charts...</div>
-                  </div>
-                )}
-
-                {/* Multi-Panel Chart - NO fixed height wrapper */}
-                {candles.length > 0 ? (
+              <CardContent className="pt-0">
+                {/* Render chart ONLY when NOT transitioning */}
+                {!isTransitioning && candles.length > 0 && (
                   <MultiPanelChart
                     candles={candles}
                     trades={chartTrades}
@@ -245,7 +233,17 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                     mode="C"
                     showIndicatorToggles={true}
                   />
-                ) : (
+                )}
+
+                {/* Blur placeholder during transition */}
+                {isTransitioning && (
+                  <div className="h-[600px] bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                    <div className="text-muted-foreground text-sm">Resizing charts...</div>
+                  </div>
+                )}
+
+                {/* No data fallback */}
+                {!isTransitioning && candles.length === 0 && (
                   <div className="h-[600px] flex items-center justify-center text-muted-foreground">
                     No price data available
                   </div>
