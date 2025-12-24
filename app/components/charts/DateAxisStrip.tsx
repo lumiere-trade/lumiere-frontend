@@ -6,6 +6,14 @@ import { indexToX } from './chartUtils'
 
 const DATE_STRIP_HEIGHT = 30 // Height of the date strip
 
+// Match padding calculation from renderers
+function getPadding(width: number) {
+  return {
+    left: Math.max(15, width * 0.02),
+    right: Math.max(58, width * 0.075)
+  }
+}
+
 export function DateAxisStrip() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -125,7 +133,8 @@ export function DateAxisStrip() {
     ctx.fillStyle = bgColor
     ctx.fillRect(0, 0, width, height)
 
-    const padding = { left: 15, right: 70 }
+    // Calculate padding to match renderers
+    const padding = getPadding(width)
     const viewport = state.sharedViewport
 
     // Draw date labels
@@ -140,7 +149,6 @@ export function DateAxisStrip() {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      // FIXED: Pass startIdx parameter
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
 
       if (x < padding.left || x > width - padding.right) continue
@@ -155,9 +163,6 @@ export function DateAxisStrip() {
     if (state.mouse) {
       const mouseX = state.mouse.x
 
-      // FIXED: Calculate candle index from mouse position using new formula
-      // Formula: startIdx = Math.floor(-offsetX / candleWidth)
-      // So: index = startIdx + relativePosition
       const relativePosition = Math.floor((mouseX - padding.left) / viewport.candleWidth)
       const candleIndex = viewport.startIdx + relativePosition
 
