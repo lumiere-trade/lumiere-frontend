@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
@@ -41,6 +42,9 @@ export function StrategyDetailsPanel({
   } = useChat()
   const runBacktestMutation = useRunBacktest()
 
+  // Transition state - freeze rendering
+  const [isTransitioning, setIsTransitioning] = useState(false)
+
   const handleRunBacktest = async () => {
     if (!generatedStrategy || !strategyMetadata) {
       log.error('No strategy to backtest')
@@ -67,11 +71,19 @@ export function StrategyDetailsPanel({
   }
 
   const handleToggleFullscreen = () => {
+    // Start transition - blur charts
+    setIsTransitioning(true)
+
     if (isParametersFullscreen) {
       collapseParametersFullscreen()
     } else {
       expandParametersFullscreen()
     }
+
+    // Resume after animation completes
+    setTimeout(() => {
+      setIsTransitioning(false)
+    }, 320) // 300ms transition + 20ms buffer
   }
 
   // GPU-optimized: Calculate width in vw units instead of Tailwind classes
@@ -117,7 +129,7 @@ export function StrategyDetailsPanel({
       >
         {/* Fullscreen mode - Left sidebar with collapsed panels */}
         {isParametersFullscreen && isOpen && (
-          <div 
+          <div
             className="absolute left-0 top-0 h-full w-12 bg-card border-r border-primary/20 flex flex-col gap-2 py-4 items-center z-20"
             style={{
               transform: 'translateZ(0)',
@@ -157,7 +169,7 @@ export function StrategyDetailsPanel({
         {isOpen && !isParametersFullscreen && (
           <div
             className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20"
-            style={{ 
+            style={{
               left: '0',
               transform: 'translate(-50%, 0) translateZ(0)',
             }}
@@ -196,7 +208,7 @@ export function StrategyDetailsPanel({
         {isOpen && isParametersFullscreen && (
           <div
             className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-30"
-            style={{ 
+            style={{
               left: 'calc(3rem)',
               transform: 'translate(-50%, 0) translateZ(0)',
             }}
@@ -262,10 +274,22 @@ export function StrategyDetailsPanel({
           </div>
         </div>
 
-        {/* Scrollable content area - UNTOUCHED for content safety */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 ${
+        {/* Scrollable content area */}
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 relative ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
+          {/* Blur overlay during transition - ONLY on backtest tab with charts */}
+          {isTransitioning && activeTab === 'backtest' && backtestResults && (
+            <div 
+              className="absolute inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center"
+              style={{
+                pointerEvents: 'none',
+              }}
+            >
+              <div className="text-muted-foreground text-sm">Resizing...</div>
+            </div>
+          )}
+
           {activeTab === 'parameters' && (
             <StrategyParameters
               hideActions={true}
@@ -297,7 +321,7 @@ export function StrategyDetailsPanel({
                   </Button>
                 </div>
               )}
-              {!isBacktesting && backtestResults && (
+              {!isBacktesting && backtestResults && !isTransitioning && (
                 <BacktestResults results={backtestResults} />
               )}
             </div>
