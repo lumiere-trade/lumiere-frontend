@@ -235,11 +235,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                   />
                 )}
 
-                {/* Blur placeholder during transition */}
+                {/* Clean blur placeholder during transition */}
                 {isTransitioning && (
-                  <div className="h-[600px] bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                    <div className="text-muted-foreground text-sm">Resizing charts...</div>
-                  </div>
+                  <div className="h-[600px] bg-background/60 backdrop-blur-sm rounded-lg" />
                 )}
 
                 {/* No data fallback */}
