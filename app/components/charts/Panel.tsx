@@ -278,9 +278,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
           </button>
         )}
 
-        {/* Volume data - only for volume panel when hovering - pushed to right with ml-auto */}
+        {/* Volume data - only for volume panel when hovering - next to eye icon */}
         {config.type === 'volume' && hoveredCandle && hoveredCandle.v !== undefined && (
-          <div className="flex items-center gap-1 text-sm font-mono ml-auto">
+          <div className="flex items-center gap-1 text-sm font-mono ml-3">
             <span className="text-muted-foreground">Vol</span>
             <span className="text-foreground w-24 text-right">
               {hoveredCandle.v.toLocaleString()}
