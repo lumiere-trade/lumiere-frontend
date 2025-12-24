@@ -224,14 +224,14 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   return (
     <div className="mb-2">
       {/* Panel header - OUTSIDE canvas, above panel */}
-      <div className="flex items-center gap-3 px-2 pt-1">
+      <div className="flex items-center px-2 pt-1">
         <span className="text-sm font-medium text-muted-foreground">
           {config.title}
         </span>
 
         {/* OHLC data - only for price panel when hovering */}
         {config.type === 'price' && hoveredCandle && (
-          <div className="flex items-center gap-1.5 text-sm font-mono">
+          <div className="flex items-center gap-1.5 text-sm font-mono ml-3">
             {/* O - Open */}
             <div className="flex items-center gap-1">
               <span className="text-muted-foreground w-3">O</span>
@@ -263,21 +263,11 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
           </div>
         )}
 
-        {/* Volume data - only for volume panel when hovering */}
-        {config.type === 'volume' && hoveredCandle && hoveredCandle.v !== undefined && (
-          <div className="flex items-center gap-1 text-sm font-mono">
-            <span className="text-muted-foreground">Vol</span>
-            <span className="text-foreground w-24 text-right">
-              {hoveredCandle.v.toLocaleString()}
-            </span>
-          </div>
-        )}
-
-        {/* Eye icon - only for volume/oscillator panels */}
+        {/* Eye icon - only for volume/oscillator panels - FIXED position after title */}
         {config.type !== 'price' && (
           <button
             onClick={handleToggleVisibility}
-            className="p-0.5 hover:bg-muted rounded transition-colors"
+            className="p-0.5 hover:bg-muted rounded transition-colors ml-2"
             title={config.visible ? 'Hide panel' : 'Show panel'}
           >
             {config.visible ? (
@@ -286,6 +276,16 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
               <EyeOff className="w-4 h-4 text-muted-foreground hover:text-foreground" />
             )}
           </button>
+        )}
+
+        {/* Volume data - only for volume panel when hovering - pushed to right with ml-auto */}
+        {config.type === 'volume' && hoveredCandle && hoveredCandle.v !== undefined && (
+          <div className="flex items-center gap-1 text-sm font-mono ml-auto">
+            <span className="text-muted-foreground">Vol</span>
+            <span className="text-foreground w-24 text-right">
+              {hoveredCandle.v.toLocaleString()}
+            </span>
+          </div>
         )}
       </div>
 
