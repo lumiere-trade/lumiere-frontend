@@ -149,8 +149,31 @@ export abstract class PanelRenderer {
     }
   }
 
-  // Draw price value label on Y-axis (without crosshair lines)
-  // Crosshair lines are drawn by CrosshairOverlay component
+  // Draw horizontal crosshair line (called BEFORE price label so it renders behind)
+  protected drawHorizontalCrosshair(
+    mouse: { x: number; y: number },
+    viewport: PanelViewport,
+    padding: any
+  ) {
+    // Only draw if mouse is within this panel vertically
+    const mouseInPanel = mouse.y >= padding.top && mouse.y <= viewport.panelHeight + padding.top
+
+    if (!mouseInPanel) return
+
+    this.ctx.strokeStyle = this.colors.cross
+    this.ctx.lineWidth = 1
+    this.ctx.setLineDash([4, 4])
+
+    this.ctx.beginPath()
+    this.ctx.moveTo(padding.left, mouse.y)
+    this.ctx.lineTo(this.width - padding.right, mouse.y)
+    this.ctx.stroke()
+
+    this.ctx.setLineDash([])
+  }
+
+  // Draw price value label on Y-axis
+  // Called AFTER drawHorizontalCrosshair so label renders on top
   protected drawPriceValueLabel(
     mouse: { x: number; y: number },
     viewport: PanelViewport,

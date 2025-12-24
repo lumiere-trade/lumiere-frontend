@@ -33,13 +33,11 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
         ctx.scale(dpr, dpr)
       }
 
-      // Re-render after resize
       render()
     }
 
     updateCanvasSize()
 
-    // Watch for resize
     const observer = new ResizeObserver(() => {
       updateCanvasSize()
     })
@@ -49,7 +47,7 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
     return () => observer.disconnect()
   }, [containerHeight])
 
-  // Render crosshair
+  // Render ONLY vertical crosshair line
   const render = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
@@ -63,7 +61,7 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
     // Clear canvas
     ctx.clearRect(0, 0, width, height)
 
-    // Draw crosshair (both vertical and horizontal lines)
+    // Draw ONLY vertical crosshair line
     if (state.mouse) {
       const crossColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary').trim() || '#8b5cf6'
@@ -72,16 +70,10 @@ export function CrosshairOverlay({ containerHeight }: CrosshairOverlayProps) {
       ctx.lineWidth = 1
       ctx.setLineDash([4, 4])
 
-      // Vertical line (full height)
+      // ONLY vertical line (full height)
       ctx.beginPath()
       ctx.moveTo(state.mouse.x, 0)
       ctx.lineTo(state.mouse.x, height)
-      ctx.stroke()
-
-      // Horizontal line (full width)
-      ctx.beginPath()
-      ctx.moveTo(0, state.mouse.y)
-      ctx.lineTo(width, state.mouse.y)
       ctx.stroke()
 
       ctx.setLineDash([])

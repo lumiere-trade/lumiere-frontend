@@ -72,7 +72,12 @@ export class PricePanelRenderer extends PanelRenderer {
     // Draw Y-axis
     this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
 
-    // Draw price value label if mouse is present
+    // Draw horizontal crosshair BEFORE price label (so label renders on top)
+    if (mouse) {
+      this.drawHorizontalCrosshair(mouse, viewport, padding)
+    }
+
+    // Draw price value label if mouse is present (renders on top of crosshair)
     if (mouse) {
       this.drawPriceValueLabel(mouse, viewport, priceMin, priceMax, padding)
     }

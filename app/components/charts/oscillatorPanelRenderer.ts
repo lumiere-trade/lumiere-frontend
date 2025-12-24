@@ -18,7 +18,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     viewport: PanelViewport,
     config: PanelConfig,
     mouse: { x: number; y: number } | null,
-    trades?: Trade[]
+    trades?: any[]
   ) {
     this.updateColors()
 
@@ -69,7 +69,12 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     // Draw Y-axis
     this.drawYAxis(yMin, yMax, viewport.panelHeight, padding)
 
-    // Draw value label if mouse is present
+    // Draw horizontal crosshair BEFORE value label (so label renders on top)
+    if (mouse) {
+      this.drawHorizontalCrosshair(mouse, viewport, padding)
+    }
+
+    // Draw value label if mouse is present (renders on top of crosshair)
     if (mouse) {
       this.drawPriceValueLabel(mouse, viewport, yMin, yMax, padding)
     }
