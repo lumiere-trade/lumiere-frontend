@@ -138,12 +138,38 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     isResizing: null
   })
 
-  // Update panels when indicators change
+  // Update panels when indicators change - PRESERVE visibility state
   useEffect(() => {
-    setState(prev => ({
-      ...prev,
-      panels: initialPanels
-    }))
+    setState(prev => {
+      // Merge new indicator data with existing visibility state
+      const updatedPanels = initialPanels.map(newPanel => {
+        const existingPanel = prev.panels.find(p => p.id === newPanel.id)
+        
+        if (!existingPanel) {
+          // New panel - use default visibility
+          return newPanel
+        }
+
+        // Existing panel - preserve visibility state
+        const updatedIndicators = newPanel.indicators.map(newInd => {
+          const existingInd = existingPanel.indicators.find(i => i.name === newInd.name)
+          return existingInd 
+            ? { ...newInd, visible: existingInd.visible } // Preserve visibility
+            : newInd // New indicator - use default
+        })
+
+        return {
+          ...newPanel,
+          visible: existingPanel.visible, // Preserve panel visibility
+          indicators: updatedIndicators
+        }
+      })
+
+      return {
+        ...prev,
+        panels: updatedPanels
+      }
+    })
   }, [initialPanels])
 
   // Store candles ref for calculations
