@@ -16,6 +16,7 @@ import { Candle, Trade } from "@/components/charts/types"
 interface BacktestResultsProps {
   results: BacktestResponse
   onClose?: () => void
+  isTransitioning?: boolean
 }
 
 // Decimate data to max N points for performance
@@ -37,7 +38,7 @@ function decimateData<T>(data: T[], maxPoints: number = 300): T[] {
   return decimated
 }
 
-export const BacktestResults = memo(function BacktestResults({ results, onClose }: BacktestResultsProps) {
+export const BacktestResults = memo(function BacktestResults({ results, onClose, isTransitioning = false }: BacktestResultsProps) {
   const { metrics, equity_curve, trades, trade_analysis, market_data, indicator_data } = results
   const [activeTab, setActiveTab] = useState('price')
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
@@ -222,7 +223,19 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose 
                     : 'Price chart with buy/sell signals'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 relative">
+                {/* Blur overlay during transition - ONLY over chart */}
+                {isTransitioning && (
+                  <div 
+                    className="absolute inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-lg"
+                    style={{
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <div className="text-muted-foreground text-sm">Resizing charts...</div>
+                  </div>
+                )}
+
                 {/* Multi-Panel Chart - NO fixed height wrapper */}
                 {candles.length > 0 ? (
                   <MultiPanelChart

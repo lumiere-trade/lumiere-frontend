@@ -42,7 +42,7 @@ export function StrategyDetailsPanel({
   } = useChat()
   const runBacktestMutation = useRunBacktest()
 
-  // Transition state - freeze rendering
+  // Transition state - freeze chart rendering
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleRunBacktest = async () => {
@@ -275,21 +275,9 @@ export function StrategyDetailsPanel({
         </div>
 
         {/* Scrollable content area */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 relative ${
+        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
-          {/* Blur overlay during transition - ONLY on backtest tab with charts */}
-          {isTransitioning && activeTab === 'backtest' && backtestResults && (
-            <div 
-              className="absolute inset-0 z-50 bg-background/60 backdrop-blur-sm flex items-center justify-center"
-              style={{
-                pointerEvents: 'none',
-              }}
-            >
-              <div className="text-muted-foreground text-sm">Resizing...</div>
-            </div>
-          )}
-
           {activeTab === 'parameters' && (
             <StrategyParameters
               hideActions={true}
@@ -321,8 +309,8 @@ export function StrategyDetailsPanel({
                   </Button>
                 </div>
               )}
-              {!isBacktesting && backtestResults && !isTransitioning && (
-                <BacktestResults results={backtestResults} />
+              {!isBacktesting && backtestResults && (
+                <BacktestResults results={backtestResults} isTransitioning={isTransitioning} />
               )}
             </div>
           )}
