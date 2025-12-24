@@ -50,9 +50,10 @@ interface Props {
   trades: Trade[]
   children: React.ReactNode
   containerWidth: number
+  onVisibilityChange?: (visibility: Record<string, boolean>) => void
 }
 
-export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth }: Props) {
+export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, onVisibilityChange }: Props) {
   // Initialize shared viewport - show LAST candles (newest data)
   const candleWidth = 8
   const visibleCandles = Math.floor(containerWidth / candleWidth)
@@ -144,7 +145,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       // Merge new indicator data with existing visibility state
       const updatedPanels = initialPanels.map(newPanel => {
         const existingPanel = prev.panels.find(p => p.id === newPanel.id)
-        
+
         if (!existingPanel) {
           // New panel - use default visibility
           return newPanel
@@ -153,7 +154,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
         // Existing panel - preserve visibility state
         const updatedIndicators = newPanel.indicators.map(newInd => {
           const existingInd = existingPanel.indicators.find(i => i.name === newInd.name)
-          return existingInd 
+          return existingInd
             ? { ...newInd, visible: existingInd.visible } // Preserve visibility
             : newInd // New indicator - use default
         })
@@ -352,9 +353,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
   // Toggle indicator - auto show/hide panel based on visible indicators
   const toggleIndicator = useCallback((indicatorName: string, panelId: string) => {
-    setState(prev => ({
-      ...prev,
-      panels: prev.panels.map(p => {
+    setState(prev => {
+      const newPanels = prev.panels.map(p => {
         if (p.id === panelId) {
           const updatedIndicators = p.indicators.map(i => {
             if (i.name === indicatorName) {
@@ -376,8 +376,24 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
         }
         return p
       })
-    }))
-  }, [])
+
+      // Call callback with new visibility state
+      if (onVisibilityChange) {
+        const visibility: Record<string, boolean> = {}
+        newPanels.forEach(panel => {
+          panel.indicators.forEach(ind => {
+            visibility[ind.name] = ind.visible
+          })
+        })
+        onVisibilityChange(visibility)
+      }
+
+      return {
+        ...prev,
+        panels: newPanels
+      }
+    })
+  }, [onVisibilityChange])
 
   // Mouse tracking
   const updateMouse = useCallback((x: number, y: number, panelId: string) => {

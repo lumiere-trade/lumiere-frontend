@@ -18,6 +18,8 @@ interface MultiPanelChartProps {
   indicatorData: IndicatorData[]
   mode?: 'L' | 'C'
   showIndicatorToggles?: boolean
+  initialVisibility?: Record<string, boolean> // indicator name -> visible state
+  onVisibilityChange?: (visibility: Record<string, boolean>) => void
 }
 
 const PANEL_GAP = 10 // px gap between panels
@@ -210,7 +212,9 @@ export function MultiPanelChart({
   trades,
   indicatorData,
   mode = 'C',
-  showIndicatorToggles = true
+  showIndicatorToggles = true,
+  initialVisibility,
+  onVisibilityChange
 }: MultiPanelChartProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = React.useState(800)
@@ -231,13 +235,13 @@ export function MultiPanelChart({
     return () => observer.disconnect()
   }, [])
 
-  // Transform indicator data to Indicator format
+  // Transform indicator data to Indicator format with initial visibility
   const indicators: Indicator[] = useMemo(() => {
     return indicatorData.map((ind, idx) => {
       return {
         name: ind.name,
         color: assignIndicatorColor(idx),
-        visible: true,
+        visible: initialVisibility?.[ind.name] ?? true, // Use provided visibility or default to true
         points: ind.values.map((val, i) => ({
           t: i,
           v: val.value
@@ -245,7 +249,7 @@ export function MultiPanelChart({
         type: 'line'
       }
     })
-  }, [indicatorData])
+  }, [indicatorData, initialVisibility])
 
   return (
     <div ref={containerRef} className="w-full">
@@ -254,6 +258,7 @@ export function MultiPanelChart({
         indicators={indicators}
         containerWidth={containerWidth}
         trades={trades}
+        onVisibilityChange={onVisibilityChange}
       >
         <MultiPanelChartInner showIndicatorToggles={showIndicatorToggles} />
       </SharedViewportProvider>

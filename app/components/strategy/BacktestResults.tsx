@@ -43,6 +43,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
   const [activeTab, setActiveTab] = useState('price')
   const [expandedTrade, setExpandedTrade] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [indicatorVisibility, setIndicatorVisibility] = useState<Record<string, boolean>>({})
   const tradesPerPage = 15
 
   const normalizedMetrics = useMemo(() => ({
@@ -232,6 +233,8 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                     indicatorData={indicator_data || []}
                     mode="C"
                     showIndicatorToggles={true}
+                    initialVisibility={indicatorVisibility}
+                    onVisibilityChange={setIndicatorVisibility}
                   />
                 )}
 
