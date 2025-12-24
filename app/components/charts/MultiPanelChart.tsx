@@ -59,15 +59,12 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
         top: currentTop,
         height: pixelHeight
       }
-      // DEBUG: Log panel layout calculation
-      console.log(`[MultiPanel] ${panel.id}: top=${currentTop}, height=${pixelHeight}`)
 
       // Add HEADER + canvas + gap for next panel
       currentTop += PANEL_HEADER_HEIGHT + pixelHeight + PANEL_GAP
       return layout
     })
 
-    console.log(`[MultiPanel] Total panels: ${layouts.length}, container height: ${containerHeight}`)
     return layouts
   }, [state.panels, containerHeight])
 
@@ -119,11 +116,6 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     const rect = wrapper.getBoundingClientRect()
     const x = e.clientX - rect.left
     const y = e.clientY - rect.top
-
-    // DEBUG: Log mouse tracking
-    console.log(`[MultiPanel Mouse] clientX=${e.clientX}, clientY=${e.clientY}`)
-    console.log(`[MultiPanel Mouse] wrapperRect.left=${rect.left}, wrapperRect.top=${rect.top}`)
-    console.log(`[MultiPanel Mouse] calculated x=${x}, y=${y}`)
 
     updateMouse(x, y, 'wrapper')
 
