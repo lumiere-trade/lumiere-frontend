@@ -6,7 +6,7 @@ import { priceToY, indexToX, findCandleIndex } from './chartUtils'
 function getPadding(width: number) {
   return {
     top: 5,
-    right: Math.max(70, width * 0.08),
+    right: Math.max(58, width * 0.075),
     bottom: 5,
     left: Math.max(15, width * 0.02)
   }
