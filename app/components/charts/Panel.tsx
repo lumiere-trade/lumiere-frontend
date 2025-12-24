@@ -26,9 +26,9 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
   const animationFrameRef = useRef<number>()
   const [themeVersion, setThemeVersion] = useState(0)
 
-  // Calculate hovered candle for OHLC display
+  // Calculate hovered candle for OHLC/Volume display
   const hoveredCandle = useMemo(() => {
-    if (!state.mouse || candles.length === 0 || config.type !== 'price') return null
+    if (!state.mouse || candles.length === 0) return null
     if (!containerRef.current) return null
 
     // Check if mouse is within this panel vertically
@@ -52,7 +52,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     if (candleIdx < 0 || candleIdx >= candles.length) return null
 
     return candles[candleIdx]
-  }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight, config.type])
+  }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight])
 
   // Render function
   const renderChart = useCallback(() => {
@@ -260,15 +260,16 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
                 {hoveredCandle.c.toFixed(2)}
               </span>
             </div>
-            {/* Volume */}
-            {hoveredCandle.v !== undefined && (
-              <div className="flex items-center gap-1 ml-1 pl-2 border-l border-border">
-                <span className="text-muted-foreground">Vol</span>
-                <span className="text-foreground w-24 text-right">
-                  {hoveredCandle.v.toLocaleString()}
-                </span>
-              </div>
-            )}
+          </div>
+        )}
+
+        {/* Volume data - only for volume panel when hovering */}
+        {config.type === 'volume' && hoveredCandle && hoveredCandle.v !== undefined && (
+          <div className="flex items-center gap-1 text-sm font-mono">
+            <span className="text-muted-foreground">Vol</span>
+            <span className="text-foreground w-24 text-right">
+              {hoveredCandle.v.toLocaleString()}
+            </span>
           </div>
         )}
 
