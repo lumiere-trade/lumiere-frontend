@@ -12,19 +12,20 @@ interface GroupedIndicator {
   panelId: string
   panelTitle: string
   isGrouped: boolean
-  groupType?: 'bollinger' | 'macd' | 'volume'
+  groupType?: 'bollinger' | 'macd' | 'volume' | 'stochastic'
   groupNames?: string[]
 }
 
 export function IndicatorTogglePanel() {
   const { state, toggleIndicator } = useSharedViewport()
 
-  // Group indicators (Bollinger, MACD, Volume as groups)
+  // Group indicators (Bollinger, MACD, Volume, Stochastic as groups)
   const groupedIndicators = useMemo(() => {
     const indicators: GroupedIndicator[] = []
     const bollingerGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
     const macdGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
     const volumeGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
+    const stochasticGroups = new Map<string, { indicators: any[]; panelId: string; panelTitle: string }>()
 
     state.panels.forEach(panel => {
       panel.indicators.forEach(ind => {
@@ -57,6 +58,20 @@ export function IndicatorTogglePanel() {
           }
 
           macdGroups.get(baseName)!.indicators.push(ind)
+        }
+        // Check if Stochastic indicator
+        else if (name.includes('stochastic')) {
+          const baseName = name.replace(/_k|_d/g, '')
+
+          if (!stochasticGroups.has(baseName)) {
+            stochasticGroups.set(baseName, {
+              indicators: [],
+              panelId: panel.id,
+              panelTitle: panel.title
+            })
+          }
+
+          stochasticGroups.get(baseName)!.indicators.push(ind)
         }
         // Check if Volume indicator (volume or volume_sma_*)
         else if (name.startsWith('volume')) {
@@ -121,6 +136,25 @@ export function IndicatorTogglePanel() {
         panelTitle: group.panelTitle,
         isGrouped: true,
         groupType: 'macd',
+        groupNames: group.indicators.map(ind => ind.name)
+      })
+    })
+
+    // Add Stochastic groups
+    stochasticGroups.forEach((group, baseName) => {
+      const firstInd = group.indicators[0]
+      const displayName = baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      const anyVisible = group.indicators.some(ind => ind.visible)
+
+      indicators.push({
+        name: baseName,
+        displayName,
+        color: firstInd.color,
+        visible: anyVisible,
+        panelId: group.panelId,
+        panelTitle: group.panelTitle,
+        isGrouped: true,
+        groupType: 'stochastic',
         groupNames: group.indicators.map(ind => ind.name)
       })
     })
