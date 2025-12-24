@@ -34,8 +34,13 @@ export abstract class PanelRenderer {
     if (!ctx) throw new Error('Failed to get canvas context')
 
     this.ctx = ctx
-    this.width = canvas.width
-    this.height = canvas.height
+    
+    // FIXED: Use LOGICAL width/height (after DPR scaling)
+    // canvas.width is physical pixels (e.g. 1606 on 2.5x display)
+    // But ctx is already scaled, so we need logical pixels (e.g. 643)
+    const dpr = window.devicePixelRatio || 1
+    this.width = canvas.width / dpr
+    this.height = canvas.height / dpr
 
     // Initialize colors from CSS variables
     this.colors = this.getColors()
@@ -149,16 +154,16 @@ export abstract class PanelRenderer {
     for (let i = 0; i <= 5; i++) {
       const value = yMin + (yStep * i)
       const y = this.valueToY(value, yMin, yMax, panelHeight, padding.top)
-      
+
       const text = formatter(value)
       const xPos = this.width - padding.right + 5
-      
+
       // DEBUG: Draw bounding box around text
       const metrics = this.ctx.measureText(text)
       this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)'
       this.ctx.lineWidth = 1
       this.ctx.strokeRect(xPos, y - 6, metrics.width, 12)
-      
+
       // DEBUG: Draw green line where right padding starts
       this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.8)'
       this.ctx.beginPath()
@@ -170,7 +175,7 @@ export abstract class PanelRenderer {
       this.ctx.fillStyle = this.colors.text
       this.ctx.fillText(text, xPos, y)
     }
-    
+
     // DEBUG: Draw canvas boundary
     this.ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)'
     this.ctx.lineWidth = 2
