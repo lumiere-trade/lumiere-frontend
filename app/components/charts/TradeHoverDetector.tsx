@@ -58,7 +58,7 @@ export const TradeHoverDetector = memo(function TradeHoverDetector({
     priceMax += priceRange * 0.05
 
     const arrowSize = 8
-    const hitRadius = 12 // Slightly larger than arrow for easier hovering
+    const hitBoxWidth = 18
 
     // Check each trade
     for (const trade of trades) {
@@ -70,16 +70,22 @@ export const TradeHoverDetector = memo(function TradeHoverDetector({
       const x = indexToX(tradeIdx, candleWidth, offsetX, padding.left, startIdx)
       const yPrice = priceToY(trade.p, priceMin, priceMax, panelHeight, padding.top)
 
-      // Arrow position (below for BUY, above for SELL)
+      // Arrow center position (below for BUY, above for SELL)
       const isBuy = trade.s === 'B'
       const yArrow = isBuy ? yPrice + 15 : yPrice - 15
 
-      // Check if mouse is within hit radius of arrow
-      const dx = mouseX - x
-      const dy = mouseY - yArrow - panelTop // Adjust for panel position
-      const distance = Math.sqrt(dx * dx + dy * dy)
+      // Arrow occupies from (yArrow - arrowSize) to (yArrow + arrowSize)
+      const arrowTop = yArrow - arrowSize
+      const arrowBottom = yArrow + arrowSize
 
-      if (distance <= hitRadius) {
+      // Convert mouse Y to canvas coordinates
+      const canvasMouseY = mouseY - panelTop
+
+      // Check if mouse is within rectangular hit box
+      const withinX = Math.abs(mouseX - x) <= hitBoxWidth / 2
+      const withinY = canvasMouseY >= arrowTop && canvasMouseY <= arrowBottom
+
+      if (withinX && withinY) {
         setHoveredTrade(trade)
         return
       }
@@ -98,5 +104,5 @@ export const TradeHoverDetector = memo(function TradeHoverDetector({
     }
   }, [state.mouse, detectHoveredTrade, setHoveredTrade])
 
-  return null // This is a logic-only component
+  return null
 })
