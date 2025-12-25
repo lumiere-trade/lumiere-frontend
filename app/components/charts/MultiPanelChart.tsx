@@ -8,6 +8,7 @@ import { VolumePanel } from './VolumePanel'
 import { IndicatorTogglePanel } from './IndicatorTogglePanel'
 import { DateAxisStrip } from './DateAxisStrip'
 import { CrosshairOverlay } from './CrosshairOverlay'
+import { TradeTooltip } from './TradeTooltip'
 import { Candle, Trade, Indicator } from './types'
 import { assignIndicatorColor } from './chartUtils'
 import { IndicatorData } from '@/lib/api/cartographe'
@@ -18,20 +19,29 @@ interface MultiPanelChartProps {
   indicatorData: IndicatorData[]
   mode?: 'L' | 'C'
   showIndicatorToggles?: boolean
-  initialVisibility?: Record<string, boolean> // indicator name -> visible state
+  initialVisibility?: Record<string, boolean>
   onVisibilityChange?: (visibility: Record<string, boolean>) => void
 }
 
-const PANEL_GAP = 10 // px gap between panels
-const PANEL_HEADER_HEIGHT = 18 // px height of panel header (title + OHLC/eye)
-const BASE_PANEL_HEIGHT = 350 // Base height for price panel
-const SECONDARY_PANEL_HEIGHT = 150 // Height for volume/oscillator panels
+const PANEL_GAP = 10
+const PANEL_HEADER_HEIGHT = 18
+const BASE_PANEL_HEIGHT = 350
+const SECONDARY_PANEL_HEIGHT = 150
 
 // Inner component that uses the context
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const { state, handleZoom, handlePan, handleReset, setDragging, updateMouse, clearMouse } = useSharedViewport()
+  const { 
+    state, 
+    hoveredTrade,
+    handleZoom, 
+    handlePan, 
+    handleReset, 
+    setDragging, 
+    updateMouse, 
+    clearMouse 
+  } = useSharedViewport()
 
   // Calculate dynamic container height based on visible panels
   const containerHeight = useMemo(() => {
@@ -40,18 +50,18 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     const secondaryPanels = visiblePanels.filter(p => p.type !== 'price')
 
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
-    const totalHeaders = visiblePanels.length * PANEL_HEADER_HEIGHT // FIXED: Add headers
+    const totalHeaders = visiblePanels.length * PANEL_HEADER_HEIGHT
     const baseHeight = pricePanel ? BASE_PANEL_HEIGHT : 0
     const secondaryHeight = secondaryPanels.length * SECONDARY_PANEL_HEIGHT
 
-    return baseHeight + secondaryHeight + totalGaps + totalHeaders // FIXED: Include headers
+    return baseHeight + secondaryHeight + totalGaps + totalHeaders
   }, [state.panels])
 
-  // Calculate panel positions - panelTop now includes ALL visual heights (header + canvas + gap)
+  // Calculate panel positions
   const panelLayout = useMemo(() => {
     const visiblePanels = state.panels.filter(p => p.visible)
     const totalGaps = (visiblePanels.length - 1) * PANEL_GAP
-    const availableHeight = containerHeight - totalGaps - (visiblePanels.length * PANEL_HEADER_HEIGHT) // FIXED: Subtract headers from available
+    const availableHeight = containerHeight - totalGaps - (visiblePanels.length * PANEL_HEADER_HEIGHT)
     const totalHeight = visiblePanels.reduce((sum, p) => sum + p.height, 0)
 
     let currentTop = 0
@@ -63,7 +73,6 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
         height: pixelHeight
       }
 
-      // Add HEADER + canvas + gap for next panel
       currentTop += PANEL_HEADER_HEIGHT + pixelHeight + PANEL_GAP
       return layout
     })
@@ -111,7 +120,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     setDragging(true)
   }, [setDragging])
 
-  // Mouse tracking for wrapper (chart + date strip)
+  // Mouse tracking for wrapper
   const handleWrapperMouseMove = useCallback((e: React.MouseEvent) => {
     const wrapper = wrapperRef.current
     if (!wrapper) return
@@ -122,7 +131,6 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 
     updateMouse(x, y, 'wrapper')
 
-    // Handle pan if dragging
     if (state.isDragging) {
       handlePan(e.movementX)
     }
@@ -137,17 +145,31 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     clearMouse()
   }, [setDragging, clearMouse])
 
+  // Calculate tooltip position
+  const tooltipPosition = useMemo(() => {
+    if (!hoveredTrade || !state.mouse || !containerRef.current) return null
+
+    const rect = containerRef.current.getBoundingClientRect()
+    
+    return {
+      x: state.mouse.x,
+      y: state.mouse.y,
+      canvasWidth: rect.width,
+      canvasHeight: containerHeight
+    }
+  }, [hoveredTrade, state.mouse, containerHeight])
+
   return (
     <div className="flex flex-col">
-      {/* Chart Container + DateAxisStrip as single visual unit with mouse tracking */}
+      {/* Chart Container + DateAxisStrip */}
       <div
         ref={wrapperRef}
-        className="bg-background rounded-lg overflow-hidden"
+        className="bg-background rounded-lg overflow-hidden relative"
         style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
         onMouseMove={handleWrapperMouseMove}
         onMouseLeave={handleMouseLeave}
       >
-        {/* Chart Container with DYNAMIC height */}
+        {/* Chart Container */}
         <div
           ref={containerRef}
           className="relative w-full transition-all duration-300"
@@ -188,15 +210,26 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
             return null
           })}
 
-          {/* Crosshair Overlay - spans all panels including gaps */}
+          {/* Crosshair Overlay */}
           <CrosshairOverlay containerHeight={containerHeight} />
+          
+          {/* Trade Tooltip Overlay */}
+          {hoveredTrade && tooltipPosition && (
+            <TradeTooltip
+              trade={hoveredTrade}
+              x={tooltipPosition.x}
+              y={tooltipPosition.y}
+              canvasWidth={tooltipPosition.canvasWidth}
+              canvasHeight={tooltipPosition.canvasHeight}
+            />
+          )}
         </div>
 
-        {/* Date Axis Strip - part of chart visual unit */}
+        {/* Date Axis Strip */}
         <DateAxisStrip />
       </div>
 
-      {/* Indicator Toggle Panel - separate below */}
+      {/* Indicator Toggle Panel */}
       {showIndicatorToggles && (
         <div className="mt-3">
           <IndicatorTogglePanel />
@@ -235,13 +268,13 @@ export function MultiPanelChart({
     return () => observer.disconnect()
   }, [])
 
-  // Transform indicator data to Indicator format with initial visibility
+  // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
     return indicatorData.map((ind, idx) => {
       return {
         name: ind.name,
         color: assignIndicatorColor(idx),
-        visible: initialVisibility?.[ind.name] ?? true, // Use provided visibility or default to true
+        visible: initialVisibility?.[ind.name] ?? true,
         points: ind.values.map((val, i) => ({
           t: i,
           v: val.value
