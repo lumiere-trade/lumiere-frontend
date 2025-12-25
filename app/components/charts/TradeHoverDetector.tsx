@@ -58,7 +58,10 @@ export const TradeHoverDetector = memo(function TradeHoverDetector({
     priceMax += priceRange * 0.05
 
     const arrowSize = 8
-    const hitBoxWidth = 18
+    const hitBoxWidth = 20 // Увеличен за по-лесно hovering
+
+    // HEADER offset - важно!
+    const PANEL_HEADER_HEIGHT = 18
 
     // Check each trade
     for (const trade of trades) {
@@ -78,14 +81,26 @@ export const TradeHoverDetector = memo(function TradeHoverDetector({
       const arrowTop = yArrow - arrowSize
       const arrowBottom = yArrow + arrowSize
 
-      // Convert mouse Y to canvas coordinates
-      const canvasMouseY = mouseY - panelTop
+      // Mouse Y relative to canvas (subtract panelTop AND header)
+      const canvasMouseY = mouseY - panelTop - PANEL_HEADER_HEIGHT
 
       // Check if mouse is within rectangular hit box
       const withinX = Math.abs(mouseX - x) <= hitBoxWidth / 2
       const withinY = canvasMouseY >= arrowTop && canvasMouseY <= arrowBottom
 
       if (withinX && withinY) {
+        console.log('Trade detected!', {
+          trade: trade.s,
+          mouseX,
+          mouseY,
+          canvasMouseY,
+          arrowTop,
+          arrowBottom,
+          x,
+          yArrow,
+          withinX,
+          withinY
+        })
         setHoveredTrade(trade)
         return
       }
