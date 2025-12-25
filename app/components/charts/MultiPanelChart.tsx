@@ -32,16 +32,23 @@ const SECONDARY_PANEL_HEIGHT = 150
 function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorToggles?: boolean }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const { 
-    state, 
+  const {
+    state,
     hoveredTrade,
-    handleZoom, 
-    handlePan, 
-    handleReset, 
-    setDragging, 
-    updateMouse, 
-    clearMouse 
+    handleZoom,
+    handlePan,
+    handleReset,
+    setDragging,
+    updateMouse,
+    clearMouse
   } = useSharedViewport()
+
+  // Calculate cursor style based on state
+  const cursorStyle = useMemo(() => {
+    if (state.isDragging) return 'grabbing'
+    if (hoveredTrade) return 'pointer'
+    return 'crosshair'
+  }, [state.isDragging, hoveredTrade])
 
   // Calculate dynamic container height based on visible panels
   const containerHeight = useMemo(() => {
@@ -150,7 +157,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
     if (!hoveredTrade || !state.mouse || !containerRef.current) return null
 
     const rect = containerRef.current.getBoundingClientRect()
-    
+
     return {
       x: state.mouse.x,
       y: state.mouse.y,
@@ -165,7 +172,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
       <div
         ref={wrapperRef}
         className="bg-background rounded-lg overflow-hidden relative"
-        style={{ cursor: state.isDragging ? 'grabbing' : 'crosshair' }}
+        style={{ cursor: cursorStyle }}
         onMouseMove={handleWrapperMouseMove}
         onMouseLeave={handleMouseLeave}
       >
@@ -212,7 +219,7 @@ function MultiPanelChartInner({ showIndicatorToggles = true }: { showIndicatorTo
 
           {/* Crosshair Overlay */}
           <CrosshairOverlay containerHeight={containerHeight} />
-          
+
           {/* Trade Tooltip Overlay */}
           {hoveredTrade && tooltipPosition && (
             <TradeTooltip
