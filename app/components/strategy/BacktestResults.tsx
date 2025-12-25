@@ -12,6 +12,8 @@ import { format } from "date-fns"
 import { MultiPanelChart } from "@/components/charts/MultiPanelChart"
 import { EquityCurve, DrawdownChart, PnLChart } from "@/components/charts"
 import { Candle, Trade } from "@/components/charts/types"
+import { TradeReasonBadge } from "./TradeReasonBadge"
+import { TradeAnalyticsSummary } from "./TradeAnalyticsSummary"
 
 interface BacktestResultsProps {
   results: BacktestResponse
@@ -85,12 +87,16 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
     }))
   }, [market_data])
 
-  // Transform trades to Trade format - USE TIMESTAMP not index
+  // Transform trades to Trade format - WITH detailed reasons and indicators
   const chartTrades: Trade[] = useMemo(() => {
     return trades.map((trade) => ({
       t: new Date(trade.timestamp).getTime(),
       p: trade.price,
-      s: trade.side === 'BUY' ? 'B' : 'S'
+      s: trade.side === 'BUY' ? 'B' : 'S',
+      reason: trade.reason,
+      indicators: trade.indicators,
+      pnl: trade.pnl,
+      pnl_pct: trade.pnl_pct
     }))
   }, [trades])
 
@@ -203,6 +209,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
         </Card>
       </div>
 
+      {/* Trade Analytics Summary - NEW */}
+      <TradeAnalyticsSummary trades={trades} />
+
       {/* Charts */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
@@ -261,7 +270,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Trade Execution Details</CardTitle>
-                    <CardDescription>Complete trade history with indicator values</CardDescription>
+                    <CardDescription>Complete trade history with detailed reasons and indicator values</CardDescription>
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Showing {((currentPage - 1) * tradesPerPage) + 1}-{Math.min(currentPage * tradesPerPage, trades.length)} of {trades.length} trades
@@ -280,7 +289,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                         <TableHead className="w-[100px] text-right">Quantity</TableHead>
                         <TableHead className="w-[110px] text-right">Value</TableHead>
                         <TableHead className="w-[100px] text-right">PnL</TableHead>
-                        <TableHead className="w-[120px]">Reason</TableHead>
+                        <TableHead className="w-[200px]">Reason</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -318,8 +327,13 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                               <TableCell className={`w-[100px] text-right font-mono text-sm ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
                                 {trade.pnl !== null && trade.pnl !== undefined ? `$${trade.pnl.toFixed(2)}` : '-'}
                               </TableCell>
-                              <TableCell className="w-[120px] text-sm text-muted-foreground">
-                                {trade.reason}
+                              <TableCell className="w-[200px]">
+                                {/* Enhanced with TradeReasonBadge */}
+                                <TradeReasonBadge 
+                                  reason={trade.reason} 
+                                  side={trade.side}
+                                  compact
+                                />
                               </TableCell>
                             </TableRow>
                             {isExpanded && hasIndicators && (

@@ -11,6 +11,10 @@ export interface Trade {
   t: number  // timestamp
   p: number  // price
   s: 'B' | 'S'  // side (B=buy, S=sell)
+  reason?: string  // NEW: Detailed reason for trade
+  indicators?: Record<string, number>  // NEW: Indicator values at trade time
+  pnl?: number  // NEW: Profit/loss for exits
+  pnl_pct?: number  // NEW: P&L percentage for exits
 }
 
 export interface IndicatorPoint {
