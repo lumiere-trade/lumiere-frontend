@@ -20,6 +20,9 @@ export const TradeTooltip = memo(function TradeTooltip({
   canvasHeight
 }: TradeTooltipProps) {
   
+  // Offset tooltip away from arrow
+  const TOOLTIP_OFFSET = 30
+  
   // Position tooltip above or below based on space
   const showAbove = y > canvasHeight / 2
   const showLeft = x > canvasWidth / 2
@@ -49,53 +52,57 @@ export const TradeTooltip = memo(function TradeTooltip({
     <div 
       className="absolute z-50 pointer-events-none"
       style={{
-        left: showLeft ? x - 320 : x + 20,
-        top: showAbove ? y - 200 : y + 20,
+        left: showLeft ? x - 320 - TOOLTIP_OFFSET : x + TOOLTIP_OFFSET,
+        top: showAbove ? y - 220 - TOOLTIP_OFFSET : y + TOOLTIP_OFFSET,
       }}
     >
       <div className="bg-background border-2 border-primary/20 rounded-lg shadow-xl p-4 w-80 backdrop-blur-sm">
         {/* Header */}
         <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
-          <span className="text-xl">{tradeType.icon}</span>
+          <span className="text-2xl">{tradeType.icon}</span>
           <div className="flex-1">
-            <div className={`inline-block px-2 py-0.5 rounded text-white text-xs font-semibold ${tradeType.color}`}>
+            <div className={`inline-block px-2.5 py-1 rounded text-white text-sm font-semibold ${tradeType.color}`}>
               {tradeType.label}
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="text-sm text-muted-foreground font-medium">
             {format(new Date(trade.t), 'MMM dd, HH:mm')}
           </div>
         </div>
         
         {/* Reason */}
         <div className="mb-3">
-          <div className="text-xs font-semibold text-muted-foreground mb-1">Reason:</div>
+          <div className="text-sm font-semibold text-muted-foreground mb-1.5">Reason:</div>
           {hasMultipleConditions ? (
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {conditions.map((condition, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-xs">
-                  <span className="text-primary mt-0.5">✓</span>
-                  <span className="text-foreground">{condition.trim()}</span>
+                <li key={idx} className="flex items-start gap-2 text-sm">
+                  <span className="text-primary mt-0.5 font-bold">✓</span>
+                  <span className="text-foreground font-medium">{condition.trim()}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-foreground">{trade.reason || 'Signal'}</p>
+            <p className="text-sm text-foreground font-medium">{trade.reason || 'Signal'}</p>
           )}
         </div>
         
         {/* Price Info */}
-        <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+        <div className="grid grid-cols-2 gap-3 mb-3 text-sm">
           <div>
-            <div className="text-muted-foreground">Price</div>
-            <div className="font-mono font-semibold">${trade.p.toFixed(2)}</div>
+            <div className="text-muted-foreground font-medium mb-0.5">Price</div>
+            <div className="font-mono font-bold text-base">${trade.p.toFixed(2)}</div>
           </div>
           {trade.pnl !== undefined && trade.pnl !== null && (
             <div>
-              <div className="text-muted-foreground">P&L</div>
-              <div className={`font-mono font-semibold ${trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              <div className="text-muted-foreground font-medium mb-0.5">P&L</div>
+              <div className={`font-mono font-bold text-base ${trade.pnl >= 0 ? 'text-green-500' : 'text-red-500'}`}>
                 {trade.pnl >= 0 ? '+' : ''}${trade.pnl.toFixed(2)}
-                {trade.pnl_pct !== undefined && ` (${trade.pnl_pct >= 0 ? '+' : ''}${trade.pnl_pct.toFixed(1)}%)`}
+                {trade.pnl_pct !== undefined && (
+                  <span className="text-sm ml-1">
+                    ({trade.pnl_pct >= 0 ? '+' : ''}{trade.pnl_pct.toFixed(1)}%)
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -103,18 +110,20 @@ export const TradeTooltip = memo(function TradeTooltip({
         
         {/* Top Indicators */}
         {trade.indicators && Object.keys(trade.indicators).length > 0 && (
-          <div className="border-t border-border pt-2">
-            <div className="text-xs font-semibold text-muted-foreground mb-2">Key Indicators:</div>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="border-t border-border pt-3">
+            <div className="text-sm font-semibold text-muted-foreground mb-2">Key Indicators:</div>
+            <div className="grid grid-cols-2 gap-2.5">
               {Object.entries(trade.indicators).slice(0, 4).map(([name, value]) => (
-                <div key={name} className="text-xs">
-                  <div className="text-muted-foreground truncate">{name.replace(/_/g, ' ').toUpperCase()}</div>
-                  <div className="font-mono font-medium">{value.toFixed(2)}</div>
+                <div key={name} className="text-sm">
+                  <div className="text-muted-foreground truncate font-medium mb-0.5">
+                    {name.replace(/_/g, ' ').toUpperCase()}
+                  </div>
+                  <div className="font-mono font-bold text-base">{value.toFixed(2)}</div>
                 </div>
               ))}
             </div>
             {Object.keys(trade.indicators).length > 4 && (
-              <div className="text-xs text-muted-foreground mt-1">
+              <div className="text-sm text-muted-foreground mt-2 font-medium">
                 +{Object.keys(trade.indicators).length - 4} more
               </div>
             )}
