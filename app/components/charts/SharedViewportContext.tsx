@@ -8,6 +8,7 @@ interface SharedViewportContextValue {
   state: MultiPanelState
   candles: Candle[]
   trades: Trade[]
+  hoveredTrade: Trade | null
 
   // Viewport controls (synchronized across panels)
   handleZoom: (delta: number, mouseX: number) => void
@@ -32,6 +33,9 @@ interface SharedViewportContextValue {
 
   // Dragging state
   setDragging: (dragging: boolean) => void
+  
+  // Trade hover tracking
+  setHoveredTrade: (trade: Trade | null) => void
 }
 
 const SharedViewportContext = createContext<SharedViewportContextValue | null>(null)
@@ -142,6 +146,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     isDragging: false,
     isResizing: null
   })
+  
+  const [hoveredTrade, setHoveredTrade] = useState<Trade | null>(null)
 
   // Update panels when indicators change - PRESERVE visibility state
   useEffect(() => {
@@ -426,6 +432,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     state,
     candles,
     trades,
+    hoveredTrade,
     handleZoom,
     handlePan,
     handleReset,
@@ -439,7 +446,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     toggleIndicator,
     updateMouse,
     clearMouse,
-    setDragging
+    setDragging,
+    setHoveredTrade
   }
 
   return (

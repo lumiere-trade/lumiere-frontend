@@ -36,7 +36,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Stop Loss - Red
     if (lowerReason.includes('stop loss')) {
       return {
-        icon: <StopCircle className="h-3.5 w-3.5" />,
+        icon: <StopCircle className="h-4 w-4" />,
         variant: "destructive",
         label: "Stop Loss"
       }
@@ -45,7 +45,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Take Profit - Green
     if (lowerReason.includes('take profit')) {
       return {
-        icon: <Target className="h-3.5 w-3.5" />,
+        icon: <Target className="h-4 w-4" />,
         variant: "success",
         label: "Take Profit"
       }
@@ -54,7 +54,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Crossover Entry - Blue (BUY)
     if (lowerReason.includes('crosses above') || lowerReason.includes('crosses_above')) {
       return {
-        icon: <ArrowUpCircle className="h-3.5 w-3.5" />,
+        icon: <ArrowUpCircle className="h-4 w-4" />,
         variant: "default",
         label: "Entry Signal"
       }
@@ -63,7 +63,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Crossover Exit - Orange (SELL)
     if (lowerReason.includes('crosses below') || lowerReason.includes('crosses_below')) {
       return {
-        icon: <ArrowDownCircle className="h-3.5 w-3.5" />,
+        icon: <ArrowDownCircle className="h-4 w-4" />,
         variant: "warning",
         label: "Exit Signal"
       }
@@ -72,7 +72,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Rising/Falling indicators
     if (lowerReason.includes('rising')) {
       return {
-        icon: <TrendingUp className="h-3.5 w-3.5" />,
+        icon: <TrendingUp className="h-4 w-4" />,
         variant: "default",
         label: "Rising"
       }
@@ -80,7 +80,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     
     if (lowerReason.includes('falling')) {
       return {
-        icon: <TrendingDown className="h-3.5 w-3.5" />,
+        icon: <TrendingDown className="h-4 w-4" />,
         variant: "warning",
         label: "Falling"
       }
@@ -89,7 +89,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     // Generic entry/exit
     if (side === 'BUY') {
       return {
-        icon: <Activity className="h-3.5 w-3.5" />,
+        icon: <Activity className="h-4 w-4" />,
         variant: "default",
         label: "Entry"
       }
@@ -97,7 +97,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     
     if (side === 'SELL') {
       return {
-        icon: <Activity className="h-3.5 w-3.5" />,
+        icon: <Activity className="h-4 w-4" />,
         variant: "secondary",
         label: "Exit"
       }
@@ -105,7 +105,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     
     // Fallback
     return {
-      icon: <Activity className="h-3.5 w-3.5" />,
+      icon: <Activity className="h-4 w-4" />,
       variant: "secondary",
       label: "Signal"
     }
@@ -117,7 +117,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     return (
       <Badge 
         variant={style.variant}
-        className="gap-1.5 text-xs font-medium px-2.5 py-1"
+        className="gap-2 text-sm font-medium px-3 py-1.5"
       >
         {style.icon}
         {reason}
@@ -129,7 +129,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
     <div className="flex items-center gap-2">
       <Badge 
         variant={style.variant}
-        className="gap-2 text-sm font-medium px-3 py-1.5 min-w-fit"
+        className="gap-2.5 text-base font-medium px-4 py-2 min-w-fit"
       >
         {style.icon}
         <span className="whitespace-nowrap">{reason}</span>
