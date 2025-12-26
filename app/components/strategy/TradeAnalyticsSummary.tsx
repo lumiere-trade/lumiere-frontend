@@ -73,13 +73,13 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
         {/* Stop Loss */}
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base font-bold flex items-center gap-2">
+            <CardDescription className="text-base font-semibold flex items-center gap-2">
               <OctagonX className="h-5 w-5 text-destructive" />
               Stop Loss
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-base font-bold">{stats.stopLoss.count}</div>
+            <div className="text-base font-semibold">{stats.stopLoss.count}</div>
             <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.stopLoss.count)}% • {stats.stopLoss.pnl !== 0 && (
                 <span className="font-semibold text-red-500">
@@ -93,13 +93,13 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
         {/* Take Profit */}
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base font-bold flex items-center gap-2">
+            <CardDescription className="text-base font-semibold flex items-center gap-2">
               <Target className="h-5 w-5 text-green-500" />
               Take Profit
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-base font-bold">{stats.takeProfit.count}</div>
+            <div className="text-base font-semibold">{stats.takeProfit.count}</div>
             <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.takeProfit.count)}% • {stats.takeProfit.pnl !== 0 && (
                 <span className="font-semibold text-green-500">
@@ -113,13 +113,13 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
         {/* Entry Signals */}
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base font-bold flex items-center gap-2">
+            <CardDescription className="text-base font-semibold flex items-center gap-2">
               <ArrowUp className="h-5 w-5 text-blue-500" />
               Entry Signals
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-base font-bold">{stats.entrySignals.count}</div>
+            <div className="text-base font-semibold">{stats.entrySignals.count}</div>
             <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.entrySignals.count)}%
             </p>
@@ -129,13 +129,13 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
         {/* Exit Signals */}
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base font-bold flex items-center gap-2">
+            <CardDescription className="text-base font-semibold flex items-center gap-2">
               <ArrowDown className="h-5 w-5 text-orange-500" />
               Exit Signals
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-base font-bold">{stats.exitSignals.count}</div>
+            <div className="text-base font-semibold">{stats.exitSignals.count}</div>
             <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.exitSignals.count)}% • {stats.exitSignals.pnl !== 0 && (
                 <span className={`font-semibold ${
