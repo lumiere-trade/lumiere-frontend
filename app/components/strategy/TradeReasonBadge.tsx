@@ -1,12 +1,11 @@
 "use client"
-
 import { memo } from "react"
 import { Badge } from "@lumiere/shared/components/ui/badge"
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Target, 
-  StopCircle, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Target,
+  StopCircle,
   Activity,
   ArrowUpCircle,
   ArrowDownCircle
@@ -24,15 +23,14 @@ interface ReasonStyle {
   label?: string
 }
 
-export const TradeReasonBadge = memo(function TradeReasonBadge({ 
-  reason, 
+export const TradeReasonBadge = memo(function TradeReasonBadge({
+  reason,
   side,
-  compact = false 
+  compact = false
 }: TradeReasonBadgeProps) {
-  
   const getReasonStyle = (reason: string, side?: string): ReasonStyle => {
     const lowerReason = reason.toLowerCase()
-    
+
     // Stop Loss - Red
     if (lowerReason.includes('stop loss')) {
       return {
@@ -41,7 +39,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Stop Loss"
       }
     }
-    
+
     // Take Profit - Green
     if (lowerReason.includes('take profit')) {
       return {
@@ -50,7 +48,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Take Profit"
       }
     }
-    
+
     // Crossover Entry - Blue (BUY)
     if (lowerReason.includes('crosses above') || lowerReason.includes('crosses_above')) {
       return {
@@ -59,7 +57,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Entry Signal"
       }
     }
-    
+
     // Crossover Exit - Orange (SELL)
     if (lowerReason.includes('crosses below') || lowerReason.includes('crosses_below')) {
       return {
@@ -68,7 +66,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Exit Signal"
       }
     }
-    
+
     // Rising/Falling indicators
     if (lowerReason.includes('rising')) {
       return {
@@ -77,7 +75,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Rising"
       }
     }
-    
+
     if (lowerReason.includes('falling')) {
       return {
         icon: <TrendingDown className="h-4 w-4" />,
@@ -85,7 +83,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Falling"
       }
     }
-    
+
     // Generic entry/exit
     if (side === 'BUY') {
       return {
@@ -94,7 +92,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Entry"
       }
     }
-    
+
     if (side === 'SELL') {
       return {
         icon: <Activity className="h-4 w-4" />,
@@ -102,7 +100,7 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
         label: "Exit"
       }
     }
-    
+
     // Fallback
     return {
       icon: <Activity className="h-4 w-4" />,
@@ -110,24 +108,24 @@ export const TradeReasonBadge = memo(function TradeReasonBadge({
       label: "Signal"
     }
   }
-  
+
   const style = getReasonStyle(reason, side)
-  
+
   if (compact) {
     return (
-      <Badge 
+      <Badge
         variant={style.variant}
         className="gap-2 text-sm font-medium px-3 py-1.5"
       >
         {style.icon}
-        {reason}
+        {style.label}
       </Badge>
     )
   }
-  
+
   return (
     <div className="flex items-center gap-2">
-      <Badge 
+      <Badge
         variant={style.variant}
         className="gap-2.5 text-base font-medium px-4 py-2 min-w-fit"
       >
