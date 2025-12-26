@@ -166,10 +166,28 @@ export function DateAxisStrip() {
       const relativePosition = Math.floor((mouseX - padding.left) / viewport.candleWidth)
       const candleIndex = viewport.startIdx + relativePosition
 
+      // DEBUG LOGGING
+      console.log('=== DATE AXIS DEBUG ===')
+      console.log('mouseX:', mouseX)
+      console.log('padding.left:', padding.left)
+      console.log('candleWidth:', viewport.candleWidth)
+      console.log('relativePosition:', relativePosition)
+      console.log('startIdx:', viewport.startIdx)
+      console.log('candleIndex:', candleIndex)
+      console.log('candles.length:', candles.length)
+
       if (candleIndex >= 0 && candleIndex < candles.length) {
         const candle = candles[candleIndex]
+        
+        console.log('candle.t (seconds):', candle.t)
+        console.log('candle.t * 1000 (ms):', candle.t * 1000)
+        
         const date = new Date(candle.t * 1000)
+        console.log('Date object:', date.toISOString())
+        
         const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+        console.log('Formatted date string:', dateStr)
+        console.log('======================')
 
         // Draw highlight background
         const textWidth = ctx.measureText(dateStr).width
@@ -180,6 +198,9 @@ export function DateAxisStrip() {
         ctx.fillStyle = bgColor
         ctx.font = 'bold 11px monospace'
         ctx.fillText(dateStr, mouseX, height / 2)
+      } else {
+        console.log('candleIndex OUT OF BOUNDS!')
+        console.log('======================')
       }
     }
   }, [state, candles, themeVersion])
