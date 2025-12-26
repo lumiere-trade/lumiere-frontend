@@ -487,20 +487,20 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Total Trades</span>
-              <span className="font-semibold">{metrics.total_trades}</span>
+              <span className="text-base text-muted-foreground">Total Trades</span>
+              <span className="text-base font-semibold">{metrics.total_trades}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Profit Factor</span>
-              <span className="font-semibold">{metrics.profit_factor.toFixed(2)}</span>
+              <span className="text-base text-muted-foreground">Profit Factor</span>
+              <span className="text-base font-semibold">{metrics.profit_factor.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">CAGR</span>
-              <span className="font-semibold">{normalizedMetrics.cagr_pct.toFixed(2)}%</span>
+              <span className="text-base text-muted-foreground">CAGR</span>
+              <span className="text-base font-semibold">{normalizedMetrics.cagr_pct.toFixed(2)}%</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Avg Holding Time</span>
-              <span className="font-semibold">{trade_analysis.avg_holding_time_minutes} min</span>
+              <span className="text-base text-muted-foreground">Avg Holding Time</span>
+              <span className="text-base font-semibold">{trade_analysis.avg_holding_time_minutes} min</span>
             </div>
           </CardContent>
         </Card>
@@ -511,20 +511,20 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Avg Win</span>
-              <span className="font-semibold text-green-500">${trade_analysis.avg_win.toFixed(2)}</span>
+              <span className="text-base text-muted-foreground">Avg Win</span>
+              <span className="text-base font-semibold text-green-500">${trade_analysis.avg_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Avg Loss</span>
-              <span className="font-semibold text-red-500">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
+              <span className="text-base text-muted-foreground">Avg Loss</span>
+              <span className="text-base font-semibold text-red-500">${Math.abs(trade_analysis.avg_loss).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Largest Win</span>
-              <span className="font-semibold text-green-500">${trade_analysis.largest_win.toFixed(2)}</span>
+              <span className="text-base text-muted-foreground">Largest Win</span>
+              <span className="text-base font-semibold text-green-500">${trade_analysis.largest_win.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Largest Loss</span>
-              <span className="font-semibold text-red-500">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
+              <span className="text-base text-muted-foreground">Largest Loss</span>
+              <span className="text-base font-semibold text-red-500">${Math.abs(trade_analysis.largest_loss).toFixed(2)}</span>
             </div>
           </CardContent>
         </Card>
