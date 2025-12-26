@@ -150,11 +150,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Backtest Results</h2>
-          <p className="text-base text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {results.symbol} • {format(new Date(results.start_date), 'MMM dd, yyyy')} - {format(new Date(results.end_date), 'MMM dd, yyyy')}
           </p>
         </div>
-        <Badge variant={isPositive ? "default" : "destructive"} className="text-lg px-4 py-2">
+        <Badge variant={isPositive ? "default" : "destructive"} className="text-base px-4 py-2">
           {isPositive ? <TrendingUp className="h-4 w-4 mr-2" /> : <TrendingDown className="h-4 w-4 mr-2" />}
           {normalizedMetrics.total_return_pct > 0 ? '+' : ''}{normalizedMetrics.total_return_pct.toFixed(2)}%
         </Badge>
@@ -168,7 +168,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <p className="text-base text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Initial: ${results.initial_capital.toLocaleString()}
             </p>
           </CardContent>
@@ -180,7 +180,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
-            <p className="text-base text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {metrics.winning_trades}W / {metrics.losing_trades}L
             </p>
           </CardContent>
@@ -192,7 +192,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
-            <p className="text-base text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Sortino: {metrics.sortino_ratio.toFixed(2)}
             </p>
           </CardContent>
@@ -204,7 +204,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
-            <p className="text-base text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               ${Math.abs(metrics.max_drawdown).toLocaleString()}
             </p>
           </CardContent>
