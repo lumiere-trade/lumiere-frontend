@@ -392,7 +392,7 @@ export class ChartRenderer {
       if (i >= candles.length) continue
 
       const x = indexToX(i, candleWidth, offsetX, this.padding.left)
-      const timeStr = formatTime(candles[i].t)
+      const timeStr = formatTime(candles[i].t, candles)
 
       this.ctx.fillText(
         timeStr,
@@ -447,7 +447,7 @@ export class ChartRenderer {
     // Time label
     const candleIdx = Math.floor((mouse.x - this.padding.left - offsetX) / candleWidth)
     if (candleIdx >= 0 && candleIdx < candles.length) {
-      const timeStr = formatTime(candles[candleIdx].t)
+      const timeStr = formatTime(candles[candleIdx].t, candles)
       const textWidth = this.ctx.measureText(timeStr).width
 
       this.ctx.fillStyle = this.colors.cross

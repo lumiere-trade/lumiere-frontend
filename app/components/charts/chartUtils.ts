@@ -1,4 +1,5 @@
 import { Candle, Trade, Viewport, Indicator } from './types'
+import { format } from 'date-fns'
 
 // Binary search for timestamp (O(log n))
 export function findCandleIndex(candles: Candle[], timestamp: number): number {
@@ -168,12 +169,49 @@ export function formatPrice(price: number): string {
     : price.toFixed(0)
 }
 
-// Format timestamp
-export function formatTime(timestamp: number): string {
+// Detect candle interval from data (in milliseconds)
+function detectCandleInterval(candles: Candle[]): number {
+  if (candles.length < 2) return 3600000 // Default 1h
+
+  // Sample first 10 candles to detect interval
+  const samples = Math.min(10, candles.length - 1)
+  let totalDiff = 0
+
+  for (let i = 0; i < samples; i++) {
+    totalDiff += candles[i + 1].t - candles[i].t
+  }
+
+  return totalDiff / samples
+}
+
+// Format timestamp - adaptive based on candle interval (TradingView style)
+export function formatTime(timestamp: number, candles?: Candle[]): string {
   const date = new Date(timestamp)
-  const hours = date.getHours().toString().padStart(2, '0')
-  const mins = date.getMinutes().toString().padStart(2, '0')
-  return `${date.getMonth() + 1}/${date.getDate()} ${hours}:${mins}`
+
+  if (!candles || candles.length < 2) {
+    // Default: show date only
+    return format(date, 'M/d')
+  }
+
+  // Detect interval
+  const interval = detectCandleInterval(candles)
+
+  const MINUTE = 60000
+  const HOUR = 3600000
+  const DAY = 86400000
+
+  // Intraday (< 1 hour) - show time only
+  if (interval < HOUR) {
+    return format(date, 'HH:mm')
+  }
+  
+  // 1h - 4h candles - show date + time
+  if (interval < DAY) {
+    return format(date, 'M/d HH:mm')
+  }
+
+  // Daily+ candles - show date only
+  return format(date, 'M/d')
 }
 
 // Assign colors to indicators
