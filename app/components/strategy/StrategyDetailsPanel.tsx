@@ -237,18 +237,18 @@ export function StrategyDetailsPanel({
                 variant={activeTab === 'parameters' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTabChange('parameters')}
-                className="gap-2 min-w-[120px]"
+                className="gap-2 min-w-[120px] text-base"
               >
-                <Sliders className="h-4 w-4" />
+                <Sliders className="h-5 w-5" />
                 Parameters
               </Button>
               <Button
                 variant={activeTab === 'code' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTabChange('code')}
-                className="gap-2 min-w-[120px]"
+                className="gap-2 min-w-[120px] text-base"
               >
-                <Code className="h-4 w-4" />
+                <Code className="h-5 w-5" />
                 View Code
               </Button>
               <Button
@@ -260,13 +260,13 @@ export function StrategyDetailsPanel({
                     handleRunBacktest()
                   }
                 }}
-                className="gap-2 min-w-[120px]"
+                className="gap-2 min-w-[120px] text-base"
                 disabled={isBacktesting}
               >
                 {isBacktesting ? (
-                  <Play className="h-4 w-4 animate-spin" />
+                  <Play className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Play className="h-4 w-4" />
+                  <Play className="h-5 w-5" />
                 )}
                 Backtest
               </Button>
@@ -303,8 +303,8 @@ export function StrategyDetailsPanel({
               {!isBacktesting && !backtestResults && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">No backtest results yet</p>
-                  <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px]">
-                    <Play className="h-4 w-4" />
+                  <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px] text-base">
+                    <Play className="h-5 w-5" />
                     Run Backtest
                   </Button>
                 </div>
