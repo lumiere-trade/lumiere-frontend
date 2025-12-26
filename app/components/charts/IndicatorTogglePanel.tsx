@@ -199,7 +199,7 @@ export function IndicatorTogglePanel() {
 
   return (
     <div className="flex flex-wrap gap-2 mb-4 p-3 bg-muted/30 rounded-lg">
-      <div className="w-full text-sm font-medium text-muted-foreground mb-1">
+      <div className="w-full text-base font-semibold text-muted-foreground mb-1">
         Indicators
       </div>
 
