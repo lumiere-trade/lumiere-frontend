@@ -70,7 +70,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
     <div className="space-y-3">
       <h3 className="text-xl font-bold text-foreground">Exit Breakdown</h3>
       <Card>
-        <CardContent className="py-3">
+        <CardContent className="py-1">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {/* Stop Loss */}
             <div className="space-y-2">
