@@ -216,7 +216,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
 
       {/* Charts */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-5 items-center">
           <TabsTrigger value="price" className="text-base">Price & Trades</TabsTrigger>
           <TabsTrigger value="details" className="text-base">Trade Details</TabsTrigger>
           <TabsTrigger value="equity" className="text-base">Equity Curve</TabsTrigger>
