@@ -149,7 +149,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Backtest Results</h2>
+          <h2 className="text-xl font-bold text-foreground">Backtest Results</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {results.symbol} • {format(new Date(results.start_date), 'MMM dd, yyyy')} - {format(new Date(results.end_date), 'MMM dd, yyyy')}
           </p>
