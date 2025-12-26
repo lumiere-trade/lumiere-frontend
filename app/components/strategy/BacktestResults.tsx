@@ -167,7 +167,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <CardDescription className="text-base font-bold">Final Equity</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-base font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <p className="text-base text-muted-foreground mt-1">
               Initial: ${results.initial_capital.toLocaleString()}
             </p>
@@ -179,7 +179,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <CardDescription className="text-base font-bold">Win Rate</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
+            <div className="text-base font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
             <p className="text-base text-muted-foreground mt-1">
               {metrics.winning_trades}W / {metrics.losing_trades}L
             </p>
@@ -191,7 +191,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <CardDescription className="text-base font-bold">Sharpe Ratio</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
+            <div className="text-base font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
             <p className="text-base text-muted-foreground mt-1">
               Sortino: {metrics.sortino_ratio.toFixed(2)}
             </p>

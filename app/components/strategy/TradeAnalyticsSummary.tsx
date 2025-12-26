@@ -79,7 +79,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{stats.stopLoss.count}</div>
+            <div className="text-base font-bold">{stats.stopLoss.count}</div>
             <p className="text-base text-muted-foreground mt-1">
               {calculatePercentage(stats.stopLoss.count)}% • {stats.stopLoss.pnl !== 0 && (
                 <span className="font-semibold text-red-500">
@@ -99,7 +99,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{stats.takeProfit.count}</div>
+            <div className="text-base font-bold">{stats.takeProfit.count}</div>
             <p className="text-base text-muted-foreground mt-1">
               {calculatePercentage(stats.takeProfit.count)}% • {stats.takeProfit.pnl !== 0 && (
                 <span className="font-semibold text-green-500">
@@ -119,7 +119,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{stats.entrySignals.count}</div>
+            <div className="text-base font-bold">{stats.entrySignals.count}</div>
             <p className="text-base text-muted-foreground mt-1">
               {calculatePercentage(stats.entrySignals.count)}%
             </p>
@@ -135,7 +135,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold">{stats.exitSignals.count}</div>
+            <div className="text-base font-bold">{stats.exitSignals.count}</div>
             <p className="text-base text-muted-foreground mt-1">
               {calculatePercentage(stats.exitSignals.count)}% • {stats.exitSignals.pnl !== 0 && (
                 <span className={`font-semibold ${
