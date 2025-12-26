@@ -1,7 +1,7 @@
 "use client"
 
 import { memo, useMemo } from "react"
-import { Card, CardContent } from "@lumiere/shared/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { OctagonX, Target, ArrowUp, ArrowDown } from "lucide-react"
 
@@ -69,90 +69,85 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
   return (
     <div className="space-y-3">
       <h3 className="text-xl font-bold text-foreground">Exit Breakdown</h3>
-      <Card>
-        <CardContent className="py-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Stop Loss */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <OctagonX className="h-5 w-5 text-destructive" />
-                <span className="text-base font-semibold">Stop Loss</span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold">{stats.stopLoss.count}</div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-sm font-medium">
-                    {calculatePercentage(stats.stopLoss.count)}%
-                  </Badge>
-                  {stats.stopLoss.pnl !== 0 && (
-                    <span className="text-sm font-mono font-semibold text-red-500">
-                      ${stats.stopLoss.pnl.toFixed(0)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* Stop Loss */}
+        <Card className="py-2 gap-1">
+          <CardHeader className="pb-1">
+            <CardDescription className="text-base font-bold flex items-center gap-2">
+              <OctagonX className="h-5 w-5 text-destructive" />
+              Stop Loss
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{stats.stopLoss.count}</div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {calculatePercentage(stats.stopLoss.count)}% • {stats.stopLoss.pnl !== 0 && (
+                <span className="font-semibold text-red-500">
+                  ${stats.stopLoss.pnl.toFixed(0)}
+                </span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
 
-            {/* Take Profit */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-green-500" />
-                <span className="text-base font-semibold">Take Profit</span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold">{stats.takeProfit.count}</div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-sm font-medium">
-                    {calculatePercentage(stats.takeProfit.count)}%
-                  </Badge>
-                  {stats.takeProfit.pnl !== 0 && (
-                    <span className="text-sm font-mono font-semibold text-green-500">
-                      +${stats.takeProfit.pnl.toFixed(0)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* Take Profit */}
+        <Card className="py-2 gap-1">
+          <CardHeader className="pb-1">
+            <CardDescription className="text-base font-bold flex items-center gap-2">
+              <Target className="h-5 w-5 text-green-500" />
+              Take Profit
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{stats.takeProfit.count}</div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {calculatePercentage(stats.takeProfit.count)}% • {stats.takeProfit.pnl !== 0 && (
+                <span className="font-semibold text-green-500">
+                  +${stats.takeProfit.pnl.toFixed(0)}
+                </span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
 
-            {/* Entry Signals */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ArrowUp className="h-5 w-5 text-blue-500" />
-                <span className="text-base font-semibold">Entry Signals</span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold">{stats.entrySignals.count}</div>
-                <Badge variant="outline" className="text-sm font-medium">
-                  {calculatePercentage(stats.entrySignals.count)}%
-                </Badge>
-              </div>
-            </div>
+        {/* Entry Signals */}
+        <Card className="py-2 gap-1">
+          <CardHeader className="pb-1">
+            <CardDescription className="text-base font-bold flex items-center gap-2">
+              <ArrowUp className="h-5 w-5 text-blue-500" />
+              Entry Signals
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{stats.entrySignals.count}</div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {calculatePercentage(stats.entrySignals.count)}%
+            </p>
+          </CardContent>
+        </Card>
 
-            {/* Exit Signals */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <ArrowDown className="h-5 w-5 text-orange-500" />
-                <span className="text-base font-semibold">Exit Signals</span>
-              </div>
-              <div className="space-y-1">
-                <div className="text-2xl font-bold">{stats.exitSignals.count}</div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-sm font-medium">
-                    {calculatePercentage(stats.exitSignals.count)}%
-                  </Badge>
-                  {stats.exitSignals.pnl !== 0 && (
-                    <span className={`text-sm font-mono font-semibold ${
-                      stats.exitSignals.pnl >= 0 ? 'text-green-500' : 'text-red-500'
-                    }`}>
-                      {stats.exitSignals.pnl >= 0 ? '+' : ''}${stats.exitSignals.pnl.toFixed(0)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Exit Signals */}
+        <Card className="py-2 gap-1">
+          <CardHeader className="pb-1">
+            <CardDescription className="text-base font-bold flex items-center gap-2">
+              <ArrowDown className="h-5 w-5 text-orange-500" />
+              Exit Signals
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <div className="text-xl font-bold">{stats.exitSignals.count}</div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {calculatePercentage(stats.exitSignals.count)}% • {stats.exitSignals.pnl !== 0 && (
+                <span className={`font-semibold ${
+                  stats.exitSignals.pnl >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {stats.exitSignals.pnl >= 0 ? '+' : ''}${stats.exitSignals.pnl.toFixed(0)}
+                </span>
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 })
