@@ -208,7 +208,7 @@ export function IndicatorTogglePanel() {
           key={`${indicator.panelId}-${indicator.name}`}
           onClick={() => handleToggle(indicator)}
           className={`
-            flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium
+            flex items-center gap-2 px-3 py-1.5 rounded text-base font-semibold
             transition-all duration-200
             ${indicator.visible
               ? 'bg-background border border-border shadow-sm'
