@@ -444,12 +444,29 @@ export class ChartRenderer {
       mouse.y
     )
 
-    // Time label - FIXED: calculate relative index then add startIdx
+    // Time label - DEBUG VERSION
     const relativeIdx = Math.floor((mouse.x - this.padding.left) / candleWidth)
     const candleIdx = startIdx + relativeIdx
 
+    // DEBUG LOGGING
+    console.log('=== CROSSHAIR DEBUG ===')
+    console.log('mouse.x:', mouse.x)
+    console.log('padding.left:', this.padding.left)
+    console.log('candleWidth:', candleWidth)
+    console.log('relativeIdx:', relativeIdx)
+    console.log('startIdx:', startIdx)
+    console.log('candleIdx:', candleIdx)
+    console.log('candles.length:', candles.length)
+    
     if (candleIdx >= 0 && candleIdx < candles.length) {
-      const timeStr = formatTime(candles[candleIdx].t, candles)
+      const candle = candles[candleIdx]
+      console.log('candle.t (timestamp):', candle.t)
+      console.log('candle date:', new Date(candle.t).toISOString())
+      
+      const timeStr = formatTime(candle.t, candles)
+      console.log('formatted time:', timeStr)
+      console.log('======================')
+      
       const textWidth = this.ctx.measureText(timeStr).width
 
       this.ctx.fillStyle = this.colors.cross
@@ -463,8 +480,10 @@ export class ChartRenderer {
       )
 
       // Tooltip with OHLC
-      const candle = candles[candleIdx]
       this.drawTooltip(mouse.x, mouse.y, candle)
+    } else {
+      console.log('candleIdx OUT OF BOUNDS')
+      console.log('======================')
     }
   }
 
