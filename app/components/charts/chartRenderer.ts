@@ -407,7 +407,7 @@ export class ChartRenderer {
     candles: Candle[],
     viewport: Viewport
   ) {
-    const { priceMin, priceMax, candleWidth, offsetX } = viewport
+    const { priceMin, priceMax, candleWidth, startIdx } = viewport
 
     // Crosshair lines
     this.ctx.strokeStyle = this.colors.cross
@@ -444,8 +444,10 @@ export class ChartRenderer {
       mouse.y
     )
 
-    // Time label
-    const candleIdx = Math.floor((mouse.x - this.padding.left - offsetX) / candleWidth)
+    // Time label - FIXED: calculate relative index then add startIdx
+    const relativeIdx = Math.floor((mouse.x - this.padding.left) / candleWidth)
+    const candleIdx = startIdx + relativeIdx
+
     if (candleIdx >= 0 && candleIdx < candles.length) {
       const timeStr = formatTime(candles[candleIdx].t, candles)
       const textWidth = this.ctx.measureText(timeStr).width
