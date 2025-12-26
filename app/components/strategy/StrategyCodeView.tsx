@@ -84,7 +84,7 @@ export function StrategyCodeView() {
               </p>
             </div>
             {tsdlJson ? (
-              <pre className="text-sm font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
+              <pre className="text-base font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
                 {tsdlJson}
               </pre>
             ) : (
@@ -124,7 +124,7 @@ export function StrategyCodeView() {
                 <p className="text-sm font-semibold text-destructive mb-2">
                   Compilation Error
                 </p>
-                <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+                <pre className="text-base text-muted-foreground whitespace-pre-wrap">
                   {compileError}
                 </pre>
                 <button
@@ -137,7 +137,7 @@ export function StrategyCodeView() {
             )}
 
             {!isCompiling && !compileError && pythonCode && (
-              <pre className="text-sm font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
+              <pre className="text-base font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
                 {pythonCode}
               </pre>
             )}
