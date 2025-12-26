@@ -164,11 +164,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base">Final Equity</CardDescription>
+            <CardDescription className="text-base font-bold">Final Equity</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-2xl font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-xl font-bold">${metrics.final_equity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <p className="text-sm text-muted-foreground mt-1">
               Initial: ${results.initial_capital.toLocaleString()}
             </p>
           </CardContent>
@@ -176,11 +176,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
 
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base">Win Rate</CardDescription>
+            <CardDescription className="text-base font-bold">Win Rate</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-2xl font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-xl font-bold">{normalizedMetrics.win_rate_pct.toFixed(1)}%</div>
+            <p className="text-sm text-muted-foreground mt-1">
               {metrics.winning_trades}W / {metrics.losing_trades}L
             </p>
           </CardContent>
@@ -188,11 +188,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
 
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base">Sharpe Ratio</CardDescription>
+            <CardDescription className="text-base font-bold">Sharpe Ratio</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-2xl font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-xl font-bold">{metrics.sharpe_ratio.toFixed(2)}</div>
+            <p className="text-sm text-muted-foreground mt-1">
               Sortino: {metrics.sortino_ratio.toFixed(2)}
             </p>
           </CardContent>
@@ -200,11 +200,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
 
         <Card className="py-2 gap-1">
           <CardHeader className="pb-1">
-            <CardDescription className="text-base">Max Drawdown</CardDescription>
+            <CardDescription className="text-base font-bold">Max Drawdown</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-2xl font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <div className="text-xl font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
+            <p className="text-sm text-muted-foreground mt-1">
               ${Math.abs(metrics.max_drawdown).toLocaleString()}
             </p>
           </CardContent>
