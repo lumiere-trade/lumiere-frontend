@@ -174,7 +174,7 @@ export class ChartRenderer {
     // Vertical lines
     const step = Math.max(1, Math.floor(100 / viewport.candleWidth))
     for (let i = viewport.startIdx; i <= viewport.endIdx; i += step) {
-      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, this.padding.left)
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, this.padding.left, viewport.startIdx)
       if (x >= this.padding.left && x <= this.width - this.padding.right) {
         this.ctx.beginPath()
         this.ctx.moveTo(x, this.padding.top)
@@ -191,7 +191,7 @@ export class ChartRenderer {
 
     candles.forEach((candle, idx) => {
       const actualIdx = viewport.startIdx + idx
-      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
+      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left, viewport.startIdx)
 
       if (x < this.padding.left || x > this.width - this.padding.right) return
 
@@ -248,7 +248,7 @@ export class ChartRenderer {
 
     candles.forEach((candle, idx) => {
       const actualIdx = viewport.startIdx + idx
-      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
+      const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left, viewport.startIdx)
       const y = priceToY(candle.c, priceMin, priceMax, this.chartHeight, this.padding.top)
 
       if (idx === 0) {
@@ -293,7 +293,7 @@ export class ChartRenderer {
 
       indicator.points.forEach((point, idx) => {
         const actualIdx = viewport.startIdx + idx
-        const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left)
+        const x = indexToX(actualIdx, candleWidth, offsetX, this.padding.left, viewport.startIdx)
         const y = priceToY(point.v, priceMin, priceMax, this.chartHeight, this.padding.top)
 
         // Skip NaN/Infinity values
@@ -335,7 +335,7 @@ export class ChartRenderer {
 
       if (idx < startIdx || idx > endIdx) return
 
-      const x = indexToX(idx, candleWidth, offsetX, this.padding.left)
+      const x = indexToX(idx, candleWidth, offsetX, this.padding.left, startIdx)
       const yPrice = priceToY(trade.p, priceMin, priceMax, this.chartHeight, this.padding.top)
 
       const color = trade.s === 'B' ? this.colors.buy : this.colors.sell
@@ -391,7 +391,7 @@ export class ChartRenderer {
     for (let i = startIdx; i <= endIdx; i += step) {
       if (i >= candles.length) continue
 
-      const x = indexToX(i, candleWidth, offsetX, this.padding.left)
+      const x = indexToX(i, candleWidth, offsetX, this.padding.left, startIdx)
       const timeStr = formatTime(candles[i].t, candles)
 
       this.ctx.fillText(
