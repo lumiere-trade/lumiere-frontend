@@ -309,7 +309,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                                   </Button>
                                 )}
                               </TableCell>
-                              <TableCell className="w-[120px] font-mono text-xs">
+                              <TableCell className="w-[120px] font-mono text-base">
                                 {format(new Date(trade.timestamp), 'MMM dd HH:mm')}
                               </TableCell>
                               <TableCell className="w-[80px]">
@@ -317,16 +317,16 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                                   {trade.side}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono text-sm">
+                              <TableCell className="w-[100px] text-right font-mono text-base">
                                 ${trade.price.toFixed(2)}
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono text-sm">
+                              <TableCell className="w-[100px] text-right font-mono text-base">
                                 {trade.quantity.toFixed(4)}
                               </TableCell>
-                              <TableCell className="w-[110px] text-right font-mono text-sm">
+                              <TableCell className="w-[110px] text-right font-mono text-base">
                                 ${trade.value.toFixed(2)}
                               </TableCell>
-                              <TableCell className={`w-[100px] text-right font-mono text-sm ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
+                              <TableCell className={`w-[100px] text-right font-mono text-base ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
                                 {trade.pnl !== null && trade.pnl !== undefined ? `$${trade.pnl.toFixed(2)}` : '-'}
                               </TableCell>
                               <TableCell className="w-[200px]">
