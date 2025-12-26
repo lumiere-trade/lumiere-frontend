@@ -203,7 +203,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <CardDescription className="text-base font-bold">Max Drawdown</CardDescription>
           </CardHeader>
           <CardContent className="pb-2">
-            <div className="text-xl font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
+            <div className="text-base font-bold text-destructive">{normalizedMetrics.max_drawdown_pct.toFixed(2)}%</div>
             <p className="text-base text-muted-foreground mt-1">
               ${Math.abs(metrics.max_drawdown).toLocaleString()}
             </p>
