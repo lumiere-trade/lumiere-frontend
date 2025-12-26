@@ -284,14 +284,14 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px]"></TableHead>
-                        <TableHead className="w-[120px]">Time</TableHead>
-                        <TableHead className="w-[80px]">Side</TableHead>
-                        <TableHead className="w-[100px] text-right">Price</TableHead>
-                        <TableHead className="w-[100px] text-right">Quantity</TableHead>
-                        <TableHead className="w-[110px] text-right">Value</TableHead>
-                        <TableHead className="w-[100px] text-right">PnL</TableHead>
-                        <TableHead className="w-[200px]">Reason</TableHead>
+                        <TableHead className="w-[50px] text-base"></TableHead>
+                        <TableHead className="w-[120px] text-base">Time</TableHead>
+                        <TableHead className="w-[80px] text-base">Side</TableHead>
+                        <TableHead className="w-[100px] text-right text-base">Price</TableHead>
+                        <TableHead className="w-[100px] text-right text-base">Quantity</TableHead>
+                        <TableHead className="w-[110px] text-right text-base">Value</TableHead>
+                        <TableHead className="w-[100px] text-right text-base">PnL</TableHead>
+                        <TableHead className="w-[200px] text-base">Reason</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
