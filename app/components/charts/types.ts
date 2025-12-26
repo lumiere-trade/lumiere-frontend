@@ -11,10 +11,12 @@ export interface Trade {
   t: number  // timestamp
   p: number  // price
   s: 'B' | 'S'  // side (B=buy, S=sell)
-  reason?: string  // NEW: Detailed reason for trade
-  indicators?: Record<string, number>  // NEW: Indicator values at trade time
-  pnl?: number  // NEW: Profit/loss for exits
-  pnl_pct?: number  // NEW: P&L percentage for exits
+  q?: number  // quantity (position size)
+  val?: number  // value (invested amount)
+  reason?: string  // Detailed reason for trade
+  indicators?: Record<string, number>  // Indicator values at trade time
+  pnl?: number  // Profit/loss for exits
+  pnl_pct?: number  // P&L percentage for exits
 }
 
 export interface IndicatorPoint {
@@ -31,6 +33,7 @@ export interface Indicator {
 }
 
 export type Mode = 'L' | 'C'  // Line | Candles
+
 export type TF = '5m' | '15m' | '30m' | '1h' | '4h' | '1d'
 
 export interface Viewport {

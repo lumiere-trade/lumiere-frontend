@@ -87,12 +87,14 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
     }))
   }, [market_data])
 
-  // Transform trades to Trade format - WITH detailed reasons and indicators
+  // Transform trades to Trade format - WITH quantity, value, detailed reasons and indicators
   const chartTrades: Trade[] = useMemo(() => {
     return trades.map((trade) => ({
       t: new Date(trade.timestamp).getTime(),
       p: trade.price,
       s: trade.side === 'BUY' ? 'B' : 'S',
+      q: trade.quantity,
+      val: trade.value,
       reason: trade.reason,
       indicators: trade.indicators,
       pnl: trade.pnl,
@@ -329,8 +331,8 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                               </TableCell>
                               <TableCell className="w-[200px]">
                                 {/* Enhanced with TradeReasonBadge */}
-                                <TradeReasonBadge 
-                                  reason={trade.reason} 
+                                <TradeReasonBadge
+                                  reason={trade.reason}
                                   side={trade.side}
                                   compact
                                 />
