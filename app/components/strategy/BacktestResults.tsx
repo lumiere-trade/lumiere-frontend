@@ -148,7 +148,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
+        <div className="space-y-1">
           <h2 className="text-xl font-semibold text-foreground">Backtest Results</h2>
           <p className="text-sm text-muted-foreground mt-1">
             {results.symbol} • {format(new Date(results.start_date), 'MMM dd, yyyy')} - {format(new Date(results.end_date), 'MMM dd, yyyy')}
@@ -270,7 +270,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="space-y-1">
                     <CardTitle>Trade Execution Details</CardTitle>
                     <CardDescription>Complete trade history with detailed reasons and indicator values</CardDescription>
                   </div>
