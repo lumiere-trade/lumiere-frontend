@@ -53,6 +53,8 @@ export class ChartRenderer {
     this.padding = getPadding(width)
     this.chartHeight = height - this.padding.top - this.padding.bottom
 
+    console.log('ChartRenderer constructor called!')
+
     // Initialize colors from CSS variables
     this.colors = {
       bg: getCSSColor('--background', '#0a0a0a'),
@@ -122,6 +124,12 @@ export class ChartRenderer {
     mouse: { x: number; y: number } | null,
     indicators: Indicator[] = []
   ) {
+    // DEBUG: Log mouse state
+    console.log('=== RENDER DEBUG ===')
+    console.log('mouse:', mouse)
+    console.log('viewport:', viewport)
+    console.log('candles.length:', candles.length)
+    
     // Clear
     this.ctx.fillStyle = this.colors.bg
     this.ctx.fillRect(0, 0, this.width, this.height)
@@ -150,7 +158,10 @@ export class ChartRenderer {
 
     // Draw crosshair
     if (mouse) {
+      console.log('Drawing crosshair with mouse:', mouse)
       this.drawCrosshair(mouse, candles, viewport)
+    } else {
+      console.log('Mouse is NULL - skipping crosshair')
     }
   }
 
@@ -457,16 +468,16 @@ export class ChartRenderer {
     console.log('startIdx:', startIdx)
     console.log('candleIdx:', candleIdx)
     console.log('candles.length:', candles.length)
-    
+
     if (candleIdx >= 0 && candleIdx < candles.length) {
       const candle = candles[candleIdx]
       console.log('candle.t (timestamp):', candle.t)
       console.log('candle date:', new Date(candle.t).toISOString())
-      
+
       const timeStr = formatTime(candle.t, candles)
       console.log('formatted time:', timeStr)
       console.log('======================')
-      
+
       const textWidth = this.ctx.measureText(timeStr).width
 
       this.ctx.fillStyle = this.colors.cross
