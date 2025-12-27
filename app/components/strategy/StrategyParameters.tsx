@@ -234,25 +234,33 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-semibold text-muted-foreground">Strategy Type:</span>
-        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-          {strategyType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-        </span>
-      </div>
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-foreground">Strategy</h3>
+        
+        <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-4">
+          <div className="space-y-2">
+            <label className="text-base text-muted-foreground">Type</label>
+            <span className="block px-3 py-1.5 bg-primary/10 text-primary rounded-full text-base font-medium w-fit">
+              {strategyType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+            </span>
+          </div>
 
-      <div className="bg-card border border-primary/20 rounded-2xl p-6">
-        <div className="space-y-1">
-          <label className="text-base font-semibold text-foreground">Strategy Name</label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <p className="text-sm text-muted-foreground">
-            {editedStrategy.description}
-          </p>
+          <div className="space-y-2">
+            <label className="text-base font-semibold text-foreground">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-base font-semibold text-foreground">Description</label>
+            <p className="text-sm text-muted-foreground">
+              {editedStrategy.description}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -268,7 +276,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               {editedStrategy.indicators.map((indicator, idx) => (
                 <div
                   key={idx}
-                  className="px-3 py-1.5 bg-background border border-primary/30 rounded-lg text-sm font-mono text-foreground"
+                  className="px-3 py-1.5 bg-background border border-primary/30 rounded-lg text-base font-mono text-foreground"
                 >
                   {indicator}
                 </div>
@@ -276,45 +284,47 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             </div>
           </div>
 
-          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <h4 className="text-base font-semibold text-foreground">Entry Conditions</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-green-500" />
+                <h4 className="text-base font-semibold text-foreground">Entry Conditions</h4>
+              </div>
+
+              <div className="space-y-2">
+                {editedStrategy.entry_rules.map((rule, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
+                    <span className="text-sm font-mono text-foreground">{rule}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2 border-t border-primary/20">
+                <p className="text-sm text-muted-foreground">Logic:</p>
+                <p className="text-sm font-mono text-primary">{editedStrategy.entry_logic}</p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              {editedStrategy.entry_rules.map((rule, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
-                  <span className="text-sm font-mono text-foreground">{rule}</span>
-                </div>
-              ))}
-            </div>
+            <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5 text-red-500" />
+                <h4 className="text-base font-semibold text-foreground">Exit Conditions</h4>
+              </div>
 
-            <div className="pt-2 border-t border-primary/20">
-              <p className="text-sm text-muted-foreground">Logic:</p>
-              <p className="text-sm font-mono text-primary">{editedStrategy.entry_logic}</p>
-            </div>
-          </div>
+              <div className="space-y-2">
+                {editedStrategy.exit_rules.map((rule, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
+                    <span className="text-sm font-mono text-foreground">{rule}</span>
+                  </div>
+                ))}
+              </div>
 
-          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
-              <h4 className="text-base font-semibold text-foreground">Exit Conditions</h4>
-            </div>
-
-            <div className="space-y-2">
-              {editedStrategy.exit_rules.map((rule, idx) => (
-                <div key={idx} className="flex items-start gap-2">
-                  <span className="text-sm font-mono text-muted-foreground mt-0.5">{idx}:</span>
-                  <span className="text-sm font-mono text-foreground">{rule}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 border-t border-primary/20">
-              <p className="text-sm text-muted-foreground">Logic:</p>
-              <p className="text-sm font-mono text-primary">{editedStrategy.exit_logic}</p>
+              <div className="pt-2 border-t border-primary/20">
+                <p className="text-sm text-muted-foreground">Logic:</p>
+                <p className="text-sm font-mono text-primary">{editedStrategy.exit_logic}</p>
+              </div>
             </div>
           </div>
 
@@ -534,7 +544,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                     max={10000}
                     step={100}
                     className="w-full"
-                  />
+                />
                   <p className="text-sm text-muted-foreground">Cap maximum trade size</p>
                 </div>
               </div>
