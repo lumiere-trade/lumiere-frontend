@@ -87,7 +87,7 @@
   --font-mono: var(--font-geist-mono);
   
   /* Custom font size for trading UI - 15px (between sm and base) */
-  --font-size-md: 0.9375rem;
+  --font-size-md: 0.9167rem;
   --font-size-md--line-height: 1.25rem;
   
   --color-background: var(--background);
