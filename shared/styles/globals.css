@@ -82,7 +82,7 @@
   --sidebar-ring: oklch(0.78 0.08 70);
 }
 
-@theme inline {
+@theme {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   
