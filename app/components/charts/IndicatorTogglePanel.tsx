@@ -199,7 +199,7 @@ export function IndicatorTogglePanel() {
 
   return (
     <div className="flex flex-wrap gap-2 mb-4 p-3 bg-muted/30 rounded-lg">
-      <div className="w-full text-base font-semibold text-muted-foreground mb-1">
+      <div className="w-full text-md font-semibold text-muted-foreground mb-1">
         Indicators
       </div>
 
@@ -208,7 +208,7 @@ export function IndicatorTogglePanel() {
           key={`${indicator.panelId}-${indicator.name}`}
           onClick={() => handleToggle(indicator)}
           className={`
-            flex items-center gap-2 px-3 py-1.5 rounded text-base font-semibold
+            flex items-center gap-2 px-3 py-1.5 rounded text-md font-semibold
             transition-all duration-200
             ${indicator.visible
               ? 'bg-background border border-border shadow-sm'
