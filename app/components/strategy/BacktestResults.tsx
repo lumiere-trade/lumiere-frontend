@@ -309,7 +309,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                                   </Button>
                                 )}
                               </TableCell>
-                              <TableCell className="w-[120px] font-mono text-base">
+                              <TableCell className="w-[120px] font-mono text-md">
                                 {format(new Date(trade.timestamp), 'MMM dd HH:mm')}
                               </TableCell>
                               <TableCell className="w-[80px]">
@@ -317,16 +317,16 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                                   {trade.side}
                                 </Badge>
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono text-base">
+                              <TableCell className="w-[100px] text-right font-mono text-md">
                                 ${trade.price.toFixed(2)}
                               </TableCell>
-                              <TableCell className="w-[100px] text-right font-mono text-base">
+                              <TableCell className="w-[100px] text-right font-mono text-md">
                                 {trade.quantity.toFixed(4)}
                               </TableCell>
-                              <TableCell className="w-[110px] text-right font-mono text-base">
+                              <TableCell className="w-[110px] text-right font-mono text-md">
                                 ${trade.value.toFixed(2)}
                               </TableCell>
-                              <TableCell className={`w-[100px] text-right font-mono text-base ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
+                              <TableCell className={`w-[100px] text-right font-mono text-md ${trade.pnl !== null && trade.pnl !== undefined ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''}`}>
                                 {trade.pnl !== null && trade.pnl !== undefined ? `$${trade.pnl.toFixed(2)}` : '-'}
                               </TableCell>
                               <TableCell className="w-[200px]">
@@ -342,12 +342,12 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                               <TableRow key={`${trade.id}-indicators`}>
                                 <TableCell colSpan={8} className="bg-muted/30">
                                   <div className="p-4 space-y-2">
-                                    <p className="text-sm font-semibold text-foreground mb-3">Indicator Values at Execution:</p>
+                                    <p className="text-md font-semibold text-foreground mb-3">Indicator Values at Execution:</p>
                                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                       {Object.entries(trade.indicators).map(([name, value]) => (
                                         <div key={name} className="bg-background border border-primary/20 rounded-lg p-3">
                                           <p className="text-xs text-muted-foreground mb-1">{name.replace(/_/g, ' ').toUpperCase()}</p>
-                                          <p className="text-sm font-mono text-foreground">{value.toFixed(4)}</p>
+                                          <p className="text-md font-mono text-foreground">{value.toFixed(4)}</p>
                                         </div>
                                       ))}
                                     </div>
