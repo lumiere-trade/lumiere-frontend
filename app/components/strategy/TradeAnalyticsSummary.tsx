@@ -80,7 +80,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-semibold">{stats.stopLoss.count}</div>
-            <p className="text-md text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.stopLoss.count)}% • {stats.stopLoss.pnl !== 0 && (
                 <span className="font-semibold text-red-500">
                   ${stats.stopLoss.pnl.toFixed(0)}
@@ -100,7 +100,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-semibold">{stats.takeProfit.count}</div>
-            <p className="text-md text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.takeProfit.count)}% • {stats.takeProfit.pnl !== 0 && (
                 <span className="font-semibold text-green-500">
                   +${stats.takeProfit.pnl.toFixed(0)}
@@ -120,7 +120,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-semibold">{stats.entrySignals.count}</div>
-            <p className="text-md text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.entrySignals.count)}%
             </p>
           </CardContent>
@@ -136,7 +136,7 @@ export const TradeAnalyticsSummary = memo(function TradeAnalyticsSummary({
           </CardHeader>
           <CardContent className="pb-2">
             <div className="text-base font-semibold">{stats.exitSignals.count}</div>
-            <p className="text-md text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {calculatePercentage(stats.exitSignals.count)}% • {stats.exitSignals.pnl !== 0 && (
                 <span className={`font-semibold ${
                   stats.exitSignals.pnl >= 0 ? 'text-green-500' : 'text-red-500'
