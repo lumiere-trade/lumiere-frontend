@@ -119,6 +119,9 @@ function CreatePageContent() {
       })
 
       toast.success(`Strategy "${strategyData.name}" loaded`)
+
+      // Automatically open details panel to show the strategy
+      setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
