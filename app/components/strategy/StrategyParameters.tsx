@@ -266,8 +266,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       {hasIndicators && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
+          <h3 className="text-xl font-semibold text-foreground ">
             Technical Indicators
           </h3>
 
@@ -329,7 +328,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           </div>
 
           <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4">
-            <p className="text-md text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Want to change indicators or conditions? Ask Prophet AI: "Change RSI period to 21" or "Add volume filter"
             </p>
           </div>
