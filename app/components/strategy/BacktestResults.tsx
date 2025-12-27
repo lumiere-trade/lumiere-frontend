@@ -217,11 +217,11 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
       {/* Charts */}
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5 items-center !p-0">
-          <TabsTrigger value="price" className="text-base !h-auto">Price & Trades</TabsTrigger>
-          <TabsTrigger value="details" className="text-base !h-auto">Trade Details</TabsTrigger>
-          <TabsTrigger value="equity" className="text-base !h-auto">Equity Curve</TabsTrigger>
-          <TabsTrigger value="drawdown" className="text-base !h-auto">Drawdown</TabsTrigger>
-          <TabsTrigger value="trades" className="text-base !h-auto">Trade PnL</TabsTrigger>
+          <TabsTrigger value="price" className="text-md !h-auto">Price & Trades</TabsTrigger>
+          <TabsTrigger value="details" className="text-md !h-auto">Trade Details</TabsTrigger>
+          <TabsTrigger value="equity" className="text-md !h-auto">Equity Curve</TabsTrigger>
+          <TabsTrigger value="drawdown" className="text-md !h-auto">Drawdown</TabsTrigger>
+          <TabsTrigger value="trades" className="text-md !h-auto">Trade PnL</TabsTrigger>
         </TabsList>
 
         {activeTab === 'price' && (
@@ -284,14 +284,14 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px] text-base"></TableHead>
-                        <TableHead className="w-[120px] text-base">Time</TableHead>
-                        <TableHead className="w-[80px] text-base">Side</TableHead>
-                        <TableHead className="w-[100px] text-right text-base">Price</TableHead>
-                        <TableHead className="w-[100px] text-right text-base">Quantity</TableHead>
-                        <TableHead className="w-[110px] text-right text-base">Value</TableHead>
-                        <TableHead className="w-[100px] text-right text-base">PnL</TableHead>
-                        <TableHead className="w-[200px] text-base">Reason</TableHead>
+                        <TableHead className="w-[50px] text-md"></TableHead>
+                        <TableHead className="w-[120px] text-md">Time</TableHead>
+                        <TableHead className="w-[80px] text-md">Side</TableHead>
+                        <TableHead className="w-[100px] text-right text-md">Price</TableHead>
+                        <TableHead className="w-[100px] text-right text-md">Quantity</TableHead>
+                        <TableHead className="w-[110px] text-right text-md">Value</TableHead>
+                        <TableHead className="w-[100px] text-right text-md">PnL</TableHead>
+                        <TableHead className="w-[200px] text-md">Reason</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>

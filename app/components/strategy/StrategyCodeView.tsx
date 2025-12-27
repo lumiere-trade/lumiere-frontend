@@ -68,8 +68,8 @@ export function StrategyCodeView() {
       {/* Code Type Tabs */}
       <Tabs value={activeCodeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 items-center !p-0">
-          <TabsTrigger value="json" className="text-base !h-auto">TSDL JSON</TabsTrigger>
-          <TabsTrigger value="python" className="text-base !h-auto">Python Code</TabsTrigger>
+          <TabsTrigger value="json" className="text-md !h-auto">TSDL JSON</TabsTrigger>
+          <TabsTrigger value="python" className="text-md !h-auto">Python Code</TabsTrigger>
         </TabsList>
 
         {/* TSDL JSON View */}

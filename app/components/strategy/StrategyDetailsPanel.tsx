@@ -237,7 +237,7 @@ export function StrategyDetailsPanel({
                 variant={activeTab === 'parameters' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTabChange('parameters')}
-                className="gap-2 min-w-[120px] text-base"
+                className="gap-2 min-w-[120px] text-md"
               >
                 <Sliders className="h-5 w-5" />
                 Parameters
@@ -246,7 +246,7 @@ export function StrategyDetailsPanel({
                 variant={activeTab === 'code' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => onTabChange('code')}
-                className="gap-2 min-w-[120px] text-base"
+                className="gap-2 min-w-[120px] text-md"
               >
                 <Code className="h-5 w-5" />
                 View Code
@@ -260,7 +260,7 @@ export function StrategyDetailsPanel({
                     handleRunBacktest()
                   }
                 }}
-                className="gap-2 min-w-[120px] text-base"
+                className="gap-2 min-w-[120px] text-md"
                 disabled={isBacktesting}
               >
                 {isBacktesting ? (
@@ -303,7 +303,7 @@ export function StrategyDetailsPanel({
               {!isBacktesting && !backtestResults && (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">No backtest results yet</p>
-                  <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px] text-base">
+                  <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px] text-md">
                     <Play className="h-5 w-5" />
                     Run Backtest
                   </Button>
