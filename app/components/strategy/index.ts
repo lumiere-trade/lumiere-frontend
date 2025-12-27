@@ -11,7 +11,6 @@ export { StrategyGenerationProgress } from './StrategyGenerationProgress'
 export { StrategyList } from './StrategyList'
 export { StrategyPanel } from './StrategyPanel'
 export { StrategyParameters } from './StrategyParameters'
-export { StrategyPreview } from './StrategyPreview'
 
 // Trade reason components
 export { TradeReasonBadge } from './TradeReasonBadge'

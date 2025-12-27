@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown, Target, Wallet } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
-import { useChat } from "@/contexts/ChatContext"
+import { useStrategy } from "@/contexts/StrategyContext"
 import { StrategyJSON } from "@/lib/api/prophet"
 import {
   useCreateStrategy,
@@ -32,7 +32,7 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategyMetadata, generatedStrategy, messages, currentStrategy } = useChat()
+  const { strategy } = useStrategy()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -44,13 +44,13 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
 
   useEffect(() => {
-    if (strategyMetadata) {
-      setName(strategyMetadata.name)
-      setEditedStrategy(strategyMetadata)
+    if (strategy) {
+      setName(strategy.name)
+      setEditedStrategy(strategy.tsdl)
     }
-  }, [strategyMetadata])
+  }, [strategy])
 
-  if (!strategyMetadata || !editedStrategy) {
+  if (!strategy || !editedStrategy) {
     return (
       <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
@@ -76,13 +76,13 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   }
 
   const handleSave = async () => {
-    if (!editedStrategy || !generatedStrategy) return
+    if (!editedStrategy || !strategy) return
 
     try {
-      const isEditing = !!currentStrategy?.id
+      const isEditing = !!strategy.id
 
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
-        strategyId: currentStrategy?.id,
+        strategyId: strategy.id,
         name
       })
 
@@ -90,21 +90,21 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       if (isEditing) {
         await updateStrategyMutation.mutateAsync({
-          strategyId: currentStrategy.id,
+          strategyId: strategy.id,
           updates: {
             name: name || editedStrategy.name,
             description: editedStrategy.description,
-            tsdl_code: generatedStrategy.python_code,
+            tsdl_code: JSON.stringify(editedStrategy, null, 2),
             base_plugins: [strategyType],
             parameters: editedStrategy
           }
         })
-        strategyId = currentStrategy.id
+        strategyId = strategy.id
       } else {
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: name || editedStrategy.name,
           description: editedStrategy.description,
-          tsdl_code: generatedStrategy.python_code,
+          tsdl_code: JSON.stringify(editedStrategy, null, 2),
           version: '1.0.0',
           base_plugins: [strategyType],
           parameters: editedStrategy
@@ -112,14 +112,14 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         strategyId = strategyResponse.strategy_id
       }
 
-      if (messages.length > 0) {
+      if (strategy.conversation.messages.length > 0) {
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
-          state: 'completed',
-          messages: messages.map(msg => ({
+          state: strategy.conversation.state,
+          messages: strategy.conversation.messages.map(msg => ({
             role: msg.role,
             content: msg.content,
-            conversation_state: 'completed',
+            conversation_state: strategy.conversation.state,
             timestamp: msg.timestamp.toISOString()
           }))
         })
@@ -132,7 +132,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   }
 
   const handleBacktest = async () => {
-    if (!editedStrategy || !generatedStrategy) return
+    if (!editedStrategy) return
 
     try {
       const results = await runBacktestMutation.mutateAsync({
@@ -148,7 +148,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     }
   }
 
-  const isEditing = !!currentStrategy?.id
+  const isEditing = !!strategy.id
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
@@ -222,14 +222,13 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       )}
 
-      {showCode && generatedStrategy && (
+      {showCode && strategy && (
         <div className="bg-card border border-primary/20 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Generated Python Code</h3>
-            <span className="text-sm text-muted-foreground font-mono">{generatedStrategy.strategy_class_name}</span>
+            <h3 className="text-lg font-semibold text-foreground">TSDL JSON</h3>
           </div>
           <pre className="text-sm text-muted-foreground whitespace-pre-wrap break-words font-mono overflow-x-auto">
-            <code>{generatedStrategy.python_code}</code>
+            <code>{JSON.stringify(editedStrategy, null, 2)}</code>
           </pre>
         </div>
       )}

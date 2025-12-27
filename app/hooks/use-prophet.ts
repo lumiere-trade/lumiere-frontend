@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useChat } from '@/contexts/ChatContext'
+import { useStrategy } from '@/contexts/StrategyContext'
 import { useLogger } from './use-logger'
 import { LogCategory } from '@/lib/debug'
 import { useProphetHealthQuery } from './queries/use-prophet-queries'
@@ -11,24 +11,18 @@ import {
 
 export function useProphet() {
   const {
-    messages,
-    setMessages,
-    conversationId,
-    setConversationId,
-    conversationState,
-    setConversationState,
+    strategy,
+    setStrategy,
+    updateStrategy,
+    updateConversation,
     isGeneratingStrategy,
     setIsGeneratingStrategy,
     setStrategyGenerationProgress,
     setProgressStage,
     setProgressMessage,
-    setGeneratedStrategy,
-    setStrategyMetadata,
-    currentStrategy,
-    generatedStrategy,
     openDetailsPanel,
     setDetailsPanelTab
-  } = useChat()
+  } = useStrategy()
 
   const [isStreaming, setIsStreaming] = useState(false)
   const log = useLogger('useProphet', LogCategory.HOOK)
@@ -40,6 +34,11 @@ export function useProphet() {
   const sendMessage = async (message: string) => {
     if (!message.trim()) return
 
+    // Extract conversation data from strategy
+    const conversationId = strategy?.conversation.id
+    const conversationState = strategy?.conversation.state || 'greeting'
+    const messages = strategy?.conversation.messages || []
+
     log.info('Sending message', { message, conversationId })
 
     const userMessage = {
@@ -49,8 +48,6 @@ export function useProphet() {
       timestamp: new Date()
     }
 
-    setMessages([...messages, userMessage])
-
     const assistantMessage = {
       id: (Date.now() + 1).toString(),
       role: 'assistant' as const,
@@ -59,28 +56,66 @@ export function useProphet() {
       isStreaming: true
     }
 
-    setMessages([...messages, userMessage, assistantMessage])
+    const newMessages = [...messages, userMessage, assistantMessage]
+    
+    // Update conversation or create new strategy with conversation
+    if (strategy) {
+      updateConversation({ messages: newMessages })
+    } else {
+      // No strategy yet - create initial empty strategy with conversation
+      setStrategy({
+        id: null,
+        name: '',
+        description: '',
+        tsdl: {
+          name: '',
+          description: '',
+          symbol: 'SOL/USDC',
+          timeframe: '1h',
+          indicators: [],
+          entry_rules: [],
+          entry_logic: '',
+          exit_rules: [],
+          exit_logic: '',
+          target_wallet: null,
+          copy_percentage: null,
+          min_copy_size: null,
+          max_copy_size: null,
+          copy_delay: null,
+          reversion_target: null,
+          entry_threshold: null,
+          exit_threshold: null,
+          lookback_period: null,
+          stop_loss: null,
+          take_profit: null,
+          trailing_stop: null,
+          max_position_size: null,
+        },
+        status: 'draft',
+        basePlugins: [],
+        version: '1.0.0',
+        conversation: {
+          id: null,
+          messages: newMessages,
+          state: 'greeting'
+        },
+        createdAt: null,
+        updatedAt: null
+      })
+    }
+
     setIsStreaming(true)
 
-    // Build strategy context if strategy is loaded
+    // Build strategy context if strategy exists
     let strategyContext = undefined
-    if (currentStrategy) {
-      // User strategy (saved)
+    if (strategy?.id) {
       strategyContext = {
-        strategy_id: currentStrategy.id,
-        current_tsdl: currentStrategy.tsdl_code,
-        strategy_name: currentStrategy.name,
-        last_updated: currentStrategy.updated_at
+        strategy_id: strategy.id,
+        current_tsdl: JSON.stringify(strategy.tsdl, null, 2),
+        strategy_name: strategy.name,
+        last_updated: strategy.updatedAt
       }
-      log.info('Sending with user strategy context', { strategyId: currentStrategy.id })
-    } else if (generatedStrategy) {
-      // Library strategy or newly generated (not saved yet)
-      strategyContext = {
-        strategy_id: 'template',
-        current_tsdl: generatedStrategy.tsdl_code,
-        strategy_name: generatedStrategy.name
-      }
-      log.info('Sending with library/generated strategy context', { strategyName: generatedStrategy.name })
+      log.info('Sending with strategy context', { strategyId: strategy.id })
     }
 
     let fullResponse = ''
@@ -97,18 +132,18 @@ export function useProphet() {
         })),
         strategy_context: strategyContext
       },
-      // onToken
+      // onToken - stream response text
       (token: string) => {
         fullResponse += token
-        setMessages(prev =>
-          prev.map(msg =>
+        updateConversation({
+          messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
               ? { ...msg, content: fullResponse, isStreaming: true }
               : msg
           )
-        )
+        })
       },
-      // onProgress
+      // onProgress - strategy generation progress
       (progress: ProgressEvent) => {
         log.info('Strategy generation progress', progress)
         setIsGeneratingStrategy(true)
@@ -116,54 +151,78 @@ export function useProphet() {
         setProgressStage(progress.stage)
         setProgressMessage(progress.message)
       },
-      // onStrategyGenerated - NEW FLAT SCHEMA
-      (strategy: StrategyGeneratedEvent) => {
+      // onStrategyGenerated - build Strategy from Prophet response
+      (strategyEvent: StrategyGeneratedEvent) => {
         log.info('Strategy generated', {
-          strategyId: strategy.strategy_id,
-          strategyName: strategy.strategy_name,
-          indicators: strategy.strategy_json.indicators,
-          pythonCodeLength: strategy.python_code.length
+          strategyId: strategyEvent.strategy_id,
+          strategyName: strategyEvent.strategy_name,
+          indicators: strategyEvent.strategy_json.indicators
         })
 
         // Hide progress
         setIsGeneratingStrategy(false)
         setStrategyGenerationProgress(0)
 
-        // Store flat JSON strategy
-        setStrategyMetadata(strategy.strategy_json)
+        // Determine strategy type from TSDL
+        const hasWallet = strategyEvent.strategy_json.target_wallet !== null
+        const hasIndicators = strategyEvent.strategy_json.indicators.length > 0
+        const hasReversion = strategyEvent.strategy_json.reversion_target !== null
 
-        // Convert strategy_json to tsdl_code (JSON string)
-        const tsdlCode = JSON.stringify(strategy.strategy_json, null, 2)
+        const strategyType = hasWallet && hasIndicators ? 'hybrid'
+          : hasWallet ? 'wallet_following'
+          : hasReversion ? 'mean_reversion'
+          : 'indicator_based'
 
-        // Store for display
-        setGeneratedStrategy({
-          id: strategy.strategy_id,
-          name: strategy.strategy_name,
-          description: strategy.strategy_json.description,
-          tsdl_code: tsdlCode,
-          strategy_json: strategy.strategy_json,
-          python_code: strategy.python_code,
-          strategy_class_name: strategy.strategy_class_name
-        })
+        if (strategy) {
+          // Update existing strategy
+          updateStrategy({
+            name: strategyEvent.strategy_name,
+            description: strategyEvent.strategy_json.description,
+            tsdl: strategyEvent.strategy_json,
+            basePlugins: [strategyType]
+          })
+        } else {
+          // Create new strategy from Prophet response
+          setStrategy({
+            id: null,
+            name: strategyEvent.strategy_name,
+            description: strategyEvent.strategy_json.description,
+            tsdl: strategyEvent.strategy_json,
+            status: 'draft',
+            basePlugins: [strategyType],
+            version: '1.0.0',
+            conversation: {
+              id: null,
+              messages: newMessages.map(msg =>
+                msg.id === assistantMessage.id
+                  ? { ...msg, hasStrategy: true }
+                  : msg
+              ),
+              state: conversationState
+            },
+            createdAt: null,
+            updatedAt: null
+          })
+        }
 
-        // Open details panel
+        // Open details panel to show strategy
         openDetailsPanel()
         setDetailsPanelTab('parameters')
 
-        // Mark message as having strategy
-        setMessages(prev =>
-          prev.map(msg =>
+        // Mark assistant message as containing strategy
+        updateConversation({
+          messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
               ? { ...msg, hasStrategy: true }
               : msg
           )
-        )
+        })
 
         log.info('Strategy stored in context', {
-          strategyId: strategy.strategy_id
+          strategyId: strategyEvent.strategy_id
         })
       },
-      // onComplete
+      // onComplete - message streaming complete
       (fullMessage: string, convId: string, state: string) => {
         log.info('Message complete', {
           conversationId: convId,
@@ -171,26 +230,27 @@ export function useProphet() {
           messageLength: fullMessage.length
         })
 
-        setConversationId(convId)
-        setConversationState(state)
         setIsStreaming(false)
 
-        setMessages(prev =>
-          prev.map(msg =>
+        // Update conversation with final state
+        updateConversation({
+          id: convId,
+          state,
+          messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
               ? { ...msg, content: fullMessage, isStreaming: false }
               : msg
           )
-        )
+        })
       },
-      // onError
+      // onError - handle streaming errors
       (error: Error) => {
         log.error('Prophet error', { error })
         setIsStreaming(false)
         setIsGeneratingStrategy(false)
 
-        setMessages(prev =>
-          prev.map(msg =>
+        updateConversation({
+          messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
               ? {
                   ...msg,
@@ -199,14 +259,14 @@ export function useProphet() {
                 }
               : msg
           )
-        )
+        })
       }
     )
   }
 
-  // Stub functions for backward compatibility with create page
+  // Deprecated - conversation history loads via StrategyContext
   const loadHistory = async () => {
-    log.warn('loadHistory is deprecated - history loads via ChatContext')
+    log.warn('loadHistory is deprecated - history loads via StrategyContext')
   }
 
   const stopGeneration = () => {
@@ -214,7 +274,7 @@ export function useProphet() {
   }
 
   return {
-    messages,
+    messages: strategy?.conversation.messages || [],
     isStreaming,
     isSending: isStreaming,
     isGeneratingStrategy,

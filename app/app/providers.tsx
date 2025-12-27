@@ -1,25 +1,25 @@
-'use client'
+"use client"
 
-import { WalletProvider } from '@/providers/WalletProvider'
-import { QueryProvider } from '@/providers/QueryProvider'
-import { WalletSync } from '@/components/wallet/WalletSync'
-import { ThemeProvider } from 'next-themes'
+import { QueryProvider } from "@/providers/QueryProvider"
+import { WalletProvider } from "@/providers/WalletProvider"
+import { StrategyProvider } from "@/contexts/StrategyContext"
+import { WalletSync } from "@/components/wallet/WalletSync"
+import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "next-themes"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem={false}
-      disableTransitionOnChange
-    >
+    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryProvider>
         <WalletProvider>
           <WalletSync>
-            {children}
+            <StrategyProvider>
+              {children}
+            </StrategyProvider>
           </WalletSync>
         </WalletProvider>
       </QueryProvider>
+      <Toaster />
     </ThemeProvider>
   )
 }

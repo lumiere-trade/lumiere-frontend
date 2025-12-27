@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useChat } from "@/contexts/ChatContext"
+import { useStrategy } from "@/contexts/StrategyContext"
 import { compileStrategy } from "@/lib/api/architect"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -11,23 +11,19 @@ type CodeTab = 'json' | 'python'
 
 export function StrategyCodeView() {
   const log = useLogger('StrategyCodeView', LogCategory.COMPONENT)
-  const { generatedStrategy, strategyMetadata } = useChat()
+  const { strategy } = useStrategy()
   const [activeCodeTab, setActiveCodeTab] = useState<CodeTab>('json')
-  const [pythonCode, setPythonCode] = useState<string | null>(generatedStrategy?.python_code || null)
-  const [pythonClassName, setPythonClassName] = useState<string | null>(generatedStrategy?.strategy_class_name || null)
+  const [pythonCode, setPythonCode] = useState<string | null>(null)
+  const [pythonClassName, setPythonClassName] = useState<string | null>(null)
   const [isCompiling, setIsCompiling] = useState(false)
   const [compileError, setCompileError] = useState<string | null>(null)
 
-  // Get TSDL JSON (always available)
-  const tsdlJson = generatedStrategy?.tsdl_code
-    ? generatedStrategy.tsdl_code
-    : strategyMetadata
-      ? JSON.stringify(strategyMetadata, null, 2)
-      : null
+  // Get TSDL JSON from strategy.tsdl
+  const tsdlJson = strategy ? JSON.stringify(strategy.tsdl, null, 2) : null
 
   const handleCompile = async () => {
-    if (!strategyMetadata) {
-      log.warn('No strategy metadata to compile')
+    if (!strategy) {
+      log.warn('No strategy to compile')
       return
     }
 
@@ -35,8 +31,8 @@ export function StrategyCodeView() {
     setCompileError(null)
 
     try {
-      log.info('Compiling strategy on-demand', { name: strategyMetadata.name })
-      const result = await compileStrategy(strategyMetadata)
+      log.info('Compiling strategy on-demand', { name: strategy.name })
+      const result = await compileStrategy(strategy.tsdl)
 
       if (result.compiles) {
         setPythonCode(result.python_code || null)
@@ -58,7 +54,7 @@ export function StrategyCodeView() {
   // Auto-compile when switching to Python tab if code not available
   const handleTabChange = (value: string) => {
     setActiveCodeTab(value as CodeTab)
-    if (value === 'python' && !pythonCode && !isCompiling && strategyMetadata) {
+    if (value === 'python' && !pythonCode && !isCompiling && strategy) {
       handleCompile()
     }
   }

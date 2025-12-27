@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { StrategyPanel } from "@/components/strategy/StrategyPanel"
 import { StrategyDetailsPanel } from "@/components/strategy/StrategyDetailsPanel"
-import { ChatProvider, useChat } from "@/contexts/ChatContext"
+import { StrategyProvider, useStrategy } from "@/contexts/StrategyContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
 import { logger, LogCategory } from "@/lib/debug"
@@ -23,7 +23,7 @@ function AuthenticatedLayoutContent({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
 
-  const chatContext = isCreatePage ? useChat() : null
+  const strategyContext = isCreatePage ? useStrategy() : null
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
 
@@ -42,12 +42,12 @@ function AuthenticatedLayoutContent({
     }
   }, [router, user, isLoading])
 
-  // Sync isDetailsPanelOpen with ChatContext
+  // Sync isDetailsPanelOpen with StrategyContext
   useEffect(() => {
-    if (chatContext) {
-      setIsDetailsPanelOpen(chatContext.isDetailsPanelOpen)
+    if (strategyContext) {
+      setIsDetailsPanelOpen(strategyContext.isDetailsPanelOpen)
     }
-  }, [chatContext?.isDetailsPanelOpen])
+  }, [strategyContext?.isDetailsPanelOpen])
 
   // Auto-close StrategyPanel when DetailsPanel opens
   useEffect(() => {
@@ -58,8 +58,8 @@ function AuthenticatedLayoutContent({
 
   // Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
   useEffect(() => {
-    if (isSidebarOpen && isDetailsPanelOpen && !chatContext?.isParametersFullscreen) {
-      chatContext?.closeDetailsPanel()
+    if (isSidebarOpen && isDetailsPanelOpen && !strategyContext?.isParametersFullscreen) {
+      strategyContext?.closeDetailsPanel()
     }
   }, [isSidebarOpen])
 
@@ -68,11 +68,11 @@ function AuthenticatedLayoutContent({
   }
 
   const handleDetailsPanelToggle = () => {
-    if (chatContext) {
+    if (strategyContext) {
       if (isDetailsPanelOpen) {
-        chatContext.closeDetailsPanel()
+        strategyContext.closeDetailsPanel()
       } else {
-        chatContext.openDetailsPanel()
+        strategyContext.openDetailsPanel()
       }
     }
   }
@@ -82,16 +82,16 @@ function AuthenticatedLayoutContent({
   }
 
   const handleOpenChat = () => {
-    if (chatContext) {
+    if (strategyContext) {
       // Collapse fullscreen to restore normal layout where chat is visible
-      if (chatContext.isParametersFullscreen) {
-        chatContext.collapseParametersFullscreen()
+      if (strategyContext.isParametersFullscreen) {
+        strategyContext.collapseParametersFullscreen()
       }
     }
   }
 
   // Calculate padding based on fullscreen state
-  const isFullscreen = chatContext?.isParametersFullscreen || false
+  const isFullscreen = strategyContext?.isParametersFullscreen || false
   const leftPadding = isFullscreen
     ? '32px'
     : isSidebarOpen && !isDetailsPanelOpen
@@ -128,12 +128,12 @@ function AuthenticatedLayoutContent({
       </main>
 
       {/* Details Panel - Fixed positioning */}
-      {isCreatePage && chatContext && (
+      {isCreatePage && strategyContext && (
         <StrategyDetailsPanel
           isOpen={isDetailsPanelOpen}
           onToggle={handleDetailsPanelToggle}
-          activeTab={chatContext.detailsPanelTab}
-          onTabChange={chatContext.setDetailsPanelTab}
+          activeTab={strategyContext.detailsPanelTab}
+          onTabChange={strategyContext.setDetailsPanelTab}
           onOpenStrategies={handleOpenStrategies}
           onOpenChat={handleOpenChat}
         />
@@ -151,11 +151,11 @@ export default function AuthenticatedLayout({
   const isCreatePage = pathname === '/create'
 
   return isCreatePage ? (
-    <ChatProvider>
+    <StrategyProvider>
       <AuthenticatedLayoutContent isCreatePage={true}>
         {children}
       </AuthenticatedLayoutContent>
-    </ChatProvider>
+    </StrategyProvider>
   ) : (
     <AuthenticatedLayoutContent isCreatePage={false}>
       {children}

@@ -12,7 +12,7 @@ import {
   useUpdateStrategy,
   useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
-import { useChat } from "@/contexts/ChatContext"
+import { useStrategy } from "@/contexts/StrategyContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
@@ -36,8 +36,7 @@ export function StrategyDetailsPanel({
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
   const {
-    generatedStrategy,
-    strategyMetadata,
+    strategy,
     backtestResults,
     isBacktesting,
     setBacktestResults,
@@ -45,9 +44,8 @@ export function StrategyDetailsPanel({
     isParametersFullscreen,
     expandParametersFullscreen,
     collapseParametersFullscreen,
-    messages,
-    currentStrategy
-  } = useChat()
+  } = useStrategy()
+  
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
@@ -57,7 +55,7 @@ export function StrategyDetailsPanel({
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleRunBacktest = async () => {
-    if (!generatedStrategy || !strategyMetadata) {
+    if (!strategy) {
       log.error('No strategy to backtest')
       return
     }
@@ -67,7 +65,7 @@ export function StrategyDetailsPanel({
 
     try {
       const result = await runBacktestMutation.mutateAsync({
-        strategy_json: strategyMetadata,
+        strategy_json: strategy.tsdl,
         candles: 2160,
         initial_capital: 10000,
         cache_results: true
@@ -82,59 +80,50 @@ export function StrategyDetailsPanel({
   }
 
   const handleSave = async () => {
-    if (!strategyMetadata) return
-
-    const hasWallet = strategyMetadata.target_wallet !== null
-    const hasIndicators = strategyMetadata.indicators.length > 0
-    const hasReversion = strategyMetadata.reversion_target !== null
-
-    const strategyType = hasWallet && hasIndicators ? 'hybrid'
-      : hasWallet ? 'wallet_following'
-      : hasReversion ? 'mean_reversion'
-      : 'indicator_based'
+    if (!strategy) return
 
     try {
-      const isEditing = !!currentStrategy?.id
+      const isEditing = !!strategy.id
 
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
-        strategyId: currentStrategy?.id,
-        name: strategyMetadata.name
+        strategyId: strategy.id,
+        name: strategy.name
       })
 
       let strategyId: string
 
       if (isEditing) {
         await updateStrategyMutation.mutateAsync({
-          strategyId: currentStrategy.id,
+          strategyId: strategy.id,
           updates: {
-            name: strategyMetadata.name,
-            description: strategyMetadata.description,
-            tsdl_code: JSON.stringify(strategyMetadata, null, 2),
-            base_plugins: [strategyType],
-            parameters: strategyMetadata
+            name: strategy.name,
+            description: strategy.description,
+            tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
+            base_plugins: strategy.basePlugins,
+            parameters: strategy.tsdl
           }
         })
-        strategyId = currentStrategy.id
+        strategyId = strategy.id
       } else {
         const strategyResponse = await createStrategyMutation.mutateAsync({
-          name: strategyMetadata.name,
-          description: strategyMetadata.description,
-          tsdl_code: JSON.stringify(strategyMetadata, null, 2),
-          version: '1.0.0',
-          base_plugins: [strategyType],
-          parameters: strategyMetadata
+          name: strategy.name,
+          description: strategy.description,
+          tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
+          version: strategy.version,
+          base_plugins: strategy.basePlugins,
+          parameters: strategy.tsdl
         })
         strategyId = strategyResponse.strategy_id
       }
 
-      if (messages.length > 0) {
+      if (strategy.conversation.messages.length > 0) {
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
-          state: 'completed',
-          messages: messages.map(msg => ({
+          state: strategy.conversation.state,
+          messages: strategy.conversation.messages.map(msg => ({
             role: msg.role,
             content: msg.content,
-            conversation_state: 'completed',
+            conversation_state: strategy.conversation.state,
             timestamp: msg.timestamp.toISOString()
           }))
         })
@@ -162,7 +151,7 @@ export function StrategyDetailsPanel({
     }, 320) // 300ms transition + 20ms buffer
   }
 
-  const isEditing = !!currentStrategy?.id
+  const isEditing = !!strategy?.id
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
@@ -356,7 +345,7 @@ export function StrategyDetailsPanel({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isSaving || !strategyMetadata}
+            disabled={isSaving || !strategy}
             className="gap-2 min-w-[120px] text-md"
           >
             {isSaving ? (

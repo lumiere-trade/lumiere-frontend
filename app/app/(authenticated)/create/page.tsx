@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { MessageInput } from "@/components/strategy/MessageInput"
 import { ExamplePrompts } from "@/components/strategy/ExamplePrompts"
 import { MessageList } from "@/components/strategy/MessageList"
-import { useChat } from "@/contexts/ChatContext"
+import { useStrategy } from "@/contexts/StrategyContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from "@/lib/api/architect"
@@ -26,18 +26,15 @@ function CreatePageContent() {
   const libraryId = searchParams.get('library')
 
   const {
-    generatedStrategy,
-    currentStrategy,
-    setGeneratedStrategy,
-    setStrategyMetadata,
-    setCurrentStrategy,
-    clearChat,
+    strategy,
+    setStrategy,
+    clearStrategy,
     isGeneratingStrategy,
     strategyGenerationProgress,
     progressStage,
     progressMessage,
     openDetailsPanel,
-  } = useChat()
+  } = useStrategy()
 
   const {
     messages,
@@ -45,7 +42,6 @@ function CreatePageContent() {
     isSending,
     isHealthy,
     error,
-    loadHistory,
     stopGeneration,
   } = useProphet()
 
@@ -54,48 +50,75 @@ function CreatePageContent() {
   // Load strategy when strategyId or libraryId changes
   useEffect(() => {
     if (strategyId) {
-      const isDifferentStrategy = !currentStrategy || currentStrategy.id !== strategyId
+      const isDifferentStrategy = !strategy || strategy.id !== strategyId
 
       if (isDifferentStrategy) {
         logger.info('Loading user strategy', { strategyId })
-        loadStrategy(strategyId)
+        loadUserStrategy(strategyId)
       }
     } else if (libraryId) {
       logger.info('Loading library strategy', { libraryId })
       loadLibraryStrategy(libraryId)
-    } else if (!strategyId && !libraryId && generatedStrategy) {
-      logger.info('Clearing chat state')
-      clearChat()
+    } else if (!strategyId && !libraryId && strategy) {
+      logger.info('Clearing strategy state')
+      clearStrategy()
     }
   }, [strategyId, libraryId])
 
-  const loadStrategy = async (id: string) => {
+  const loadUserStrategy = async (id: string) => {
     try {
-      const strategy = await getStrategy(id)
+      const strategyData = await getStrategy(id)
 
-      // Parse TSDL code to StrategyJSON
-      const strategyJson = JSON.parse(strategy.tsdl_code)
+      // Parse TSDL JSON from tsdl_code
+      const tsdlJson = JSON.parse(strategyData.tsdl_code)
 
-      setGeneratedStrategy({
-        id: strategy.id,
-        name: strategy.name,
-        description: strategy.description,
-        tsdl_code: strategy.tsdl_code
+      // Load conversation history
+      const { conversations } = await getStrategyConversations(id)
+      let conversationData = {
+        id: null as string | null,
+        messages: [] as any[],
+        state: 'completed'
+      }
+
+      if (conversations.length > 0) {
+        const latestConversation = conversations.sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0]
+
+        const fullConversation = await getConversation(latestConversation.id)
+        conversationData = {
+          id: fullConversation.id,
+          messages: fullConversation.messages.map(msg => ({
+            id: msg.id || Date.now().toString(),
+            role: msg.role,
+            content: msg.content,
+            timestamp: new Date(msg.timestamp),
+            isStreaming: false,
+            hasStrategy: false
+          })),
+          state: fullConversation.state
+        }
+
+        logger.info('Conversation history loaded', {
+          messageCount: conversationData.messages.length
+        })
+      }
+
+      // Build Strategy object from database
+      setStrategy({
+        id: strategyData.id,
+        name: strategyData.name,
+        description: strategyData.description,
+        tsdl: tsdlJson,
+        status: strategyData.status,
+        basePlugins: strategyData.base_plugins,
+        version: strategyData.version,
+        conversation: conversationData,
+        createdAt: strategyData.created_at,
+        updatedAt: strategyData.updated_at
       })
 
-      // Directly use flat StrategyJSON from parameters
-      setStrategyMetadata(strategyJson)
-
-      setCurrentStrategy({
-        id: strategy.id,
-        name: strategy.name,
-        tsdl_code: strategy.tsdl_code,
-        updated_at: strategy.updated_at,
-      })
-
-      await loadConversationHistory(id)
-
-      toast.success(`Strategy "${strategy.name}" loaded`)
+      toast.success(`Strategy "${strategyData.name}" loaded`)
     } catch (error) {
       logger.error('Failed to load strategy', { error })
       toast.error('Failed to load strategy')
@@ -117,24 +140,36 @@ function CreatePageContent() {
         entry_logic: lib.entry_logic,
         exit_rules: lib.exit_rules,
         exit_logic: lib.exit_logic,
-        // Spread flat parameters (stop_loss, take_profit, etc.)
         ...lib.parameters,
       }
 
-      const tsdlCode = JSON.stringify(strategyJson, null, 2)
+      // Determine strategy type
+      const hasWallet = strategyJson.target_wallet !== null
+      const hasIndicators = strategyJson.indicators.length > 0
+      const hasReversion = strategyJson.reversion_target !== null
 
-      setGeneratedStrategy({
-        id: lib.id,
+      const strategyType = hasWallet && hasIndicators ? 'hybrid'
+        : hasWallet ? 'wallet_following'
+        : hasReversion ? 'mean_reversion'
+        : 'indicator_based'
+
+      // Build Strategy object from library
+      setStrategy({
+        id: null,
         name: lib.name,
         description: lib.description,
-        tsdl_code: tsdlCode
+        tsdl: strategyJson as any,
+        status: 'draft',
+        basePlugins: [strategyType],
+        version: '1.0.0',
+        conversation: {
+          id: null,
+          messages: [],
+          state: 'greeting'
+        },
+        createdAt: null,
+        updatedAt: null
       })
-
-      // Directly use flat StrategyJSON
-      setStrategyMetadata(strategyJson as any)
-
-      // No currentStrategy (library template, not saved)
-      setCurrentStrategy(null)
 
       toast.success(`Library strategy "${lib.name}" loaded as template`)
 
@@ -143,27 +178,6 @@ function CreatePageContent() {
     } catch (error) {
       logger.error('Failed to load library strategy', { error })
       toast.error('Failed to load library strategy')
-    }
-  }
-
-  const loadConversationHistory = async (strategyId: string) => {
-    try {
-      const { conversations } = await getStrategyConversations(strategyId)
-
-      if (conversations.length === 0) return
-
-      const latestConversation = conversations.sort((a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0]
-
-      const fullConversation = await getConversation(latestConversation.id)
-      loadHistory(fullConversation)
-
-      logger.info('Conversation history loaded', {
-        messageCount: fullConversation.messages.length
-      })
-    } catch (error) {
-      logger.error('Failed to load conversation history', { error })
     }
   }
 
@@ -194,8 +208,7 @@ function CreatePageContent() {
 
   // Determine view state
   const hasMessages = messages.length > 0
-  // Only show library preview when NO messages exist
-  const hasLoadedLibraryStrategy = !strategyId && libraryId && generatedStrategy && !hasMessages
+  const hasLoadedLibraryStrategy = !strategyId && libraryId && strategy && !hasMessages
 
   // Show conversation view (takes priority over library preview)
   if (hasMessages) {
@@ -210,7 +223,7 @@ function CreatePageContent() {
             progressStage={progressStage}
             progressMessage={progressMessage}
             error={error}
-            generatedStrategy={generatedStrategy}
+            generatedStrategy={strategy}
             onViewStrategy={handleViewStrategy}
           />
         </div>
@@ -241,10 +254,10 @@ function CreatePageContent() {
           <div className="w-full max-w-3xl mx-auto space-y-6">
             <div className="text-center space-y-4">
               <h1 className="text-4xl font-bold text-foreground tracking-tight">
-                {generatedStrategy.name}
+                {strategy.name}
               </h1>
               <p className="text-lg text-muted-foreground">
-                {generatedStrategy.description}
+                {strategy.description}
               </p>
               <div className="flex gap-3 justify-center pt-4">
                 <button
