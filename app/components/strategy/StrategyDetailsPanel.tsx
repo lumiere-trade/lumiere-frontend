@@ -1,15 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft } from "lucide-react"
+import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
+import {
+  useCreateStrategy,
+  useUpdateStrategy,
+  useCreateConversation
+} from "@/hooks/mutations/use-architect-mutations"
 import { useChat } from "@/contexts/ChatContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
+import { toast } from "sonner"
 
 interface StrategyDetailsPanelProps {
   isOpen: boolean
@@ -38,9 +44,14 @@ export function StrategyDetailsPanel({
     setIsBacktesting,
     isParametersFullscreen,
     expandParametersFullscreen,
-    collapseParametersFullscreen
+    collapseParametersFullscreen,
+    messages,
+    currentStrategy
   } = useChat()
   const runBacktestMutation = useRunBacktest()
+  const createStrategyMutation = useCreateStrategy()
+  const updateStrategyMutation = useUpdateStrategy()
+  const createConversationMutation = useCreateConversation()
 
   // Transition state - freeze chart rendering
   const [isTransitioning, setIsTransitioning] = useState(false)
@@ -70,6 +81,71 @@ export function StrategyDetailsPanel({
     }
   }
 
+  const handleSave = async () => {
+    if (!strategyMetadata || !generatedStrategy) return
+
+    const hasWallet = strategyMetadata.target_wallet !== null
+    const hasIndicators = strategyMetadata.indicators.length > 0
+    const hasReversion = strategyMetadata.reversion_target !== null
+
+    const strategyType = hasWallet && hasIndicators ? 'hybrid'
+      : hasWallet ? 'wallet_following'
+      : hasReversion ? 'mean_reversion'
+      : 'indicator_based'
+
+    try {
+      const isEditing = !!currentStrategy?.id
+
+      log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
+        strategyId: currentStrategy?.id,
+        name: strategyMetadata.name
+      })
+
+      let strategyId: string
+
+      if (isEditing) {
+        await updateStrategyMutation.mutateAsync({
+          strategyId: currentStrategy.id,
+          updates: {
+            name: strategyMetadata.name,
+            description: strategyMetadata.description,
+            tsdl_code: generatedStrategy.python_code,
+            base_plugins: [strategyType],
+            parameters: strategyMetadata
+          }
+        })
+        strategyId = currentStrategy.id
+      } else {
+        const strategyResponse = await createStrategyMutation.mutateAsync({
+          name: strategyMetadata.name,
+          description: strategyMetadata.description,
+          tsdl_code: generatedStrategy.python_code,
+          version: '1.0.0',
+          base_plugins: [strategyType],
+          parameters: strategyMetadata
+        })
+        strategyId = strategyResponse.strategy_id
+      }
+
+      if (messages.length > 0) {
+        await createConversationMutation.mutateAsync({
+          strategy_id: strategyId,
+          state: 'completed',
+          messages: messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            conversation_state: 'completed',
+            timestamp: msg.timestamp.toISOString()
+          }))
+        })
+      }
+
+      toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
+    } catch (error) {
+      log.error('Failed to save strategy', { error })
+    }
+  }
+
   const handleToggleFullscreen = () => {
     // Start transition - blur charts
     setIsTransitioning(true)
@@ -85,6 +161,11 @@ export function StrategyDetailsPanel({
       setIsTransitioning(false)
     }, 320) // 300ms transition + 20ms buffer
   }
+
+  const isEditing = !!currentStrategy?.id
+  const isSaving = createStrategyMutation.isPending ||
+                   updateStrategyMutation.isPending ||
+                   createConversationMutation.isPending
 
   // GPU-optimized: Calculate width in vw units instead of Tailwind classes
   const panelWidthVw = isParametersFullscreen ? 100 : 50
@@ -228,50 +309,68 @@ export function StrategyDetailsPanel({
         )}
 
         {/* Header with tab navigation */}
-        <div className={`border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-center ${
+        <div className={`border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
-          <div className="flex items-center justify-between gap-4 w-full">
-            <div className="flex items-center gap-2">
-              <Button
-                variant={activeTab === 'parameters' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onTabChange('parameters')}
-                className="gap-2 min-w-[120px] text-md"
-              >
-                <Sliders className="h-5 w-5" />
-                Parameters
-              </Button>
-              <Button
-                variant={activeTab === 'code' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => onTabChange('code')}
-                className="gap-2 min-w-[120px] text-md"
-              >
-                <Code className="h-5 w-5" />
-                View Code
-              </Button>
-              <Button
-                variant={activeTab === 'backtest' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  onTabChange('backtest')
-                  if (!backtestResults && !isBacktesting) {
-                    handleRunBacktest()
-                  }
-                }}
-                className="gap-2 min-w-[120px] text-md"
-                disabled={isBacktesting}
-              >
-                {isBacktesting ? (
-                  <Play className="h-5 w-5 animate-spin" />
-                ) : (
-                  <Play className="h-5 w-5" />
-                )}
-                Backtest
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === 'parameters' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onTabChange('parameters')}
+              className="gap-2 min-w-[120px] text-md"
+            >
+              <Sliders className="h-5 w-5" />
+              Parameters
+            </Button>
+            <Button
+              variant={activeTab === 'code' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onTabChange('code')}
+              className="gap-2 min-w-[120px] text-md"
+            >
+              <Code className="h-5 w-5" />
+              View Code
+            </Button>
+            <Button
+              variant={activeTab === 'backtest' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => {
+                onTabChange('backtest')
+                if (!backtestResults && !isBacktesting) {
+                  handleRunBacktest()
+                }
+              }}
+              className="gap-2 min-w-[120px] text-md"
+              disabled={isBacktesting}
+            >
+              {isBacktesting ? (
+                <Play className="h-5 w-5 animate-spin" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
+              Backtest
+            </Button>
           </div>
+
+          {/* Save Button - Right side */}
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving || !strategyMetadata}
+            className="gap-2 min-w-[120px] text-md"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                {isEditing ? 'Update' : 'Save'}
+              </>
+            )}
+          </Button>
         </div>
 
         {/* Scrollable content area */}
