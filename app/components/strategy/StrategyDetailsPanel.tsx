@@ -109,7 +109,7 @@ export function StrategyDetailsPanel({
           updates: {
             name: strategyMetadata.name,
             description: strategyMetadata.description,
-            tsdl_code: JSON.stringify(strategyMetadata),
+            tsdl_code: JSON.stringify(strategyMetadata, null, 2),
             base_plugins: [strategyType],
             parameters: strategyMetadata
           }
@@ -119,7 +119,7 @@ export function StrategyDetailsPanel({
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: strategyMetadata.name,
           description: strategyMetadata.description,
-          tsdl_code: JSON.stringify(strategyMetadata),
+          tsdl_code: JSON.stringify(strategyMetadata, null, 2),
           version: '1.0.0',
           base_plugins: [strategyType],
           parameters: strategyMetadata
