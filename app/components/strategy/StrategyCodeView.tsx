@@ -79,12 +79,12 @@ export function StrategyCodeView() {
               <h3 className="text-base font-semibold text-foreground mb-2">
                 Strategy Definition
               </h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-md text-muted-foreground">
                 This is the declarative strategy configuration that will be compiled and executed
               </p>
             </div>
             {tsdlJson ? (
-              <pre className="text-base font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
+              <pre className="text-md font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
                 {tsdlJson}
               </pre>
             ) : (
@@ -103,11 +103,11 @@ export function StrategyCodeView() {
                 Compiled Python Code
               </h3>
               {pythonClassName && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-md text-muted-foreground">
                   Class: <span className="font-mono font-semibold">{pythonClassName}</span>
                 </p>
               )}
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-md text-muted-foreground mt-1">
                 This is the actual code that will execute your strategy on-chain
               </p>
             </div>
@@ -124,7 +124,7 @@ export function StrategyCodeView() {
                 <p className="text-sm font-semibold text-destructive mb-2">
                   Compilation Error
                 </p>
-                <pre className="text-base text-muted-foreground whitespace-pre-wrap">
+                <pre className="text-md text-muted-foreground whitespace-pre-wrap">
                   {compileError}
                 </pre>
                 <button
@@ -137,7 +137,7 @@ export function StrategyCodeView() {
             )}
 
             {!isCompiling && !compileError && pythonCode && (
-              <pre className="text-base font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
+              <pre className="text-md font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
                 {pythonCode}
               </pre>
             )}
