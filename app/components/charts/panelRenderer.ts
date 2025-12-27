@@ -130,7 +130,7 @@ export abstract class PanelRenderer {
     formatFn?: (val: number) => string
   ) {
     this.ctx.fillStyle = this.colors.text
-    this.ctx.font = '11px monospace'
+    this.ctx.font = '12px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'middle'
 
@@ -198,7 +198,7 @@ export abstract class PanelRenderer {
 
     // Draw value text
     this.ctx.fillStyle = this.colors.bg
-    this.ctx.font = 'bold 11px monospace'
+    this.ctx.font = 'bold 12px monospace'
     this.ctx.textAlign = 'center'
     this.ctx.textBaseline = 'middle'
     this.ctx.fillText(

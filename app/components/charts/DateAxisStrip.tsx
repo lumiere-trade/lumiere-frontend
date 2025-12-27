@@ -139,7 +139,7 @@ export function DateAxisStrip() {
 
     // Draw date labels
     ctx.fillStyle = textColor
-    ctx.font = '11px monospace'
+    ctx.font = '12px monospace'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
 
@@ -178,7 +178,7 @@ export function DateAxisStrip() {
 
         // Draw highlighted date text
         ctx.fillStyle = bgColor
-        ctx.font = 'bold 11px monospace'
+        ctx.font = 'bold 12px monospace'
         ctx.fillText(dateStr, mouseX, height / 2)
       }
     }

@@ -229,7 +229,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">Price Chart with Trade Signals</CardTitle>
-                <CardDescription className="text-md">
+                <CardDescription className="text-sm">
                   {indicator_data && indicator_data.length > 0
                     ? `${indicator_data.length} indicators loaded • Toggle visibility below`
                     : 'Price chart with buy/sell signals'}
