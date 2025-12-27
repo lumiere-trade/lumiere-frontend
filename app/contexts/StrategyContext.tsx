@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
 
@@ -21,13 +21,13 @@ export interface Strategy {
   status: 'draft' | 'active' | 'paused' | 'archived'
   basePlugins: string[]
   version: string
-  
+
   conversation: {
     id: string | null
     messages: ChatMessage[]
     state: string
   }
-  
+
   createdAt: string | null
   updatedAt: string | null
 }
@@ -40,12 +40,12 @@ interface StrategyContextType {
   updateStrategy: (updates: Partial<Strategy>) => void
   updateConversation: (updates: Partial<Strategy['conversation']>) => void
   clearStrategy: () => void
-  
+
   backtestResults: BacktestResponse | null
   setBacktestResults: (results: BacktestResponse | null) => void
   isBacktesting: boolean
   setIsBacktesting: (value: boolean) => void
-  
+
   isGeneratingStrategy: boolean
   setIsGeneratingStrategy: (value: boolean) => void
   strategyGenerationProgress: number
@@ -54,17 +54,17 @@ interface StrategyContextType {
   setProgressStage: (stage: string) => void
   progressMessage: string
   setProgressMessage: (message: string) => void
-  
+
   isChatExpanded: boolean
   expandChat: () => void
   collapseChat: () => void
-  
+
   isDetailsPanelOpen: boolean
   detailsPanelTab: DetailsPanelTab
   openDetailsPanel: () => void
   closeDetailsPanel: () => void
   setDetailsPanelTab: (tab: DetailsPanelTab) => void
-  
+
   isParametersFullscreen: boolean
   expandParametersFullscreen: () => void
   collapseParametersFullscreen: () => void
@@ -74,27 +74,32 @@ const StrategyContext = createContext<StrategyContextType | undefined>(undefined
 
 export function StrategyProvider({ children }: { children: ReactNode }) {
   const [strategy, setStrategy] = useState<Strategy | null>(null)
-  
+
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
   const [isBacktesting, setIsBacktesting] = useState(false)
-  
+
   const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false)
   const [strategyGenerationProgress, setStrategyGenerationProgress] = useState(0)
   const [progressStage, setProgressStage] = useState<string>('')
   const [progressMessage, setProgressMessage] = useState<string>('')
-  
+
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
   const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
+
+  // Auto-clear backtest results when strategy changes
+  useEffect(() => {
+    setBacktestResults(null)
+  }, [strategy?.id, strategy?.name])
 
   const updateStrategy = (updates: Partial<Strategy>) => {
     setStrategy(prev => prev ? { ...prev, ...updates } : null)
   }
 
   const updateConversation = (updates: Partial<Strategy['conversation']>) => {
-    setStrategy(prev => 
-      prev 
+    setStrategy(prev =>
+      prev
         ? { ...prev, conversation: { ...prev.conversation, ...updates } }
         : null
     )
