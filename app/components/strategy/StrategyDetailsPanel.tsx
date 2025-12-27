@@ -82,7 +82,7 @@ export function StrategyDetailsPanel({
   }
 
   const handleSave = async () => {
-    if (!strategyMetadata || !generatedStrategy) return
+    if (!strategyMetadata) return
 
     const hasWallet = strategyMetadata.target_wallet !== null
     const hasIndicators = strategyMetadata.indicators.length > 0
@@ -109,7 +109,7 @@ export function StrategyDetailsPanel({
           updates: {
             name: strategyMetadata.name,
             description: strategyMetadata.description,
-            tsdl_code: generatedStrategy.python_code,
+            tsdl_code: JSON.stringify(strategyMetadata),
             base_plugins: [strategyType],
             parameters: strategyMetadata
           }
@@ -119,7 +119,7 @@ export function StrategyDetailsPanel({
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: strategyMetadata.name,
           description: strategyMetadata.description,
-          tsdl_code: generatedStrategy.python_code,
+          tsdl_code: JSON.stringify(strategyMetadata),
           version: '1.0.0',
           base_plugins: [strategyType],
           parameters: strategyMetadata
