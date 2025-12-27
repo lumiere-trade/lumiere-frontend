@@ -372,7 +372,7 @@ export class PnLChartRenderer {
 
     // Text
     this.ctx.fillStyle = this.colors.text
-    this.ctx.font = '12px monospace'
+    this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'top'
 

@@ -362,7 +362,7 @@ export class ChartRenderer {
   private drawPriceAxis(viewport: Viewport) {
     const { priceMin, priceMax } = viewport
     this.ctx.fillStyle = this.colors.text
-    this.ctx.font = '12px monospace'
+    this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'middle'
 
@@ -383,7 +383,7 @@ export class ChartRenderer {
     const { candleWidth, offsetX, startIdx, endIdx } = viewport
 
     this.ctx.fillStyle = this.colors.text
-    this.ctx.font = '12px monospace'
+    this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'center'
     this.ctx.textBaseline = 'top'
 
@@ -435,7 +435,7 @@ export class ChartRenderer {
     this.ctx.fillRect(this.width - this.padding.right, mouse.y - 10, this.padding.right, 20)
 
     this.ctx.fillStyle = this.colors.bg
-    this.ctx.font = '12px monospace'
+    this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'center'
     this.ctx.textBaseline = 'middle'
     this.ctx.fillText(
@@ -503,7 +503,7 @@ export class ChartRenderer {
 
     // Text
     this.ctx.fillStyle = this.colors.text
-    this.ctx.font = '12px monospace'
+    this.ctx.font = '11px monospace'
     this.ctx.textAlign = 'left'
     this.ctx.textBaseline = 'top'
 
