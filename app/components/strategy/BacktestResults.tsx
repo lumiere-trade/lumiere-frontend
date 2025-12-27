@@ -154,7 +154,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
             {results.symbol} • {format(new Date(results.start_date), 'MMM dd, yyyy')} - {format(new Date(results.end_date), 'MMM dd, yyyy')}
           </p>
         </div>
-        <Badge variant={isPositive ? "default" : "destructive"} className="text-base px-4 py-2">
+        <Badge className={`text-md px-4 py-2 ${isPositive ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}`}>
           {isPositive ? <TrendingUp className="h-4 w-4 mr-2" /> : <TrendingDown className="h-4 w-4 mr-2" />}
           {normalizedMetrics.total_return_pct > 0 ? '+' : ''}{normalizedMetrics.total_return_pct.toFixed(2)}%
         </Badge>
