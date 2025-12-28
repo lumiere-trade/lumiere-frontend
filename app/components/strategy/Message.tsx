@@ -30,7 +30,7 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
           <Button
             onClick={onViewStrategy}
             size="lg"
-            className="gap-2 text-md"
+            className="gap-2 text-sm"
           >
             <Eye className="h-5 w-5" />
             View Strategy
@@ -70,7 +70,7 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
             <Button
               onClick={onViewStrategy}
               size="lg"
-              className="gap-2 text-md"
+              className="gap-2 text-sm"
             >
               <Eye className="h-5 w-5" />
               View Strategy
