@@ -38,8 +38,7 @@ function CreatePageContent() {
     progressStage,
     progressMessage,
     openDetailsPanel,
-    isDirty,
-    markAsClean
+    isDirty
   } = useStrategy()
 
   const {
@@ -91,7 +90,7 @@ function CreatePageContent() {
       // Auto-save on component unmount if dirty and strategy exists
       if (isDirty && strategy && strategy.id) {
         logger.info('Auto-saving strategy on unmount', { strategyId: strategy.id })
-        
+
         // Fire-and-forget save
         updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
@@ -173,9 +172,6 @@ function CreatePageContent() {
         createdAt: strategyData.created_at,
         updatedAt: strategyData.updated_at
       })
-
-      // Mark as clean - just loaded from DB
-      markAsClean()
 
       toast.success(`Strategy "${strategyData.name}" loaded`)
 

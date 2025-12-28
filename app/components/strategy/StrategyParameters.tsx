@@ -32,7 +32,7 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategy, isDirty, setDirty, markAsClean } = useStrategy()
+  const { strategy, isDirty, setDirty } = useStrategy()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -138,8 +138,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         })
       }
 
-      // Mark as clean after successful save
-      markAsClean()
+      // React Query will refetch and update strategy
+      // editedStrategy will sync with new strategy.tsdl
+      // isDirty will become false automatically
 
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
