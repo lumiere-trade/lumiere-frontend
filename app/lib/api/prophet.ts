@@ -21,7 +21,6 @@ export interface ProphetChatRequest {
   message: string;
   conversation_id?: string;
   user_id?: string;
-  state?: string;
   history?: ProphetMessage[];
   strategy_context?: StrategyContext;
 }
@@ -88,11 +87,11 @@ export interface StrategyGeneratedEvent {
 }
 
 export type SSEEvent =
-  | { type: 'metadata'; data: { conversation_id: string; state: string } }
+  | { type: 'metadata'; data: { conversation_id: string } }
   | { type: 'token'; data: { token: string } }
   | { type: 'progress'; data: ProgressEvent }
   | { type: 'strategy_generated'; data: StrategyGeneratedEvent }
-  | { type: 'done'; data: { conversation_id: string; state: string; message_count?: number } }
+  | { type: 'done'; data: { conversation_id: string; message_count?: number } }
   | { type: 'error'; data: { error: string } };
 
 /**
@@ -103,7 +102,7 @@ export async function sendChatMessageStream(
   onToken: (token: string) => void,
   onProgress: (progress: ProgressEvent) => void,
   onStrategyGenerated: (strategy: StrategyGeneratedEvent) => void,
-  onComplete: (fullMessage: string, conversationId: string, state: string) => void,
+  onComplete: (fullMessage: string, conversationId: string) => void,
   onError: (error: Error) => void
 ): Promise<void> {
   try {
@@ -128,7 +127,6 @@ export async function sendChatMessageStream(
     let buffer = '';
     let fullMessage = '';
     let conversationId = '';
-    let state = '';
 
     while (true) {
       const { done, value } = await reader.read();
@@ -152,7 +150,6 @@ export async function sendChatMessageStream(
 
           if (eventType === 'metadata') {
             conversationId = eventData.conversation_id;
-            state = eventData.state;
           } else if (eventType === 'token') {
             fullMessage += eventData.token;
             onToken(eventData.token);
@@ -161,8 +158,7 @@ export async function sendChatMessageStream(
           } else if (eventType === 'strategy_generated') {
             onStrategyGenerated(eventData as StrategyGeneratedEvent);
           } else if (eventType === 'done') {
-            state = eventData.state || state;
-            onComplete(fullMessage, conversationId, state);
+            onComplete(fullMessage, conversationId);
           } else if (eventType === 'error') {
             onError(new Error(eventData.error));
           }

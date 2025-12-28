@@ -29,12 +29,7 @@ export interface Conversation {
   id: string;
   user_id: string;
   strategy_id: string;
-  state: string;
   created_at: string;
-  updated_at: string;
-  completed_at: string | null;
-  message_count: number;
-  duration_seconds: number | null;
   messages: Message[];
 }
 
@@ -44,8 +39,6 @@ export interface Message {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  token_count: number | null;
-  conversation_state: string;
 }
 
 export interface CreateStrategyRequest {
@@ -67,11 +60,9 @@ export interface UpdateStrategyRequest {
 
 export interface CreateConversationRequest {
   strategy_id: string;
-  state: string;
   messages: Array<{
     role: 'user' | 'assistant' | 'system';
     content: string;
-    conversation_state: string;
     timestamp: string;
   }>;
 }
@@ -79,7 +70,6 @@ export interface CreateConversationRequest {
 export interface AddMessageRequest {
   role: 'user' | 'assistant' | 'system';
   content: string;
-  conversation_state: string;
 }
 
 export interface StrategyListResponse {
@@ -325,7 +315,7 @@ export const getConversation = async (
 
   try {
     const result = await get(`${ARCHITECT_PREFIX}/conversations/${conversationId}`);
-    logger.info(LOG_CATEGORY, 'Conversation fetched', { conversationId, messageCount: result.message_count });
+    logger.info(LOG_CATEGORY, 'Conversation fetched', { conversationId, messages: result.messages.length });
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to fetch conversation', { error, conversationId });
@@ -335,7 +325,6 @@ export const getConversation = async (
 
 /**
  * Get conversations for strategy
- * FIXED: Use correct endpoint /conversations?strategy_id={id}
  */
 export const getStrategyConversations = async (
   strategyId: string
@@ -503,17 +492,17 @@ export const compileStrategy = async (
     const result = await post(`${ARCHITECT_PREFIX}/strategies/compile`, {
       strategy_json: strategyJson
     })
-    
+
     if (result.compiles) {
-      logger.info(LOG_CATEGORY, 'Strategy compiled successfully', { 
-        className: result.strategy_class_name 
+      logger.info(LOG_CATEGORY, 'Strategy compiled successfully', {
+        className: result.strategy_class_name
       })
     } else {
-      logger.warn(LOG_CATEGORY, 'Strategy compilation failed', { 
-        error: result.compile_error 
+      logger.warn(LOG_CATEGORY, 'Strategy compilation failed', {
+        error: result.compile_error
       })
     }
-    
+
     return result
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to compile strategy', { error })

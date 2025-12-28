@@ -36,7 +36,6 @@ export function useProphet() {
 
     // Extract conversation data from strategy
     const conversationId = strategy?.conversation.id
-    const conversationState = strategy?.conversation.state || 'greeting'
     const messages = strategy?.conversation.messages || []
 
     log.info('Sending message', { message, conversationId })
@@ -57,7 +56,7 @@ export function useProphet() {
     }
 
     const newMessages = [...messages, userMessage, assistantMessage]
-    
+
     // Update conversation or create new strategy with conversation
     if (strategy) {
       updateConversation({ messages: newMessages })
@@ -96,8 +95,7 @@ export function useProphet() {
         version: '1.0.0',
         conversation: {
           id: null,
-          messages: newMessages,
-          state: 'greeting'
+          messages: newMessages
         },
         createdAt: null,
         updatedAt: null
@@ -125,7 +123,6 @@ export function useProphet() {
         message,
         conversation_id: conversationId || undefined,
         user_id: 'user-1',
-        state: conversationState,
         history: messages.map(msg => ({
           role: msg.role,
           content: msg.content
@@ -197,8 +194,7 @@ export function useProphet() {
                 msg.id === assistantMessage.id
                   ? { ...msg, hasStrategy: true }
                   : msg
-              ),
-              state: conversationState
+              )
             },
             createdAt: null,
             updatedAt: null
@@ -223,19 +219,17 @@ export function useProphet() {
         })
       },
       // onComplete - message streaming complete
-      (fullMessage: string, convId: string, state: string) => {
+      (fullMessage: string, convId: string) => {
         log.info('Message complete', {
           conversationId: convId,
-          state,
           messageLength: fullMessage.length
         })
 
         setIsStreaming(false)
 
-        // Update conversation with final state
+        // Update conversation with final ID
         updateConversation({
           id: convId,
-          state,
           messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
               ? { ...msg, content: fullMessage, isStreaming: false }

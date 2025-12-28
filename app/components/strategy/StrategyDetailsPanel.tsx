@@ -45,7 +45,7 @@ export function StrategyDetailsPanel({
     expandParametersFullscreen,
     collapseParametersFullscreen,
   } = useStrategy()
-  
+
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
@@ -119,11 +119,9 @@ export function StrategyDetailsPanel({
       if (strategy.conversation.messages.length > 0) {
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
-          state: strategy.conversation.state,
           messages: strategy.conversation.messages.map(msg => ({
             role: msg.role,
             content: msg.content,
-            conversation_state: strategy.conversation.state,
             timestamp: msg.timestamp.toISOString()
           }))
         })

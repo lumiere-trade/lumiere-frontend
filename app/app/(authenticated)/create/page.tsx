@@ -77,7 +77,6 @@ function CreatePageContent() {
       let conversationData = {
         id: null as string | null,
         messages: [] as any[],
-        state: 'completed'
       }
 
       if (conversations.length > 0) {
@@ -96,7 +95,6 @@ function CreatePageContent() {
             isStreaming: false,
             hasStrategy: false
           })),
-          state: fullConversation.state
         }
 
         logger.info('Conversation history loaded', {
@@ -168,7 +166,6 @@ function CreatePageContent() {
         conversation: {
           id: null,
           messages: [],
-          state: 'greeting'
         },
         createdAt: null,
         updatedAt: null

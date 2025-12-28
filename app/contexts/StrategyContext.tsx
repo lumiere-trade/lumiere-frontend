@@ -25,7 +25,6 @@ export interface Strategy {
   conversation: {
     id: string | null
     messages: ChatMessage[]
-    state: string
   }
 
   createdAt: string | null

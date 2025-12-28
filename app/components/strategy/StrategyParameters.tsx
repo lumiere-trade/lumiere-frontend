@@ -115,11 +115,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       if (strategy.conversation.messages.length > 0) {
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
-          state: strategy.conversation.state,
           messages: strategy.conversation.messages.map(msg => ({
             role: msg.role,
             content: msg.content,
-            conversation_state: strategy.conversation.state,
             timestamp: msg.timestamp.toISOString()
           }))
         })
