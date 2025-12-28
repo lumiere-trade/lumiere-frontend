@@ -20,7 +20,7 @@ export const useRunBacktest = () => {
     mutationFn: (request: BacktestRequest) => runBacktest(request),
     onSuccess: (data) => {
       toast.success('Backtest completed successfully!', {
-        description: `Total Return: ${data.metrics.total_return_pct.toFixed(2)}% | Win Rate: ${(data.metrics.win_rate * 100).toFixed(1)}%`,
+        description: `Total Return: ${data.metrics.total_return_pct.toFixed(2)}% | Win Rate: ${data.metrics.win_rate.toFixed(1)}%`,
       });
     },
     onError: (error: any) => {
