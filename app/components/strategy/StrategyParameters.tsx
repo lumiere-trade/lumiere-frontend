@@ -170,7 +170,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     }
   }
 
-  const isEditing = !!strategy.id
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
@@ -222,7 +221,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  {isEditing ? 'Update' : 'Save'} {isDirty && '*'}
+                  Save {isDirty && '*'}
                 </>
               )}
             </Button>
