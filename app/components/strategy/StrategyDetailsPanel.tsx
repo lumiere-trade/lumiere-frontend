@@ -39,6 +39,7 @@ export function StrategyDetailsPanel({
     strategy,
     editedStrategy,
     editedName,
+    updateStrategy,
     backtestResults,
     isBacktesting,
     setBacktestResults,
@@ -93,8 +94,17 @@ export function StrategyDetailsPanel({
         name: editedName
       })
 
+      // FIRST: Update strategy in Context immediately
+      // This makes strategy.tsdl = editedStrategy, so isDirty becomes false
+      updateStrategy({
+        name: editedName,
+        description: editedStrategy.description,
+        tsdl: editedStrategy
+      })
+
       let strategyId: string
 
+      // SECOND: Save to backend
       if (isEditing) {
         await updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
@@ -117,6 +127,9 @@ export function StrategyDetailsPanel({
           parameters: editedStrategy
         })
         strategyId = strategyResponse.strategy_id
+
+        // Update with new ID from backend
+        updateStrategy({ id: strategyId })
       }
 
       if (strategy.conversation.messages.length > 0) {
@@ -133,6 +146,7 @@ export function StrategyDetailsPanel({
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
       log.error('Failed to save strategy', { error })
+      toast.error('Failed to save strategy')
     }
   }
 

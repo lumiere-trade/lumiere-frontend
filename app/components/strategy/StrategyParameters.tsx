@@ -32,7 +32,7 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, isDirty } = useStrategy()
+  const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, updateStrategy, isDirty } = useStrategy()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -71,8 +71,17 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         name: editedName
       })
 
+      // FIRST: Update strategy in Context immediately
+      // This makes strategy.tsdl = editedStrategy, so isDirty becomes false
+      updateStrategy({
+        name: editedName,
+        description: editedStrategy.description,
+        tsdl: editedStrategy
+      })
+
       let strategyId: string
 
+      // SECOND: Save to backend
       if (isEditing) {
         await updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
@@ -95,6 +104,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           parameters: editedStrategy
         })
         strategyId = strategyResponse.strategy_id
+
+        // Update with new ID from backend
+        updateStrategy({ id: strategyId })
       }
 
       // Save conversation if exists
@@ -109,13 +121,10 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         })
       }
 
-      // React Query will refetch and update strategy
-      // editedStrategy will sync automatically via useEffect in Context
-      // isDirty will become false automatically
-
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
       log.error('Failed to save strategy', { error })
+      toast.error('Failed to save strategy')
     }
   }
 
