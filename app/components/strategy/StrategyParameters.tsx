@@ -32,7 +32,7 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategy } = useStrategy()
+  const { strategy, isDirty, setDirty, markAsClean } = useStrategy()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -43,12 +43,32 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
 
+  // Initialize from strategy
   useEffect(() => {
     if (strategy) {
       setName(strategy.name)
       setEditedStrategy(strategy.tsdl)
     }
-  }, [strategy])
+  }, [strategy?.id])
+
+  // Detect changes and set dirty flag
+  useEffect(() => {
+    if (!strategy || !editedStrategy) {
+      setDirty(false)
+      return
+    }
+
+    const hasChanges = 
+      name !== strategy.name ||
+      editedStrategy.symbol !== strategy.tsdl.symbol ||
+      editedStrategy.timeframe !== strategy.tsdl.timeframe ||
+      editedStrategy.stop_loss !== strategy.tsdl.stop_loss ||
+      editedStrategy.take_profit !== strategy.tsdl.take_profit ||
+      editedStrategy.trailing_stop !== strategy.tsdl.trailing_stop ||
+      JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl)
+
+    setDirty(hasChanges)
+  }, [name, editedStrategy, strategy, setDirty])
 
   if (!strategy || !editedStrategy) {
     return (
@@ -106,6 +126,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         strategyId = strategyResponse.strategy_id
       }
 
+      // Save conversation if exists
       if (strategy.conversation.messages.length > 0) {
         await createConversationMutation.mutateAsync({
           strategy_id: strategyId,
@@ -117,6 +138,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         })
       }
 
+      // Mark as clean after successful save
+      markAsClean()
+      
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
       log.error('Failed to save strategy', { error })
@@ -135,6 +159,11 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       })
 
       setBacktestResults(results)
+
+      // Show reminder to save if dirty
+      if (isDirty) {
+        toast.info('Strategy tested successfully. Remember to save your changes!')
+      }
     } catch (error) {
       log.error('Backtest failed', { error })
     }
@@ -181,8 +210,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={isSaving}
-              className="gap-2"
+              disabled={!isDirty || isSaving}
+              className={`gap-2 ${isDirty ? 'animate-pulse' : ''}`}
             >
               {isSaving ? (
                 <>
@@ -192,7 +221,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  {isEditing ? 'Update Strategy' : 'Save Strategy'}
+                  {isEditing ? 'Update' : 'Save'} {isDirty && '*'}
                 </>
               )}
             </Button>

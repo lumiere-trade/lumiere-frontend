@@ -40,6 +40,12 @@ interface StrategyContextType {
   updateConversation: (updates: Partial<Strategy['conversation']>) => void
   clearStrategy: () => void
 
+  // Dirty state tracking
+  savedStrategy: Strategy | null
+  isDirty: boolean
+  setDirty: (isDirty: boolean) => void
+  markAsClean: () => void
+
   backtestResults: BacktestResponse | null
   setBacktestResults: (results: BacktestResponse | null) => void
   isBacktesting: boolean
@@ -73,6 +79,8 @@ const StrategyContext = createContext<StrategyContextType | undefined>(undefined
 
 export function StrategyProvider({ children }: { children: ReactNode }) {
   const [strategy, setStrategy] = useState<Strategy | null>(null)
+  const [savedStrategy, setSavedStrategy] = useState<Strategy | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
 
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
   const [isBacktesting, setIsBacktesting] = useState(false)
@@ -104,8 +112,21 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     )
   }
 
+  const setDirty = (dirty: boolean) => {
+    setIsDirty(dirty)
+  }
+
+  const markAsClean = () => {
+    if (strategy) {
+      setSavedStrategy(JSON.parse(JSON.stringify(strategy)))
+    }
+    setIsDirty(false)
+  }
+
   const clearStrategy = () => {
     setStrategy(null)
+    setSavedStrategy(null)
+    setIsDirty(false)
     setBacktestResults(null)
     setIsBacktesting(false)
     setIsGeneratingStrategy(false)
@@ -135,6 +156,10 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         updateStrategy,
         updateConversation,
         clearStrategy,
+        savedStrategy,
+        isDirty,
+        setDirty,
+        markAsClean,
         backtestResults,
         setBacktestResults,
         isBacktesting,

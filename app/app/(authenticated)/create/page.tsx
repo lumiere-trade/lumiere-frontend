@@ -11,6 +11,10 @@ import { LogCategory } from "@/lib/debug"
 import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from "@/lib/api/architect"
 import { useProphet } from "@/hooks/use-prophet"
 import { toast } from "sonner"
+import {
+  useUpdateStrategy,
+  useCreateConversation
+} from "@/hooks/mutations/use-architect-mutations"
 
 const EXAMPLE_PROMPTS = [
   "Create a momentum strategy for SOL/USD",
@@ -34,6 +38,8 @@ function CreatePageContent() {
     progressStage,
     progressMessage,
     openDetailsPanel,
+    isDirty,
+    markAsClean
   } = useStrategy()
 
   const {
@@ -44,6 +50,9 @@ function CreatePageContent() {
     error,
     stopGeneration,
   } = useProphet()
+
+  const updateStrategyMutation = useUpdateStrategy()
+  const createConversationMutation = useCreateConversation()
 
   const [inputValue, setInputValue] = useState("")
 
@@ -64,6 +73,55 @@ function CreatePageContent() {
       clearStrategy()
     }
   }, [strategyId, libraryId])
+
+  // Browser beforeunload warning + auto-save on unmount
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+
+      // Auto-save on component unmount if dirty and strategy exists
+      if (isDirty && strategy && strategy.id) {
+        logger.info('Auto-saving strategy on unmount', { strategyId: strategy.id })
+        
+        // Fire-and-forget save
+        updateStrategyMutation.mutateAsync({
+          strategyId: strategy.id,
+          updates: {
+            name: strategy.name,
+            description: strategy.description,
+            tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
+            base_plugins: strategy.basePlugins,
+            parameters: strategy.tsdl
+          }
+        }).then(() => {
+          // Save conversation if exists
+          if (strategy.conversation.messages.length > 0) {
+            return createConversationMutation.mutateAsync({
+              strategy_id: strategy.id!,
+              messages: strategy.conversation.messages.map(msg => ({
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.timestamp.toISOString()
+              }))
+            })
+          }
+        }).then(() => {
+          logger.info('Auto-save on unmount completed')
+        }).catch(err => {
+          logger.error('Auto-save on unmount failed', { error: err })
+        })
+      }
+    }
+  }, [isDirty, strategy])
 
   const loadUserStrategy = async (id: string) => {
     try {
@@ -115,6 +173,9 @@ function CreatePageContent() {
         createdAt: strategyData.created_at,
         updatedAt: strategyData.updated_at
       })
+
+      // Mark as clean - just loaded from DB
+      markAsClean()
 
       toast.success(`Strategy "${strategyData.name}" loaded`)
 
