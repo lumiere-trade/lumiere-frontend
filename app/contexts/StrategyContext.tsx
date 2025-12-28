@@ -86,11 +86,11 @@ const StrategyContext = createContext<StrategyContextType | undefined>(undefined
 export function StrategyProvider({ children }: { children: ReactNode }) {
   // Base strategy (saved)
   const [strategy, setStrategy] = useState<Strategy | null>(null)
-  
+
   // Edited strategy (working copy)
   const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [editedName, setEditedName] = useState('')
-  
+
   // Dirty state
   const [isDirty, setIsDirty] = useState(false)
 
@@ -132,10 +132,10 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setIsDirty(hasChanges)
   }, [editedName, editedStrategy, strategy])
 
-  // Auto-clear backtest results when strategy changes
+  // Clear backtest results when editedStrategy changes (user edits or new strategy from Prophet)
   useEffect(() => {
     setBacktestResults(null)
-  }, [strategy?.id, strategy?.name])
+  }, [editedStrategy])
 
   const updateStrategy = (updates: Partial<Strategy>) => {
     setStrategy(prev => prev ? { ...prev, ...updates } : null)
