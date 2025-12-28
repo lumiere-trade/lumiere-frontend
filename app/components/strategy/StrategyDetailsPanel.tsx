@@ -40,6 +40,7 @@ export function StrategyDetailsPanel({
     editedStrategy,
     editedName,
     updateStrategy,
+    updateEditedStrategy,
     backtestResults,
     isBacktesting,
     setBacktestResults,
@@ -94,12 +95,15 @@ export function StrategyDetailsPanel({
         name: editedName
       })
 
+      // Sync editedName with editedStrategy.name before saving
+      updateEditedStrategy({ name: editedName })
+
       // FIRST: Update strategy in Context immediately
       // This makes strategy.tsdl = editedStrategy, so isDirty becomes false
       updateStrategy({
         name: editedName,
         description: editedStrategy.description,
-        tsdl: editedStrategy
+        tsdl: { ...editedStrategy, name: editedName }
       })
 
       let strategyId: string
@@ -111,9 +115,9 @@ export function StrategyDetailsPanel({
           updates: {
             name: editedName,
             description: editedStrategy.description,
-            tsdl_code: JSON.stringify(editedStrategy, null, 2),
+            tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
             base_plugins: strategy.basePlugins,
-            parameters: editedStrategy
+            parameters: { ...editedStrategy, name: editedName }
           }
         })
         strategyId = strategy.id
@@ -121,10 +125,10 @@ export function StrategyDetailsPanel({
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: editedName,
           description: editedStrategy.description,
-          tsdl_code: JSON.stringify(editedStrategy, null, 2),
+          tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
           version: strategy.version,
           base_plugins: strategy.basePlugins,
-          parameters: editedStrategy
+          parameters: { ...editedStrategy, name: editedName }
         })
         strategyId = strategyResponse.strategy_id
 
