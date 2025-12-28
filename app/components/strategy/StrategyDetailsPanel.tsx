@@ -344,7 +344,7 @@ export function StrategyDetailsPanel({
             size="sm"
             onClick={handleSave}
             disabled={!isDirty || isSaving || !strategy}
-            className={`gap-2 min-w-[120px] text-md ${isDirty ? 'animate-pulse' : ''}`}
+            className="gap-2 min-w-[120px] text-md"
           >
             {isSaving ? (
               <>
@@ -354,7 +354,7 @@ export function StrategyDetailsPanel({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                Save {isDirty && '*'}
+                Save
               </>
             )}
           </Button>
