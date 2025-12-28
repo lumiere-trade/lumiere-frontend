@@ -1,8 +1,3 @@
-/**
- * Architect React Query Mutations
- * Strategy and Conversation mutations
- */
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -16,11 +11,6 @@ import {
   CreateConversationRequest,
   AddMessageRequest,
 } from '@/lib/api/architect';
-import { architectKeys } from '../queries/use-architect-queries';
-
-// ============================================================================
-// STRATEGY MUTATIONS
-// ============================================================================
 
 /**
  * Create strategy mutation
@@ -30,10 +20,8 @@ export const useCreateStrategy = () => {
 
   return useMutation({
     mutationFn: (data: CreateStrategyRequest) => createStrategy(data),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      await queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
-      toast.success('Strategy created successfully!');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategies'] });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to create strategy';
@@ -50,17 +38,10 @@ export const useUpdateStrategy = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      strategyId,
-      updates,
-    }: {
-      strategyId: string;
-      updates: UpdateStrategyRequest;
-    }) => updateStrategy(strategyId, updates),
-    onSuccess: async (_, { strategyId }) => {
-      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      await queryClient.invalidateQueries({ queryKey: architectKeys.strategyDetail(strategyId) });
-      toast.success('Strategy updated successfully!');
+    mutationFn: ({ strategyId, updates }: { strategyId: string; updates: UpdateStrategyRequest }) =>
+      updateStrategy(strategyId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategies'] });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to update strategy';
@@ -78,13 +59,8 @@ export const useDeleteStrategy = () => {
 
   return useMutation({
     mutationFn: (strategyId: string) => deleteStrategy(strategyId),
-    onSuccess: async () => {
-      // Invalidate and refetch immediately
-      await queryClient.invalidateQueries({ 
-        queryKey: architectKeys.strategyLists(),
-        refetchType: 'active' 
-      });
-      await queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['strategies'] });
       toast.success('Strategy deleted successfully!');
     },
     onError: (error: any) => {
@@ -107,11 +83,8 @@ export const useCreateConversation = () => {
 
   return useMutation({
     mutationFn: (data: CreateConversationRequest) => createConversation(data),
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: architectKeys.strategyConversations(variables.strategy_id),
-      });
-      toast.success('Conversation saved!');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to save conversation';
@@ -128,17 +101,10 @@ export const useAddMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      conversationId,
-      message,
-    }: {
-      conversationId: string;
-      message: AddMessageRequest;
-    }) => addMessage(conversationId, message),
-    onSuccess: async (_, { conversationId }) => {
-      await queryClient.invalidateQueries({
-        queryKey: architectKeys.conversationDetail(conversationId),
-      });
+    mutationFn: ({ conversationId, message }: { conversationId: string; message: AddMessageRequest }) =>
+      addMessage(conversationId, message),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to add message';
