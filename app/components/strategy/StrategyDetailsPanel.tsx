@@ -37,6 +37,8 @@ export function StrategyDetailsPanel({
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
   const {
     strategy,
+    editedStrategy,
+    editedName,
     backtestResults,
     isBacktesting,
     setBacktestResults,
@@ -56,7 +58,7 @@ export function StrategyDetailsPanel({
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleRunBacktest = async () => {
-    if (!strategy) {
+    if (!editedStrategy) {
       log.error('No strategy to backtest')
       return
     }
@@ -66,7 +68,7 @@ export function StrategyDetailsPanel({
 
     try {
       const result = await runBacktestMutation.mutateAsync({
-        strategy_json: strategy.tsdl,
+        strategy_json: editedStrategy,
         candles: 2160,
         initial_capital: 10000,
         cache_results: true
@@ -81,14 +83,14 @@ export function StrategyDetailsPanel({
   }
 
   const handleSave = async () => {
-    if (!strategy) return
+    if (!strategy || !editedStrategy) return
 
     try {
       const isEditing = !!strategy.id
 
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
         strategyId: strategy.id,
-        name: strategy.name
+        name: editedName
       })
 
       let strategyId: string
@@ -97,22 +99,22 @@ export function StrategyDetailsPanel({
         await updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
           updates: {
-            name: strategy.name,
-            description: strategy.description,
-            tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
+            name: editedName,
+            description: editedStrategy.description,
+            tsdl_code: JSON.stringify(editedStrategy, null, 2),
             base_plugins: strategy.basePlugins,
-            parameters: strategy.tsdl
+            parameters: editedStrategy
           }
         })
         strategyId = strategy.id
       } else {
         const strategyResponse = await createStrategyMutation.mutateAsync({
-          name: strategy.name,
-          description: strategy.description,
-          tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
+          name: editedName,
+          description: editedStrategy.description,
+          tsdl_code: JSON.stringify(editedStrategy, null, 2),
           version: strategy.version,
           base_plugins: strategy.basePlugins,
-          parameters: strategy.tsdl
+          parameters: editedStrategy
         })
         strategyId = strategyResponse.strategy_id
       }

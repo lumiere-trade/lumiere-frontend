@@ -33,15 +33,21 @@ export interface Strategy {
 export type DetailsPanelTab = 'parameters' | 'code' | 'backtest'
 
 interface StrategyContextType {
+  // Base strategy (saved version from DB)
   strategy: Strategy | null
   setStrategy: (strategy: Strategy | null) => void
   updateStrategy: (updates: Partial<Strategy>) => void
   updateConversation: (updates: Partial<Strategy['conversation']>) => void
   clearStrategy: () => void
 
-  // Dirty state tracking (simplified)
+  // Edited strategy (working copy)
+  editedStrategy: StrategyJSON | null
+  editedName: string
+  updateEditedStrategy: (updates: Partial<StrategyJSON>) => void
+  setEditedName: (name: string) => void
+
+  // Dirty state (auto-calculated)
   isDirty: boolean
-  setDirty: (isDirty: boolean) => void
 
   // Navigation helper
   navigateToCreate: (router: any) => boolean
@@ -78,7 +84,14 @@ interface StrategyContextType {
 const StrategyContext = createContext<StrategyContextType | undefined>(undefined)
 
 export function StrategyProvider({ children }: { children: ReactNode }) {
+  // Base strategy (saved)
   const [strategy, setStrategy] = useState<Strategy | null>(null)
+  
+  // Edited strategy (working copy)
+  const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
+  const [editedName, setEditedName] = useState('')
+  
+  // Dirty state
   const [isDirty, setIsDirty] = useState(false)
 
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
@@ -93,6 +106,31 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
   const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
+
+  // Sync editedStrategy with strategy when strategy changes
+  useEffect(() => {
+    if (strategy) {
+      setEditedStrategy(strategy.tsdl)
+      setEditedName(strategy.name)
+    } else {
+      setEditedStrategy(null)
+      setEditedName('')
+    }
+  }, [strategy?.id, strategy?.tsdl, strategy?.name])
+
+  // Auto-calculate dirty state
+  useEffect(() => {
+    if (!strategy || !editedStrategy) {
+      setIsDirty(false)
+      return
+    }
+
+    const hasChanges =
+      editedName !== strategy.name ||
+      JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl)
+
+    setIsDirty(hasChanges)
+  }, [editedName, editedStrategy, strategy])
 
   // Auto-clear backtest results when strategy changes
   useEffect(() => {
@@ -111,12 +149,14 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  const setDirty = (dirty: boolean) => {
-    setIsDirty(dirty)
+  const updateEditedStrategy = (updates: Partial<StrategyJSON>) => {
+    setEditedStrategy(prev => prev ? { ...prev, ...updates } : null)
   }
 
   const clearStrategy = () => {
     setStrategy(null)
+    setEditedStrategy(null)
+    setEditedName('')
     setIsDirty(false)
     setBacktestResults(null)
     setIsBacktesting(false)
@@ -164,8 +204,11 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         updateStrategy,
         updateConversation,
         clearStrategy,
+        editedStrategy,
+        editedName,
+        updateEditedStrategy,
+        setEditedName,
         isDirty,
-        setDirty,
         navigateToCreate,
         backtestResults,
         setBacktestResults,

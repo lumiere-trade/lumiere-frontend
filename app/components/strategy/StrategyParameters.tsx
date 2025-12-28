@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown } from "lucide-react"
@@ -32,43 +32,14 @@ interface StrategyParametersProps {
 
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
-  const { strategy, isDirty, setDirty } = useStrategy()
+  const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, isDirty } = useStrategy()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
   const runBacktestMutation = useRunBacktest()
 
   const [showCode, setShowCode] = useState(false)
-  const [name, setName] = useState('')
-  const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
-
-  // Initialize from strategy - track both ID and TSDL changes
-  useEffect(() => {
-    if (strategy) {
-      setName(strategy.name)
-      setEditedStrategy(strategy.tsdl)
-    }
-  }, [strategy?.id, strategy?.tsdl])
-
-  // Detect changes and set dirty flag
-  useEffect(() => {
-    if (!strategy || !editedStrategy) {
-      setDirty(false)
-      return
-    }
-
-    const hasChanges =
-      name !== strategy.name ||
-      editedStrategy.symbol !== strategy.tsdl.symbol ||
-      editedStrategy.timeframe !== strategy.tsdl.timeframe ||
-      editedStrategy.stop_loss !== strategy.tsdl.stop_loss ||
-      editedStrategy.take_profit !== strategy.tsdl.take_profit ||
-      editedStrategy.trailing_stop !== strategy.tsdl.trailing_stop ||
-      JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl)
-
-    setDirty(hasChanges)
-  }, [name, editedStrategy, strategy, setDirty])
 
   if (!strategy || !editedStrategy) {
     return (
@@ -86,7 +57,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const strategyType = 'indicator_based'
 
   const handleFieldChange = (field: keyof StrategyJSON, value: any) => {
-    setEditedStrategy(prev => prev ? { ...prev, [field]: value } : null)
+    updateEditedStrategy({ [field]: value })
   }
 
   const handleSave = async () => {
@@ -97,7 +68,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       log.info(isEditing ? 'Updating strategy' : 'Creating new strategy', {
         strategyId: strategy.id,
-        name
+        name: editedName
       })
 
       let strategyId: string
@@ -106,7 +77,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         await updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
           updates: {
-            name: name || editedStrategy.name,
+            name: editedName || editedStrategy.name,
             description: editedStrategy.description,
             tsdl_code: JSON.stringify(editedStrategy, null, 2),
             base_plugins: [strategyType],
@@ -116,7 +87,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         strategyId = strategy.id
       } else {
         const strategyResponse = await createStrategyMutation.mutateAsync({
-          name: name || editedStrategy.name,
+          name: editedName || editedStrategy.name,
           description: editedStrategy.description,
           tsdl_code: JSON.stringify(editedStrategy, null, 2),
           version: '1.0.0',
@@ -139,7 +110,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       }
 
       // React Query will refetch and update strategy
-      // editedStrategy will sync with new strategy.tsdl
+      // editedStrategy will sync automatically via useEffect in Context
       // isDirty will become false automatically
 
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
@@ -211,7 +182,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               size="sm"
               onClick={handleSave}
               disabled={!isDirty || isSaving}
-              className={`gap-2 ${isDirty ? 'animate-pulse' : ''}`}
+              className="gap-2"
             >
               {isSaving ? (
                 <>
@@ -221,7 +192,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  Save {isDirty && '*'}
+                  Save
                 </>
               )}
             </Button>
@@ -269,8 +240,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             <label className="text-base font-semibold text-foreground">Name</label>
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={editedName}
+              onChange={(e) => setEditedName(e.target.value)}
               className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
