@@ -11,6 +11,7 @@ import {
   CreateConversationRequest,
   AddMessageRequest,
 } from '@/lib/api/architect';
+import { architectKeys } from '../queries/use-architect-queries';
 
 /**
  * Create strategy mutation
@@ -21,7 +22,8 @@ export const useCreateStrategy = () => {
   return useMutation({
     mutationFn: (data: CreateStrategyRequest) => createStrategy(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['strategies'] });
+      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
+      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to create strategy';
@@ -40,8 +42,9 @@ export const useUpdateStrategy = () => {
   return useMutation({
     mutationFn: ({ strategyId, updates }: { strategyId: string; updates: UpdateStrategyRequest }) =>
       updateStrategy(strategyId, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['strategies'] });
+    onSuccess: (_, { strategyId }) => {
+      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
+      queryClient.invalidateQueries({ queryKey: architectKeys.strategyDetail(strategyId) });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to update strategy';
@@ -60,7 +63,8 @@ export const useDeleteStrategy = () => {
   return useMutation({
     mutationFn: (strategyId: string) => deleteStrategy(strategyId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['strategies'] });
+      queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
+      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
       toast.success('Strategy deleted successfully!');
     },
     onError: (error: any) => {
@@ -83,8 +87,10 @@ export const useCreateConversation = () => {
 
   return useMutation({
     mutationFn: (data: CreateConversationRequest) => createConversation(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: architectKeys.strategyConversations(variables.strategy_id),
+      });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to save conversation';
@@ -103,8 +109,10 @@ export const useAddMessage = () => {
   return useMutation({
     mutationFn: ({ conversationId, message }: { conversationId: string; message: AddMessageRequest }) =>
       addMessage(conversationId, message),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    onSuccess: (_, { conversationId }) => {
+      queryClient.invalidateQueries({
+        queryKey: architectKeys.conversationDetail(conversationId),
+      });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to add message';
