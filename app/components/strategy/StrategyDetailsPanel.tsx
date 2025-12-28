@@ -44,6 +44,7 @@ export function StrategyDetailsPanel({
     isParametersFullscreen,
     expandParametersFullscreen,
     collapseParametersFullscreen,
+    isDirty
   } = useStrategy()
 
   const runBacktestMutation = useRunBacktest()
@@ -149,7 +150,6 @@ export function StrategyDetailsPanel({
     }, 320) // 300ms transition + 20ms buffer
   }
 
-  const isEditing = !!strategy?.id
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
@@ -343,8 +343,8 @@ export function StrategyDetailsPanel({
           <Button
             size="sm"
             onClick={handleSave}
-            disabled={isSaving || !strategy}
-            className="gap-2 min-w-[120px] text-md"
+            disabled={!isDirty || isSaving || !strategy}
+            className={`gap-2 min-w-[120px] text-md ${isDirty ? 'animate-pulse' : ''}`}
           >
             {isSaving ? (
               <>
@@ -354,7 +354,7 @@ export function StrategyDetailsPanel({
             ) : (
               <>
                 <Save className="h-4 w-4" />
-                {isEditing ? 'Update' : 'Save'}
+                Save {isDirty && '*'}
               </>
             )}
           </Button>
