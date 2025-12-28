@@ -43,13 +43,13 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
 
-  // Initialize from strategy
+  // Initialize from strategy - track both ID and TSDL changes
   useEffect(() => {
     if (strategy) {
       setName(strategy.name)
       setEditedStrategy(strategy.tsdl)
     }
-  }, [strategy?.id])
+  }, [strategy?.id, strategy?.tsdl])
 
   // Detect changes and set dirty flag
   useEffect(() => {
@@ -58,7 +58,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       return
     }
 
-    const hasChanges = 
+    const hasChanges =
       name !== strategy.name ||
       editedStrategy.symbol !== strategy.tsdl.symbol ||
       editedStrategy.timeframe !== strategy.tsdl.timeframe ||
@@ -140,7 +140,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       // Mark as clean after successful save
       markAsClean()
-      
+
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
       log.error('Failed to save strategy', { error })
