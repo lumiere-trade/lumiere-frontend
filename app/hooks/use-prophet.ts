@@ -65,7 +65,7 @@ export function useProphet() {
     // Update conversation or create new strategy with conversation
     if (strategy) {
       updateConversation({ messages: newMessages })
-      
+
       // Auto-save conversation (fire-and-forget) if strategy exists
       if (strategy.id) {
         log.info('Auto-saving conversation', { strategyId: strategy.id })
@@ -127,6 +127,7 @@ export function useProphet() {
     }
 
     let fullResponse = ''
+    let strategyWasGenerated = false
 
     await sendChatMessageStream(
       {
@@ -170,6 +171,9 @@ export function useProphet() {
         setIsGeneratingStrategy(false)
         setStrategyGenerationProgress(0)
 
+        // Flag that strategy was generated (will open panel in onComplete)
+        strategyWasGenerated = true
+
         // MVP: All strategies are indicator-based
         const strategyType = 'indicator_based'
 
@@ -208,18 +212,8 @@ export function useProphet() {
         setDirty(true)
         log.info('Strategy marked as dirty after Prophet generation')
 
-        // Open details panel to show strategy
-        openDetailsPanel()
+        // Set default tab to parameters
         setDetailsPanelTab('parameters')
-
-        // Mark assistant message as containing strategy
-        updateConversation({
-          messages: newMessages.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, hasStrategy: true }
-              : msg
-          )
-        })
 
         log.info('Strategy stored in context', {
           strategyId: strategyEvent.strategy_id
@@ -229,20 +223,32 @@ export function useProphet() {
       (fullMessage: string, convId: string) => {
         log.info('Message complete', {
           conversationId: convId,
-          messageLength: fullMessage.length
+          messageLength: fullMessage.length,
+          strategyGenerated: strategyWasGenerated
         })
 
         setIsStreaming(false)
 
-        // Update conversation with final ID
+        // Add strategy marker if strategy was generated
+        const finalMessage = strategyWasGenerated 
+          ? `${fullMessage}\n\n<<view_strategy>>`
+          : fullMessage
+
+        // Update conversation with final ID and marker
         updateConversation({
           id: convId,
           messages: newMessages.map(msg =>
             msg.id === assistantMessage.id
-              ? { ...msg, content: fullMessage, isStreaming: false }
+              ? { ...msg, content: finalMessage, isStreaming: false }
               : msg
           )
         })
+
+        // Open details panel AFTER streaming completes if strategy was generated
+        if (strategyWasGenerated) {
+          log.info('Opening details panel - strategy is ready')
+          openDetailsPanel()
+        }
 
         // Auto-save conversation with final message (fire-and-forget)
         if (strategy?.id) {
@@ -251,7 +257,7 @@ export function useProphet() {
             strategy_id: strategy.id,
             messages: newMessages.map(msg => ({
               role: msg.role,
-              content: msg.id === assistantMessage.id ? fullMessage : msg.content,
+              content: msg.id === assistantMessage.id ? finalMessage : msg.content,
               timestamp: msg.timestamp.toISOString()
             }))
           }).catch(err => {

@@ -10,7 +10,6 @@ export interface ChatMessage {
   content: string
   timestamp: Date
   isStreaming?: boolean
-  hasStrategy?: boolean
 }
 
 export interface Strategy {

@@ -11,7 +11,6 @@ interface MessageData {
   role: "user" | "assistant"
   content: string
   isStreaming?: boolean
-  hasStrategy?: boolean
 }
 
 interface MessageListProps {
@@ -124,18 +123,19 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // IMPROVED FILTER: Skip empty messages
+  // Filter empty messages, but keep those with strategy marker
   const visibleMessages = messages.filter(msg => {
     const hasContent = msg.content && msg.content.trim().length > 0
+    const hasStrategyMarker = msg.content.includes('<<view_strategy>>')
 
     // If currently streaming, show it even if empty (will fill up)
     if (msg.isStreaming && hasContent) {
       return true
     }
 
-    // If not streaming and no content, hide it UNLESS it has a strategy
+    // If not streaming and no content, hide it UNLESS it has strategy marker
     if (!hasContent) {
-      return msg.hasStrategy === true
+      return hasStrategyMarker
     }
 
     return true
@@ -153,7 +153,6 @@ export function MessageList({
             role={message.role}
             content={message.content}
             isStreaming={message.isStreaming}
-            hasStrategy={message.hasStrategy}
             onViewStrategy={onViewStrategy}
           />
         ))}

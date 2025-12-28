@@ -8,13 +8,19 @@ interface MessageProps {
   role: "user" | "assistant"
   content: string
   isStreaming?: boolean
-  hasStrategy?: boolean
   onViewStrategy?: () => void
 }
 
-export function Message({ role, content, isStreaming, hasStrategy, onViewStrategy }: MessageProps) {
-  const showViewButton = role === "assistant" && !isStreaming && hasStrategy && onViewStrategy
-  const hasContent = content && content.trim().length > 0
+export function Message({ role, content, isStreaming, onViewStrategy }: MessageProps) {
+  // Check for strategy marker in content
+  const hasStrategyMarker = content.includes('<<view_strategy>>')
+  
+  // Filter out the marker from displayed content
+  const displayContent = content.replace(/<<view_strategy>>/g, '').trim()
+  
+  // Show button if marker is present
+  const showViewButton = role === "assistant" && !isStreaming && hasStrategyMarker && onViewStrategy
+  const hasContent = displayContent && displayContent.length > 0
 
   // If no content but has strategy button, show ONLY the button
   if (!hasContent && showViewButton) {
@@ -24,7 +30,7 @@ export function Message({ role, content, isStreaming, hasStrategy, onViewStrateg
           <Button
             onClick={onViewStrategy}
             size="lg"
-            className="gap-2"
+            className="gap-2 text-md"
           >
             <Eye className="h-5 w-5" />
             View Strategy
@@ -52,10 +58,10 @@ export function Message({ role, content, isStreaming, hasStrategy, onViewStrateg
         >
           {role === "user" ? (
             <p className="text-base leading-relaxed whitespace-pre-line">
-              {content}
+              {displayContent}
             </p>
           ) : (
-            <MarkdownMessage content={content} />
+            <MarkdownMessage content={displayContent} />
           )}
         </div>
 
@@ -64,7 +70,7 @@ export function Message({ role, content, isStreaming, hasStrategy, onViewStrateg
             <Button
               onClick={onViewStrategy}
               size="lg"
-              className="gap-2"
+              className="gap-2 text-md"
             >
               <Eye className="h-5 w-5" />
               View Strategy
