@@ -12,10 +12,8 @@ import { logger, LogCategory } from "@/lib/debug"
 
 function AuthenticatedLayoutContent({
   children,
-  isCreatePage
 }: {
   children: React.ReactNode
-  isCreatePage: boolean
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -23,9 +21,10 @@ function AuthenticatedLayoutContent({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
 
-  const strategyContext = isCreatePage ? useStrategy() : null
+  const strategyContext = useStrategy()
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
+  const isCreatePage = pathname === '/create'
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
@@ -44,10 +43,8 @@ function AuthenticatedLayoutContent({
 
   // Sync isDetailsPanelOpen with StrategyContext
   useEffect(() => {
-    if (strategyContext) {
-      setIsDetailsPanelOpen(strategyContext.isDetailsPanelOpen)
-    }
-  }, [strategyContext?.isDetailsPanelOpen])
+    setIsDetailsPanelOpen(strategyContext.isDetailsPanelOpen)
+  }, [strategyContext.isDetailsPanelOpen])
 
   // Auto-close StrategyPanel when DetailsPanel opens
   useEffect(() => {
@@ -58,8 +55,8 @@ function AuthenticatedLayoutContent({
 
   // Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
   useEffect(() => {
-    if (isSidebarOpen && isDetailsPanelOpen && !strategyContext?.isParametersFullscreen) {
-      strategyContext?.closeDetailsPanel()
+    if (isSidebarOpen && isDetailsPanelOpen && !strategyContext.isParametersFullscreen) {
+      strategyContext.closeDetailsPanel()
     }
   }, [isSidebarOpen])
 
@@ -68,12 +65,10 @@ function AuthenticatedLayoutContent({
   }
 
   const handleDetailsPanelToggle = () => {
-    if (strategyContext) {
-      if (isDetailsPanelOpen) {
-        strategyContext.closeDetailsPanel()
-      } else {
-        strategyContext.openDetailsPanel()
-      }
+    if (isDetailsPanelOpen) {
+      strategyContext.closeDetailsPanel()
+    } else {
+      strategyContext.openDetailsPanel()
     }
   }
 
@@ -82,16 +77,14 @@ function AuthenticatedLayoutContent({
   }
 
   const handleOpenChat = () => {
-    if (strategyContext) {
-      // Collapse fullscreen to restore normal layout where chat is visible
-      if (strategyContext.isParametersFullscreen) {
-        strategyContext.collapseParametersFullscreen()
-      }
+    // Collapse fullscreen to restore normal layout where chat is visible
+    if (strategyContext.isParametersFullscreen) {
+      strategyContext.collapseParametersFullscreen()
     }
   }
 
   // Calculate padding based on fullscreen state
-  const isFullscreen = strategyContext?.isParametersFullscreen || false
+  const isFullscreen = strategyContext.isParametersFullscreen || false
   const leftPadding = isFullscreen
     ? '32px'
     : isSidebarOpen && !isDetailsPanelOpen
@@ -128,7 +121,7 @@ function AuthenticatedLayoutContent({
       </main>
 
       {/* Details Panel - Fixed positioning */}
-      {isCreatePage && strategyContext && (
+      {isCreatePage && (
         <StrategyDetailsPanel
           isOpen={isDetailsPanelOpen}
           onToggle={handleDetailsPanelToggle}
@@ -147,18 +140,11 @@ export default function AuthenticatedLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-  const isCreatePage = pathname === '/create'
-
-  return isCreatePage ? (
+  return (
     <StrategyProvider>
-      <AuthenticatedLayoutContent isCreatePage={true}>
+      <AuthenticatedLayoutContent>
         {children}
       </AuthenticatedLayoutContent>
     </StrategyProvider>
-  ) : (
-    <AuthenticatedLayoutContent isCreatePage={false}>
-      {children}
-    </AuthenticatedLayoutContent>
   )
 }

@@ -3,9 +3,11 @@
 import { Button } from '@lumiere/shared/components/ui/button'
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Wallet, ArrowDownToLine, LogOut } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
 import { useWallet } from "@solana/wallet-adapter-react"
+import { useStrategy } from "@/contexts/StrategyContext"
 import { WalletPanel } from "@/components/wallet/WalletPanel"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
 import { UserProfileModal } from "@/components/navigation/UserProfileModal"
@@ -19,8 +21,10 @@ interface NavigationHeaderProps {
 
 export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
   const log = useLogger('NavigationHeader', LogCategory.COMPONENT)
+  const router = useRouter()
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
+  const { navigateToCreate } = useStrategy()
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
 
   const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
@@ -60,6 +64,12 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
     }
   }
 
+  const handleCreateClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    log.info('CREATE button clicked')
+    navigateToCreate(router)
+  }
+
   return (
     <>
       <header className="border-b border-primary/20 bg-background z-20 relative h-[54px]">
@@ -80,15 +90,14 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 DASHBOARD
               </Button>
             </Link>
-            <Link href="/create">
-              <Button
-                variant="outline"
-                size="lg"
-                className="rounded-full px-6 md:px-8 font-semibold"
-              >
-                CREATE
-              </Button>
-            </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-6 md:px-8 font-semibold"
+              onClick={handleCreateClick}
+            >
+              CREATE
+            </Button>
 
             <Button
               variant="default"

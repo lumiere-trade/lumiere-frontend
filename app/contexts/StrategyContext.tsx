@@ -45,6 +45,9 @@ interface StrategyContextType {
   setDirty: (isDirty: boolean) => void
   markAsClean: () => void
 
+  // Navigation helper
+  navigateToCreate: (router: any) => boolean
+
   backtestResults: BacktestResponse | null
   setBacktestResults: (results: BacktestResponse | null) => void
   isBacktesting: boolean
@@ -137,6 +140,23 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setIsParametersFullscreen(false)
   }
 
+  // Navigation helper - checks for unsaved changes before navigating
+  const navigateToCreate = (router: any): boolean => {
+    if (isDirty) {
+      const confirmed = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
+      )
+      if (!confirmed) {
+        return false
+      }
+    }
+
+    // Clear strategy and navigate
+    clearStrategy()
+    router.push('/create')
+    return true
+  }
+
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
   const openDetailsPanel = () => setIsDetailsPanelOpen(true)
@@ -159,6 +179,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         isDirty,
         setDirty,
         markAsClean,
+        navigateToCreate,
         backtestResults,
         setBacktestResults,
         isBacktesting,

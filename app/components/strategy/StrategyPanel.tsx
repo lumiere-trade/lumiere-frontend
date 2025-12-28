@@ -1,5 +1,6 @@
 "use client"
 
+import { useStrategy } from "@/contexts/StrategyContext"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
@@ -28,6 +29,7 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
+  const { navigateToCreate } = useStrategy()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [libraryExpanded, setLibraryExpanded] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
@@ -48,8 +50,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   )
 
   const handleNewStrategy = () => {
-    // Navigate to /create which will handle clearing state via useEffect
-    router.push('/create')
+    navigateToCreate(router)
   }
 
   const handleStrategyClick = (strategyId: string) => {
