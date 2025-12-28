@@ -76,22 +76,12 @@ export function useProphet() {
           entry_logic: '',
           exit_rules: [],
           exit_logic: '',
-          target_wallet: null,
-          copy_percentage: null,
-          min_copy_size: null,
-          max_copy_size: null,
-          copy_delay: null,
-          reversion_target: null,
-          entry_threshold: null,
-          exit_threshold: null,
-          lookback_period: null,
-          stop_loss: null,
+          stop_loss: 3.0,
           take_profit: null,
           trailing_stop: null,
-          max_position_size: null,
         },
         status: 'draft',
-        basePlugins: [],
+        basePlugins: ['indicator_based'],
         version: '1.0.0',
         conversation: {
           id: null,
@@ -160,15 +150,8 @@ export function useProphet() {
         setIsGeneratingStrategy(false)
         setStrategyGenerationProgress(0)
 
-        // Determine strategy type from TSDL
-        const hasWallet = strategyEvent.strategy_json.target_wallet !== null
-        const hasIndicators = strategyEvent.strategy_json.indicators.length > 0
-        const hasReversion = strategyEvent.strategy_json.reversion_target !== null
-
-        const strategyType = hasWallet && hasIndicators ? 'hybrid'
-          : hasWallet ? 'wallet_following'
-          : hasReversion ? 'mean_reversion'
-          : 'indicator_based'
+        // MVP: All strategies are indicator-based
+        const strategyType = 'indicator_based'
 
         if (strategy) {
           // Update existing strategy

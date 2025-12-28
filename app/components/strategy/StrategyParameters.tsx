@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown, Target, Wallet } from "lucide-react"
+import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -62,14 +62,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     )
   }
 
-  const hasIndicators = editedStrategy.indicators.length > 0
-  const hasWallet = editedStrategy.target_wallet !== null
-  const hasReversion = editedStrategy.reversion_target !== null
-
-  const strategyType = hasWallet && hasIndicators ? 'hybrid'
-    : hasWallet ? 'wallet_following'
-    : hasReversion ? 'mean_reversion'
-    : 'indicator_based'
+  const hasIndicators = editedStrategy.indicators && editedStrategy.indicators.length > 0
+  const strategyType = 'indicator_based'
 
   const handleFieldChange = (field: keyof StrategyJSON, value: any) => {
     setEditedStrategy(prev => prev ? { ...prev, [field]: value } : null)
@@ -238,7 +232,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           <div className="space-y-2">
             <label className="text-base font-semibold text-muted-foreground">Type</label>
             <span className="block px-3 py-1.5 bg-primary/10 text-primary rounded-full text-md font-medium w-fit">
-              {strategyType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              Indicator Based
             </span>
           </div>
 
@@ -332,22 +326,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       )}
 
-      {hasWallet && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
-            <Wallet className="h-5 w-5 text-primary" />
-            Wallet Following
-          </h3>
-
-          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Target Wallet</p>
-              <p className="text-sm font-mono text-foreground break-all">{editedStrategy.target_wallet}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-foreground">Execution Settings</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -363,9 +341,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="SOL/USDC">SOL/USDC</SelectItem>
-                  <SelectItem value="SOL/USDT">SOL/USDT</SelectItem>
                   <SelectItem value="BTC/USDC">BTC/USDC</SelectItem>
                   <SelectItem value="ETH/USDC">ETH/USDC</SelectItem>
+                  <SelectItem value="BONK/USDC">BONK/USDC</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">Asset to trade</p>
@@ -386,9 +364,11 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   <SelectItem value="1m">1 Minute</SelectItem>
                   <SelectItem value="5m">5 Minutes</SelectItem>
                   <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="30m">30 Minutes</SelectItem>
                   <SelectItem value="1h">1 Hour</SelectItem>
                   <SelectItem value="4h">4 Hours</SelectItem>
                   <SelectItem value="1d">1 Day</SelectItem>
+                  <SelectItem value="1w">1 Week</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">Candle interval</p>
@@ -399,28 +379,31 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-foreground">Risk Management</h3>
+        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
+          <p className="text-sm text-muted-foreground">
+            MVP trades with 100% of available capital. Position sizing will be added in future updates.
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {editedStrategy.stop_loss !== null && (
-            <div className="bg-card border border-primary/20 rounded-2xl p-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-base font-semibold text-foreground">Stop Loss</label>
-                  <span className="text-base font-mono text-primary">{editedStrategy.stop_loss.toFixed(1)}%</span>
-                </div>
-                <Slider
-                  value={[editedStrategy.stop_loss]}
-                  onValueChange={([value]) => handleFieldChange('stop_loss', value)}
-                  min={0.1}
-                  max={10}
-                  step={0.1}
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">Maximum loss per trade</p>
+          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-base font-semibold text-foreground">Stop Loss</label>
+                <span className="text-base font-mono text-primary">{editedStrategy.stop_loss.toFixed(1)}%</span>
               </div>
+              <Slider
+                value={[editedStrategy.stop_loss]}
+                onValueChange={([value]) => handleFieldChange('stop_loss', value)}
+                min={0.1}
+                max={20}
+                step={0.1}
+                className="w-full"
+              />
+              <p className="text-sm text-muted-foreground">Maximum loss per trade (required)</p>
             </div>
-          )}
+          </div>
 
-          {editedStrategy.take_profit !== null && (
+          {editedStrategy.take_profit !== null && editedStrategy.take_profit !== undefined && (
             <div className="bg-card border border-primary/20 rounded-2xl p-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -431,16 +414,16 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   value={[editedStrategy.take_profit]}
                   onValueChange={([value]) => handleFieldChange('take_profit', value)}
                   min={0.1}
-                  max={20}
+                  max={50}
                   step={0.1}
                   className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">Target profit per trade</p>
+                <p className="text-sm text-muted-foreground">Fixed profit target (optional)</p>
               </div>
             </div>
           )}
 
-          {editedStrategy.trailing_stop !== null && (
+          {editedStrategy.trailing_stop !== null && editedStrategy.trailing_stop !== undefined && (
             <div className="bg-card border border-primary/20 rounded-2xl p-6">
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -451,168 +434,16 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   value={[editedStrategy.trailing_stop]}
                   onValueChange={([value]) => handleFieldChange('trailing_stop', value)}
                   min={0.1}
-                  max={5}
+                  max={10}
                   step={0.1}
                   className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">Dynamic stop loss distance</p>
-              </div>
-            </div>
-          )}
-
-          {editedStrategy.max_position_size !== null && (
-            <div className="bg-card border border-primary/20 rounded-2xl p-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-base font-semibold text-foreground">Max Position Size</label>
-                  <span className="text-base font-mono text-primary">{(editedStrategy.max_position_size * 100).toFixed(0)}%</span>
-                </div>
-                <Slider
-                  value={[editedStrategy.max_position_size * 100]}
-                  onValueChange={([value]) => handleFieldChange('max_position_size', value / 100)}
-                  min={1}
-                  max={100}
-                  step={1}
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">Maximum capital per trade</p>
+                <p className="text-sm text-muted-foreground">Dynamic trailing stop (optional)</p>
               </div>
             </div>
           )}
         </div>
       </div>
-
-      {hasWallet && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground">Copy Trading Settings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {editedStrategy.copy_percentage !== null && (
-              <div className="bg-card border border-primary/20 rounded-2xl p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-base font-semibold text-foreground">Copy Percentage</label>
-                    <span className="text-base font-mono text-primary">{(editedStrategy.copy_percentage * 100).toFixed(0)}%</span>
-                  </div>
-                  <Slider
-                    value={[editedStrategy.copy_percentage * 100]}
-                    onValueChange={([value]) => handleFieldChange('copy_percentage', value / 100)}
-                    min={1}
-                    max={100}
-                    step={1}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">Percentage of whale trade to copy</p>
-                </div>
-              </div>
-            )}
-
-            {editedStrategy.min_copy_size !== null && (
-              <div className="bg-card border border-primary/20 rounded-2xl p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-base font-semibold text-foreground">Min Copy Size</label>
-                    <span className="text-base font-mono text-primary">${editedStrategy.min_copy_size.toFixed(0)}</span>
-                  </div>
-                  <Slider
-                    value={[editedStrategy.min_copy_size]}
-                    onValueChange={([value]) => handleFieldChange('min_copy_size', value)}
-                    min={10}
-                    max={1000}
-                    step={10}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">Ignore smaller trades</p>
-                </div>
-              </div>
-            )}
-
-            {editedStrategy.max_copy_size !== null && (
-              <div className="bg-card border border-primary/20 rounded-2xl p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-base font-semibold text-foreground">Max Copy Size</label>
-                    <span className="text-base font-mono text-primary">${editedStrategy.max_copy_size.toFixed(0)}</span>
-                  </div>
-                  <Slider
-                    value={[editedStrategy.max_copy_size]}
-                    onValueChange={([value]) => handleFieldChange('max_copy_size', value)}
-                    min={100}
-                    max={10000}
-                    step={100}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">Cap maximum trade size</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {hasReversion && editedStrategy.entry_threshold !== null && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground">Mean Reversion Settings</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-card border border-primary/20 rounded-2xl p-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-base font-semibold text-foreground">Entry Threshold</label>
-                  <span className="text-base font-mono text-primary">{editedStrategy.entry_threshold.toFixed(1)}</span>
-                </div>
-                <Slider
-                  value={[editedStrategy.entry_threshold]}
-                  onValueChange={([value]) => handleFieldChange('entry_threshold', value)}
-                  min={0.5}
-                  max={5}
-                  step={0.1}
-                  className="w-full"
-                />
-                <p className="text-sm text-muted-foreground">Standard deviations for entry</p>
-              </div>
-            </div>
-
-            {editedStrategy.exit_threshold !== null && (
-              <div className="bg-card border border-primary/20 rounded-2xl p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-base font-semibold text-foreground">Exit Threshold</label>
-                    <span className="text-base font-mono text-primary">{editedStrategy.exit_threshold.toFixed(1)}</span>
-                  </div>
-                  <Slider
-                    value={[editedStrategy.exit_threshold]}
-                    onValueChange={([value]) => handleFieldChange('exit_threshold', value)}
-                    min={0.1}
-                    max={3}
-                    step={0.1}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">Standard deviations for exit</p>
-                </div>
-              </div>
-            )}
-
-            {editedStrategy.lookback_period !== null && (
-              <div className="bg-card border border-primary/20 rounded-2xl p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label className="text-base font-semibold text-foreground">Lookback Period</label>
-                    <span className="text-base font-mono text-primary">{editedStrategy.lookback_period}</span>
-                  </div>
-                  <Slider
-                    value={[editedStrategy.lookback_period]}
-                    onValueChange={([value]) => handleFieldChange('lookback_period', value)}
-                    min={10}
-                    max={200}
-                    step={10}
-                    className="w-full"
-                  />
-                  <p className="text-sm text-muted-foreground">Historical periods to analyze</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 /**
  * Prophet API Client - SSE Streaming
- * Updated for TSDL2 flat composable schema
+ * Updated for MVP with simplified strategy schema
  */
 
 const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
@@ -36,39 +36,25 @@ export interface ProphetHealthResponse {
   redis_cache?: string;
 }
 
-// TSDL2 Flat Composable Schema - ALL fields always present
+// MVP Strategy Schema - Only 12 fields
 export interface StrategyJSON {
-  // Core metadata
+  // Core metadata (4 fields)
   name: string;
   description: string;
   symbol: string;
   timeframe: string;
 
-  // Indicator-based strategy fields
+  // Indicator-based strategy fields (5 fields)
   indicators: string[];
   entry_rules: string[];
   entry_logic: string;
   exit_rules: string[];
   exit_logic: string;
 
-  // Wallet following fields
-  target_wallet: string | null;
-  copy_percentage: number | null;
-  min_copy_size: number | null;
-  max_copy_size: number | null;
-  copy_delay: number | null;
-
-  // Mean reversion fields
-  reversion_target: string | null;
-  entry_threshold: number | null;
-  exit_threshold: number | null;
-  lookback_period: number | null;
-
-  // Risk management
-  stop_loss: number | null;
+  // Risk management (3 fields)
+  stop_loss: number;
   take_profit: number | null;
   trailing_stop: number | null;
-  max_position_size: number | null;
 }
 
 export interface ProgressEvent {

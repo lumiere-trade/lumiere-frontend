@@ -16,7 +16,7 @@ const EXAMPLE_PROMPTS = [
   "Create a momentum strategy for SOL/USD",
   "Build a mean reversion strategy using RSI",
   "Design a breakout strategy",
-  "Copy a successful whale wallet's trades",
+  "Make a scalping strategy with tight stops",
 ]
 
 function CreatePageContent() {
@@ -130,7 +130,7 @@ function CreatePageContent() {
     try {
       const lib = await getLibraryStrategy(id)
 
-      // Convert library strategy to TSDL v2.0 JSON format
+      // Convert library strategy to MVP JSON format
       const strategyJson = {
         name: lib.name,
         description: lib.description,
@@ -141,18 +141,13 @@ function CreatePageContent() {
         entry_logic: lib.entry_logic,
         exit_rules: lib.exit_rules,
         exit_logic: lib.exit_logic,
-        ...lib.parameters,
+        stop_loss: lib.parameters.stop_loss,
+        take_profit: lib.parameters.take_profit,
+        trailing_stop: lib.parameters.trailing_stop,
       }
 
-      // Determine strategy type
-      const hasWallet = strategyJson.target_wallet !== null
-      const hasIndicators = strategyJson.indicators.length > 0
-      const hasReversion = strategyJson.reversion_target !== null
-
-      const strategyType = hasWallet && hasIndicators ? 'hybrid'
-        : hasWallet ? 'wallet_following'
-        : hasReversion ? 'mean_reversion'
-        : 'indicator_based'
+      // MVP: All strategies are indicator-based
+      const strategyType = 'indicator_based'
 
       // Build Strategy object from library
       setStrategy({
