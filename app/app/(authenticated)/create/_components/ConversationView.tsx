@@ -53,7 +53,7 @@ export function ConversationView({
         />
       </div>
 
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t">
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
         <div className="w-full max-w-3xl mx-auto px-6 py-4">
           <MessageInput
             value={inputValue}
