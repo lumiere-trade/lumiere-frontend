@@ -108,12 +108,14 @@ function AuthenticatedLayoutContent({
   } else if (isLargeScreen) {
     // Large screen (≥1920px): Support 3-panel layout
     leftPadding = isSidebarOpen ? '300px' : '32px'
-    rightPadding = isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+    // CRITICAL: Only apply details panel padding on /create page
+    rightPadding = (isDetailsPanelOpen && isCreatePage) ? 'calc(50% + 32px)' : '32px'
   } else {
     // Small/Medium screen (≤1919px): Max 2 panels
     // Sidebar takes priority when both try to open (handled by auto-close logic)
     leftPadding = isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
-    rightPadding = isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+    // CRITICAL: Only apply details panel padding on /create page
+    rightPadding = (isDetailsPanelOpen && isCreatePage) ? 'calc(50% + 32px)' : '32px'
   }
 
   return (
