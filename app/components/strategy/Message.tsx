@@ -98,28 +98,14 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
           )}
         </div>
 
-        {/* Copy button (hover only) + Timestamp (always visible) */}
-        {!isStreaming && (
+        {/* Timestamp (hover only - LEFT) + Copy button (hover only - RIGHT) */}
+        {!isStreaming && isHovered && (
           <div
-            className={`flex items-center gap-2 mt-1 px-2 ${role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex items-center justify-between gap-2 mt-1 px-2 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {/* Copy button - показва се само при hover */}
-            {isHovered && (
-              <button
-                onClick={handleCopy}
-                className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
-                title="Copy message"
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <Copy className="h-4 w-4 text-muted-foreground" />
-                )}
-              </button>
-            )}
-            {/* Timestamp - винаги видим */}
+            {/* Timestamp - ВЛЯВО, само при hover */}
             <div
               className="relative"
               onMouseEnter={() => setShowFullDate(true)}
@@ -129,13 +115,26 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
                 {formatTime(timestamp)}
               </span>
               {showFullDate && (
-                <div className="absolute left-0 top-full mt-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
+                <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
                   <span className="text-sm text-foreground">
                     {formatFullDate(timestamp)}
                   </span>
                 </div>
               )}
             </div>
+
+            {/* Copy button - ВДЯСНО, само при hover */}
+            <button
+              onClick={handleCopy}
+              className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
+              title="Copy message"
+            >
+              {copied ? (
+                <Check className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Copy className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
           </div>
         )}
 
