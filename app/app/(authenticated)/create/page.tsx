@@ -270,7 +270,7 @@ function CreatePageContent() {
   }
 
   // Check if URL matches loaded strategy
-  const isCorrectStrategy = 
+  const isCorrectStrategy =
     (strategyId && strategy?.id === strategyId) ||
     (libraryId && strategy?.id === null)
 
@@ -359,39 +359,65 @@ function CreatePageContent() {
     )
   }
 
-  // Show empty state
-  return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6">
-      <div className="w-full max-w-3xl mx-auto space-y-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-foreground tracking-tight">
-            Ready to create your strategy?
-          </h1>
+  // If strategy exists but URL doesn't match, keep showing old messages (loading state)
+  if (strategy && !isCorrectStrategy && messages.length > 0) {
+    return (
+      <div className="flex flex-col" style={{ minHeight: 'calc(100vh - 80px)', scrollbarGutter: 'stable' }}>
+        <div className="flex-1 pb-4">
+          <MessageList
+            messages={messages}
+            isSending={false}
+            isGeneratingStrategy={false}
+            strategyGenerationProgress={0}
+            progressStage=""
+            progressMessage=""
+            error={null}
+            generatedStrategy={strategy}
+            onViewStrategy={handleViewStrategy}
+          />
         </div>
-
-        <MessageInput
-          value={inputValue}
-          onChange={setInputValue}
-          onSend={handleSend}
-          disabled={!isHealthy || isSending}
-        />
-
-        <ExamplePrompts
-          prompts={EXAMPLE_PROMPTS}
-          onSelect={setInputValue}
-          disabled={isSending}
-        />
-
-        {!isHealthy && (
-          <div className="text-center">
-            <p className="text-sm text-destructive">
-              Prophet AI is not responding. Please check the connection.
-            </p>
-          </div>
-        )}
       </div>
-    </div>
-  )
+    )
+  }
+
+  // Show empty state ONLY if no strategy at all
+  if (!strategy) {
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6">
+        <div className="w-full max-w-3xl mx-auto space-y-6">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-foreground tracking-tight">
+              Ready to create your strategy?
+            </h1>
+          </div>
+
+          <MessageInput
+            value={inputValue}
+            onChange={setInputValue}
+            onSend={handleSend}
+            disabled={!isHealthy || isSending}
+          />
+
+          <ExamplePrompts
+            prompts={EXAMPLE_PROMPTS}
+            onSelect={setInputValue}
+            disabled={isSending}
+          />
+
+          {!isHealthy && (
+            <div className="text-center">
+              <p className="text-sm text-destructive">
+                Prophet AI is not responding. Please check the connection.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // Fallback: strategy exists but no messages (shouldn't happen often)
+  return null
 }
 
 export default function CreatePage() {
