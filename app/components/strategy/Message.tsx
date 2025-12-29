@@ -1,17 +1,23 @@
 "use client"
 
+import { useState } from "react"
 import { MarkdownMessage } from "./MarkdownMessage"
 import { Button } from "@lumiere/shared/components/ui/button"
-import { Eye } from "lucide-react"
+import { Eye, Copy, Check } from "lucide-react"
 
 interface MessageProps {
   role: "user" | "assistant"
   content: string
+  timestamp: Date
   isStreaming?: boolean
   onViewStrategy?: () => void
 }
 
-export function Message({ role, content, isStreaming, onViewStrategy }: MessageProps) {
+export function Message({ role, content, timestamp, isStreaming, onViewStrategy }: MessageProps) {
+  const [copied, setCopied] = useState(false)
+  const [showFullDate, setShowFullDate] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
+
   // Check for strategy marker in content
   const hasStrategyMarker = content.includes('<<view_strategy>>')
 
@@ -22,7 +28,32 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
   const showViewButton = role === "assistant" && !isStreaming && hasStrategyMarker && onViewStrategy
   const hasContent = displayContent && displayContent.length > 0
 
-  // If no content but has strategy button, show ONLY the button
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(displayContent)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    })
+  }
+
+  const formatFullDate = (date: Date) => {
+    return date.toLocaleString('en-US', { 
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    })
+  }
+
+  // If no content but has strategy button, show ONLY the button (no copy/timestamp)
   if (!hasContent && showViewButton) {
     return (
       <div className="flex gap-3 justify-start">
@@ -50,7 +81,9 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
     <div className={`flex gap-3 ${role === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[80%] ${role === "user" ? "" : "w-full"}`}>
         <div
-          className={`rounded-2xl px-4 py-3 ${
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className={`rounded-2xl px-4 py-3 cursor-pointer ${
             role === "user"
               ? "bg-primary text-primary-foreground"
               : "bg-card border border-primary/20"
@@ -65,6 +98,44 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
           )}
         </div>
 
+        {/* Copy button (hover only) + Timestamp (always visible) */}
+        {!isStreaming && (
+          <div className="flex items-center gap-2 mt-1 px-2">
+            {/* Copy button - показва се само при hover */}
+            {isHovered && (
+              <button
+                onClick={handleCopy}
+                className="p-1 rounded hover:bg-muted/50 transition-colors"
+                title="Copy message"
+              >
+                {copied ? (
+                  <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+              </button>
+            )}
+            {/* Timestamp - винаги видим */}
+            <div
+              className="relative"
+              onMouseEnter={() => setShowFullDate(true)}
+              onMouseLeave={() => setShowFullDate(false)}
+            >
+              <span className="text-xs text-muted-foreground cursor-default">
+                {formatTime(timestamp)}
+              </span>
+              {showFullDate && (
+                <div className="absolute left-0 top-full mt-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
+                  <span className="text-xs text-foreground">
+                    {formatFullDate(timestamp)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* View Strategy бутон - отделен, БЕЗ copy/timestamp под него */}
         {showViewButton && (
           <div className="mt-3">
             <Button

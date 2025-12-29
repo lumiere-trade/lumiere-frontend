@@ -10,6 +10,7 @@ interface MessageData {
   id: string
   role: "user" | "assistant"
   content: string
+  timestamp: Date
   isStreaming?: boolean
 }
 
@@ -152,6 +153,7 @@ export function MessageList({
             key={message.id}
             role={message.role}
             content={message.content}
+            timestamp={message.timestamp}
             isStreaming={message.isStreaming}
             onViewStrategy={onViewStrategy}
           />
@@ -185,6 +187,15 @@ export function MessageList({
                 Error: {error.message}
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Disclaimer в дъното */}
+        {messages.length > 0 && (
+          <div className="flex justify-center pt-4">
+            <p className="text-sm text-muted-foreground text-center">
+              Lumiere is AI and can make mistakes. Use for educational purposes and not as trading advice.
+            </p>
           </div>
         )}
 
