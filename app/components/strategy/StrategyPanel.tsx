@@ -31,7 +31,7 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
-  const { navigateToCreate, clearStrategy } = useStrategy()
+  const { strategy, navigateToCreate, clearStrategy } = useStrategy()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [libraryExpanded, setLibraryExpanded] = useState(true)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
@@ -61,6 +61,11 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   }
 
   const handleStrategyClick = async (strategyId: string) => {
+    // Don't reload if already viewing this strategy
+    if (strategy?.id === strategyId) {
+      return
+    }
+
     // Auto-save current conversation before navigating
     await clearStrategy()
     router.push(`/create?strategy=${strategyId}`)
@@ -233,15 +238,15 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                       <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
                         Your Strategies ({userSearchResults.length})
                       </h4>
-                      {userSearchResults.map((strategy) => {
-                        const isThisDeleting = deletingId === strategy.id
-                        const isHovered = hoveredId === strategy.id
-                        const isEditing = editingId === strategy.id
+                      {userSearchResults.map((strategyItem) => {
+                        const isThisDeleting = deletingId === strategyItem.id
+                        const isHovered = hoveredId === strategyItem.id
+                        const isEditing = editingId === strategyItem.id
 
                         return (
                           <div
-                            key={strategy.id}
-                            onMouseEnter={() => setHoveredId(strategy.id)}
+                            key={strategyItem.id}
+                            onMouseEnter={() => setHoveredId(strategyItem.id)}
                             onMouseLeave={() => setHoveredId(null)}
                             className="relative group"
                           >
@@ -251,20 +256,20 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                 value={editingName}
                                 onChange={(e) => setEditingName(e.target.value)}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') saveRename(strategy.id)
+                                  if (e.key === 'Enter') saveRename(strategyItem.id)
                                   if (e.key === 'Escape') cancelEditing()
                                 }}
-                                onBlur={() => saveRename(strategy.id)}
+                                onBlur={() => saveRename(strategyItem.id)}
                                 autoFocus
                                 className="w-full px-2 py-2 text-base bg-card border border-primary/40 rounded-lg focus:outline-none focus:border-primary text-foreground"
                               />
                             ) : (
                               <button
-                                onClick={() => handleStrategyClick(strategy.id)}
+                                onClick={() => handleStrategyClick(strategyItem.id)}
                                 className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
                               >
                                 <div className="text-base text-foreground truncate pr-16">
-                                  {strategy.name}
+                                  {strategyItem.name}
                                 </div>
                               </button>
                             )}
@@ -274,24 +279,24 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    startEditing(strategy.id, strategy.name)
+                                    startEditing(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title="Rename strategy"
                                 >
-                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <Pencil className="h-3 w-3 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleDelete(strategy.id, strategy.name)
+                                    handleDelete(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting || isThisDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-3.5 w-3.5 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-3 w-3 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
                             )}
@@ -307,14 +312,14 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                       <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
                         Library ({librarySearchResults.length})
                       </h4>
-                      {librarySearchResults.map((strategy) => (
+                      {librarySearchResults.map((libraryStrategy) => (
                         <button
-                          key={strategy.id}
-                          onClick={() => handleLibraryStrategyClick(strategy.id)}
+                          key={libraryStrategy.id}
+                          onClick={() => handleLibraryStrategyClick(libraryStrategy.id)}
                           className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
                         >
                           <div className="text-base text-foreground truncate">
-                            {strategy.name}
+                            {libraryStrategy.name}
                           </div>
                         </button>
                       ))}
@@ -381,15 +386,15 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         </button>
                       </div>
                     ) : (
-                      strategies.map((strategy) => {
-                        const isThisDeleting = deletingId === strategy.id
-                        const isHovered = hoveredId === strategy.id
-                        const isEditing = editingId === strategy.id
+                      strategies.map((strategyItem) => {
+                        const isThisDeleting = deletingId === strategyItem.id
+                        const isHovered = hoveredId === strategyItem.id
+                        const isEditing = editingId === strategyItem.id
 
                         return (
                           <div
-                            key={strategy.id}
-                            onMouseEnter={() => setHoveredId(strategy.id)}
+                            key={strategyItem.id}
+                            onMouseEnter={() => setHoveredId(strategyItem.id)}
                             onMouseLeave={() => setHoveredId(null)}
                             className="relative group"
                           >
@@ -399,20 +404,20 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                 value={editingName}
                                 onChange={(e) => setEditingName(e.target.value)}
                                 onKeyDown={(e) => {
-                                  if (e.key === 'Enter') saveRename(strategy.id)
+                                  if (e.key === 'Enter') saveRename(strategyItem.id)
                                   if (e.key === 'Escape') cancelEditing()
                                 }}
-                                onBlur={() => saveRename(strategy.id)}
+                                onBlur={() => saveRename(strategyItem.id)}
                                 autoFocus
                                 className="w-full px-2 py-2 text-base bg-card border border-primary/40 rounded-lg focus:outline-none focus:border-primary text-foreground"
                               />
                             ) : (
                               <button
-                                onClick={() => handleStrategyClick(strategy.id)}
+                                onClick={() => handleStrategyClick(strategyItem.id)}
                                 className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
                               >
                                 <div className="text-base text-foreground truncate pr-16">
-                                  {strategy.name}
+                                  {strategyItem.name}
                                 </div>
                               </button>
                             )}
@@ -422,24 +427,24 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    startEditing(strategy.id, strategy.name)
+                                    startEditing(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title="Rename strategy"
                                 >
-                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                                  <Pencil className="h-3 w-3 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleDelete(strategy.id, strategy.name)
+                                    handleDelete(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting || isThisDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-3.5 w-3.5 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-3 w-3 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
                             )}
@@ -553,14 +558,14 @@ function CategorySection({
               No strategies
             </div>
           ) : (
-            strategies.map((strategy) => (
+            strategies.map((libraryStrategy) => (
               <button
-                key={strategy.id}
-                onClick={() => onStrategyClick(strategy.id)}
+                key={libraryStrategy.id}
+                onClick={() => onStrategyClick(libraryStrategy.id)}
                 className="w-full text-left p-2 rounded-lg hover:bg-card transition-colors"
               >
                 <div className="text-base text-foreground truncate">
-                  {strategy.name}
+                  {libraryStrategy.name}
                 </div>
               </button>
             ))

@@ -55,13 +55,14 @@ function CreatePageContent() {
 
   const [inputValue, setInputValue] = useState("")
 
-  // Load strategy when strategyId or libraryId changes OR when strategy is cleared
+  // Load strategy when strategyId or libraryId changes
   useEffect(() => {
     const loadData = async () => {
       if (strategyId) {
-        const isDifferentStrategy = !strategy || strategy.id !== strategyId
+        // Check if we need to load: strategy is null OR different strategy
+        const shouldLoad = !strategy || strategy.id !== strategyId
 
-        if (isDifferentStrategy) {
+        if (shouldLoad) {
           logger.info('Loading user strategy', { strategyId })
           await loadUserStrategy(strategyId)
         }
@@ -75,7 +76,7 @@ function CreatePageContent() {
     }
 
     loadData()
-  }, [strategyId, libraryId, strategy?.id])
+  }, [strategyId, libraryId])
 
   // Browser beforeunload warning + auto-save on unmount
   useEffect(() => {
