@@ -88,8 +88,23 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   }
 
   const handleLibraryStrategyClick = async (strategyId: string) => {
-    // Auto-save current conversation before navigating
-    await clearStrategy()
+    // Auto-save conversation before navigating (without clearing strategy)
+    if (strategy?.id && strategy.conversation.messages.length > 0) {
+      try {
+        await createConversation({
+          strategy_id: strategy.id,
+          messages: strategy.conversation.messages.map(msg => ({
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.timestamp.toISOString()
+          }))
+        })
+      } catch (error) {
+        console.error('Auto-save failed:', error)
+      }
+    }
+
+    // Navigate directly - let create/page useEffect handle loading
     router.push(`/create?library=${strategyId}`)
   }
 
