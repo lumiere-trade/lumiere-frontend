@@ -190,15 +190,6 @@ export function MessageList({
           </div>
         )}
 
-        {/* Disclaimer в дъното */}
-        {messages.length > 0 && (
-          <div className="flex justify-center pt-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Lumiere is AI and can make mistakes. Use for educational purposes and not as trading advice.
-            </p>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 

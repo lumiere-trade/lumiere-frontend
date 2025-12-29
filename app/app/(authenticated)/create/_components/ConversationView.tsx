@@ -65,6 +65,12 @@ export function ConversationView({
             placeholder="Reply..."
             autoFocus={true}
           />
+          {/* Disclaimer под input box-a */}
+          <div className="flex justify-center pt-2">
+            <p className="text-sm text-muted-foreground text-center">
+              Lumiere is AI and can make mistakes. Use for educational purposes and not as trading advice.
+            </p>
+          </div>
         </div>
       </div>
     </div>
