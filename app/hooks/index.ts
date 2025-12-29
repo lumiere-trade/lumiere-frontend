@@ -9,3 +9,6 @@ export * from './mutations/use-prophet-mutations';
 export * from './use-strategies';
 export * from './queries/use-architect-queries';
 export * from './mutations/use-architect-mutations';
+
+// Media query hooks
+export * from './use-media-query';

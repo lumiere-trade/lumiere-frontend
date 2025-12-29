@@ -8,6 +8,7 @@ import { StrategyDetailsPanel } from "@/components/strategy/StrategyDetailsPanel
 import { StrategyProvider, useStrategy } from "@/contexts/StrategyContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
+import { useIsLargeScreen } from "@/hooks/use-media-query"
 import { logger, LogCategory } from "@/lib/debug"
 
 function AuthenticatedLayoutContent({
@@ -22,6 +23,7 @@ function AuthenticatedLayoutContent({
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
 
   const strategyContext = useStrategy()
+  const isLargeScreen = useIsLargeScreen()
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
   const isCreatePage = pathname === '/create'
@@ -46,19 +48,32 @@ function AuthenticatedLayoutContent({
     setIsDetailsPanelOpen(strategyContext.isDetailsPanelOpen)
   }, [strategyContext.isDetailsPanelOpen])
 
-  // Auto-close StrategyPanel when DetailsPanel opens
+  // RESPONSIVE AUTO-CLOSE LOGIC
+  // Small/Medium screens (≤1919px): MAX 2 panels - auto-close behavior
+  // Large screens (≥1920px): Allow 3 panels - no auto-close
   useEffect(() => {
+    if (isLargeScreen) {
+      // Large screen: Allow all 3 panels open simultaneously
+      return
+    }
+
+    // Small/Medium screen: Auto-close StrategyPanel when DetailsPanel opens
     if (isDetailsPanelOpen && isSidebarOpen) {
       setIsSidebarOpen(false)
     }
-  }, [isDetailsPanelOpen])
+  }, [isDetailsPanelOpen, isSidebarOpen, isLargeScreen])
 
-  // Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
   useEffect(() => {
+    if (isLargeScreen) {
+      // Large screen: Allow all 3 panels open simultaneously
+      return
+    }
+
+    // Small/Medium screen: Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
     if (isSidebarOpen && isDetailsPanelOpen && !strategyContext.isParametersFullscreen) {
       strategyContext.closeDetailsPanel()
     }
-  }, [isSidebarOpen])
+  }, [isSidebarOpen, isDetailsPanelOpen, strategyContext.isParametersFullscreen, isLargeScreen])
 
   if (!storage.hasToken() || isLoading) {
     return null
@@ -83,18 +98,26 @@ function AuthenticatedLayoutContent({
     }
   }
 
-  // Calculate padding based on fullscreen state
+  // RESPONSIVE PADDING CALCULATION
   const isFullscreen = strategyContext.isParametersFullscreen || false
-  const leftPadding = isFullscreen
-    ? '32px'
-    : isSidebarOpen && !isDetailsPanelOpen
-      ? '300px'
-      : '32px'
-  const rightPadding = isFullscreen
-    ? '32px'
-    : isDetailsPanelOpen
-      ? 'calc(50% + 32px)'
-      : '32px'
+
+  let leftPadding: string
+  let rightPadding: string
+
+  if (isFullscreen) {
+    // Fullscreen mode: no side panels
+    leftPadding = '32px'
+    rightPadding = '32px'
+  } else if (isLargeScreen) {
+    // Large screen (≥1920px): Support 3-panel layout
+    leftPadding = isSidebarOpen ? '300px' : '32px'
+    rightPadding = isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+  } else {
+    // Small/Medium screen (≤1919px): Max 2 panels
+    // Sidebar takes priority when both try to open (handled by auto-close logic)
+    leftPadding = isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
+    rightPadding = isDetailsPanelOpen ? 'calc(50% + 32px)' : '32px'
+  }
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
