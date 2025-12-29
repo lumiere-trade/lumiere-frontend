@@ -148,7 +148,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 className="flex items-center gap-3 flex-1 hover:opacity-80 transition-opacity"
               >
                 <Plus className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-base text-primary whitespace-nowrap">
+                <span className="text-base font-semibold text-primary whitespace-nowrap">
                   New Strategy
                 </span>
               </button>
@@ -163,7 +163,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
             >
               <div className="flex items-center gap-3">
                 <Layers className="h-5 w-5 text-primary shrink-0" />
-                <h3 className="text-base text-primary whitespace-nowrap">
+                <h3 className="text-base font-semibold text-primary whitespace-nowrap">
                   Strategies
                 </h3>
               </div>
@@ -269,7 +269,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
             >
               <div className="flex items-center gap-3">
                 <BookOpen className="h-5 w-5 text-primary shrink-0" />
-                <h3 className="text-base text-primary whitespace-nowrap">
+                <h3 className="text-base font-semibold text-primary whitespace-nowrap">
                   Library
                 </h3>
               </div>
