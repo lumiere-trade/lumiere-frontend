@@ -80,11 +80,11 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
   return (
     <div className={`flex gap-3 ${role === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[80%] ${role === "user" ? "" : "w-full"}`}>
-        {/* Hover container includes message bubble and space below for copy/timestamp */}
+        {/* Hover container with relative positioning */}
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="pb-8"
+          className="relative"
         >
           <div
             className={`rounded-2xl px-4 py-3 ${
@@ -102,10 +102,10 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
             )}
           </div>
 
-          {/* Timestamp and copy button - only shown on hover */}
+          {/* Timestamp and copy button - absolute positioned, only shown on hover */}
           {!isStreaming && isHovered && (
             <div
-              className={`flex items-center justify-between gap-2 mt-1 px-2 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
+              className={`absolute top-full left-0 right-0 flex items-center justify-between gap-2 mt-1 px-2 pb-6 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
             >
               {/* Timestamp - left side for assistant, right side for user */}
               <div
