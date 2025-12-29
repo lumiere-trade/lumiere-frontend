@@ -102,12 +102,10 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
             )}
           </div>
 
-          {/* Timestamp and copy button - absolute positioned, only shown on hover */}
+          {/* Timestamp and copy button - absolute positioned, always on right side */}
           {!isStreaming && isHovered && (
-            <div
-              className={`absolute top-full left-0 right-0 flex items-center justify-between gap-2 mt-1 px-2 pb-6 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
-            >
-              {/* Timestamp - left side for assistant, right side for user */}
+            <div className="absolute top-full left-0 right-0 flex items-center justify-end gap-2 mt-1 px-2 pb-6">
+              {/* Timestamp - left of copy button */}
               <div
                 className="relative"
                 onMouseEnter={() => setShowFullDate(true)}
@@ -125,7 +123,7 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
                 )}
               </div>
 
-              {/* Copy button - right side for assistant, left side for user */}
+              {/* Copy button - rightmost */}
               <button
                 onClick={handleCopy}
                 className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
