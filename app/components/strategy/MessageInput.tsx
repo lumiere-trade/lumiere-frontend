@@ -70,7 +70,7 @@ export function MessageInput({
         size="icon"
         onClick={handleButtonClick}
         disabled={disabled || (!isSending && !value.trim())}
-        className="absolute right-3 bottom-3 h-8 w-8 rounded-xl"
+        className="absolute right-3 bottom-5 h-8 w-8 rounded-xl"
       >
         {isSending ? (
           <Square className="h-3.5 w-3.5" fill="currentColor" />
