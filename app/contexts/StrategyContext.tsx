@@ -50,6 +50,9 @@ interface StrategyContextType {
   // Dirty state (auto-calculated)
   isDirty: boolean
 
+  // Loading state for navigation
+  isLoadingStrategy: boolean
+
   // Navigation helper
   navigateToCreate: (router: any) => Promise<boolean>
 
@@ -98,6 +101,9 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   // Dirty state
   const [isDirty, setIsDirty] = useState(false)
 
+  // Loading state for navigation
+  const [isLoadingStrategy, setIsLoadingStrategy] = useState(false)
+
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
   const [isBacktesting, setIsBacktesting] = useState(false)
 
@@ -114,7 +120,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   // Ref to Prophet stopGeneration callback
   const stopProphetRef = useRef<(() => void) | null>(null)
 
-  // Wrapped setStrategy with logging
+  // Wrapped setStrategy with logging and loading state management
   const setStrategy = (newStrategy: Strategy | null) => {
     console.log('🔵 [StrategyContext] setStrategy called', {
       from: strategy?.id || 'null',
@@ -125,6 +131,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       timestamp: new Date().toISOString()
     })
     setStrategyState(newStrategy)
+    setIsLoadingStrategy(false)
   }
 
   // Register Prophet stop callback
@@ -255,7 +262,10 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       timestamp: new Date().toISOString()
     })
 
-    // CRITICAL: Stop Prophet generation FIRST
+    // Set loading state FIRST
+    setIsLoadingStrategy(true)
+
+    // CRITICAL: Stop Prophet generation
     if (stopProphetRef.current) {
       console.log('🛑 [StrategyContext] Stopping Prophet generation')
       stopProphetRef.current()
@@ -335,6 +345,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         updateEditedStrategy,
         setEditedName,
         isDirty,
+        isLoadingStrategy,
         navigateToCreate,
         registerStopProphet,
         backtestResults,

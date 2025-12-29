@@ -11,6 +11,7 @@ import { EmptyStateView } from "./_components/EmptyStateView"
 import { ConversationView } from "./_components/ConversationView"
 import { LibraryPreviewView } from "./_components/LibraryPreviewView"
 import { useStrategyLoader } from "./_hooks/useStrategyLoader"
+import { Spinner } from "@/components/ui/spinner"
 
 const EXAMPLE_PROMPTS = [
   "Create a momentum strategy for SOL/USD",
@@ -35,7 +36,8 @@ function CreatePageContent() {
     progressMessage,
     openDetailsPanel,
     isDirty,
-    registerStopProphet
+    registerStopProphet,
+    isLoadingStrategy,
   } = useStrategy()
 
   const {
@@ -150,8 +152,22 @@ function CreatePageContent() {
     messageCount: messages.length,
     urlStrategyId: strategyId,
     urlLibraryId: libraryId,
+    isLoadingStrategy,
     timestamp: new Date().toISOString()
   })
+
+  // Loading state - show spinner while fetching strategy
+  if (isLoadingStrategy) {
+    console.log('🟪 [CreatePage] Rendering: LoadingView', {
+      timestamp: new Date().toISOString()
+    })
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <Spinner className="w-8 h-8 mb-4" />
+        <p className="text-sm text-muted-foreground">Loading strategy...</p>
+      </div>
+    )
+  }
 
   // View routing
   if (hasMessages) {
