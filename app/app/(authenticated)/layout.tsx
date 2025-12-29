@@ -51,29 +51,26 @@ function AuthenticatedLayoutContent({
   // RESPONSIVE AUTO-CLOSE LOGIC
   // Small/Medium screens (≤1919px): MAX 2 panels - auto-close behavior
   // Large screens (≥1920px): Allow 3 panels - no auto-close
-  useEffect(() => {
-    if (isLargeScreen) {
-      // Large screen: Allow all 3 panels open simultaneously
-      return
-    }
 
-    // Small/Medium screen: Auto-close StrategyPanel when DetailsPanel opens
+  // Auto-close StrategyPanel when DetailsPanel opens (small screens only)
+  useEffect(() => {
+    // Skip auto-close on large screens
+    if (isLargeScreen) return
+
     if (isDetailsPanelOpen && isSidebarOpen) {
       setIsSidebarOpen(false)
     }
-  }, [isDetailsPanelOpen, isSidebarOpen, isLargeScreen])
+  }, [isDetailsPanelOpen, isLargeScreen])
 
+  // Auto-close DetailsPanel when StrategyPanel opens (small screens only, unless fullscreen)
   useEffect(() => {
-    if (isLargeScreen) {
-      // Large screen: Allow all 3 panels open simultaneously
-      return
-    }
+    // Skip auto-close on large screens
+    if (isLargeScreen) return
 
-    // Small/Medium screen: Auto-close DetailsPanel when StrategyPanel opens (unless fullscreen)
     if (isSidebarOpen && isDetailsPanelOpen && !strategyContext.isParametersFullscreen) {
       strategyContext.closeDetailsPanel()
     }
-  }, [isSidebarOpen, isDetailsPanelOpen, strategyContext.isParametersFullscreen, isLargeScreen])
+  }, [isSidebarOpen, isLargeScreen, strategyContext.isParametersFullscreen])
 
   if (!storage.hasToken() || isLoading) {
     return null
