@@ -54,8 +54,8 @@ export function ConversationView({
         />
       </div>
 
-      {/* Absolute positioned input - always at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pointer-events-none">
+      {/* Absolute positioned input - always at bottom, leaves space for scrollbar */}
+      <div className="absolute bottom-0 left-0 right-4 bg-background/95 backdrop-blur-sm pointer-events-none">
         <div className="w-full max-w-3xl mx-auto px-6 py-4 pointer-events-auto">
           <MessageInput
             value={inputValue}
