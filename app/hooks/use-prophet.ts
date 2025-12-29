@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useStrategy } from '@/contexts/StrategyContext'
 import { useLogger } from './use-logger'
 import { LogCategory } from '@/lib/debug'
@@ -25,6 +25,7 @@ export function useProphet() {
   } = useStrategy()
 
   const [isStreaming, setIsStreaming] = useState(false)
+  const abortControllerRef = useRef<AbortController | null>(null)
   const log = useLogger('useProphet', LogCategory.API)
 
   // Health check query
@@ -93,6 +94,9 @@ export function useProphet() {
     }
 
     setIsStreaming(true)
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController()
 
     // Build strategy context if strategy exists
     let strategyContext = undefined
@@ -207,6 +211,7 @@ export function useProphet() {
         })
 
         setIsStreaming(false)
+        abortControllerRef.current = null
 
         // Add strategy marker if strategy was generated
         const finalMessage = strategyWasGenerated
@@ -234,6 +239,7 @@ export function useProphet() {
         log.error('Prophet error', { error })
         setIsStreaming(false)
         setIsGeneratingStrategy(false)
+        abortControllerRef.current = null
 
         updateConversation({
           messages: newMessages.map(msg =>
@@ -246,7 +252,9 @@ export function useProphet() {
               : msg
           )
         })
-      }
+      },
+      // signal - AbortSignal for cancellation
+      abortControllerRef.current.signal
     )
   }
 
@@ -256,7 +264,14 @@ export function useProphet() {
   }
 
   const stopGeneration = () => {
-    log.warn('stopGeneration not yet implemented')
+    if (abortControllerRef.current) {
+      log.info('Stopping Prophet stream')
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+      setIsStreaming(false)
+      setIsGeneratingStrategy(false)
+      setStrategyGenerationProgress(0)
+    }
   }
 
   return {

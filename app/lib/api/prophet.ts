@@ -89,7 +89,8 @@ export async function sendChatMessageStream(
   onProgress: (progress: ProgressEvent) => void,
   onStrategyGenerated: (strategy: StrategyGeneratedEvent) => void,
   onComplete: (fullMessage: string, conversationId: string) => void,
-  onError: (error: Error) => void
+  onError: (error: Error) => void,
+  signal?: AbortSignal
 ): Promise<void> {
   try {
     const response = await fetch(`${PROPHET_URL}/chat`, {
@@ -98,6 +99,7 @@ export async function sendChatMessageStream(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
+      signal,
     });
 
     if (!response.ok) {
@@ -152,6 +154,10 @@ export async function sendChatMessageStream(
       }
     }
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.log('[Prophet] Stream aborted by user');
+      return;
+    }
     onError(error instanceof Error ? error : new Error('Unknown error'));
   }
 }
