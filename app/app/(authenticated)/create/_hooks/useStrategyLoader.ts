@@ -53,18 +53,18 @@ export function useStrategyLoader({
             to: strategyId,
             timestamp: new Date().toISOString()
           })
-          
+
           // CRITICAL: Clear context first (auto-saves conversations)
           await clearStrategy()
-          
+
           console.log('✅ [useStrategyLoader] clearStrategy complete - loading new strategy', {
             strategyId,
             timestamp: new Date().toISOString()
           })
-          
+
           // Then load new strategy
           await loadUserStrategy(strategyId)
-          
+
           console.log('✅ [useStrategyLoader] loadUserStrategy complete', {
             strategyId,
             timestamp: new Date().toISOString()
@@ -82,23 +82,23 @@ export function useStrategyLoader({
           libraryId,
           timestamp: new Date().toISOString()
         })
-        
+
         console.log('🔴 [useStrategyLoader] Loading library - clearing first', {
           libraryId,
           timestamp: new Date().toISOString()
         })
-        
+
         // CRITICAL: Clear context first (auto-saves conversations)
         await clearStrategy()
-        
+
         console.log('✅ [useStrategyLoader] clearStrategy complete - loading library', {
           libraryId,
           timestamp: new Date().toISOString()
         })
-        
+
         // Then load library template
         await loadLibraryStrategy(libraryId)
-        
+
         console.log('✅ [useStrategyLoader] loadLibraryStrategy complete', {
           libraryId,
           timestamp: new Date().toISOString()
@@ -106,14 +106,21 @@ export function useStrategyLoader({
       }
       // No URL params - clear if strategy exists
       else if (!strategyId && !libraryId && currentStrategy) {
-        console.log('🟦 [useStrategyLoader] No URL params - clearing', {
+        console.log('🟦 [useStrategyLoader] No URL params - clearing for EmptyState', {
           currentStrategyId: currentStrategy.id,
           timestamp: new Date().toISOString()
         })
-        
+
         await clearStrategy()
-        
-        console.log('✅ [useStrategyLoader] clearStrategy complete', {
+
+        console.log('✅ [useStrategyLoader] clearStrategy complete - setting null to clear loading', {
+          timestamp: new Date().toISOString()
+        })
+
+        // CRITICAL: setStrategy(null) clears isLoadingStrategy
+        setStrategy(null)
+
+        console.log('✅ [useStrategyLoader] EmptyState ready', {
           timestamp: new Date().toISOString()
         })
       } else {
@@ -135,7 +142,7 @@ export function useStrategyLoader({
         strategyId: id,
         timestamp: new Date().toISOString()
       })
-      
+
       toast.dismiss()
 
       const strategyData = await getStrategy(id)
@@ -213,7 +220,7 @@ export function useStrategyLoader({
 
       toast.success(`Strategy "${strategyData.name}" loaded`)
       setTimeout(() => openDetailsPanel(), 100)
-      
+
       console.log('✅ [useStrategyLoader] loadUserStrategy COMPLETE', {
         strategyId: id,
         timestamp: new Date().toISOString()
@@ -234,7 +241,7 @@ export function useStrategyLoader({
         libraryId: id,
         timestamp: new Date().toISOString()
       })
-      
+
       toast.dismiss()
 
       const lib = await getLibraryStrategy(id)
@@ -286,7 +293,7 @@ export function useStrategyLoader({
 
       toast.success(`Library strategy "${lib.name}" loaded as template`)
       setTimeout(() => openDetailsPanel(), 100)
-      
+
       console.log('✅ [useStrategyLoader] loadLibraryStrategy COMPLETE', {
         libraryId: id,
         timestamp: new Date().toISOString()
