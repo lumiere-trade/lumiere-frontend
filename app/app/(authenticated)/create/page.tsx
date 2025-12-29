@@ -129,6 +129,9 @@ function CreatePageContent() {
 
   const loadUserStrategy = async (id: string) => {
     try {
+      // Clear old toasts
+      toast.dismiss()
+
       const strategyData = await getStrategy(id)
 
       // Parse TSDL JSON from tsdl_code
@@ -190,6 +193,9 @@ function CreatePageContent() {
 
   const loadLibraryStrategy = async (id: string) => {
     try {
+      // Clear old toasts
+      toast.dismiss()
+
       const lib = await getLibraryStrategy(id)
 
       // Convert library strategy to MVP JSON format
@@ -263,14 +269,14 @@ function CreatePageContent() {
     openDetailsPanel()
   }
 
-  // Determine view state
-  const hasMessages = messages.length > 0
+  // Check if URL matches loaded strategy
+  const isCorrectStrategy = 
+    (strategyId && strategy?.id === strategyId) ||
+    (libraryId && strategy?.id === null)
+
+  // Only show messages if URL matches loaded strategy
+  const hasMessages = isCorrectStrategy && messages.length > 0
   const hasLoadedLibraryStrategy = !strategyId && libraryId && strategy && !hasMessages
-  
-  // Check if loading a different strategy (avoid empty state flash)
-  const isLoadingDifferentStrategy = 
-    (strategyId && strategy && strategy.id !== strategyId) ||
-    (libraryId && strategy && strategy.id !== null)
 
   // Show conversation view (takes priority over library preview)
   if (hasMessages) {
@@ -353,25 +359,7 @@ function CreatePageContent() {
     )
   }
 
-  // If loading a different strategy, keep showing current view (prevent flash)
-  if (isLoadingDifferentStrategy) {
-    return (
-      <div className="flex flex-col min-h-[calc(100vh-80px)]">
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="w-full max-w-3xl mx-auto space-y-6">
-            <div className="text-center space-y-4">
-              <div className="inline-block animate-pulse">
-                <div className="h-10 w-64 bg-muted rounded mb-4" />
-                <div className="h-6 w-96 bg-muted rounded mx-auto" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Show empty state (only if no strategy loaded at all)
+  // Show empty state
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6">
       <div className="w-full max-w-3xl mx-auto space-y-6">
