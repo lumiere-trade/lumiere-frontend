@@ -130,6 +130,14 @@ export function useStrategyLoader({
           hasCurrentStrategy: !!currentStrategy,
           timestamp: new Date().toISOString()
         })
+
+        // CRITICAL: If no action needed but we're in EmptyState, clear loading
+        if (!strategyId && !libraryId && !currentStrategy) {
+          console.log('🔵 [useStrategyLoader] EmptyState - clearing loading state', {
+            timestamp: new Date().toISOString()
+          })
+          setStrategy(null)
+        }
       }
     }
 
