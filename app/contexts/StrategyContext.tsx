@@ -292,6 +292,9 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setIsDetailsPanelOpen(false)
     setDetailsPanelTab('parameters')
     setIsParametersFullscreen(false)
+    
+    // CRITICAL: Clear loading state at the end
+    setIsLoadingStrategy(false)
 
     console.log('✅ [StrategyContext] clearStrategy COMPLETE', {
       timestamp: new Date().toISOString()
