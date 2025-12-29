@@ -317,6 +317,10 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     // Clear strategy (includes auto-save)
     await clearStrategy()
     
+    // CRITICAL: setStrategy(null) clears isLoadingStrategy immediately
+    // This prevents infinite spinner if router.push doesn't trigger navigation
+    setStrategy(null)
+    
     // Close details panel when going to EmptyState
     setIsDetailsPanelOpen(false)
     
