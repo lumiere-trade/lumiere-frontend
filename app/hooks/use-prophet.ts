@@ -8,7 +8,6 @@ import {
   ProgressEvent,
   StrategyGeneratedEvent,
 } from '@/lib/api/prophet'
-import { useCreateConversation } from './mutations/use-architect-mutations'
 
 export function useProphet() {
   const {
@@ -31,9 +30,6 @@ export function useProphet() {
   // Health check query
   const { data: healthData, error: healthError } = useProphetHealthQuery()
   const isHealthy = healthData?.status === 'healthy'
-
-  // Auto-save conversation mutation (fire-and-forget)
-  const createConversationMutation = useCreateConversation()
 
   const sendMessage = async (message: string) => {
     if (!message.trim()) return
@@ -64,21 +60,6 @@ export function useProphet() {
     // Update conversation or create new strategy with conversation
     if (strategy) {
       updateConversation({ messages: newMessages })
-
-      // Auto-save conversation (fire-and-forget) if strategy exists
-      if (strategy.id) {
-        log.info('Auto-saving conversation', { strategyId: strategy.id })
-        createConversationMutation.mutateAsync({
-          strategy_id: strategy.id,
-          messages: newMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          }))
-        }).catch(err => {
-          log.error('Conversation auto-save failed', { error: err })
-        })
-      }
     } else {
       // No strategy yet - create initial empty strategy with conversation
       setStrategy({
@@ -246,21 +227,6 @@ export function useProphet() {
         if (strategyWasGenerated) {
           log.info('Opening details panel - strategy is ready')
           openDetailsPanel()
-        }
-
-        // Auto-save conversation with final message (fire-and-forget)
-        if (strategy?.id) {
-          log.info('Auto-saving final conversation', { strategyId: strategy.id, convId })
-          createConversationMutation.mutateAsync({
-            strategy_id: strategy.id,
-            messages: newMessages.map(msg => ({
-              role: msg.role,
-              content: msg.id === assistantMessage.id ? finalMessage : msg.content,
-              timestamp: msg.timestamp.toISOString()
-            }))
-          }).catch(err => {
-            log.error('Final conversation auto-save failed', { error: err })
-          })
         }
       },
       // onError - handle streaming errors

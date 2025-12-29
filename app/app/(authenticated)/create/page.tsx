@@ -57,20 +57,24 @@ function CreatePageContent() {
 
   // Load strategy when strategyId or libraryId changes
   useEffect(() => {
-    if (strategyId) {
-      const isDifferentStrategy = !strategy || strategy.id !== strategyId
+    const loadData = async () => {
+      if (strategyId) {
+        const isDifferentStrategy = !strategy || strategy.id !== strategyId
 
-      if (isDifferentStrategy) {
-        logger.info('Loading user strategy', { strategyId })
-        loadUserStrategy(strategyId)
+        if (isDifferentStrategy) {
+          logger.info('Loading user strategy', { strategyId })
+          await loadUserStrategy(strategyId)
+        }
+      } else if (libraryId) {
+        logger.info('Loading library strategy', { libraryId })
+        await loadLibraryStrategy(libraryId)
+      } else if (!strategyId && !libraryId && strategy) {
+        logger.info('Clearing strategy state')
+        await clearStrategy()
       }
-    } else if (libraryId) {
-      logger.info('Loading library strategy', { libraryId })
-      loadLibraryStrategy(libraryId)
-    } else if (!strategyId && !libraryId && strategy) {
-      logger.info('Clearing strategy state')
-      clearStrategy()
     }
+
+    loadData()
   }, [strategyId, libraryId])
 
   // Browser beforeunload warning + auto-save on unmount

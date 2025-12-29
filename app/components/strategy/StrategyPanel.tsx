@@ -29,7 +29,7 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
-  const { navigateToCreate } = useStrategy()
+  const { navigateToCreate, clearStrategy } = useStrategy()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [libraryExpanded, setLibraryExpanded] = useState(true)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
@@ -49,16 +49,19 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     20
   )
 
-  const handleNewStrategy = () => {
-    navigateToCreate(router)
+  const handleNewStrategy = async () => {
+    await navigateToCreate(router)
   }
 
-  const handleStrategyClick = (strategyId: string) => {
+  const handleStrategyClick = async (strategyId: string) => {
+    // Auto-save current conversation before navigating
+    await clearStrategy()
     router.push(`/create?strategy=${strategyId}`)
   }
 
-  const handleLibraryStrategyClick = (strategyId: string) => {
-    console.log('Load library strategy:', strategyId)
+  const handleLibraryStrategyClick = async (strategyId: string) => {
+    // Auto-save current conversation before navigating
+    await clearStrategy()
     router.push(`/create?library=${strategyId}`)
   }
 

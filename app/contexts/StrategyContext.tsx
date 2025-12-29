@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
+import { createConversation } from '@/lib/api/architect'
 
 export interface ChatMessage {
   id: string
@@ -38,7 +39,7 @@ interface StrategyContextType {
   setStrategy: (strategy: Strategy | null) => void
   updateStrategy: (updates: Partial<Strategy>) => void
   updateConversation: (updates: Partial<Strategy['conversation']>) => void
-  clearStrategy: () => void
+  clearStrategy: () => Promise<void>
 
   // Edited strategy (working copy)
   editedStrategy: StrategyJSON | null
@@ -50,7 +51,7 @@ interface StrategyContextType {
   isDirty: boolean
 
   // Navigation helper
-  navigateToCreate: (router: any) => boolean
+  navigateToCreate: (router: any) => Promise<boolean>
 
   backtestResults: BacktestResponse | null
   setBacktestResults: (results: BacktestResponse | null) => void
@@ -160,7 +161,34 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setEditedStrategy(prev => prev ? { ...prev, ...updates } : null)
   }
 
-  const clearStrategy = () => {
+  // Auto-save conversation before navigation (only for saved strategies)
+  const saveConversationBeforeNavigate = async () => {
+    if (!strategy?.id || !strategy.conversation.messages.length) {
+      return
+    }
+
+    try {
+      console.log('Auto-saving conversation before navigate', { strategyId: strategy.id })
+      await createConversation({
+        strategy_id: strategy.id,
+        messages: strategy.conversation.messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp.toISOString()
+        }))
+      })
+      console.log('Conversation auto-saved successfully')
+    } catch (error) {
+      console.error('Auto-save conversation failed:', error)
+      // Don't block navigation on error
+    }
+  }
+
+  const clearStrategy = async () => {
+    // Auto-save conversation before clearing (only if strategy has ID)
+    await saveConversationBeforeNavigate()
+
+    // Then clear everything
     setStrategy(null)
     setEditedStrategy(null)
     setEditedName('')
@@ -177,7 +205,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   }
 
   // Navigation helper - checks for unsaved changes before navigating
-  const navigateToCreate = (router: any): boolean => {
+  const navigateToCreate = async (router: any): Promise<boolean> => {
     if (isDirty) {
       const confirmed = window.confirm(
         'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
@@ -187,8 +215,8 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Clear strategy and navigate
-    clearStrategy()
+    // Clear strategy (includes auto-save) and navigate
+    await clearStrategy()
     router.push('/create')
     return true
   }
