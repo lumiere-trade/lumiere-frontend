@@ -2,7 +2,7 @@
 
 import { useStrategy } from "@/contexts/StrategyContext"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   ChevronLeft,
   ChevronRight,
@@ -32,6 +32,7 @@ interface StrategyPanelProps {
 
 export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { strategy, navigateToCreate, clearStrategy } = useStrategy()
   const [strategiesExpanded, setStrategiesExpanded] = useState(true)
   const [libraryExpanded, setLibraryExpanded] = useState(true)
@@ -62,8 +63,9 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   }
 
   const handleStrategyClick = async (strategyId: string) => {
-    // Don't reload if already viewing this strategy
-    if (strategy?.id === strategyId) {
+    // Don't reload if URL already shows this strategy
+    const currentStrategyId = searchParams.get('strategy')
+    if (currentStrategyId === strategyId) {
       return
     }
 
