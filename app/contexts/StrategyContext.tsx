@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react'
 import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
 import { createConversation } from '@/lib/api/architect'
@@ -52,6 +52,9 @@ interface StrategyContextType {
 
   // Navigation helper
   navigateToCreate: (router: any) => Promise<boolean>
+
+  // Prophet generation control
+  registerStopProphet: (callback: () => void) => void
 
   backtestResults: BacktestResponse | null
   setBacktestResults: (results: BacktestResponse | null) => void
@@ -108,6 +111,9 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
   const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
 
+  // Ref to Prophet stopGeneration callback
+  const stopProphetRef = useRef<(() => void) | null>(null)
+
   // Wrapped setStrategy with logging
   const setStrategy = (newStrategy: Strategy | null) => {
     console.log('🔵 [StrategyContext] setStrategy called', {
@@ -119,6 +125,12 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       timestamp: new Date().toISOString()
     })
     setStrategyState(newStrategy)
+  }
+
+  // Register Prophet stop callback
+  const registerStopProphet = (callback: () => void) => {
+    console.log('🟢 [StrategyContext] Registered Prophet stop callback')
+    stopProphetRef.current = callback
   }
 
   // Sync editedStrategy with strategy when strategy changes
@@ -179,10 +191,10 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   }
 
   const updateConversation = (updates: Partial<Strategy['conversation']>) => {
-    console.log('🔵 [StrategyContext] updateConversation', { 
-      updates, 
+    console.log('🔵 [StrategyContext] updateConversation', {
+      updates,
       currentMessageCount: strategy?.conversation.messages.length || 0,
-      timestamp: new Date().toISOString() 
+      timestamp: new Date().toISOString()
     })
     setStrategyState(prev =>
       prev
@@ -242,6 +254,12 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       isDirty,
       timestamp: new Date().toISOString()
     })
+
+    // CRITICAL: Stop Prophet generation FIRST
+    if (stopProphetRef.current) {
+      console.log('🛑 [StrategyContext] Stopping Prophet generation')
+      stopProphetRef.current()
+    }
 
     // Auto-save conversation before clearing (only if strategy has ID)
     await saveConversationBeforeNavigate()
@@ -318,6 +336,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         setEditedName,
         isDirty,
         navigateToCreate,
+        registerStopProphet,
         backtestResults,
         setBacktestResults,
         isBacktesting,

@@ -34,7 +34,8 @@ function CreatePageContent() {
     progressStage,
     progressMessage,
     openDetailsPanel,
-    isDirty
+    isDirty,
+    registerStopProphet
   } = useStrategy()
 
   const {
@@ -50,6 +51,11 @@ function CreatePageContent() {
   const createConversationMutation = useCreateConversation()
 
   const [inputValue, setInputValue] = useState("")
+
+  // Register Prophet stop callback with StrategyContext
+  useEffect(() => {
+    registerStopProphet(stopGeneration)
+  }, [registerStopProphet, stopGeneration])
 
   // Load strategy from URL
   useStrategyLoader({
