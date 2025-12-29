@@ -37,6 +37,8 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
   // Fetch all strategies (draft, active, paused) - no status filter
@@ -70,19 +72,31 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     router.push(`/create?library=${strategyId}`)
   }
 
-  const handleRename = async (strategyId: string, currentName: string) => {
-    const newName = prompt('Enter new strategy name:', currentName)
-    
-    if (!newName || newName.trim() === '' || newName === currentName) {
+  const startEditing = (strategyId: string, currentName: string) => {
+    setEditingId(strategyId)
+    setEditingName(currentName)
+  }
+
+  const cancelEditing = () => {
+    setEditingId(null)
+    setEditingName("")
+  }
+
+  const saveRename = async (strategyId: string) => {
+    const newName = editingName.trim()
+
+    if (!newName || newName === strategies.find(s => s.id === strategyId)?.name) {
+      cancelEditing()
       return
     }
 
     try {
       await updateStrategyMutation.mutateAsync({
         strategyId,
-        updates: { name: newName.trim() }
+        updates: { name: newName }
       })
       toast.success('Strategy renamed')
+      cancelEditing()
     } catch (error) {
       console.error('Rename failed:', error)
       toast.error('Failed to rename strategy')
@@ -215,13 +229,14 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 <>
                   {/* User Strategies Results */}
                   {userSearchResults.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
                         Your Strategies ({userSearchResults.length})
                       </h4>
                       {userSearchResults.map((strategy) => {
                         const isThisDeleting = deletingId === strategy.id
                         const isHovered = hoveredId === strategy.id
+                        const isEditing = editingId === strategy.id
 
                         return (
                           <div
@@ -230,21 +245,36 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                             onMouseLeave={() => setHoveredId(null)}
                             className="relative group"
                           >
-                            <button
-                              onClick={() => handleStrategyClick(strategy.id)}
-                              className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
-                            >
-                              <div className="text-base text-foreground truncate pr-16">
-                                {strategy.name}
-                              </div>
-                            </button>
-                            
-                            {isHovered && (
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveRename(strategy.id)
+                                  if (e.key === 'Escape') cancelEditing()
+                                }}
+                                onBlur={() => saveRename(strategy.id)}
+                                autoFocus
+                                className="w-full px-2 py-2 text-base bg-card border border-primary/40 rounded-lg focus:outline-none focus:border-primary text-foreground"
+                              />
+                            ) : (
+                              <button
+                                onClick={() => handleStrategyClick(strategy.id)}
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
+                              >
+                                <div className="text-base text-foreground truncate pr-16">
+                                  {strategy.name}
+                                </div>
+                              </button>
+                            )}
+
+                            {isHovered && !isEditing && (
                               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleRename(strategy.id, strategy.name)
+                                    startEditing(strategy.id, strategy.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -273,7 +303,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
                   {/* Library Results */}
                   {librarySearchResults.length > 0 && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
                         Library ({librarySearchResults.length})
                       </h4>
@@ -281,7 +311,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         <button
                           key={strategy.id}
                           onClick={() => handleLibraryStrategyClick(strategy.id)}
-                          className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                          className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
                         >
                           <div className="text-base text-foreground truncate">
                             {strategy.name}
@@ -335,10 +365,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                     {isLoading ? (
                       <>
                         {[1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className="w-full p-2 rounded-lg border border-primary/20 bg-card animate-pulse"
-                          >
+                          <div key={i} className="px-2 py-2 animate-pulse">
                             <div className="h-4 bg-muted rounded w-2/3" />
                           </div>
                         ))}
@@ -357,6 +384,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                       strategies.map((strategy) => {
                         const isThisDeleting = deletingId === strategy.id
                         const isHovered = hoveredId === strategy.id
+                        const isEditing = editingId === strategy.id
 
                         return (
                           <div
@@ -365,21 +393,36 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                             onMouseLeave={() => setHoveredId(null)}
                             className="relative group"
                           >
-                            <button
-                              onClick={() => handleStrategyClick(strategy.id)}
-                              className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
-                            >
-                              <div className="text-base text-foreground truncate pr-16">
-                                {strategy.name}
-                              </div>
-                            </button>
-                            
-                            {isHovered && (
+                            {isEditing ? (
+                              <input
+                                type="text"
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveRename(strategy.id)
+                                  if (e.key === 'Escape') cancelEditing()
+                                }}
+                                onBlur={() => saveRename(strategy.id)}
+                                autoFocus
+                                className="w-full px-2 py-2 text-base bg-card border border-primary/40 rounded-lg focus:outline-none focus:border-primary text-foreground"
+                              />
+                            ) : (
+                              <button
+                                onClick={() => handleStrategyClick(strategy.id)}
+                                className="w-full text-left px-2 py-2 rounded-lg hover:bg-card transition-colors"
+                              >
+                                <div className="text-base text-foreground truncate pr-16">
+                                  {strategy.name}
+                                </div>
+                              </button>
+                            )}
+
+                            {isHovered && !isEditing && (
                               <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleRename(strategy.id, strategy.name)
+                                    startEditing(strategy.id, strategy.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
