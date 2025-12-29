@@ -136,8 +136,23 @@ function CreatePageContent() {
   const hasMessages = messages.length > 0
   const isLibraryPreview = libraryId && strategy && !hasMessages
 
+  console.log('🟪 [CreatePage] Render decision', {
+    hasMessages,
+    isLibraryPreview,
+    strategyId: strategy?.id,
+    strategyName: strategy?.name,
+    messageCount: messages.length,
+    urlStrategyId: strategyId,
+    urlLibraryId: libraryId,
+    timestamp: new Date().toISOString()
+  })
+
   // View routing
   if (hasMessages) {
+    console.log('🟪 [CreatePage] Rendering: ConversationView', {
+      messageCount: messages.length,
+      timestamp: new Date().toISOString()
+    })
     return (
       <ConversationView
         messages={messages}
@@ -159,6 +174,10 @@ function CreatePageContent() {
   }
 
   if (isLibraryPreview) {
+    console.log('🟪 [CreatePage] Rendering: LibraryPreviewView', {
+      strategyName: strategy.name,
+      timestamp: new Date().toISOString()
+    })
     return (
       <LibraryPreviewView
         strategy={strategy}
@@ -173,6 +192,9 @@ function CreatePageContent() {
   }
 
   // Default: Empty state
+  console.log('🟪 [CreatePage] Rendering: EmptyStateView', {
+    timestamp: new Date().toISOString()
+  })
   return (
     <EmptyStateView
       inputValue={inputValue}

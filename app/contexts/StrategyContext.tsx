@@ -86,7 +86,7 @@ const StrategyContext = createContext<StrategyContextType | undefined>(undefined
 
 export function StrategyProvider({ children }: { children: ReactNode }) {
   // Base strategy (saved)
-  const [strategy, setStrategy] = useState<Strategy | null>(null)
+  const [strategy, setStrategyState] = useState<Strategy | null>(null)
 
   // Edited strategy (working copy)
   const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
@@ -108,8 +108,28 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
   const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
 
+  // Wrapped setStrategy with logging
+  const setStrategy = (newStrategy: Strategy | null) => {
+    console.log('🔵 [StrategyContext] setStrategy called', {
+      from: strategy?.id || 'null',
+      to: newStrategy?.id || 'null',
+      fromName: strategy?.name || 'null',
+      toName: newStrategy?.name || 'null',
+      messageCount: newStrategy?.conversation.messages.length || 0,
+      timestamp: new Date().toISOString()
+    })
+    setStrategyState(newStrategy)
+  }
+
   // Sync editedStrategy with strategy when strategy changes
   useEffect(() => {
+    console.log('🟡 [StrategyContext] Syncing editedStrategy from strategy', {
+      strategyId: strategy?.id,
+      strategyName: strategy?.name,
+      hasStrategy: !!strategy,
+      timestamp: new Date().toISOString()
+    })
+
     if (strategy) {
       setEditedStrategy(strategy.tsdl)
       setEditedName(strategy.name)
@@ -137,6 +157,14 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       editedName !== strategy.name ||
       JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl)
 
+    console.log('🟣 [StrategyContext] Dirty state calculated', {
+      isDirty: hasChanges,
+      strategyId: strategy.id,
+      nameChanged: editedName !== strategy.name,
+      tsdlChanged: JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl),
+      timestamp: new Date().toISOString()
+    })
+
     setIsDirty(hasChanges)
   }, [editedName, editedStrategy, strategy])
 
@@ -146,11 +174,17 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   }, [editedStrategy])
 
   const updateStrategy = (updates: Partial<Strategy>) => {
-    setStrategy(prev => prev ? { ...prev, ...updates } : null)
+    console.log('🔵 [StrategyContext] updateStrategy', { updates, timestamp: new Date().toISOString() })
+    setStrategyState(prev => prev ? { ...prev, ...updates } : null)
   }
 
   const updateConversation = (updates: Partial<Strategy['conversation']>) => {
-    setStrategy(prev =>
+    console.log('🔵 [StrategyContext] updateConversation', { 
+      updates, 
+      currentMessageCount: strategy?.conversation.messages.length || 0,
+      timestamp: new Date().toISOString() 
+    })
+    setStrategyState(prev =>
       prev
         ? { ...prev, conversation: { ...prev.conversation, ...updates } }
         : null
@@ -158,17 +192,25 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   }
 
   const updateEditedStrategy = (updates: Partial<StrategyJSON>) => {
+    console.log('🟢 [StrategyContext] updateEditedStrategy', { updates, timestamp: new Date().toISOString() })
     setEditedStrategy(prev => prev ? { ...prev, ...updates } : null)
   }
 
   // Auto-save conversation before navigation (only for saved strategies)
   const saveConversationBeforeNavigate = async () => {
+    console.log('🟠 [StrategyContext] saveConversationBeforeNavigate START', {
+      hasStrategyId: !!strategy?.id,
+      strategyId: strategy?.id,
+      messageCount: strategy?.conversation.messages.length || 0,
+      timestamp: new Date().toISOString()
+    })
+
     if (!strategy?.id || !strategy.conversation.messages.length) {
+      console.log('⚪ [StrategyContext] saveConversationBeforeNavigate SKIP - no ID or messages')
       return
     }
 
     try {
-      console.log('Auto-saving conversation before navigate', { strategyId: strategy.id })
       await createConversation({
         strategy_id: strategy.id,
         messages: strategy.conversation.messages.map(msg => ({
@@ -177,19 +219,39 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
           timestamp: msg.timestamp.toISOString()
         }))
       })
-      console.log('Conversation auto-saved successfully')
+      console.log('✅ [StrategyContext] saveConversationBeforeNavigate SUCCESS', {
+        strategyId: strategy.id,
+        messagesSaved: strategy.conversation.messages.length,
+        timestamp: new Date().toISOString()
+      })
     } catch (error) {
-      console.error('Auto-save conversation failed:', error)
+      console.error('❌ [StrategyContext] saveConversationBeforeNavigate FAILED', {
+        error,
+        strategyId: strategy.id,
+        timestamp: new Date().toISOString()
+      })
       // Don't block navigation on error
     }
   }
 
   const clearStrategy = async () => {
+    console.log('🔴 [StrategyContext] clearStrategy START', {
+      currentStrategyId: strategy?.id,
+      currentStrategyName: strategy?.name,
+      messageCount: strategy?.conversation.messages.length || 0,
+      isDirty,
+      timestamp: new Date().toISOString()
+    })
+
     // Auto-save conversation before clearing (only if strategy has ID)
     await saveConversationBeforeNavigate()
 
     // Then clear everything
-    setStrategy(null)
+    console.log('🔴 [StrategyContext] clearStrategy - clearing all state', {
+      timestamp: new Date().toISOString()
+    })
+
+    setStrategyState(null)
     setEditedStrategy(null)
     setEditedName('')
     setIsDirty(false)
@@ -202,15 +264,25 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setIsDetailsPanelOpen(false)
     setDetailsPanelTab('parameters')
     setIsParametersFullscreen(false)
+
+    console.log('✅ [StrategyContext] clearStrategy COMPLETE', {
+      timestamp: new Date().toISOString()
+    })
   }
 
   // Navigation helper - checks for unsaved changes before navigating
   const navigateToCreate = async (router: any): Promise<boolean> => {
+    console.log('🔵 [StrategyContext] navigateToCreate', {
+      isDirty,
+      timestamp: new Date().toISOString()
+    })
+
     if (isDirty) {
       const confirmed = window.confirm(
         'You have unsaved changes. Are you sure you want to leave? Your changes will be lost.'
       )
       if (!confirmed) {
+        console.log('⚪ [StrategyContext] navigateToCreate CANCELLED by user')
         return false
       }
     }
@@ -218,6 +290,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     // Clear strategy (includes auto-save) and navigate
     await clearStrategy()
     router.push('/create')
+    console.log('✅ [StrategyContext] navigateToCreate COMPLETE')
     return true
   }
 
