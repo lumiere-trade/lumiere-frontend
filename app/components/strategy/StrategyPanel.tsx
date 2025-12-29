@@ -21,6 +21,8 @@ import {
   useLibraryStrategies,
   useLibrarySearch,
 } from "@/hooks/queries/use-architect-queries"
+import { useUpdateStrategy } from "@/hooks/mutations/use-architect-mutations"
+import { toast } from "sonner"
 
 interface StrategyPanelProps {
   isOpen: boolean
@@ -41,6 +43,9 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   const { strategies, isLoading, deleteStrategy, isDeleting } = useStrategies({
     limit: 50
   })
+
+  // Update strategy mutation for rename
+  const updateStrategyMutation = useUpdateStrategy()
 
   // Fetch library data
   const { data: categories = [], isLoading: categoriesLoading } = useLibraryCategories()
@@ -63,6 +68,25 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
     // Auto-save current conversation before navigating
     await clearStrategy()
     router.push(`/create?library=${strategyId}`)
+  }
+
+  const handleRename = async (strategyId: string, currentName: string) => {
+    const newName = prompt('Enter new strategy name:', currentName)
+    
+    if (!newName || newName.trim() === '' || newName === currentName) {
+      return
+    }
+
+    try {
+      await updateStrategyMutation.mutateAsync({
+        strategyId,
+        updates: { name: newName.trim() }
+      })
+      toast.success('Strategy renamed')
+    } catch (error) {
+      console.error('Rename failed:', error)
+      toast.error('Failed to rename strategy')
+    }
   }
 
   const handleDelete = async (strategyId: string, strategyName: string) => {
@@ -202,32 +226,31 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         return (
                           <div
                             key={strategy.id}
-                            onClick={() => handleStrategyClick(strategy.id)}
                             onMouseEnter={() => setHoveredId(strategy.id)}
                             onMouseLeave={() => setHoveredId(null)}
-                            className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors cursor-pointer"
+                            className="relative group"
                           >
-                            <div className="text-base font-medium text-foreground truncate">
-                              {strategy.name}
-                            </div>
-                            <div className="flex items-center justify-between mt-1 min-h-[24px]">
-                              <span className="text-sm text-muted-foreground capitalize">
-                                {strategy.status}
-                              </span>
-
-                              <div className={`flex items-center gap-2 transition-opacity duration-200 ${
-                                isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                              }`}>
+                            <button
+                              onClick={() => handleStrategyClick(strategy.id)}
+                              className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                            >
+                              <div className="text-base text-foreground truncate pr-16">
+                                {strategy.name}
+                              </div>
+                            </button>
+                            
+                            {isHovered && (
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleStrategyClick(strategy.id)
+                                    handleRename(strategy.id, strategy.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title="Edit strategy"
+                                  title="Rename strategy"
                                 >
-                                  <Pencil className="h-4 w-4 text-primary" />
+                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -238,10 +261,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-4 w-4 text-primary ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-3.5 w-3.5 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
-                            </div>
+                            )}
                           </div>
                         )
                       })}
@@ -258,13 +281,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         <button
                           key={strategy.id}
                           onClick={() => handleLibraryStrategyClick(strategy.id)}
-                          className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                          className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
                         >
-                          <div className="text-base font-medium text-foreground truncate">
+                          <div className="text-base text-foreground truncate">
                             {strategy.name}
-                          </div>
-                          <div className="text-sm text-muted-foreground capitalize mt-0.5">
-                            {strategy.category.replace('_', ' ')}
                           </div>
                         </button>
                       ))}
@@ -311,16 +331,15 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                 </button>
 
                 {strategiesExpanded && (
-                  <div className="px-4 pb-4 space-y-2">
+                  <div className="px-4 pb-4 space-y-1">
                     {isLoading ? (
                       <>
                         {[1, 2, 3].map((i) => (
                           <div
                             key={i}
-                            className="w-full p-3 rounded-lg border border-primary/20 bg-card animate-pulse"
+                            className="w-full p-2 rounded-lg border border-primary/20 bg-card animate-pulse"
                           >
-                            <div className="h-4 bg-muted rounded w-2/3 mb-2" />
-                            <div className="h-3 bg-muted rounded w-1/3" />
+                            <div className="h-4 bg-muted rounded w-2/3" />
                           </div>
                         ))}
                       </>
@@ -342,32 +361,31 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                         return (
                           <div
                             key={strategy.id}
-                            onClick={() => handleStrategyClick(strategy.id)}
                             onMouseEnter={() => setHoveredId(strategy.id)}
                             onMouseLeave={() => setHoveredId(null)}
-                            className="w-full text-left p-3 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors cursor-pointer"
+                            className="relative group"
                           >
-                            <div className="text-base font-medium text-foreground truncate">
-                              {strategy.name}
-                            </div>
-                            <div className="flex items-center justify-between mt-1 min-h-[24px]">
-                              <span className="text-sm text-muted-foreground capitalize">
-                                {strategy.status}
-                              </span>
-
-                              <div className={`flex items-center gap-2 transition-opacity duration-200 ${
-                                isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                              }`}>
+                            <button
+                              onClick={() => handleStrategyClick(strategy.id)}
+                              className="w-full text-left p-2 rounded-lg border border-primary/20 bg-card hover:border-primary/40 transition-colors"
+                            >
+                              <div className="text-base text-foreground truncate pr-16">
+                                {strategy.name}
+                              </div>
+                            </button>
+                            
+                            {isHovered && (
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation()
-                                    handleStrategyClick(strategy.id)
+                                    handleRename(strategy.id, strategy.name)
                                   }}
                                   disabled={isDeleting}
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title="Edit strategy"
+                                  title="Rename strategy"
                                 >
-                                  <Pencil className="h-4 w-4 text-primary" />
+                                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -378,10 +396,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                   className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-4 w-4 text-primary ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-3.5 w-3.5 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
-                            </div>
+                            )}
                           </div>
                         )
                       })
