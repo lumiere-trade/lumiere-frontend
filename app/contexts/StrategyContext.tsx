@@ -289,10 +289,8 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setStrategyGenerationProgress(0)
     setProgressStage('')
     setProgressMessage('')
-    setIsDetailsPanelOpen(false)
     setDetailsPanelTab('parameters')
     setIsParametersFullscreen(false)
-    
 
     console.log('✅ [StrategyContext] clearStrategy COMPLETE', {
       timestamp: new Date().toISOString()
@@ -316,8 +314,13 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Clear strategy (includes auto-save) and navigate
+    // Clear strategy (includes auto-save)
     await clearStrategy()
+    
+    // Close details panel when going to EmptyState
+    setIsDetailsPanelOpen(false)
+    
+    // Navigate
     router.push('/create')
     console.log('✅ [StrategyContext] navigateToCreate COMPLETE')
     return true
