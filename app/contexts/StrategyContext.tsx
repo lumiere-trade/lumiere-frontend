@@ -125,6 +125,13 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       return
     }
 
+    // New strategy (not saved yet) - always dirty
+    if (strategy.id === null) {
+      setIsDirty(true)
+      return
+    }
+
+    // Existing strategy - check for changes
     const hasChanges =
       editedName !== strategy.name ||
       JSON.stringify(editedStrategy) !== JSON.stringify(strategy.tsdl)
