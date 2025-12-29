@@ -8,7 +8,7 @@ interface MarkdownMessageProps {
 
 export function MarkdownMessage({ content }: MarkdownMessageProps) {
   return (
-    <div className="prose prose-invert prose-sm max-w-none">
+    <div className="prose prose-invert prose-sm max-w-none select-text">
       <ReactMarkdown
         components={{
           h1: ({ children }) => (
@@ -73,8 +73,7 @@ export function MarkdownMessage({ content }: MarkdownMessageProps) {
           ),
           a: ({ href, children }) => (
             
-              <a
- 		href={href}
+              <a href={href}
               className="text-primary hover:text-primary/80 underline"
               target="_blank"
               rel="noopener noreferrer"

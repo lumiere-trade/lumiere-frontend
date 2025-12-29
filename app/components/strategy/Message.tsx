@@ -14,10 +14,10 @@ interface MessageProps {
 export function Message({ role, content, isStreaming, onViewStrategy }: MessageProps) {
   // Check for strategy marker in content
   const hasStrategyMarker = content.includes('<<view_strategy>>')
-  
+
   // Filter out the marker from displayed content
   const displayContent = content.replace(/<<view_strategy>>/g, '').trim()
-  
+
   // Show button if marker is present
   const showViewButton = role === "assistant" && !isStreaming && hasStrategyMarker && onViewStrategy
   const hasContent = displayContent && displayContent.length > 0
@@ -57,7 +57,7 @@ export function Message({ role, content, isStreaming, onViewStrategy }: MessageP
           }`}
         >
           {role === "user" ? (
-            <p className="text-base leading-relaxed whitespace-pre-line">
+            <p className="text-base leading-relaxed whitespace-pre-line select-text">
               {displayContent}
             </p>
           ) : (
