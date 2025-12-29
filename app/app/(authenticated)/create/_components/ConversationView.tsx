@@ -38,8 +38,9 @@ export function ConversationView({
   onViewStrategy,
 }: ConversationViewProps) {
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex-1 overflow-y-auto">
+    <div className="relative h-[calc(100vh-80px)]">
+      {/* Full height scroll - scroll bar reaches bottom */}
+      <div className="h-full overflow-y-auto">
         <MessageList
           messages={messages}
           isSending={isSending}
@@ -53,8 +54,9 @@ export function ConversationView({
         />
       </div>
 
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
-        <div className="w-full max-w-3xl mx-auto px-6 py-4">
+      {/* Absolute positioned input - always at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pointer-events-none">
+        <div className="w-full max-w-3xl mx-auto px-6 py-4 pointer-events-auto">
           <MessageInput
             value={inputValue}
             onChange={onInputChange}
