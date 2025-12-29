@@ -38,20 +38,18 @@ export function ConversationView({
   onViewStrategy,
 }: ConversationViewProps) {
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex-1 overflow-y-auto">
-        <MessageList
-          messages={messages}
-          isSending={isSending}
-          isGeneratingStrategy={isGeneratingStrategy}
-          strategyGenerationProgress={strategyGenerationProgress}
-          progressStage={progressStage}
-          progressMessage={progressMessage}
-          error={error}
-          generatedStrategy={generatedStrategy}
-          onViewStrategy={onViewStrategy}
-        />
-      </div>
+    <div className="h-[calc(100vh-80px)] overflow-y-auto">
+      <MessageList
+        messages={messages}
+        isSending={isSending}
+        isGeneratingStrategy={isGeneratingStrategy}
+        strategyGenerationProgress={strategyGenerationProgress}
+        progressStage={progressStage}
+        progressMessage={progressMessage}
+        error={error}
+        generatedStrategy={generatedStrategy}
+        onViewStrategy={onViewStrategy}
+      />
 
       <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm">
         <div className="w-full max-w-3xl mx-auto px-6 py-4">
@@ -65,7 +63,6 @@ export function ConversationView({
             placeholder="Reply..."
             autoFocus={true}
           />
-          {/* Disclaimer под input box-a */}
           <div className="flex justify-center pt-2">
             <p className="text-sm text-muted-foreground text-center">
               Lumiere is AI and can make mistakes. Use for educational purposes and not as trading advice.

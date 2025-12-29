@@ -146,7 +146,7 @@ export function MessageList({
   const showThinking = isSending && !hasStreamingContent && !isGeneratingStrategy
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-3xl mx-auto px-6 pt-8">
+    <div ref={containerRef} className="relative w-full max-w-3xl mx-auto px-6 pt-8 pb-48">
       <div className="space-y-6">
         {visibleMessages.map((message) => (
           <Message
