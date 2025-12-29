@@ -28,18 +28,33 @@ export function useStrategyLoader({
 
   useEffect(() => {
     const loadData = async () => {
+      // Load user strategy from URL
       if (strategyId) {
-        const shouldLoad = !currentStrategy || currentStrategy.id !== strategyId
+        const isDifferentStrategy = !currentStrategy || currentStrategy.id !== strategyId
 
-        if (shouldLoad) {
-          logger.info('Loading user strategy', { strategyId })
+        if (isDifferentStrategy) {
+          logger.info('Loading user strategy - clearing first', { strategyId })
+          
+          // CRITICAL: Clear context first (auto-saves conversations)
+          await clearStrategy()
+          
+          // Then load new strategy
           await loadUserStrategy(strategyId)
         }
-      } else if (libraryId) {
-        logger.info('Loading library strategy', { libraryId })
+      }
+      // Load library strategy template
+      else if (libraryId) {
+        logger.info('Loading library strategy - clearing first', { libraryId })
+        
+        // CRITICAL: Clear context first (auto-saves conversations)
+        await clearStrategy()
+        
+        // Then load library template
         await loadLibraryStrategy(libraryId)
-      } else if (!strategyId && !libraryId && currentStrategy) {
-        logger.info('Clearing strategy state')
+      }
+      // No URL params - clear if strategy exists
+      else if (!strategyId && !libraryId && currentStrategy) {
+        logger.info('No URL params - clearing strategy')
         await clearStrategy()
       }
     }
