@@ -83,7 +83,7 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`rounded-2xl px-4 py-3 cursor-pointer ${
+          className={`rounded-2xl px-4 py-3 ${
             role === "user"
               ? "bg-primary text-primary-foreground"
               : "bg-card border border-primary/20"
@@ -100,18 +100,22 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
 
         {/* Copy button (hover only) + Timestamp (always visible) */}
         {!isStreaming && (
-          <div className="flex items-center gap-2 mt-1 px-2">
+          <div
+            className={`flex items-center gap-2 mt-1 px-2 ${role === "user" ? "justify-end" : "justify-start"}`}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
             {/* Copy button - показва се само при hover */}
             {isHovered && (
               <button
                 onClick={handleCopy}
-                className="p-1 rounded hover:bg-muted/50 transition-colors"
+                className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
                 title="Copy message"
               >
                 {copied ? (
-                  <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Check className="h-4 w-4 text-muted-foreground" />
                 ) : (
-                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground" />
                 )}
               </button>
             )}
@@ -121,12 +125,12 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
               onMouseEnter={() => setShowFullDate(true)}
               onMouseLeave={() => setShowFullDate(false)}
             >
-              <span className="text-xs text-muted-foreground cursor-default">
+              <span className="text-sm text-muted-foreground cursor-default">
                 {formatTime(timestamp)}
               </span>
               {showFullDate && (
                 <div className="absolute left-0 top-full mt-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
-                  <span className="text-xs text-foreground">
+                  <span className="text-sm text-foreground">
                     {formatFullDate(timestamp)}
                   </span>
                 </div>
