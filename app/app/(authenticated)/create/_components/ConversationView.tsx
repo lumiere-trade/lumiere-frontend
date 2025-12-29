@@ -39,7 +39,7 @@ export function ConversationView({
 }: ConversationViewProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex-1 overflow-y-auto pb-4">
+      <div className="flex-1 overflow-y-auto">
         <MessageList
           messages={messages}
           isSending={isSending}
