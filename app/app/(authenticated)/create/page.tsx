@@ -55,7 +55,7 @@ function CreatePageContent() {
 
   const [inputValue, setInputValue] = useState("")
 
-  // Load strategy when strategyId or libraryId changes
+  // Load strategy when strategyId or libraryId changes OR when strategy is cleared
   useEffect(() => {
     const loadData = async () => {
       if (strategyId) {
@@ -75,7 +75,7 @@ function CreatePageContent() {
     }
 
     loadData()
-  }, [strategyId, libraryId])
+  }, [strategyId, libraryId, strategy?.id])
 
   // Browser beforeunload warning + auto-save on unmount
   useEffect(() => {
