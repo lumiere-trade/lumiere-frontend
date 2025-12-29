@@ -35,25 +35,25 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
   }
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     })
   }
 
   const formatFullDate = (date: Date) => {
-    return date.toLocaleString('en-US', { 
+    return date.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      hour: '2-digit', 
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: false 
+      hour12: false
     })
   }
 
-  // If no content but has strategy button, show ONLY the button (no copy/timestamp)
+  // If no content but has strategy button, show only the button
   if (!hasContent && showViewButton) {
     return (
       <div className="flex gap-3 justify-start">
@@ -80,65 +80,68 @@ export function Message({ role, content, timestamp, isStreaming, onViewStrategy 
   return (
     <div className={`flex gap-3 ${role === "user" ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[80%] ${role === "user" ? "" : "w-full"}`}>
+        {/* Hover container includes message bubble and space below for copy/timestamp */}
         <div
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className={`rounded-2xl px-4 py-3 ${
-            role === "user"
-              ? "bg-primary text-primary-foreground"
-              : "bg-card border border-primary/20"
-          }`}
+          className="pb-8"
         >
-          {role === "user" ? (
-            <p className="text-base leading-relaxed whitespace-pre-line select-text">
-              {displayContent}
-            </p>
-          ) : (
-            <MarkdownMessage content={displayContent} />
+          <div
+            className={`rounded-2xl px-4 py-3 ${
+              role === "user"
+                ? "bg-primary text-primary-foreground"
+                : "bg-card border border-primary/20"
+            }`}
+          >
+            {role === "user" ? (
+              <p className="text-base leading-relaxed whitespace-pre-line select-text">
+                {displayContent}
+              </p>
+            ) : (
+              <MarkdownMessage content={displayContent} />
+            )}
+          </div>
+
+          {/* Timestamp and copy button - only shown on hover */}
+          {!isStreaming && isHovered && (
+            <div
+              className={`flex items-center justify-between gap-2 mt-1 px-2 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
+            >
+              {/* Timestamp - left side for assistant, right side for user */}
+              <div
+                className="relative"
+                onMouseEnter={() => setShowFullDate(true)}
+                onMouseLeave={() => setShowFullDate(false)}
+              >
+                <span className="text-sm text-muted-foreground cursor-default">
+                  {formatTime(timestamp)}
+                </span>
+                {showFullDate && (
+                  <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
+                    <span className="text-sm text-foreground">
+                      {formatFullDate(timestamp)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Copy button - right side for assistant, left side for user */}
+              <button
+                onClick={handleCopy}
+                className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
+                title="Copy message"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Copy className="h-4 w-4 text-muted-foreground" />
+                )}
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Timestamp (hover only - LEFT) + Copy button (hover only - RIGHT) */}
-        {!isStreaming && isHovered && (
-          <div
-            className={`flex items-center justify-between gap-2 mt-1 px-2 ${role === "user" ? "flex-row-reverse" : "flex-row"}`}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
-            {/* Timestamp - ВЛЯВО, само при hover */}
-            <div
-              className="relative"
-              onMouseEnter={() => setShowFullDate(true)}
-              onMouseLeave={() => setShowFullDate(false)}
-            >
-              <span className="text-sm text-muted-foreground cursor-default">
-                {formatTime(timestamp)}
-              </span>
-              {showFullDate && (
-                <div className="absolute left-0 bottom-full mb-1 px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-50">
-                  <span className="text-sm text-foreground">
-                    {formatFullDate(timestamp)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Copy button - ВДЯСНО, само при hover */}
-            <button
-              onClick={handleCopy}
-              className="p-1 rounded hover:bg-muted/50 transition-colors cursor-pointer"
-              title="Copy message"
-            >
-              {copied ? (
-                <Check className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <Copy className="h-4 w-4 text-muted-foreground" />
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* View Strategy бутон - отделен, БЕЗ copy/timestamp под него */}
+        {/* View Strategy button - separate, without copy/timestamp */}
         {showViewButton && (
           <div className="mt-3">
             <Button

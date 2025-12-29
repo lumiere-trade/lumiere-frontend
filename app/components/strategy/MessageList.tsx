@@ -147,7 +147,7 @@ export function MessageList({
 
   return (
     <div ref={containerRef} className="relative w-full max-w-3xl mx-auto px-6 py-8">
-      <div className="space-y-6">
+      <div className="space-y-10">
         {visibleMessages.map((message) => (
           <Message
             key={message.id}
