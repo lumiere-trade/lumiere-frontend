@@ -16,6 +16,83 @@ interface GroupedIndicator {
   groupNames?: string[]
 }
 
+// Format indicator name to human readable
+function formatIndicatorName(name: string): string {
+  const lower = name.toLowerCase()
+  
+  // MACD: macd_12_26_9 -> MACD(12, 26, 9)
+  if (lower.startsWith('macd_')) {
+    const params = lower.match(/(\d+)_(\d+)_(\d+)/)
+    if (params) {
+      return `MACD(${params[1]}, ${params[2]}, ${params[3]})`
+    }
+  }
+  
+  // EMA: ema_20 -> EMA(20)
+  if (lower.startsWith('ema_')) {
+    const params = lower.match(/ema_(\d+)/)
+    if (params) {
+      return `EMA(${params[1]})`
+    }
+  }
+  
+  // SMA: sma_50 -> SMA(50)
+  if (lower.startsWith('sma_')) {
+    const params = lower.match(/sma_(\d+)/)
+    if (params) {
+      return `SMA(${params[1]})`
+    }
+  }
+  
+  // RSI: rsi_14 -> RSI(14)
+  if (lower.startsWith('rsi_')) {
+    const params = lower.match(/rsi_(\d+)/)
+    if (params) {
+      return `RSI(${params[1]})`
+    }
+  }
+  
+  // ADX: adx_14 -> ADX(14)
+  if (lower.startsWith('adx_')) {
+    const params = lower.match(/adx_(\d+)/)
+    if (params) {
+      return `ADX(${params[1]})`
+    }
+  }
+  
+  // Bollinger Bands: bollinger_20_2 -> Bollinger Bands(20, 2)
+  if (lower.includes('bollinger')) {
+    const params = lower.match(/(\d+)_(\d+)/)
+    if (params) {
+      return `Bollinger Bands(${params[1]}, ${params[2]})`
+    }
+  }
+  
+  // Stochastic: stochastic_14_3_3 -> Stochastic(14, 3, 3)
+  if (lower.startsWith('stochastic_')) {
+    const params = lower.match(/(\d+)_(\d+)_(\d+)/)
+    if (params) {
+      return `Stochastic(${params[1]}, ${params[2]}, ${params[3]})`
+    }
+  }
+  
+  // ATR: atr_14 -> ATR(14)
+  if (lower.startsWith('atr_')) {
+    const params = lower.match(/atr_(\d+)/)
+    if (params) {
+      return `ATR(${params[1]})`
+    }
+  }
+  
+  // Volume: volume -> Volume
+  if (lower === 'volume') {
+    return 'Volume'
+  }
+  
+  // Default: Title Case
+  return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+}
+
 export function IndicatorTogglePanel() {
   const { state, toggleIndicator } = useSharedViewport()
 
@@ -97,10 +174,10 @@ export function IndicatorTogglePanel() {
           volumeGroups.get(baseName)!.indicators.push(ind)
         }
         else {
-          // Non-grouped indicator - add directly
+          // Non-grouped indicator - add directly with formatted name
           indicators.push({
             name: ind.name,
-            displayName: ind.name,
+            displayName: formatIndicatorName(ind.name),
             color: ind.color,
             visible: ind.visible,
             panelId: panel.id,
@@ -114,7 +191,7 @@ export function IndicatorTogglePanel() {
     // Add Bollinger groups
     bollingerGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
-      const displayName = baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      const displayName = formatIndicatorName(baseName)
       const anyVisible = group.indicators.some(ind => ind.visible)
 
       indicators.push({
@@ -133,7 +210,7 @@ export function IndicatorTogglePanel() {
     // Add MACD groups
     macdGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
-      const displayName = baseName.replace(/_/g, ' ').toUpperCase()
+      const displayName = formatIndicatorName(baseName)
       const anyVisible = group.indicators.some(ind => ind.visible)
 
       indicators.push({
@@ -152,7 +229,7 @@ export function IndicatorTogglePanel() {
     // Add Stochastic groups
     stochasticGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
-      const displayName = baseName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+      const displayName = formatIndicatorName(baseName)
       const anyVisible = group.indicators.some(ind => ind.visible)
 
       indicators.push({
@@ -171,7 +248,7 @@ export function IndicatorTogglePanel() {
     // Add Volume groups
     volumeGroups.forEach((group, baseName) => {
       const firstInd = group.indicators[0]
-      const displayName = 'Volume' // Clean display name
+      const displayName = formatIndicatorName(baseName)
       const anyVisible = group.indicators.some(ind => ind.visible)
 
       indicators.push({
