@@ -133,7 +133,7 @@ function AuthenticatedLayoutContent({
 
       {/* Main Content Area */}
       <main
-        className="flex-1 overflow-y-auto bg-background transition-all duration-300"
+        className="flex-1 overflow-y-auto bg-background"
         style={{
           paddingLeft: leftPadding,
           paddingRight: rightPadding
