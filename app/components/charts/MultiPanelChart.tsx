@@ -277,7 +277,6 @@ export function MultiPanelChart({
 
   // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
-    console.log("DEBUG: USEMEMO RUNNING - indicatorData:", indicatorData.length)
     const baseIndicators = indicatorData.map((ind, idx) => {
       // Detect indicator type based on name
       const nameLower = ind.name.toLowerCase()
@@ -300,7 +299,6 @@ export function MultiPanelChart({
     })
 
     // Synthesize MACD Histogram from MACD and MACD_Signal
-    console.log('DEBUG: All indicators:', baseIndicators.map(i => i.name))
     const macdIndicator = baseIndicators.find(ind => {
       const name = ind.name.toLowerCase()
       return name.startsWith('macd_') && !name.includes('signal')
@@ -309,7 +307,6 @@ export function MultiPanelChart({
       const name = ind.name.toLowerCase()
       return name.startsWith('macd_') && name.includes('signal')
     })
-    console.log('DEBUG: Found MACD:', macdIndicator?.name, 'Signal:', macdSignalIndicator?.name)
 
     if (macdIndicator && macdSignalIndicator) {
       // Calculate histogram: MACD - Signal
@@ -333,7 +330,6 @@ export function MultiPanelChart({
         type: 'histogram'
       }
 
-      console.log('DEBUG: MACD Histogram created:', histogramIndicator.name, 'points:', histogramIndicator.points.length)
       return [...baseIndicators, histogramIndicator]
     }
 
