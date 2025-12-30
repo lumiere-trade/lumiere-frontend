@@ -19,7 +19,7 @@ interface GroupedIndicator {
 // Format indicator name to human readable
 function formatIndicatorName(name: string): string {
   const lower = name.toLowerCase()
-  
+
   // MACD: macd_12_26_9 -> MACD(12, 26, 9)
   if (lower.startsWith('macd_')) {
     const params = lower.match(/(\d+)_(\d+)_(\d+)/)
@@ -27,7 +27,7 @@ function formatIndicatorName(name: string): string {
       return `MACD(${params[1]}, ${params[2]}, ${params[3]})`
     }
   }
-  
+
   // EMA: ema_20 -> EMA(20)
   if (lower.startsWith('ema_')) {
     const params = lower.match(/ema_(\d+)/)
@@ -35,7 +35,7 @@ function formatIndicatorName(name: string): string {
       return `EMA(${params[1]})`
     }
   }
-  
+
   // SMA: sma_50 -> SMA(50)
   if (lower.startsWith('sma_')) {
     const params = lower.match(/sma_(\d+)/)
@@ -43,7 +43,7 @@ function formatIndicatorName(name: string): string {
       return `SMA(${params[1]})`
     }
   }
-  
+
   // RSI: rsi_14 -> RSI(14)
   if (lower.startsWith('rsi_')) {
     const params = lower.match(/rsi_(\d+)/)
@@ -51,7 +51,7 @@ function formatIndicatorName(name: string): string {
       return `RSI(${params[1]})`
     }
   }
-  
+
   // ADX: adx_14 -> ADX(14)
   if (lower.startsWith('adx_')) {
     const params = lower.match(/adx_(\d+)/)
@@ -59,7 +59,7 @@ function formatIndicatorName(name: string): string {
       return `ADX(${params[1]})`
     }
   }
-  
+
   // Bollinger Bands: bollinger_20_2 -> Bollinger Bands(20, 2)
   if (lower.includes('bollinger')) {
     const params = lower.match(/(\d+)_(\d+)/)
@@ -67,7 +67,7 @@ function formatIndicatorName(name: string): string {
       return `Bollinger Bands(${params[1]}, ${params[2]})`
     }
   }
-  
+
   // Stochastic: stochastic_14_3_3 -> Stochastic(14, 3, 3)
   if (lower.startsWith('stochastic_')) {
     const params = lower.match(/(\d+)_(\d+)_(\d+)/)
@@ -75,7 +75,7 @@ function formatIndicatorName(name: string): string {
       return `Stochastic(${params[1]}, ${params[2]}, ${params[3]})`
     }
   }
-  
+
   // ATR: atr_14 -> ATR(14)
   if (lower.startsWith('atr_')) {
     const params = lower.match(/atr_(\d+)/)
@@ -83,12 +83,12 @@ function formatIndicatorName(name: string): string {
       return `ATR(${params[1]})`
     }
   }
-  
+
   // Volume: volume -> Volume
   if (lower === 'volume') {
     return 'Volume'
   }
-  
+
   // Default: Title Case
   return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
 }
@@ -129,7 +129,7 @@ export function IndicatorTogglePanel() {
           // macd_signal_12_26_9 -> 12, 26, 9
           // macd_histogram(12, 26, 9) -> 12, 26, 9
           const paramsMatch = name.match(/(\d+)[_,\s]+(\d+)[_,\s]+(\d+)/)
-          
+
           if (paramsMatch) {
             // Use consistent base name for all variants
             const baseName = `macd_${paramsMatch[1]}_${paramsMatch[2]}_${paramsMatch[3]}`
@@ -315,10 +315,6 @@ export function IndicatorTogglePanel() {
           />
 
           <span>{indicator.displayName}</span>
-
-          <span className="text-xs text-muted-foreground">
-            ({indicator.panelTitle})
-          </span>
         </button>
       ))}
     </div>
