@@ -194,7 +194,7 @@ export function MessageList({
       </div>
 
       {showScrollButton && (
-        <div className="sticky bottom-52 left-0 right-0 flex justify-center pointer-events-none mb-4">
+        <div className="sticky bottom-44 left-0 right-0 flex justify-center pointer-events-none mb-4">
           <Button
             size="icon"
             onClick={scrollToBottom}
