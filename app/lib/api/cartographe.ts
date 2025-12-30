@@ -48,6 +48,7 @@ export interface Trade {
   timestamp: string;
   side: 'BUY' | 'SELL';
   symbol: string;
+  timeframe: string;
   price: number;
   quantity: number;
   value: number;
@@ -89,6 +90,7 @@ export interface IndicatorData {
 export interface BacktestResponse {
   backtest_id: string;
   symbol: string;
+  timeframe: string;
   start_date: string;
   end_date: string;
   initial_capital: number;
