@@ -151,9 +151,27 @@ function CreatePageContent() {
   }
 
   // View routing:
-  // 1. If strategy exists (with or without messages) → ConversationView
-  // 2. If no strategy → EmptyStateView
-  if (strategy) {
+  // 1. Library template (libraryId) → LibraryPreviewView
+  // 2. User strategy (strategyId, with or without messages) → ConversationView
+  // 3. No params → EmptyStateView
+  
+  // Library template preview
+  if (libraryId && strategy) {
+    return (
+      <LibraryPreviewView
+        strategy={strategy}
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onSend={handleSend}
+        onViewStrategy={handleViewStrategy}
+        isHealthy={isHealthy}
+        isSending={isSending}
+      />
+    )
+  }
+
+  // User strategy (with or without conversation history)
+  if (strategyId && strategy) {
     return (
       <ConversationView
         messages={messages}
@@ -174,7 +192,7 @@ function CreatePageContent() {
     )
   }
 
-  // Default: Empty state (no strategy at all)
+  // Default: Empty state (new strategy, no params)
   return (
     <EmptyStateView
       inputValue={inputValue}
