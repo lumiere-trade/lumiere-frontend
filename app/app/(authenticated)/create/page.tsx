@@ -69,13 +69,6 @@ function CreatePageContent() {
     openDetailsPanel,
   })
 
-  // Auto-open details panel for user strategies without conversation
-  useEffect(() => {
-    if (strategy && strategyId && !libraryId && messages.length === 0 && !isLoadingStrategy) {
-      openDetailsPanel()
-    }
-  }, [strategy, strategyId, libraryId, messages.length, isLoadingStrategy, openDetailsPanel])
-
   // Browser beforeunload warning + auto-save on unmount
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -147,10 +140,6 @@ function CreatePageContent() {
     openDetailsPanel()
   }
 
-  // Determine which view to show
-  const hasMessages = messages.length > 0
-  const isLibraryPreview = libraryId && strategy && !hasMessages && !isLoadingStrategy
-
   // Loading state - show spinner while fetching strategy
   if (isLoadingStrategy) {
     return (
@@ -161,8 +150,10 @@ function CreatePageContent() {
     )
   }
 
-  // View routing
-  if (hasMessages) {
+  // View routing:
+  // 1. If strategy exists (with or without messages) → ConversationView
+  // 2. If no strategy → EmptyStateView
+  if (strategy) {
     return (
       <ConversationView
         messages={messages}
@@ -183,21 +174,7 @@ function CreatePageContent() {
     )
   }
 
-  if (isLibraryPreview) {
-    return (
-      <LibraryPreviewView
-        strategy={strategy}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSend={handleSend}
-        onViewStrategy={handleViewStrategy}
-        isHealthy={isHealthy}
-        isSending={isSending}
-      />
-    )
-  }
-
-  // Default: Empty state (includes user strategies without conversation)
+  // Default: Empty state (no strategy at all)
   return (
     <EmptyStateView
       inputValue={inputValue}
