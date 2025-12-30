@@ -61,10 +61,21 @@ export class OscillatorPanelRenderer extends PanelRenderer {
       this.drawRSIReferences(yMin, yMax, viewport.panelHeight, padding)
     } else if (config.id.toLowerCase().includes('stochastic')) {
       this.drawStochasticReferences(yMin, yMax, viewport.panelHeight, padding)
+    } else if (config.id === 'macd') {
+      this.drawMACDZeroLine(yMin, yMax, viewport.panelHeight, padding)
     }
 
-    // Draw indicator lines
-    this.drawIndicatorLines(config.indicators, viewport, yMin, yMax, padding)
+    // Separate histograms from lines
+    const histograms = config.indicators.filter(ind => ind.visible && ind.type === 'histogram')
+    const lines = config.indicators.filter(ind => ind.visible && ind.type !== 'histogram')
+
+    // Draw histograms FIRST (behind lines)
+    histograms.forEach(histogram => {
+      this.drawHistogram(histogram, viewport, yMin, yMax, padding)
+    })
+
+    // Draw indicator lines on top
+    this.drawIndicatorLines(lines, viewport, yMin, yMax, padding)
 
     // Draw Y-axis
     this.drawYAxis(yMin, yMax, viewport.panelHeight, padding)
@@ -78,6 +89,86 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     if (mouse) {
       this.drawPriceValueLabel(mouse, viewport, yMin, yMax, padding)
     }
+  }
+
+  private drawMACDZeroLine(
+    yMin: number,
+    yMax: number,
+    panelHeight: number,
+    padding: any
+  ) {
+    // Only draw zero line if it's in view
+    if (yMin > 0 || yMax < 0) return
+
+    this.ctx.lineWidth = 1.5
+    this.ctx.setLineDash([5, 3])
+    this.ctx.strokeStyle = 'rgba(136, 136, 136, 0.5)'
+
+    const y0 = this.valueToY(0, yMin, yMax, panelHeight, padding.top)
+    this.ctx.beginPath()
+    this.ctx.moveTo(padding.left, y0)
+    this.ctx.lineTo(this.width - padding.right, y0)
+    this.ctx.stroke()
+
+    this.ctx.setLineDash([])
+  }
+
+  private drawHistogram(
+    indicator: any,
+    viewport: PanelViewport,
+    yMin: number,
+    yMax: number,
+    padding: any
+  ) {
+    // Save context and setup clipping
+    this.ctx.save()
+    this.ctx.beginPath()
+    this.ctx.rect(
+      padding.left,
+      padding.top,
+      this.width - padding.left - padding.right,
+      viewport.panelHeight
+    )
+    this.ctx.clip()
+
+    // Calculate bar width (80% of candleWidth)
+    const barWidth = Math.max(1, viewport.candleWidth * 0.8)
+
+    // Calculate zero line Y position
+    const zeroY = this.valueToY(0, yMin, yMax, viewport.panelHeight, padding.top)
+
+    for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
+      if (i >= indicator.points.length) break
+
+      const point = indicator.points[i]
+      if (!point || point.v === null || point.v === undefined) continue
+
+      const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+      if (x < padding.left || x > this.width - padding.right) continue
+
+      const valueY = this.valueToY(point.v, yMin, yMax, viewport.panelHeight, padding.top)
+
+      // Determine bar height and position
+      const barHeight = Math.abs(valueY - zeroY)
+      const barY = Math.min(valueY, zeroY)
+
+      // Color: green for positive, red for negative
+      if (point.v >= 0) {
+        this.ctx.fillStyle = 'rgba(34, 197, 94, 0.7)' // green
+      } else {
+        this.ctx.fillStyle = 'rgba(239, 68, 68, 0.7)' // red
+      }
+
+      // Draw bar
+      this.ctx.fillRect(
+        x - barWidth / 2,
+        barY,
+        barWidth,
+        Math.max(1, barHeight)
+      )
+    }
+
+    this.ctx.restore()
   }
 
   private drawRSIReferences(

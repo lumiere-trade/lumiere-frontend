@@ -29,7 +29,7 @@ export interface Indicator {
   color: string
   visible: boolean
   points: IndicatorPoint[]
-  type: 'line' | 'area'  // future: support different types
+  type: 'line' | 'area' | 'histogram'  // Added histogram type
 }
 
 export type Mode = 'L' | 'C'  // Line | Candles

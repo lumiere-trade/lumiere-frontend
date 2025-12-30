@@ -278,6 +278,14 @@ export function MultiPanelChart({
   // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
     return indicatorData.map((ind, idx) => {
+      // Detect indicator type based on name
+      const nameLower = ind.name.toLowerCase()
+      let type: 'line' | 'area' | 'histogram' = 'line'
+
+      if (nameLower.includes('histogram')) {
+        type = 'histogram'
+      }
+
       return {
         name: ind.name,
         color: assignIndicatorColor(idx),
@@ -286,7 +294,7 @@ export function MultiPanelChart({
           t: i,
           v: val.value
         })),
-        type: 'line'
+        type
       }
     })
   }, [indicatorData, initialVisibility])
