@@ -191,7 +191,7 @@ export function StrategyDetailsPanel({
         <div className="h-full flex items-center justify-center" style={{ marginTop: '54px' }}>
           <button
             onClick={onToggle}
-            className="h-full w-full px-2 hover:bg-card/80"
+            className="h-full w-full px-2 hover:bg-card"
             style={{
               transition: 'background-color 150ms ease-in-out',
             }}
@@ -266,7 +266,7 @@ export function StrategyDetailsPanel({
               {/* Expand to Fullscreen Button */}
               <button
                 onClick={handleToggleFullscreen}
-                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 rounded-lg shadow-md"
+                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md"
                 style={{
                   transition: 'background-color 150ms ease-in-out',
                   transform: 'translateZ(0)',
@@ -279,7 +279,7 @@ export function StrategyDetailsPanel({
               {/* Close Button */}
               <button
                 onClick={onToggle}
-                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 rounded-lg shadow-md"
+                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md"
                 style={{
                   transition: 'background-color 150ms ease-in-out',
                   transform: 'translateZ(0)',
@@ -303,7 +303,7 @@ export function StrategyDetailsPanel({
           >
             <button
               onClick={handleToggleFullscreen}
-              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 rounded-lg shadow-md pointer-events-auto"
+              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md pointer-events-auto"
               style={{
                 transition: 'background-color 150ms ease-in-out',
                 transform: 'translateZ(0)',
