@@ -299,12 +299,14 @@ export function MultiPanelChart({
     })
 
     // Synthesize MACD Histogram from MACD and MACD_Signal
+    console.log('🔍 All indicators:', baseIndicators.map(i => i.name))
     const macdIndicator = baseIndicators.find(ind =>
       ind.name.toUpperCase().startsWith('MACD(') && !ind.name.toUpperCase().includes('SIGNAL')
     )
     const macdSignalIndicator = baseIndicators.find(ind =>
       ind.name.toUpperCase().includes('MACD_SIGNAL')
     )
+    console.log('🔍 Found MACD:', macdIndicator?.name, 'Signal:', macdSignalIndicator?.name)
 
     if (macdIndicator && macdSignalIndicator) {
       // Calculate histogram: MACD - Signal
