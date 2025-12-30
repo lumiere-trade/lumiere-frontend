@@ -195,7 +195,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
         <div className="h-full flex items-center justify-center" style={{ marginTop: '54px' }}>
           <button
             onClick={onToggle}
-            className="h-full w-full px-2 hover:bg-card/80 transition-colors"
+            className="h-full w-full px-2 hover:bg-card transition-colors"
             title="Open sidebar"
           >
             <ChevronRight className="h-5 w-5 text-primary" />
@@ -217,7 +217,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           >
             <button
               onClick={onToggle}
-              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card/80 transition-colors rounded-lg pointer-events-auto shadow-md"
+              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card transition-colors rounded-lg pointer-events-auto shadow-md"
               title="Close sidebar"
             >
               <ChevronLeft className="h-4 w-4 text-primary mx-auto" />
