@@ -277,7 +277,7 @@ export function MultiPanelChart({
 
   // Transform indicator data to Indicator format
   const indicators: Indicator[] = useMemo(() => {
-    return indicatorData.map((ind, idx) => {
+    const baseIndicators = indicatorData.map((ind, idx) => {
       // Detect indicator type based on name
       const nameLower = ind.name.toLowerCase()
       let type: 'line' | 'area' | 'histogram' = 'line'
@@ -297,6 +297,41 @@ export function MultiPanelChart({
         type
       }
     })
+
+    // Synthesize MACD Histogram from MACD and MACD_Signal
+    const macdIndicator = baseIndicators.find(ind =>
+      ind.name.toUpperCase().startsWith('MACD(') && !ind.name.toUpperCase().includes('SIGNAL')
+    )
+    const macdSignalIndicator = baseIndicators.find(ind =>
+      ind.name.toUpperCase().includes('MACD_SIGNAL')
+    )
+
+    if (macdIndicator && macdSignalIndicator) {
+      // Calculate histogram: MACD - Signal
+      const histogramPoints = macdIndicator.points.map((macdPoint, i) => {
+        const signalPoint = macdSignalIndicator.points[i]
+        return {
+          t: macdPoint.t,
+          v: macdPoint.v - signalPoint.v
+        }
+      })
+
+      // Extract parameters from MACD name (e.g., "MACD(12, 26, 9)" -> "12, 26, 9")
+      const paramsMatch = macdIndicator.name.match(/\(([^)]+)\)/)
+      const params = paramsMatch ? paramsMatch[1] : '12, 26, 9'
+
+      const histogramIndicator: Indicator = {
+        name: `MACD_Histogram(${params})`,
+        color: 'rgba(139, 92, 246, 0.7)', // Purple
+        visible: initialVisibility?.[`MACD_Histogram(${params})`] ?? true,
+        points: histogramPoints,
+        type: 'histogram'
+      }
+
+      return [...baseIndicators, histogramIndicator]
+    }
+
+    return baseIndicators
   }, [indicatorData, initialVisibility])
 
   return (
