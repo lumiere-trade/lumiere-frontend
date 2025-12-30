@@ -33,7 +33,7 @@ interface SharedViewportContextValue {
 
   // Dragging state
   setDragging: (dragging: boolean) => void
-  
+
   // Trade hover tracking
   setHoveredTrade: (trade: Trade | null) => void
 }
@@ -146,7 +146,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     isDragging: false,
     isResizing: null
   })
-  
+
   const [hoveredTrade, setHoveredTrade] = useState<Trade | null>(null)
 
   // Update panels when indicators change - PRESERVE visibility state
@@ -213,13 +213,33 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     }
   }, [])
 
-  // Zoom handler - MULTIPLICATIVE like old TradingChart
+  // Zoom handler with FOCAL POINT - zoom towards cursor position
   const handleZoom = useCallback((delta: number, mouseX: number) => {
     setState(prev => {
       const zoomFactor = delta > 0 ? 1.1 : 0.9
       const newZoom = Math.max(0.1, Math.min(10, prev.sharedViewport.zoom * zoomFactor))
 
-      const newOffsetX = prev.sharedViewport.offsetX * (newZoom / prev.sharedViewport.zoom)
+      // Calculate padding (match renderer logic)
+      const paddingLeft = Math.max(15, containerWidth * 0.02)
+
+      // Calculate current candle position under cursor (in candle units)
+      // This is the "focal point" we want to preserve
+      const oldCandleWidth = prev.sharedViewport.candleWidth
+      const candlePositionUnderCursor = (mouseX - paddingLeft - prev.sharedViewport.offsetX) / oldCandleWidth
+
+      // Calculate new candle width after zoom
+      const newCandleWidth = Math.max(2, 8 * newZoom)
+
+      // Calculate new offsetX to keep same candle under cursor
+      // Formula: offsetX = mouseX - paddingLeft - candlePosition * newCandleWidth
+      let newOffsetX = mouseX - paddingLeft - candlePositionUnderCursor * newCandleWidth
+
+      // Apply bounds clamping
+      const visibleCandles = Math.floor(containerWidth / newCandleWidth)
+      const maxOffset = -(candlesRef.current.length - visibleCandles) * newCandleWidth
+      const minOffset = 0
+
+      newOffsetX = Math.max(maxOffset, Math.min(minOffset, newOffsetX))
 
       return {
         ...prev,
