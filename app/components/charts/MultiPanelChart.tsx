@@ -328,6 +328,7 @@ export function MultiPanelChart({
         type: 'histogram'
       }
 
+      console.log('✅ MACD Histogram created:', histogramIndicator.name, 'points:', histogramIndicator.points.length)
       return [...baseIndicators, histogramIndicator]
     }
 
