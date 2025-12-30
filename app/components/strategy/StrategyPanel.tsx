@@ -251,7 +251,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ scrollbarGutter: "stable" }}>
           {isSearching ? (
             // Search Results View
             <div className="px-4 py-4 space-y-4">
