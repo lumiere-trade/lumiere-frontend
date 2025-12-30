@@ -45,9 +45,10 @@ export function IndicatorTogglePanel() {
 
           bollingerGroups.get(baseName)!.indicators.push(ind)
         }
-        // Check if MACD indicator
+        // Check if MACD indicator (including histogram)
         else if (name.includes('macd')) {
-          const baseName = name.replace(/_signal/g, '')
+          // Remove _signal and _histogram suffixes for grouping
+          const baseName = name.replace(/_signal|_histogram/g, '')
 
           if (!macdGroups.has(baseName)) {
             macdGroups.set(baseName, {
