@@ -142,25 +142,10 @@ function CreatePageContent() {
 
   // Determine which view to show
   const hasMessages = messages.length > 0
-  const isLibraryPreview = libraryId && strategy && !hasMessages
-
-  console.log('🟪 [CreatePage] Render decision', {
-    hasMessages,
-    isLibraryPreview,
-    strategyId: strategy?.id,
-    strategyName: strategy?.name,
-    messageCount: messages.length,
-    urlStrategyId: strategyId,
-    urlLibraryId: libraryId,
-    isLoadingStrategy,
-    timestamp: new Date().toISOString()
-  })
+  const isLibraryPreview = strategy && !hasMessages && !isLoadingStrategy
 
   // Loading state - show spinner while fetching strategy
   if (isLoadingStrategy) {
-    console.log('🟪 [CreatePage] Rendering: LoadingView', {
-      timestamp: new Date().toISOString()
-    })
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <Spinner className="w-8 h-8 mb-4" />
@@ -171,10 +156,6 @@ function CreatePageContent() {
 
   // View routing
   if (hasMessages) {
-    console.log('🟪 [CreatePage] Rendering: ConversationView', {
-      messageCount: messages.length,
-      timestamp: new Date().toISOString()
-    })
     return (
       <ConversationView
         messages={messages}
@@ -196,10 +177,6 @@ function CreatePageContent() {
   }
 
   if (isLibraryPreview) {
-    console.log('🟪 [CreatePage] Rendering: LibraryPreviewView', {
-      strategyName: strategy.name,
-      timestamp: new Date().toISOString()
-    })
     return (
       <LibraryPreviewView
         strategy={strategy}
@@ -214,9 +191,6 @@ function CreatePageContent() {
   }
 
   // Default: Empty state
-  console.log('🟪 [CreatePage] Rendering: EmptyStateView', {
-    timestamp: new Date().toISOString()
-  })
   return (
     <EmptyStateView
       inputValue={inputValue}
