@@ -45,20 +45,28 @@ export function IndicatorTogglePanel() {
 
           bollingerGroups.get(baseName)!.indicators.push(ind)
         }
-        // Check if MACD indicator (including histogram)
+        // Check if MACD indicator (including histogram with different format)
         else if (name.includes('macd')) {
-          // Remove _signal and _histogram suffixes for grouping
-          const baseName = name.replace(/_signal|_histogram/g, '')
+          // Extract parameters from any MACD format:
+          // macd_12_26_9 -> 12, 26, 9
+          // macd_signal_12_26_9 -> 12, 26, 9
+          // macd_histogram(12, 26, 9) -> 12, 26, 9
+          const paramsMatch = name.match(/(\d+)[_,\s]+(\d+)[_,\s]+(\d+)/)
+          
+          if (paramsMatch) {
+            // Use consistent base name for all variants
+            const baseName = `macd_${paramsMatch[1]}_${paramsMatch[2]}_${paramsMatch[3]}`
 
-          if (!macdGroups.has(baseName)) {
-            macdGroups.set(baseName, {
-              indicators: [],
-              panelId: panel.id,
-              panelTitle: panel.title
-            })
+            if (!macdGroups.has(baseName)) {
+              macdGroups.set(baseName, {
+                indicators: [],
+                panelId: panel.id,
+                panelTitle: panel.title
+              })
+            }
+
+            macdGroups.get(baseName)!.indicators.push(ind)
           }
-
-          macdGroups.get(baseName)!.indicators.push(ind)
         }
         // Check if Stochastic indicator
         else if (name.includes('stochastic')) {
