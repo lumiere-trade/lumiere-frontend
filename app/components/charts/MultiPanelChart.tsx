@@ -301,12 +301,14 @@ export function MultiPanelChart({
 
     // Synthesize MACD Histogram from MACD and MACD_Signal
     console.log('DEBUG: All indicators:', baseIndicators.map(i => i.name))
-    const macdIndicator = baseIndicators.find(ind =>
-      ind.name.toUpperCase().startsWith('MACD(') && !ind.name.toUpperCase().includes('SIGNAL')
-    )
-    const macdSignalIndicator = baseIndicators.find(ind =>
-      ind.name.toUpperCase().includes('MACD_SIGNAL')
-    )
+    const macdIndicator = baseIndicators.find(ind => {
+      const name = ind.name.toLowerCase()
+      return name.startsWith('macd_') && !name.includes('signal')
+    })
+    const macdSignalIndicator = baseIndicators.find(ind => {
+      const name = ind.name.toLowerCase()
+      return name.startsWith('macd_') && name.includes('signal')
+    })
     console.log('DEBUG: Found MACD:', macdIndicator?.name, 'Signal:', macdSignalIndicator?.name)
 
     if (macdIndicator && macdSignalIndicator) {
@@ -319,9 +321,9 @@ export function MultiPanelChart({
         }
       })
 
-      // Extract parameters from MACD name (e.g., "MACD(12, 26, 9)" -> "12, 26, 9")
-      const paramsMatch = macdIndicator.name.match(/\(([^)]+)\)/)
-      const params = paramsMatch ? paramsMatch[1] : '12, 26, 9'
+      // Extract parameters from MACD name (e.g., "macd_12_26_9" -> "12, 26, 9")
+      const paramsMatch = macdIndicator.name.match(/(\d+)_(\d+)_(\d+)/)
+      const params = paramsMatch ? `${paramsMatch[1]}, ${paramsMatch[2]}, ${paramsMatch[3]}` : '12, 26, 9'
 
       const histogramIndicator: Indicator = {
         name: `MACD_Histogram(${params})`,
