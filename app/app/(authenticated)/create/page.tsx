@@ -4,8 +4,6 @@ import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useStrategy } from "@/contexts/StrategyContext"
 import { useProphet } from "@/hooks/use-prophet"
-import { useLogger } from "@/hooks/use-logger"
-import { LogCategory } from "@/lib/debug"
 import { useUpdateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { EmptyStateView } from "./_components/EmptyStateView"
 import { ConversationView } from "./_components/ConversationView"
@@ -21,7 +19,6 @@ const EXAMPLE_PROMPTS = [
 ]
 
 function CreatePageContent() {
-  const logger = useLogger('CreatePage', LogCategory.COMPONENT)
   const searchParams = useSearchParams()
   const strategyId = searchParams.get('strategy')
   const libraryId = searchParams.get('library')
@@ -54,12 +51,10 @@ function CreatePageContent() {
 
   const [inputValue, setInputValue] = useState("")
 
-  // Register Prophet stop callback with StrategyContext
   useEffect(() => {
     registerStopProphet(stopGeneration)
   }, [registerStopProphet, stopGeneration])
 
-  // Load strategy from URL
   useStrategyLoader({
     strategyId,
     libraryId,
@@ -69,7 +64,6 @@ function CreatePageContent() {
     openDetailsPanel,
   })
 
-  // Browser beforeunload warning + auto-save on unmount
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
@@ -84,8 +78,6 @@ function CreatePageContent() {
       window.removeEventListener('beforeunload', handleBeforeUnload)
 
       if (isDirty && strategy && strategy.id) {
-        logger.info('Auto-saving strategy on unmount', { strategyId: strategy.id })
-
         updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
           updates: {
@@ -106,10 +98,8 @@ function CreatePageContent() {
               }))
             })
           }
-        }).then(() => {
-          logger.info('Auto-save on unmount completed')
         }).catch(err => {
-          logger.error('Auto-save on unmount failed', { error: err })
+          console.error('Auto-save on unmount failed', err)
         })
       }
     }
@@ -121,26 +111,21 @@ function CreatePageContent() {
     const userMessage = inputValue.trim()
     setInputValue("")
 
-    logger.info('Sending message', { messageLength: userMessage.length })
-
     try {
       await sendMessage(userMessage)
     } catch (err) {
-      logger.error('Failed to send message', { error: err })
+      console.error('Failed to send message', err)
     }
   }
 
   const handleStop = () => {
-    logger.info('Stop generation requested')
     stopGeneration()
   }
 
   const handleViewStrategy = () => {
-    logger.info('View strategy clicked')
     openDetailsPanel()
   }
 
-  // Loading state - show spinner while fetching strategy
   if (isLoadingStrategy) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -150,28 +135,11 @@ function CreatePageContent() {
     )
   }
 
-  // View routing:
-  // 1. Library template (libraryId) → LibraryPreviewView
-  // 2. User strategy (strategyId, with or without messages) → ConversationView
-  // 3. No params → EmptyStateView
-  
-  // Library template preview
-  if (libraryId && strategy) {
-    return (
-      <LibraryPreviewView
-        strategy={strategy}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSend={handleSend}
-        onViewStrategy={handleViewStrategy}
-        isHealthy={isHealthy}
-        isSending={isSending}
-      />
-    )
-  }
+  // View routing based on actual state, not URL params
+  // This allows conversation to work even when strategy.id is null
 
-  // User strategy (with or without conversation history)
-  if (strategyId && strategy) {
+  // Active conversation (has messages)
+  if (messages.length > 0) {
     return (
       <ConversationView
         messages={messages}
@@ -192,7 +160,22 @@ function CreatePageContent() {
     )
   }
 
-  // Default: Empty state (new strategy, no params)
+  // Library template preview (has strategy but no messages)
+  if (libraryId && strategy && messages.length === 0) {
+    return (
+      <LibraryPreviewView
+        strategy={strategy}
+        inputValue={inputValue}
+        onInputChange={setInputValue}
+        onSend={handleSend}
+        onViewStrategy={handleViewStrategy}
+        isHealthy={isHealthy}
+        isSending={isSending}
+      />
+    )
+  }
+
+  // Default: Empty state (new strategy, no messages)
   return (
     <EmptyStateView
       inputValue={inputValue}
