@@ -569,7 +569,7 @@ function CategorySection({
           {category.display_name}
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm font-semibold text-muted-foreground">
             {strategies.length}
           </span>
           {isExpanded ? (
