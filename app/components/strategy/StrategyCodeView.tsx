@@ -114,7 +114,7 @@ export function StrategyCodeView() {
                   className="p-2 hover:bg-muted rounded-lg transition-colors"
                   title="Copy TSDL JSON"
                 >
-                  <Copy className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>
               )}
             </div>
@@ -153,7 +153,7 @@ export function StrategyCodeView() {
                   className="p-2 hover:bg-muted rounded-lg transition-colors"
                   title="Copy Python code"
                 >
-                  <Copy className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                 </button>
               )}
             </div>
