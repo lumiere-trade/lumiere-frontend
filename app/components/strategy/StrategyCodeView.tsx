@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { Copy } from "lucide-react"
 import { useStrategy } from "@/contexts/StrategyContext"
 import { compileStrategy } from "@/lib/api/architect"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
+import { toast } from "sonner"
 
 type CodeTab = 'json' | 'python'
 
@@ -59,6 +61,32 @@ export function StrategyCodeView() {
     }
   }
 
+  const handleCopyJson = async () => {
+    if (!tsdlJson) return
+
+    try {
+      await navigator.clipboard.writeText(tsdlJson)
+      toast.success('TSDL JSON copied to clipboard')
+      log.info('TSDL JSON copied to clipboard')
+    } catch (error) {
+      toast.error('Failed to copy to clipboard')
+      log.error('Failed to copy JSON', { error })
+    }
+  }
+
+  const handleCopyPython = async () => {
+    if (!pythonCode) return
+
+    try {
+      await navigator.clipboard.writeText(pythonCode)
+      toast.success('Python code copied to clipboard')
+      log.info('Python code copied to clipboard')
+    } catch (error) {
+      toast.error('Failed to copy to clipboard')
+      log.error('Failed to copy Python code', { error })
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Code Type Tabs */}
@@ -71,13 +99,24 @@ export function StrategyCodeView() {
         {/* TSDL JSON View */}
         <TabsContent value="json" className="space-y-4">
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="mb-4">
-              <h3 className="text-base font-semibold text-foreground mb-2">
-                Strategy Definition
-              </h3>
-              <p className="text-md text-muted-foreground">
-                This is the declarative strategy configuration that will be compiled and executed
-              </p>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-foreground mb-2">
+                  Strategy Definition
+                </h3>
+                <p className="text-md text-muted-foreground">
+                  This is the declarative strategy configuration that will be compiled and executed
+                </p>
+              </div>
+              {tsdlJson && (
+                <button
+                  onClick={handleCopyJson}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  title="Copy TSDL JSON"
+                >
+                  <Copy className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                </button>
+              )}
             </div>
             {tsdlJson ? (
               <pre className="text-md font-mono whitespace-pre-wrap overflow-x-auto bg-muted/50 p-4 rounded-lg">
@@ -94,18 +133,29 @@ export function StrategyCodeView() {
         {/* Python Code View */}
         <TabsContent value="python" className="space-y-4">
           <div className="bg-card border border-border rounded-lg p-4">
-            <div className="mb-4">
-              <h3 className="text-base font-semibold text-foreground mb-2">
-                Compiled Python Code
-              </h3>
-              {pythonClassName && (
-                <p className="text-md text-muted-foreground">
-                  Class: <span className="font-mono font-semibold">{pythonClassName}</span>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-foreground mb-2">
+                  Compiled Python Code
+                </h3>
+                {pythonClassName && (
+                  <p className="text-md text-muted-foreground">
+                    Class: <span className="font-mono font-semibold">{pythonClassName}</span>
+                  </p>
+                )}
+                <p className="text-md text-muted-foreground mt-1">
+                  This is the actual code that will execute your strategy on-chain
                 </p>
+              </div>
+              {pythonCode && !isCompiling && !compileError && (
+                <button
+                  onClick={handleCopyPython}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  title="Copy Python code"
+                >
+                  <Copy className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                </button>
               )}
-              <p className="text-md text-muted-foreground mt-1">
-                This is the actual code that will execute your strategy on-chain
-              </p>
             </div>
 
             {isCompiling && (
