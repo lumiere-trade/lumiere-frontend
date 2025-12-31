@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from '@/lib/api/architect'
 import { toast } from 'sonner'
 import type { Strategy } from '@/contexts/StrategyContext'
+import type { EducationalContent } from '@/lib/api/architect'
 
 interface UseStrategyLoaderProps {
   strategyId: string | null
@@ -22,6 +23,8 @@ export function useStrategyLoader({
   clearStrategy,
   openDetailsPanel,
 }: UseStrategyLoaderProps) {
+  const [educationalContent, setEducationalContent] = useState<EducationalContent | undefined>(undefined)
+
   useEffect(() => {
     const loadData = async () => {
       if (strategyId) {
@@ -29,6 +32,7 @@ export function useStrategyLoader({
 
         if (isDifferentStrategy) {
           await clearStrategy()
+          setEducationalContent(undefined)
           await loadUserStrategy(strategyId)
         }
       }
@@ -39,9 +43,11 @@ export function useStrategyLoader({
       else if (!strategyId && !libraryId && currentStrategy) {
         await clearStrategy()
         setStrategy(null)
+        setEducationalContent(undefined)
       } else {
         if (!strategyId && !libraryId && !currentStrategy) {
           setStrategy(null)
+          setEducationalContent(undefined)
         }
       }
     }
@@ -143,10 +149,14 @@ export function useStrategyLoader({
       }
 
       setStrategy(newStrategy)
+      setEducationalContent(lib.educational_content)
       toast.success(`Library strategy "${lib.name}" loaded as template`)
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       toast.error('Failed to load library strategy')
+      setEducationalContent(undefined)
     }
   }
+
+  return { educationalContent }
 }

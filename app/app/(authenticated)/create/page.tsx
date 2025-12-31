@@ -55,7 +55,7 @@ function CreatePageContent() {
     registerStopProphet(stopGeneration)
   }, [registerStopProphet, stopGeneration])
 
-  useStrategyLoader({
+  const { educationalContent } = useStrategyLoader({
     strategyId,
     libraryId,
     currentStrategy: strategy,
@@ -165,6 +165,7 @@ function CreatePageContent() {
     return (
       <LibraryPreviewView
         strategy={strategy}
+        educationalContent={educationalContent}
         inputValue={inputValue}
         onInputChange={setInputValue}
         onSend={handleSend}
