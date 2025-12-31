@@ -91,6 +91,14 @@ export interface LibraryStrategy {
   category: string;
 }
 
+export interface EducationalContent {
+  concept?: string;
+  entry_logic?: string;
+  exit_logic?: string;
+  risk_reward?: string;
+  philosophy?: string;
+}
+
 export interface LibraryStrategyDetail {
   id: string;
   name: string;
@@ -104,6 +112,7 @@ export interface LibraryStrategyDetail {
   exit_rules: string[];
   exit_logic: string;
   parameters: Record<string, any>;
+  educational_content?: EducationalContent;
 }
 
 // ============================================================================
