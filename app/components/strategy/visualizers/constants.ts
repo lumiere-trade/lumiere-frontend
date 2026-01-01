@@ -2,42 +2,39 @@
  * Visual constants for strategy rule visualizations
  * Educational style - clarity over fancy effects
  * 
- * Font sizes aligned with project Tailwind typography:
- * - Base font-size: 12px (html root)
- * - text-sm: 10px
- * - text-md: 11px (custom)
- * - text-base: 12px
+ * Colors aligned with Lumière design system
+ * Font sizes aligned with Tailwind typography scale
  */
 
 export const COLORS = {
-  // Signal colors
-  bullish: '#22c55e',
-  bearish: '#ef4444',
-  neutral: '#f97316',
+  // Signal colors - using theme-aware values
+  bullish: '#22c55e',       // green-500
+  bearish: '#ef4444',       // red-500
+  neutral: '#f97316',       // orange-500
   
-  // Indicator colors
-  fastLine: '#3b82f6',      // Blue for fast indicators (EMA 50, MACD)
-  slowLine: '#f97316',      // Orange for slow indicators (EMA 100, Signal)
-  price: '#22c55e',         // Green for price/close
+  // Indicator colors - softer, theme-integrated
+  fastLine: '#3b82f6',      // blue-500
+  slowLine: '#f59e0b',      // amber-500 (softer than orange)
+  price: '#10b981',         // emerald-500
   
   // Volume colors
-  volumeNormal: '#ef4444',  // Red for normal volume
-  volumeHigh: '#22c55e',    // Green for high volume
-  volumeLine: '#f97316',    // Orange for volume SMA
+  volumeNormal: '#ef4444',  // red-500
+  volumeHigh: '#22c55e',    // green-500
+  volumeLine: '#f59e0b',    // amber-500
   
   // RSI/Oscillator colors
-  oscillator: '#3b82f6',    // Blue for oscillator line
+  oscillator: '#3b82f6',    // blue-500
   
-  // UI elements
+  // UI elements - theme-aware
   grid: 'currentColor',
-  gridOpacity: 0.3,
+  gridOpacity: 0.15,        // Subtle, matches muted background
   text: 'currentColor',
   textMuted: 'currentColor',
-  textMutedOpacity: 0.5,
+  textMutedOpacity: 0.4,    // Softer for labels
   
   // Bands/Areas
-  bandFill: '#f97316',
-  bandFillOpacity: 0.1,
+  bandFill: '#f59e0b',      // amber-500
+  bandFillOpacity: 0.08,    // Very subtle
 } as const
 
 export const DIMENSIONS = {
