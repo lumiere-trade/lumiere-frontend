@@ -71,7 +71,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           )}
 
           {/* Cross label - centered above intersection point */}
-          <text x={crossesAbove ? "65" : "110"} y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
+          <text x={crossesAbove ? "65" : "110"} y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {crossesAbove ? "Bullish Cross" : "Bearish Cross"}
           </text>
         </svg>
@@ -89,7 +89,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <circle cx="200" cy="70" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
           <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="10">Slow MA</text>
           <text x="10" y={crossesAbove ? "100" : "50"} fill="currentColor" opacity="0.5" fontSize="10">Fast MA</text>
-          <text x="140" y={crossesAbove ? "25" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
+          <text x="140" y={crossesAbove ? "25" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {crossesAbove ? "Golden Cross" : "Death Cross"}
           </text>
         </svg>
@@ -107,7 +107,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
                 stroke={above ? "#22c55e" : "#ef4444"} strokeWidth="2" fill="none" />
           <rect x="0" y={above ? "35" : "75"} width="400" height="30" fill={above ? "#22c55e" : "#ef4444"} opacity="0.1" />
           <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12">MA</text>
-          <text x="10" y={above ? "45" : "105"} fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">Price</text>
+          <text x="10" y={above ? "45" : "105"} fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">Price</text>
         </svg>
       )
     }
@@ -126,8 +126,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <text x="5" y="18" fill="#ef4444" fontSize="10">70</text>
           <text x="5" y="58" fill="currentColor" opacity="0.5" fontSize="10">50</text>
           <text x="5" y="98" fill="#22c55e" fontSize="10">30</text>
-          {isOverbought && <text x="300" y="15" fill="#ef4444" fontSize="12" fontWeight="bold">Overbought</text>}
-          {isOversold && <text x="300" y="115" fill="#22c55e" fontSize="12" fontWeight="bold">Oversold</text>}
+          {isOverbought && <text x="300" y="15" fill="#ef4444" fontSize="12" fontWeight="600">Overbought</text>}
+          {isOversold && <text x="300" y="115" fill="#22c55e" fontSize="12" fontWeight="600">Oversold</text>}
         </svg>
       )
     }
@@ -173,7 +173,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <rect x="240" y="35" width="12" height="35" fill="#22c55e" opacity="0.6" />
           <rect x="350" y="75" width="12" height="45" fill="#ef4444" opacity="0.3" />
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12">Volume SMA</text>
-          <text x="200" y="20" fill="#22c55e" fontSize="12" fontWeight="bold">High Volume</text>
+          <text x="200" y="20" fill="#22c55e" fontSize="12" fontWeight="600">High Volume</text>
         </svg>
       )
     }
@@ -192,8 +192,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <text x="5" y="18" fill="#ef4444" fontSize="10">80</text>
           <text x="5" y="58" fill="currentColor" opacity="0.5" fontSize="10">50</text>
           <text x="5" y="98" fill="#22c55e" fontSize="10">20</text>
-          {isOverbought && <text x="300" y="15" fill="#ef4444" fontSize="12" fontWeight="bold">Overbought</text>}
-          {isOversold && <text x="300" y="115" fill="#22c55e" fontSize="12" fontWeight="bold">Oversold</text>}
+          {isOverbought && <text x="300" y="15" fill="#ef4444" fontSize="12" fontWeight="600">Overbought</text>}
+          {isOversold && <text x="300" y="115" fill="#22c55e" fontSize="12" fontWeight="600">Oversold</text>}
         </svg>
       )
     }
@@ -213,7 +213,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           )}
           <text x="5" y="78" fill="#22c55e" fontSize="10">25</text>
           <text x="5" y="98" fill="currentColor" opacity="0.5" fontSize="10">0</text>
-          {strongTrend && <text x="280" y="25" fill="#22c55e" fontSize="12" fontWeight="bold">Strong Trend</text>}
+          {strongTrend && <text x="280" y="25" fill="#22c55e" fontSize="12" fontWeight="600">Strong Trend</text>}
         </svg>
       )
     }
@@ -231,7 +231,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             </>
           )}
           <text x="5" y="78" fill="currentColor" opacity="0.5" fontSize="10">Threshold</text>
-          {highVolatility && <text x="260" y="15" fill="#f97316" fontSize="12" fontWeight="bold">High Volatility</text>}
+          {highVolatility && <text x="260" y="15" fill="#f97316" fontSize="12" fontWeight="600">High Volatility</text>}
         </svg>
       )
     }
@@ -246,7 +246,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
                 stroke={isRising ? "#22c55e" : "#ef4444"} strokeWidth="3" fill="none" />
           <path d={isRising ? "M 380 25 L 400 20 L 390 35" : "M 380 95 L 400 100 L 390 85"}
                 fill={isRising ? "#22c55e" : "#ef4444"} />
-          <text x="150" y={isRising ? "15" : "115"} fill={isRising ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
+          <text x="150" y={isRising ? "15" : "115"} fill={isRising ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {isRising ? "Rising Trend" : "Falling Trend"}
           </text>
         </svg>
