@@ -59,7 +59,7 @@ export function LibraryEducationalContent() {
           <TabsContent key={tab.id} value={tab.id} className="space-y-4">
             <div className="bg-muted/30 rounded-lg p-6">
               <div className="prose prose-sm max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap font-sans text-md leading-relaxed">
+                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
                   {tab.content}
                 </pre>
               </div>
