@@ -225,9 +225,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 2.5. MA Comparison (without crossover) - includes Volume_SMA
-    if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
-      const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
+    // 2.5. MA Comparison (without crossover)
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
+      const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
       if (maMatches.length < 2) return null
 
       const fastAbove = ruleLower.includes('>')
@@ -392,8 +392,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 6. Volume
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
-      const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-      if (volumeSmaMatches.length >= 2) return null
 
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
