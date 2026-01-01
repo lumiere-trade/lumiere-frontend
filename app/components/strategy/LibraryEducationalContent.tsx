@@ -4,7 +4,7 @@ import { useState } from "react"
 import { BookOpen, TrendingUp, TrendingDown, Target, Lightbulb } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { useStrategy } from "@/contexts/StrategyContext"
-import { StrategyConditionsVisualizer } from "./StrategyConditionsVisualizer"
+import { StrategyRulesVisualizer } from "./StrategyRulesVisualizer"
 
 export function LibraryEducationalContent() {
   const { strategy, educationalContent } = useStrategy()
@@ -67,42 +67,14 @@ export function LibraryEducationalContent() {
           </div>
         </TabsContent>
 
-        {/* Entry Logic Tab - Side by Side Layout */}
+        {/* Entry Logic Tab - Unified Grid Component */}
         <TabsContent value="entry" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Left: Educational Text */}
-            <div className="bg-muted/30 rounded-lg p-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                  {educationalContent.entry_logic}
-                </pre>
-              </div>
-            </div>
-            
-            {/* Right: Visual Guide */}
-            <div>
-              <StrategyConditionsVisualizer mode="entry" />
-            </div>
-          </div>
+          <StrategyRulesVisualizer mode="entry" educationalText={educationalContent.entry_logic} />
         </TabsContent>
 
-        {/* Exit Logic Tab - Side by Side Layout */}
+        {/* Exit Logic Tab - Unified Grid Component */}
         <TabsContent value="exit" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Left: Educational Text */}
-            <div className="bg-muted/30 rounded-lg p-6">
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                  {educationalContent.exit_logic}
-                </pre>
-              </div>
-            </div>
-            
-            {/* Right: Visual Guide */}
-            <div>
-              <StrategyConditionsVisualizer mode="exit" />
-            </div>
-          </div>
+          <StrategyRulesVisualizer mode="exit" educationalText={educationalContent.exit_logic} />
         </TabsContent>
 
         {/* Risk/Reward Tab */}
