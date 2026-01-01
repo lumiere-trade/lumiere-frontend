@@ -46,7 +46,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if (ruleLower.includes('macd') && ruleLower.includes('crosses')) {
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="5,5" />
           <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"} 
@@ -65,7 +65,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses')) {
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <path d="M 0 70 Q 100 68 200 70 T 400 72" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
           <path d={crossesAbove ? "M 0 85 Q 100 78 200 65 T 400 55" : "M 0 55 Q 100 62 200 75 T 400 85"} 
                 stroke="#3b82f6" strokeWidth="2" fill="none" />
@@ -83,7 +83,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const above = ruleLower.includes('>')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <path d="M 0 70 Q 100 65 200 70 T 400 75" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
           <path d={above ? "M 0 50 L 50 55 L 100 45 L 150 50 L 200 40 L 250 45 L 300 50 L 350 48 L 400 52" : 
                           "M 0 90 L 50 85 L 100 95 L 150 90 L 200 100 L 250 95 L 300 90 L 350 92 L 400 88"}
@@ -100,7 +100,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const isOverbought = ruleLower.includes('>') && (ruleLower.includes('70') || ruleLower.includes('65') || ruleLower.includes('60'))
       const isOversold = ruleLower.includes('<') && (ruleLower.includes('30') || ruleLower.includes('35') || ruleLower.includes('40') || ruleLower.includes('25'))
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="20" x2="400" y2="20" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
           <line x1="0" y1="100" x2="400" y2="100" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
@@ -120,7 +120,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const touchesLower = ruleLower.includes('lower') || ruleLower.includes('<')
       const touchesUpper = ruleLower.includes('upper') || ruleLower.includes('>')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <path d="M 0 20 Q 100 22 200 20 T 400 22" stroke="#f97316" strokeWidth="1" fill="none" opacity="0.5" />
           <path d="M 0 60 Q 100 58 200 60 T 400 62" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
           <path d="M 0 100 Q 100 98 200 100 T 400 102" stroke="#f97316" strokeWidth="1" fill="none" opacity="0.5" />
@@ -146,7 +146,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 6. Volume
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <path d="M 0 70 Q 100 68 200 70 T 400 72" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
           <rect x="20" y="80" width="12" height="40" fill="#ef4444" opacity="0.3" />
           <rect x="40" y="75" width="12" height="45" fill="#ef4444" opacity="0.3" />
@@ -166,7 +166,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const isOverbought = ruleLower.includes('>') && (ruleLower.includes('80') || ruleLower.includes('75'))
       const isOversold = ruleLower.includes('<') && (ruleLower.includes('20') || ruleLower.includes('25'))
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="20" x2="400" y2="20" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
           <line x1="0" y1="100" x2="400" y2="100" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
@@ -185,7 +185,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if (ruleLower.includes('adx')) {
       const strongTrend = ruleLower.includes('>') && (ruleLower.includes('25') || ruleLower.includes('20'))
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="80" x2="400" y2="80" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
           <line x1="0" y1="100" x2="400" y2="100" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
           {strongTrend && (
@@ -205,7 +205,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if (ruleLower.includes('atr')) {
       const highVolatility = ruleLower.includes('>')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="80" x2="400" y2="80" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
           {highVolatility && (
             <>
@@ -223,7 +223,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if (ruleLower.includes('rising') || ruleLower.includes('falling')) {
       const isRising = ruleLower.includes('rising')
       return (
-        <svg viewBox="0 0 400 120" className="w-full h-24">
+        <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="5,5" />
           <path d={isRising ? "M 0 90 Q 100 80 200 50 T 400 20" : "M 0 20 Q 100 40 200 70 T 400 100"} 
                 stroke={isRising ? "#22c55e" : "#ef4444"} strokeWidth="3" fill="none" />
