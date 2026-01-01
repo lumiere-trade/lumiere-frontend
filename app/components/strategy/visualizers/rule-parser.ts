@@ -264,8 +264,25 @@ export function parseRule(rule: string): ParsedRule {
     }
   }
   
-  // ATR
+  // ATR - FIXED: detect rising/falling keywords
   if (ruleLower.includes('atr')) {
+    // Check for rising/falling keywords first
+    if (ruleLower.includes('rising') || ruleLower.includes('expanding') || ruleLower.includes('increasing')) {
+      return {
+        type: 'atr',
+        rawText: rule,
+        params: { condition: 'high_volatility' }
+      }
+    }
+    if (ruleLower.includes('falling') || ruleLower.includes('contracting') || ruleLower.includes('decreasing')) {
+      return {
+        type: 'atr',
+        rawText: rule,
+        params: { condition: 'low_volatility' }
+      }
+    }
+    
+    // Fallback to > < operators
     const highVolatility = ruleLower.includes('>')
     return {
       type: 'atr',
