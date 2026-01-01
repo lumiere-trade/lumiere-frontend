@@ -17,111 +17,132 @@ export function ThresholdPattern({
   const isAbove = operator === 'gt'
   
   // Calculate Y position for threshold (inverted scale: 0=top, 100=bottom)
-  const thresholdY = 110 - threshold
+  // Map: RSI 100 -> Y 10, RSI 0 -> Y 110
+  const mapValue = (value: number) => 110 - value
   
-  // Oscillator path
+  const thresholdY = mapValue(threshold)
+  
+  // Oscillator path - stays within bounds
   const oscillatorPath = type === 'rsi' || type === 'stochastic'
     ? (isAbove
-        ? "M 0 60 Q 100 50 200 30 T 400 20"   // Rising above threshold
-        : "M 0 60 Q 100 80 200 110 T 400 115") // Falling below threshold
+        ? `M 0 ${mapValue(40)} Q 100 ${mapValue(50)} 200 ${mapValue(65)} T 400 ${mapValue(70)}`
+        : `M 0 ${mapValue(80)} Q 100 ${mapValue(70)} 200 ${mapValue(55)} T 400 ${mapValue(50)}`)
     : (isAbove
-        ? "M 0 95 Q 100 90 200 60 T 400 30"   // ADX rising (strong trend)
-        : "M 0 30 Q 100 40 200 70 T 400 100") // ADX falling (weak trend)
+        ? "M 0 95 Q 100 90 200 60 T 400 30"
+        : "M 0 30 Q 100 40 200 70 T 400 100")
   
+  // Determine which zone lines to show based on threshold
+  const showOverbought = threshold <= 60  // Show 70 line if threshold is below it
+  const showOversold = threshold >= 40    // Show 30 line if threshold is above it
+  const showNeutral = (type === 'rsi' || type === 'stochastic') && threshold !== 50
+
   return (
     <svg viewBox={VIEWBOX} className="w-full h-36">
-      {/* Zone lines for RSI/Stochastic */}
+      {/* Zone lines - only show relevant ones */}
       {(type === 'rsi' || type === 'stochastic') && (
         <>
-          {/* Overbought (70/80) */}
-          <Line
-            x1={0}
-            y1={40}
-            x2={DIMENSIONS.width}
-            y2={40}
-            color={COLORS.bearish}
-            width={DIMENSIONS.lineReference}
-            opacity={0.5}
-            dash="3,3"
-          />
+          {/* Overbought (70) - prominent */}
+          {showOverbought && (
+            <>
+              <Line
+                x1={0}
+                y1={mapValue(70)}
+                x2={DIMENSIONS.width}
+                y2={mapValue(70)}
+                color={COLORS.bearish}
+                width={1.5}
+                opacity={0.6}
+                dash="5,3"
+              />
+              <Text
+                x={DIMENSIONS.width - 5}
+                y={mapValue(70) - 3}
+                text="70"
+                color={COLORS.bearish}
+                fontSize={DIMENSIONS.fontSizeSmall}
+                opacity={0.7}
+                anchor="end"
+              />
+            </>
+          )}
           
-          {/* Oversold (30/20) */}
-          <Line
-            x1={0}
-            y1={80}
-            x2={DIMENSIONS.width}
-            y2={80}
-            color={COLORS.bullish}
-            width={DIMENSIONS.lineReference}
-            opacity={0.5}
-            dash="3,3"
-          />
+          {/* Oversold (30) - prominent */}
+          {showOversold && (
+            <>
+              <Line
+                x1={0}
+                y1={mapValue(30)}
+                x2={DIMENSIONS.width}
+                y2={mapValue(30)}
+                color={COLORS.bullish}
+                width={1.5}
+                opacity={0.6}
+                dash="5,3"
+              />
+              <Text
+                x={DIMENSIONS.width - 5}
+                y={mapValue(30) - 3}
+                text="30"
+                color={COLORS.bullish}
+                fontSize={DIMENSIONS.fontSizeSmall}
+                opacity={0.7}
+                anchor="end"
+              />
+            </>
+          )}
           
-          {/* Neutral (50) */}
-          <Line
-            x1={0}
-            y1={LAYOUT.centerY}
-            x2={DIMENSIONS.width}
-            y2={LAYOUT.centerY}
-            color={COLORS.grid}
-            opacity={0.2}
-          />
+          {/* Neutral (50) - subtle but visible */}
+          {showNeutral && (
+            <>
+              <Line
+                x1={0}
+                y1={mapValue(50)}
+                x2={DIMENSIONS.width}
+                y2={mapValue(50)}
+                color={COLORS.grid}
+                width={1.5}
+                opacity={0.4}
+                dash="5,3"
+              />
+              <Text
+                x={DIMENSIONS.width - 5}
+                y={mapValue(50) - 3}
+                text="50"
+                opacity={0.5}
+                fontSize={DIMENSIONS.fontSizeSmall}
+                anchor="end"
+              />
+            </>
+          )}
         </>
       )}
       
-      {/* Threshold line */}
+      {/* Threshold line - highlighted */}
       <Line
         x1={0}
         y1={thresholdY}
         x2={DIMENSIONS.width}
         y2={thresholdY}
         color={COLORS.slowLine}
-        opacity={0.7}
+        width={DIMENSIONS.lineThick}
+        opacity={0.8}
       />
       
       {/* Oscillator line */}
       <Path
         d={oscillatorPath}
         color={COLORS.fastLine}
+        width={DIMENSIONS.lineThick}
       />
       
-      {/* Zone labels */}
-      {(type === 'rsi' || type === 'stochastic') && (
-        <>
-          <Text
-            x={5}
-            y={38}
-            text={type === 'rsi' ? '70' : '80'}
-            color={COLORS.bearish}
-            fontSize={DIMENSIONS.fontSizeSmall}
-            anchor="start"
-          />
-          <Text
-            x={5}
-            y={58}
-            text="50"
-            opacity={COLORS.textMutedOpacity}
-            fontSize={DIMENSIONS.fontSizeSmall}
-            anchor="start"
-          />
-          <Text
-            x={5}
-            y={78}
-            text={type === 'rsi' ? '30' : '20'}
-            color={COLORS.bullish}
-            fontSize={DIMENSIONS.fontSizeSmall}
-            anchor="start"
-          />
-        </>
-      )}
-      
-      {/* Threshold label */}
+      {/* Threshold value label - positioned to avoid overlap */}
       <Text
         x={5}
-        y={thresholdY + 5}
+        y={thresholdY - 5}
         text={threshold.toString()}
-        opacity={COLORS.textMutedOpacity}
-        fontSize={DIMENSIONS.fontSizeSmall}
+        color={COLORS.slowLine}
+        fontSize={DIMENSIONS.fontSize}
+        fontWeight={700}
         anchor="start"
       />
       
