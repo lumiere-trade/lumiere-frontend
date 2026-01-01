@@ -279,8 +279,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
 
             {/* Labels */}
-            <text x="10" y="25" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
-            <text x="10" y="108" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
+            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
+            <text x="10" y="115" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
             <text x="200" y="115" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &gt; {secondMA}</text>
           </svg>
         )
