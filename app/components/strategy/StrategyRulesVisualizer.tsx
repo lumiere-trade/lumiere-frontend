@@ -237,7 +237,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 3. Price vs MA - Candlestick visualization with breakthrough
+    // 3. Price vs MA - Candlestick visualization with wicks and MA breakthrough
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const above = ruleLower.includes('>')
       return (
@@ -247,39 +247,59 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           
           {above ? (
             <>
-              {/* Candlesticks - 4 below MA, last one breaks above */}
-              {/* Red candle 1 - below MA */}
+              {/* Candlesticks - 4 below MA, last one breaks above through MA */}
+              {/* Red candle 1 - below MA, wick below */}
+              <line x1="70" y1="90" x2="70" y2="100" stroke="#ef4444" strokeWidth="2" />
               <rect x="62" y="65" width="16" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="70" y1="65" x2="70" y2="58" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Red candle 2 - below MA */}
+              {/* Red candle 2 - below MA, wick above */}
+              <line x1="130" y1="70" x2="130" y2="63" stroke="#ef4444" strokeWidth="2" />
               <rect x="122" y="70" width="16" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="90" x2="130" y2="98" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Green candle 3 - below MA */}
+              {/* Green candle 3 - below MA, wick above and below */}
+              <line x1="190" y1="72" x2="190" y2="65" stroke="#22c55e" strokeWidth="2" />
               <rect x="182" y="72" width="16" height="18" fill="#22c55e" opacity="0.8" />
+              <line x1="190" y1="90" x2="190" y2="95" stroke="#22c55e" strokeWidth="2" />
               
-              {/* Red candle 4 - below MA */}
+              {/* Red candle 4 - below MA, wick below */}
+              <line x1="250" y1="68" x2="250" y2="62" stroke="#ef4444" strokeWidth="2" />
               <rect x="242" y="68" width="16" height="22" fill="#ef4444" opacity="0.8" />
+              <line x1="250" y1="90" x2="250" y2="100" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Green candle 5 - breaks ABOVE MA */}
+              {/* Green candle 5 - breaks ABOVE MA with wick through and above */}
+              <line x1="310" y1="30" x2="310" y2="20" stroke="#22c55e" strokeWidth="2" />
               <rect x="302" y="30" width="16" height="30" fill="#22c55e" opacity="0.8" />
+              <line x1="310" y1="60" x2="310" y2="70" stroke="#22c55e" strokeWidth="2" />
             </>
           ) : (
             <>
-              {/* Candlesticks - 4 above MA, last one breaks below */}
-              {/* Green candle 1 - above MA */}
+              {/* Candlesticks - 4 above MA, last one breaks below through MA */}
+              {/* Green candle 1 - above MA, wick above */}
+              <line x1="70" y1="30" x2="70" y2="22" stroke="#22c55e" strokeWidth="2" />
               <rect x="62" y="30" width="16" height="25" fill="#22c55e" opacity="0.8" />
+              <line x1="70" y1="55" x2="70" y2="58" stroke="#22c55e" strokeWidth="2" />
               
-              {/* Red candle 2 - above MA */}
+              {/* Red candle 2 - above MA, wick below */}
+              <line x1="130" y1="35" x2="130" y2="28" stroke="#ef4444" strokeWidth="2" />
               <rect x="122" y="35" width="16" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="55" x2="130" y2="62" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Green candle 3 - above MA */}
+              {/* Green candle 3 - above MA, wick above and below */}
+              <line x1="190" y1="32" x2="190" y2="25" stroke="#22c55e" strokeWidth="2" />
               <rect x="182" y="32" width="16" height="23" fill="#22c55e" opacity="0.8" />
+              <line x1="190" y1="55" x2="190" y2="60" stroke="#22c55e" strokeWidth="2" />
               
-              {/* Red candle 4 - above MA */}
+              {/* Red candle 4 - above MA, wick above */}
+              <line x1="250" y1="38" x2="250" y2="30" stroke="#ef4444" strokeWidth="2" />
               <rect x="242" y="38" width="16" height="17" fill="#ef4444" opacity="0.8" />
+              <line x1="250" y1="55" x2="250" y2="58" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Red candle 5 - breaks BELOW MA */}
+              {/* Red candle 5 - breaks BELOW MA with wick through and below */}
+              <line x1="310" y1="60" x2="310" y2="50" stroke="#ef4444" strokeWidth="2" />
               <rect x="302" y="60" width="16" height="30" fill="#ef4444" opacity="0.8" />
+              <line x1="310" y1="90" x2="310" y2="100" stroke="#ef4444" strokeWidth="2" />
             </>
           )}
           
