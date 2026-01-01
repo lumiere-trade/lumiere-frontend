@@ -249,56 +249,57 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <>
               {/* Candlesticks above MA - bullish trend */}
               {/* Red candle 1 */}
-              <line x1="70" y1="35" x2="70" y2="20" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="65" y="35" width="10" height="20" fill="#ef4444" opacity="0.8" />
-              <line x1="70" y1="55" x2="70" y2="45" stroke="#ef4444" strokeWidth="1.5" />
+              <line x1="70" y1="35" x2="70" y2="20" stroke="#ef4444" strokeWidth="2" />
+              <rect x="62" y="35" width="16" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="70" y1="55" x2="70" y2="48" stroke="#ef4444" strokeWidth="2" />
               
               {/* Red candle 2 */}
-              <line x1="130" y1="30" x2="130" y2="15" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="125" y="30" width="10" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="30" x2="130" y2="15" stroke="#ef4444" strokeWidth="2" />
+              <rect x="122" y="30" width="16" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="55" x2="130" y2="50" stroke="#ef4444" strokeWidth="2" />
               
               {/* Green candle 3 */}
-              <line x1="190" y1="25" x2="190" y2="10" stroke="#22c55e" strokeWidth="1.5" />
-              <rect x="185" y="40" width="10" height="15" fill="#22c55e" opacity="0.8" />
-              <line x1="190" y1="50" x2="190" y2="40" stroke="#22c55e" strokeWidth="1.5" />
+              <line x1="190" y1="25" x2="190" y2="10" stroke="#22c55e" strokeWidth="2" />
+              <rect x="182" y="40" width="16" height="15" fill="#22c55e" opacity="0.8" />
+              <line x1="190" y1="55" x2="190" y2="48" stroke="#22c55e" strokeWidth="2" />
               
               {/* Green candle 4 */}
-              <line x1="250" y1="15" x2="250" y2="5" stroke="#22c55e" strokeWidth="1.5" />
-              <rect x="245" y="30" width="10" height="15" fill="#22c55e" opacity="0.8" />
-              <line x1="250" y1="45" x2="250" y2="30" stroke="#22c55e" strokeWidth="1.5" />
+              <line x1="250" y1="15" x2="250" y2="5" stroke="#22c55e" strokeWidth="2" />
+              <rect x="242" y="35" width="16" height="20" fill="#22c55e" opacity="0.8" />
+              <line x1="250" y1="55" x2="250" y2="48" stroke="#22c55e" strokeWidth="2" />
               
               {/* Green candle 5 */}
-              <line x1="310" y1="10" x2="310" y2="0" stroke="#22c55e" strokeWidth="1.5" />
-              <rect x="305" y="25" width="10" height="15" fill="#22c55e" opacity="0.8" />
-              <line x1="310" y1="40" x2="310" y2="25" stroke="#22c55e" strokeWidth="1.5" />
+              <line x1="310" y1="10" x2="310" y2="0" stroke="#22c55e" strokeWidth="2" />
+              <rect x="302" y="30" width="16" height="25" fill="#22c55e" opacity="0.8" />
+              <line x1="310" y1="55" x2="310" y2="48" stroke="#22c55e" strokeWidth="2" />
             </>
           ) : (
             <>
-              {/* Candlesticks below MA - bearish trend */}
-              {/* Green candle 1 */}
-              <line x1="70" y1="65" x2="70" y2="80" stroke="#22c55e" strokeWidth="1.5" />
-              <rect x="65" y="65" width="10" height="20" fill="#22c55e" opacity="0.8" />
-              <line x1="70" y1="85" x2="70" y2="105" stroke="#22c55e" strokeWidth="1.5" />
+              {/* Candlesticks below MA - mixed bearish trend */}
+              {/* Red candle 1 */}
+              <line x1="70" y1="65" x2="70" y2="80" stroke="#ef4444" strokeWidth="2" />
+              <rect x="62" y="65" width="16" height="30" fill="#ef4444" opacity="0.8" />
+              <line x1="70" y1="95" x2="70" y2="110" stroke="#ef4444" strokeWidth="2" />
               
               {/* Red candle 2 */}
-              <line x1="130" y1="70" x2="130" y2="85" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="125" y="70" width="10" height="25" fill="#ef4444" opacity="0.8" />
-              <line x1="130" y1="95" x2="130" y2="105" stroke="#ef4444" strokeWidth="1.5" />
+              <line x1="130" y1="65" x2="130" y2="75" stroke="#ef4444" strokeWidth="2" />
+              <rect x="122" y="65" width="16" height="35" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="100" x2="130" y2="115" stroke="#ef4444" strokeWidth="2" />
               
               {/* Red candle 3 */}
-              <line x1="190" y1="75" x2="190" y2="90" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="185" y="75" width="10" height="20" fill="#ef4444" opacity="0.8" />
-              <line x1="190" y1="95" x2="190" y2="110" stroke="#ef4444" strokeWidth="1.5" />
+              <line x1="190" y1="65" x2="190" y2="78" stroke="#ef4444" strokeWidth="2" />
+              <rect x="182" y="65" width="16" height="30" fill="#ef4444" opacity="0.8" />
+              <line x1="190" y1="95" x2="190" y2="110" stroke="#ef4444" strokeWidth="2" />
               
-              {/* Red candle 4 */}
-              <line x1="250" y1="80" x2="250" y2="95" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="245" y="80" width="10" height="20" fill="#ef4444" opacity="0.8" />
-              <line x1="250" y1="100" x2="250" y2="115" stroke="#ef4444" strokeWidth="1.5" />
+              {/* Green candle 4 */}
+              <line x1="250" y1="65" x2="250" y2="75" stroke="#22c55e" strokeWidth="2" />
+              <rect x="242" y="80" width="16" height="20" fill="#22c55e" opacity="0.8" />
+              <line x1="250" y1="100" x2="250" y2="110" stroke="#22c55e" strokeWidth="2" />
               
-              {/* Red candle 5 */}
-              <line x1="310" y1="85" x2="310" y2="100" stroke="#ef4444" strokeWidth="1.5" />
-              <rect x="305" y="85" width="10" height="25" fill="#ef4444" opacity="0.8" />
-              <line x1="310" y1="110" x2="310" y2="120" stroke="#ef4444" strokeWidth="1.5" />
+              {/* Green candle 5 */}
+              <line x1="310" y1="65" x2="310" y2="78" stroke="#22c55e" strokeWidth="2" />
+              <rect x="302" y="82" width="16" height="25" fill="#22c55e" opacity="0.8" />
+              <line x1="310" y1="107" x2="310" y2="118" stroke="#22c55e" strokeWidth="2" />
             </>
           )}
           
