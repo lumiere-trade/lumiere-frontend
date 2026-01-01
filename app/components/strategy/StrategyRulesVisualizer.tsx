@@ -309,6 +309,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const crossesBelow = ruleLower.includes('crosses_below')
       const crossesAbove = ruleLower.includes('crosses_above')
       const above = crossesAbove ? true : crossesBelow ? false : ruleLower.includes('>')
+      
+      // Extract MA value from rule text (e.g., "Close > EMA(20)")
+      const maMatch = rule.match(/(EMA|SMA)\((\d+)\)/i)
+      const maLabel = maMatch ? maMatch[0] : 'MA'
 
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
