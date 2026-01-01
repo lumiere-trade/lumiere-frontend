@@ -222,6 +222,12 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 2. EMA/SMA Crossover
     if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
       const crossesAbove = ruleLower.includes('crosses_above')
+      
+      // Extract MA values from rule text (e.g., "EMA(50) crosses_above EMA(200)")
+      const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
+      const fastMA = maMatches[0] || 'Fast MA'
+      const slowMA = maMatches[1] || 'Slow MA'
+      
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
@@ -239,13 +245,13 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           {/* Text labels */}
           {crossesAbove ? (
             <>
-              <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
-              <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
+              <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{slowMA}</text>
+              <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{fastMA}</text>
             </>
           ) : (
             <>
-              <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
-              <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
+              <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{fastMA}</text>
+              <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{slowMA}</text>
             </>
           )}
 
