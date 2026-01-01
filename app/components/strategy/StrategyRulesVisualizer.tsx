@@ -380,7 +380,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           
           {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
-          <text x="200" y="118" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
+          <text x="200" y="125" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
         </svg>
       )
     }
