@@ -263,8 +263,12 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 2.5. MA Comparison (without crossover)
-    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
+    // 2.5. MA Comparison (without crossover) - includes Volume_SMA
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
+      // Check if this is a comparison between two MAs (not Volume > Volume_SMA)
+      const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
+      if (maMatches.length < 2) return null
+      
       const fastAbove = ruleLower.includes('>')
       
       // Extract MA values from rule text (e.g., "EMA(20) > EMA(50)")
@@ -493,55 +497,12 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 6. Volume SMA Comparison (curved lines like MA comparison)
-    if (ruleLower.includes('volume_sma') && (rule.match(/volume_sma/gi) || []).length >= 2) {
-      const fastAbove = ruleLower.includes('>')
-      
-      // Extract Volume_SMA values (e.g., "Volume_SMA(20) > Volume_SMA(50)")
-      const smaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-      const firstSMA = smaMatches[0] || 'Fast Volume SMA'
-      const secondSMA = smaMatches[1] || 'Slow Volume SMA'
-      
-      return (
-        <svg viewBox="0 0 400 120" className="w-full h-36">
-          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-          
-          {/* Volume bars at bottom */}
-          <rect x="60" y="92" width="15" height="15" fill="#ef4444" opacity="0.6" />
-          <rect x="100" y="90" width="15" height="17" fill="#ef4444" opacity="0.6" />
-          <rect x="140" y="87" width="15" height="20" fill="#22c55e" opacity="0.6" />
-          <rect x="180" y="83" width="15" height="24" fill="#22c55e" opacity="0.6" />
-          <rect x="220" y="80" width="15" height="27" fill="#22c55e" opacity="0.6" />
-          
-          {/* SMA curves - same as MA Comparison */}
-          {fastAbove ? (
-            <>
-              {/* Slow SMA - curved, below */}
-              <path d="M 0 75 Q 100 73 200 70 T 400 65" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
-              {/* Fast SMA - curved, above */}
-              <path d="M 0 40 Q 100 38 200 35 T 400 30" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-            </>
-          ) : (
-            <>
-              {/* Slow SMA - curved, above */}
-              <path d="M 0 40 Q 100 38 200 35 T 400 30" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
-              {/* Fast SMA - curved, below */}
-              <path d="M 0 75 Q 100 73 200 70 T 400 65" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-            </>
-          )}
-          
-          {/* Labels */}
-          <text x="10" y={fastAbove ? "35" : "75"} fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstSMA}</text>
-          <text x="10" y={fastAbove ? "90" : "35"} fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondSMA}</text>
-          <text x="200" y="115" fill={fastAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
-            {firstSMA} {fastAbove ? '>' : '<'} {secondSMA}
-          </text>
-        </svg>
-      )
-    }
-
-    // 7. Volume - bars below SMA with one breaking through
+    // 6. Volume - bars below SMA with one breaking through
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
+      // Skip if this is Volume_SMA comparison (handled by MA Comparison)
+      const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
+      if (volumeSmaMatches.length >= 2) return null
+      
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           {/* Volume SMA - straight line */}
@@ -565,7 +526,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 8. Stochastic
+    // 7. Stochastic
     if (ruleLower.includes('stochastic') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const isOverbought = ruleLower.includes('>') && (ruleLower.includes('80') || ruleLower.includes('75'))
       const isOversold = ruleLower.includes('<') && (ruleLower.includes('20') || ruleLower.includes('25'))
@@ -585,7 +546,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 9. ADX
+    // 8. ADX
     if (ruleLower.includes('adx')) {
       const strongTrend = ruleLower.includes('>') && (ruleLower.includes('25') || ruleLower.includes('20'))
       return (
@@ -605,7 +566,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 10. ATR
+    // 9. ATR
     if (ruleLower.includes('atr')) {
       const highVolatility = ruleLower.includes('>')
       return (
@@ -623,7 +584,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 11. Trend
+    // 10. Trend
     if (ruleLower.includes('rising') || ruleLower.includes('falling')) {
       const isRising = ruleLower.includes('rising')
       return (
