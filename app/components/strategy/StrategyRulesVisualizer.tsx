@@ -47,21 +47,21 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="5,5" />
 
-          {/* Signal line - same thickness as MACD */}
-          <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="3" fill="none" opacity="0.7" />
+          {/* Signal line - reduced thickness */}
+          <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
 
-          {/* MACD line - curved crossover */}
+          {/* MACD line - curved crossover, reduced thickness */}
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
-                stroke="#3b82f6" strokeWidth="3" fill="none" />
+                stroke="#3b82f6" strokeWidth="2.5" fill="none" />
 
           {/* Intersection point - mathematically calculated */}
           <circle cx={crossesAbove ? "120" : "167"} cy="71" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
 
-          {/* Text labels - semibold, correctly positioned */}
+          {/* Text labels - adjusted positioning for bullish */}
           {crossesAbove ? (
             <>
-              <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
-              <text x="10" y="100" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
+              <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+              <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             </>
           ) : (
             <>
@@ -70,7 +70,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             </>
           )}
 
-          <text x="150" y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
+          {/* Cross label - centered above intersection point */}
+          <text x={crossesAbove ? "65" : "110"} y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
             {crossesAbove ? "Bullish Cross" : "Bearish Cross"}
           </text>
         </svg>
