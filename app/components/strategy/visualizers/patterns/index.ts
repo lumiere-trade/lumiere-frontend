@@ -1,5 +1,7 @@
 export { CrossoverPattern } from './CrossoverPattern'
 export { BandPattern } from './BandPattern'
+export { BollingerWidthPattern } from './BollingerWidthPattern'
+export { BollingerMiddlePattern } from './BollingerMiddlePattern'
 export { VolumePattern } from './VolumePattern'
 export { ThresholdPattern } from './ThresholdPattern'
 export { CandlestickPattern } from './CandlestickPattern'
