@@ -60,7 +60,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="180" y="40" width="20" height="20" fill="#22c55e" opacity="0.8" />
             <rect x="220" y="30" width="20" height="30" fill="#22c55e" opacity="0.8" />
             <rect x="260" y="20" width="20" height="40" fill="#22c55e" opacity="0.8" />
-            <text x="90" y="15" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Crosses Above</text>
+            <text x="80" y="110" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Crosses Above</text>
           </svg>
         )
       }
@@ -76,7 +76,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="180" y="60" width="20" height="20" fill="#ef4444" opacity="0.8" />
             <rect x="220" y="60" width="20" height="30" fill="#ef4444" opacity="0.8" />
             <rect x="260" y="60" width="20" height="40" fill="#ef4444" opacity="0.8" />
-            <text x="95" y="110" fill="#ef4444" fontSize="12" fontWeight="600">Histogram Crosses Below</text>
+            <text x="80" y="110" fill="#ef4444" fontSize="12" fontWeight="600">Histogram Crosses Below</text>
           </svg>
         )
       }
@@ -91,7 +91,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="160" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
             <rect x="200" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
             <rect x="240" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
-            <text x="140" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram &gt; 0</text>
+            <text x="140" y="110" fill="#22c55e" fontSize="12" fontWeight="600">Histogram &gt; 0</text>
           </svg>
         )
       }
@@ -121,7 +121,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="150" y="30" width="20" height="30" fill="#22c55e" opacity="0.8" />
             <rect x="190" y="40" width="20" height="20" fill="#22c55e" opacity="0.8" />
             <rect x="230" y="50" width="20" height="10" fill="#22c55e" opacity="0.8" />
-            <text x="100" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Contracting</text>
+            <text x="90" y="110" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Contracting</text>
           </svg>
         )
       }
@@ -137,7 +137,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="180" y="15" width="20" height="45" fill="#22c55e" opacity="0.8" />
             <rect x="220" y="5" width="20" height="55" fill="#22c55e" opacity="0.8" />
             <rect x="260" y="-5" width="20" height="65" fill="#22c55e" opacity="0.8" />
-            <text x="120" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Rising</text>
+            <text x="130" y="110" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Rising</text>
           </svg>
         )
       }
@@ -212,7 +212,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           )}
 
           {/* Cross label - centered above intersection point */}
-          <text x={crossesAbove ? "65" : "110"} y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
+          <text x="130" y="110" fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {crossesAbove ? "Bullish Cross" : "Bearish Cross"}
           </text>
         </svg>
