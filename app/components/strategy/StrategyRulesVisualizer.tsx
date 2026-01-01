@@ -270,7 +270,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               
               {/* Green candle 5 - breaks ABOVE MA with wick through and above */}
               <line x1="310" y1="30" x2="310" y2="20" stroke="#22c55e" strokeWidth="2" />
-              <rect x="302" y="30" width="16" height="30" fill="#22c55e" opacity="0.8" />
+              <rect x="302" y="50" width="16" height="20" fill="#22c55e" opacity="0.8" />
               <line x1="310" y1="60" x2="310" y2="70" stroke="#22c55e" strokeWidth="2" />
             </>
           ) : (
@@ -298,7 +298,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               
               {/* Red candle 5 - breaks BELOW MA with wick through and below */}
               <line x1="310" y1="60" x2="310" y2="50" stroke="#ef4444" strokeWidth="2" />
-              <rect x="302" y="60" width="16" height="30" fill="#ef4444" opacity="0.8" />
+              <rect x="302" y="50" width="16" height="20" fill="#ef4444" opacity="0.8" />
               <line x1="310" y1="90" x2="310" y2="100" stroke="#ef4444" strokeWidth="2" />
             </>
           )}
