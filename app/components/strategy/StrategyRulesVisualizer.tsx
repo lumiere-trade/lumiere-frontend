@@ -110,7 +110,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     }
 
     // 1. MACD Crossover
-    if (ruleLower.includes('macd') && ruleLower.includes('crosses')) {
+    if (ruleLower.includes('macd') && ruleLower.includes('crosses') && !ruleLower.includes('macd_histogram')) {
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
