@@ -237,18 +237,76 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 3. Price vs MA
+    // 3. Price vs MA - Candlestick visualization
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const above = ruleLower.includes('>')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          <path d="M 0 70 Q 100 65 200 70 T 400 75" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
-          <path d={above ? "M 0 50 L 50 55 L 100 45 L 150 50 L 200 40 L 250 45 L 300 50 L 350 48 L 400 52" :
-                          "M 0 90 L 50 85 L 100 95 L 150 90 L 200 100 L 250 95 L 300 90 L 350 92 L 400 88"}
-                stroke={above ? "#22c55e" : "#ef4444"} strokeWidth="2" fill="none" />
-          <rect x="0" y={above ? "35" : "75"} width="400" height="30" fill={above ? "#22c55e" : "#ef4444"} opacity="0.1" />
-          <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12">MA</text>
-          <text x="10" y={above ? "45" : "105"} fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">Price</text>
+          {/* MA line - orange */}
+          <line x1="0" y1="60" x2="400" y2="60" stroke="#f97316" strokeWidth="2" opacity="0.7" />
+          
+          {above ? (
+            <>
+              {/* Candlesticks above MA - bullish trend */}
+              {/* Red candle 1 */}
+              <line x1="70" y1="35" x2="70" y2="20" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="65" y="35" width="10" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="70" y1="55" x2="70" y2="45" stroke="#ef4444" strokeWidth="1.5" />
+              
+              {/* Red candle 2 */}
+              <line x1="130" y1="30" x2="130" y2="15" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="125" y="30" width="10" height="25" fill="#ef4444" opacity="0.8" />
+              
+              {/* Green candle 3 */}
+              <line x1="190" y1="25" x2="190" y2="10" stroke="#22c55e" strokeWidth="1.5" />
+              <rect x="185" y="40" width="10" height="15" fill="#22c55e" opacity="0.8" />
+              <line x1="190" y1="50" x2="190" y2="40" stroke="#22c55e" strokeWidth="1.5" />
+              
+              {/* Green candle 4 */}
+              <line x1="250" y1="15" x2="250" y2="5" stroke="#22c55e" strokeWidth="1.5" />
+              <rect x="245" y="30" width="10" height="15" fill="#22c55e" opacity="0.8" />
+              <line x1="250" y1="45" x2="250" y2="30" stroke="#22c55e" strokeWidth="1.5" />
+              
+              {/* Green candle 5 */}
+              <line x1="310" y1="10" x2="310" y2="0" stroke="#22c55e" strokeWidth="1.5" />
+              <rect x="305" y="25" width="10" height="15" fill="#22c55e" opacity="0.8" />
+              <line x1="310" y1="40" x2="310" y2="25" stroke="#22c55e" strokeWidth="1.5" />
+            </>
+          ) : (
+            <>
+              {/* Candlesticks below MA - bearish trend */}
+              {/* Green candle 1 */}
+              <line x1="70" y1="65" x2="70" y2="80" stroke="#22c55e" strokeWidth="1.5" />
+              <rect x="65" y="65" width="10" height="20" fill="#22c55e" opacity="0.8" />
+              <line x1="70" y1="85" x2="70" y2="105" stroke="#22c55e" strokeWidth="1.5" />
+              
+              {/* Red candle 2 */}
+              <line x1="130" y1="70" x2="130" y2="85" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="125" y="70" width="10" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="130" y1="95" x2="130" y2="105" stroke="#ef4444" strokeWidth="1.5" />
+              
+              {/* Red candle 3 */}
+              <line x1="190" y1="75" x2="190" y2="90" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="185" y="75" width="10" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="190" y1="95" x2="190" y2="110" stroke="#ef4444" strokeWidth="1.5" />
+              
+              {/* Red candle 4 */}
+              <line x1="250" y1="80" x2="250" y2="95" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="245" y="80" width="10" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="250" y1="100" x2="250" y2="115" stroke="#ef4444" strokeWidth="1.5" />
+              
+              {/* Red candle 5 */}
+              <line x1="310" y1="85" x2="310" y2="100" stroke="#ef4444" strokeWidth="1.5" />
+              <rect x="305" y="85" width="10" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="310" y1="110" x2="310" y2="120" stroke="#ef4444" strokeWidth="1.5" />
+            </>
+          )}
+          
+          {/* Labels */}
+          <text x="10" y="55" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MA</text>
+          <text x="200" y="110" fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
+            {above ? "Close > MA" : "Close < MA"}
+          </text>
         </svg>
       )
     }
