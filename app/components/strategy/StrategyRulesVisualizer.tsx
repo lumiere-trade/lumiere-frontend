@@ -143,6 +143,44 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       }
     }
 
+    // 0.5. MACD vs Signal (without crossover)
+    if (ruleLower.includes('macd') && ruleLower.includes('signal') && !ruleLower.includes('crosses') && !ruleLower.includes('macd_histogram')) {
+      const macdAbove = ruleLower.includes('>') || ruleLower.includes('above')
+      const macdBelow = ruleLower.includes('<') || ruleLower.includes('below')
+
+      // MACD > Signal
+      if (macdAbove) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            {/* Signal line - below */}
+            <path d="M 0 75 Q 100 76 200 75 T 400 76" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
+            {/* MACD line - above */}
+            <path d="M 0 35 Q 100 38 200 40 T 400 42" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            {/* Labels */}
+            <text x="10" y="30" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
+            <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+            <text x="135" y="15" fill="#22c55e" fontSize="12" fontWeight="600">MACD &gt; Signal</text>
+          </svg>
+        )
+      }
+
+      // MACD < Signal
+      if (macdBelow) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            {/* Signal line - above */}
+            <path d="M 0 35 Q 100 36 200 35 T 400 36" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
+            {/* MACD line - below */}
+            <path d="M 0 75 Q 100 78 200 80 T 400 82" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            {/* Labels */}
+            <text x="10" y="30" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+            <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
+            <text x="135" y="110" fill="#ef4444" fontSize="12" fontWeight="600">MACD &lt; Signal</text>
+          </svg>
+        )
+      }
+    }
+
     // 1. MACD Crossover
     if (ruleLower.includes('macd') && ruleLower.includes('crosses') && !ruleLower.includes('macd_histogram')) {
       const crossesAbove = ruleLower.includes('crosses_above')
