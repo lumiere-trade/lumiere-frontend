@@ -363,7 +363,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 6. Volume - bars below SMA with one breaking through
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
       return (
-        <svg viewBox="0 0 400 140" className="w-full h-40">
+        <svg viewBox="0 0 400 120" className="w-full h-36">
           {/* Volume SMA - straight line */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
           
@@ -380,7 +380,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           
           {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
-          <text x="200" y="125" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
+          <text x="200" y="112" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
         </svg>
       )
     }
