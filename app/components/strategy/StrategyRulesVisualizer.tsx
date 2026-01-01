@@ -228,8 +228,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 2.5. MA Comparison (without crossover) - includes Volume_SMA
     if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
       const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
-      // Need exactly 2 MA indicators for comparison
       if (maMatches.length < 2) return null
+
+      const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
+      if (volumeSmaMatches.length === 1) return null
 
       const fastAbove = ruleLower.includes('>')
       const firstMA = maMatches[0] || 'Fast MA'
@@ -241,9 +243,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
             <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
             <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
-            <text x="10" y="115" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
-            <text x="200" y="115" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &gt; {secondMA}</text>
+            <text x="10" y="25" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
+            <text x="10" y="108" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
+            <text x="200" y="118" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &gt; {secondMA}</text>
           </svg>
         )
       }
@@ -253,9 +255,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
           <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
           <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-          <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
-          <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
-          <text x="200" y="115" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &lt; {secondMA}</text>
+          <text x="10" y="25" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
+          <text x="10" y="108" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
+          <text x="200" y="118" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &lt; {secondMA}</text>
         </svg>
       )
     }
@@ -393,7 +395,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 6. Volume
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
-
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
