@@ -257,6 +257,43 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
+    // 2.5. MA Comparison (without crossover)
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
+      const fastAbove = ruleLower.includes('>')
+      const fastBelow = ruleLower.includes('<')
+
+      // Fast MA > Slow MA
+      if (fastAbove) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            {/* Slow MA line - parallel, below */}
+            <line x1="0" y1="75" x2="400" y2="75" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
+            {/* Fast MA line - parallel, above */}
+            <line x1="0" y1="40" x2="400" y2="40" stroke="#3b82f6" strokeWidth="2.5" />
+            {/* Labels */}
+            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
+            <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
+            <text x="200" y="110" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">Fast MA &gt; Slow MA</text>
+          </svg>
+        )
+      }
+
+      // Fast MA < Slow MA
+      if (fastBelow) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            {/* Slow MA line - parallel, above */}
+            <line x1="0" y1="40" x2="400" y2="40" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
+            {/* Fast MA line - parallel, below */}
+            <line x1="0" y1="75" x2="400" y2="75" stroke="#3b82f6" strokeWidth="2.5" />
+            {/* Labels */}
+            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
+            <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
+            <text x="200" y="110" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">Fast MA &lt; Slow MA</text>
+          </svg>
+        )
+      }
+    }
     // 3. Price vs MA - Candlestick visualization with wicks and MA breakthrough
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<') || ruleLower.includes('crosses'))) {
       const crossesBelow = ruleLower.includes('crosses_below')
