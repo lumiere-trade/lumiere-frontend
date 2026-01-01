@@ -368,7 +368,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
           
           {/* Red bars below SMA - no opacity */}
-          <rect x="60" y="65" width="20" height="23" fill="#ef4444" />
+          <rect x="60" y="72" width="20" height="23" fill="#ef4444" />
           <rect x="100" y="70" width="20" height="25" fill="#ef4444" />
           <rect x="140" y="67" width="20" height="28" fill="#ef4444" />
           <rect x="180" y="63" width="20" height="32" fill="#ef4444" />
