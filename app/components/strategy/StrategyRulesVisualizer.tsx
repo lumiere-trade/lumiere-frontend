@@ -448,12 +448,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const isRising = ruleLower.includes('rising')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="5,5" />
+          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
           <path d={isRising ? "M 0 90 Q 100 80 200 50 T 400 20" : "M 0 20 Q 100 40 200 70 T 400 100"}
                 stroke={isRising ? "#22c55e" : "#ef4444"} strokeWidth="3" fill="none" />
-          <path d={isRising ? "M 380 25 L 400 20 L 390 35" : "M 380 95 L 400 100 L 390 85"}
-                fill={isRising ? "#22c55e" : "#ef4444"} />
-          <text x="150" y={isRising ? "15" : "115"} fill={isRising ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
+          <text x="200" y="110" fill={isRising ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
             {isRising ? "Rising Trend" : "Falling Trend"}
           </text>
         </svg>
