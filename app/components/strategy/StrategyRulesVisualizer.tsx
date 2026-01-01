@@ -424,20 +424,32 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 4. RSI
     if (ruleLower.includes('rsi') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
-      const isOverbought = ruleLower.includes('>') && (ruleLower.includes('70') || ruleLower.includes('65') || ruleLower.includes('60'))
-      const isOversold = ruleLower.includes('<') && (ruleLower.includes('30') || ruleLower.includes('35') || ruleLower.includes('40') || ruleLower.includes('25'))
+      const isAbove = ruleLower.includes('>')
+      
+      // Extract threshold value from rule (e.g., "RSI(14) > 45" -> 45)
+      const thresholdMatch = rule.match(/[><]\s*(\d+)/)
+      const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : 50
+      
+      // Map threshold to y-coordinate (RSI range 0-100 -> SVG y 110-10)
+      const thresholdY = 110 - threshold
+      
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          <line x1="0" y1="20" x2="400" y2="20" stroke="#ef4444" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
-          <line x1="0" y1="100" x2="400" y2="100" stroke="#22c55e" strokeWidth="1" strokeDasharray="3,3" opacity="0.5" />
-          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.2" />
-          {isOverbought && <path d="M 0 60 Q 100 50 200 15 T 400 10" stroke="#3b82f6" strokeWidth="2" fill="none" />}
-          {isOversold && <path d="M 0 60 Q 100 70 200 105 T 400 110" stroke="#3b82f6" strokeWidth="2" fill="none" />}
-          <text x="5" y="18" fill="#ef4444" fontSize="10">70</text>
-          <text x="5" y="58" fill="currentColor" opacity="0.5" fontSize="10">50</text>
-          <text x="5" y="98" fill="#22c55e" fontSize="10">30</text>
-          {isOverbought && <text x="300" y="15" fill="#ef4444" fontSize="12" fontWeight="600">Overbought</text>}
-          {isOversold && <text x="300" y="115" fill="#22c55e" fontSize="12" fontWeight="600">Oversold</text>}
+          {/* Threshold line - flat orange line */}
+          <line x1="0" y1={thresholdY} x2="400" y2={thresholdY} stroke="#f97316" strokeWidth="2" opacity="0.7" />
+          
+          {/* RSI curve - same curve as EMA, positioned above or below threshold */}
+          {isAbove ? (
+            <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+          ) : (
+            <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+          )}
+          
+          {/* Labels */}
+          <text x="5" y={thresholdY + 5} fill="currentColor" opacity="0.5" fontSize="10">{threshold}</text>
+          <text x="200" y="115" fill={isAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
+            RSI {isAbove ? '>' : '<'} {threshold}
+          </text>
         </svg>
       )
     }
