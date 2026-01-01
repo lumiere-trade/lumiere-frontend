@@ -218,8 +218,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         </svg>
       )
     }
-    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
+
     // 2. EMA/SMA Crossover
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -258,11 +259,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 3. Price vs MA - Candlestick visualization with wicks and MA breakthrough
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<') || ruleLower.includes('crosses'))) {
-      // Check for crosses_below or crosses_above first, then fall back to > or 
       const crossesBelow = ruleLower.includes('crosses_below')
       const crossesAbove = ruleLower.includes('crosses_above')
       const above = crossesAbove ? true : crossesBelow ? false : ruleLower.includes('>')
-      
+
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           {/* MA line - orange */}
@@ -270,59 +270,99 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
           {above ? (
             <>
-              {/* Candlesticks - 4 below MA, last one breaks above through MA */}
-              {/* Red candle 1 - below MA, wick below */}
-              <line x1="70" y1="90" x2="70" y2="100" stroke="#ef4444" strokeWidth="2" />
-              <rect x="62" y="65" width="16" height="25" fill="#ef4444" opacity="0.8" />
-              <line x1="70" y1="65" x2="70" y2="58" stroke="#ef4444" strokeWidth="2" />
+              {/* Candlesticks - 9 candles: 8 below MA, last one breaks above through MA */}
+              {/* Red candle 1 */}
+              <line x1="40" y1="90" x2="40" y2="100" stroke="#ef4444" strokeWidth="2" />
+              <rect x="32" y="65" width="16" height="25" fill="#ef4444" opacity="0.8" />
+              <line x1="40" y1="65" x2="40" y2="58" stroke="#ef4444" strokeWidth="2" />
 
-              {/* Red candle 2 - below MA, wick above */}
-              <line x1="140" y1="70" x2="140" y2="63" stroke="#ef4444" strokeWidth="2" />
-              <rect x="132" y="70" width="16" height="20" fill="#ef4444" opacity="0.8" />
-              <line x1="140" y1="90" x2="140" y2="98" stroke="#ef4444" strokeWidth="2" />
+              {/* Green candle 2 */}
+              <line x1="80" y1="75" x2="80" y2="68" stroke="#22c55e" strokeWidth="2" />
+              <rect x="72" y="75" width="16" height="15" fill="#22c55e" opacity="0.8" />
+              <line x1="80" y1="90" x2="80" y2="95" stroke="#22c55e" strokeWidth="2" />
 
-              {/* Green candle 3 - below MA, wick above and below */}
-              <line x1="210" y1="72" x2="210" y2="65" stroke="#22c55e" strokeWidth="2" />
-              <rect x="202" y="72" width="16" height="18" fill="#22c55e" opacity="0.8" />
-              <line x1="210" y1="90" x2="210" y2="95" stroke="#22c55e" strokeWidth="2" />
+              {/* Red candle 3 */}
+              <line x1="120" y1="70" x2="120" y2="63" stroke="#ef4444" strokeWidth="2" />
+              <rect x="112" y="70" width="16" height="20" fill="#ef4444" opacity="0.8" />
+              <line x1="120" y1="90" x2="120" y2="98" stroke="#ef4444" strokeWidth="2" />
 
-              {/* Red candle 4 - below MA, wick below */}
+              {/* Green candle 4 */}
+              <line x1="160" y1="73" x2="160" y2="66" stroke="#22c55e" strokeWidth="2" />
+              <rect x="152" y="73" width="16" height="17" fill="#22c55e" opacity="0.8" />
+              <line x1="160" y1="90" x2="160" y2="96" stroke="#22c55e" strokeWidth="2" />
+
+              {/* Red candle 5 */}
+              <line x1="200" y1="72" x2="200" y2="65" stroke="#ef4444" strokeWidth="2" />
+              <rect x="192" y="72" width="16" height="18" fill="#ef4444" opacity="0.8" />
+              <line x1="200" y1="90" x2="200" y2="95" stroke="#ef4444" strokeWidth="2" />
+
+              {/* Green candle 6 */}
+              <line x1="240" y1="74" x2="240" y2="67" stroke="#22c55e" strokeWidth="2" />
+              <rect x="232" y="74" width="16" height="16" fill="#22c55e" opacity="0.8" />
+              <line x1="240" y1="90" x2="240" y2="94" stroke="#22c55e" strokeWidth="2" />
+
+              {/* Red candle 7 */}
               <line x1="280" y1="68" x2="280" y2="62" stroke="#ef4444" strokeWidth="2" />
               <rect x="272" y="68" width="16" height="22" fill="#ef4444" opacity="0.8" />
               <line x1="280" y1="90" x2="280" y2="100" stroke="#ef4444" strokeWidth="2" />
 
-              {/* Green candle 5 - breaks ABOVE MA with wick through */}
-              <line x1="350" y1="50" x2="350" y2="20" stroke="#22c55e" strokeWidth="2" />
-              <rect x="342" y="50" width="16" height="20" fill="#22c55e" />
-              <line x1="350" y1="70" x2="350" y2="90" stroke="#22c55e" strokeWidth="2" />
+              {/* Green candle 8 */}
+              <line x1="320" y1="71" x2="320" y2="64" stroke="#22c55e" strokeWidth="2" />
+              <rect x="312" y="71" width="16" height="19" fill="#22c55e" opacity="0.8" />
+              <line x1="320" y1="90" x2="320" y2="97" stroke="#22c55e" strokeWidth="2" />
+
+              {/* Green candle 9 - breaks ABOVE MA with wick through */}
+              <line x1="360" y1="50" x2="360" y2="20" stroke="#22c55e" strokeWidth="2" />
+              <rect x="352" y="50" width="16" height="20" fill="#22c55e" />
+              <line x1="360" y1="70" x2="360" y2="90" stroke="#22c55e" strokeWidth="2" />
             </>
           ) : (
             <>
-              {/* Candlesticks - 4 above MA, last one breaks below through MA */}
-              {/* Green candle 1 - above MA, wick above */}
-              <line x1="70" y1="30" x2="70" y2="22" stroke="#22c55e" strokeWidth="2" />
-              <rect x="62" y="30" width="16" height="25" fill="#22c55e" opacity="0.8" />
-              <line x1="70" y1="55" x2="70" y2="58" stroke="#22c55e" strokeWidth="2" />
+              {/* Candlesticks - 9 candles: 8 above MA, last one breaks below through MA */}
+              {/* Green candle 1 */}
+              <line x1="40" y1="30" x2="40" y2="22" stroke="#22c55e" strokeWidth="2" />
+              <rect x="32" y="30" width="16" height="25" fill="#22c55e" opacity="0.8" />
+              <line x1="40" y1="55" x2="40" y2="58" stroke="#22c55e" strokeWidth="2" />
 
-              {/* Red candle 2 - above MA, wick below */}
-              <line x1="140" y1="35" x2="140" y2="28" stroke="#ef4444" strokeWidth="2" />
-              <rect x="132" y="35" width="16" height="20" fill="#ef4444" opacity="0.8" />
-              <line x1="140" y1="55" x2="140" y2="62" stroke="#ef4444" strokeWidth="2" />
+              {/* Red candle 2 */}
+              <line x1="80" y1="40" x2="80" y2="33" stroke="#ef4444" strokeWidth="2" />
+              <rect x="72" y="40" width="16" height="15" fill="#ef4444" opacity="0.8" />
+              <line x1="80" y1="55" x2="80" y2="61" stroke="#ef4444" strokeWidth="2" />
 
-              {/* Green candle 3 - above MA, wick above and below */}
-              <line x1="210" y1="32" x2="210" y2="25" stroke="#22c55e" strokeWidth="2" />
-              <rect x="202" y="32" width="16" height="23" fill="#22c55e" opacity="0.8" />
-              <line x1="210" y1="55" x2="210" y2="60" stroke="#22c55e" strokeWidth="2" />
+              {/* Green candle 3 */}
+              <line x1="120" y1="35" x2="120" y2="28" stroke="#22c55e" strokeWidth="2" />
+              <rect x="112" y="35" width="16" height="20" fill="#22c55e" opacity="0.8" />
+              <line x1="120" y1="55" x2="120" y2="62" stroke="#22c55e" strokeWidth="2" />
 
-              {/* Red candle 4 - above MA, wick above */}
-              <line x1="280" y1="38" x2="280" y2="30" stroke="#ef4444" strokeWidth="2" />
-              <rect x="272" y="38" width="16" height="17" fill="#ef4444" opacity="0.8" />
-              <line x1="280" y1="55" x2="280" y2="58" stroke="#ef4444" strokeWidth="2" />
+              {/* Red candle 4 */}
+              <line x1="160" y1="38" x2="160" y2="31" stroke="#ef4444" strokeWidth="2" />
+              <rect x="152" y="38" width="16" height="17" fill="#ef4444" opacity="0.8" />
+              <line x1="160" y1="55" x2="160" y2="60" stroke="#ef4444" strokeWidth="2" />
 
-              {/* Red candle 5 - breaks BELOW MA with wick through */}
-              <line x1="350" y1="50" x2="350" y2="20" stroke="#ef4444" strokeWidth="2" />
-              <rect x="342" y="50" width="16" height="20" fill="#ef4444" />
-              <line x1="350" y1="70" x2="350" y2="90" stroke="#ef4444" strokeWidth="2" />
+              {/* Green candle 5 */}
+              <line x1="200" y1="32" x2="200" y2="25" stroke="#22c55e" strokeWidth="2" />
+              <rect x="192" y="32" width="16" height="23" fill="#22c55e" opacity="0.8" />
+              <line x1="200" y1="55" x2="200" y2="60" stroke="#22c55e" strokeWidth="2" />
+
+              {/* Red candle 6 */}
+              <line x1="240" y1="37" x2="240" y2="30" stroke="#ef4444" strokeWidth="2" />
+              <rect x="232" y="37" width="16" height="18" fill="#ef4444" opacity="0.8" />
+              <line x1="240" y1="55" x2="240" y2="59" stroke="#ef4444" strokeWidth="2" />
+
+              {/* Green candle 7 */}
+              <line x1="280" y1="38" x2="280" y2="30" stroke="#22c55e" strokeWidth="2" />
+              <rect x="272" y="38" width="16" height="17" fill="#22c55e" opacity="0.8" />
+              <line x1="280" y1="55" x2="280" y2="58" stroke="#22c55e" strokeWidth="2" />
+
+              {/* Red candle 8 */}
+              <line x1="320" y1="41" x2="320" y2="34" stroke="#ef4444" strokeWidth="2" />
+              <rect x="312" y="41" width="16" height="14" fill="#ef4444" opacity="0.8" />
+              <line x1="320" y1="55" x2="320" y2="60" stroke="#ef4444" strokeWidth="2" />
+
+              {/* Red candle 9 - breaks BELOW MA with wick through */}
+              <line x1="360" y1="50" x2="360" y2="20" stroke="#ef4444" strokeWidth="2" />
+              <rect x="352" y="50" width="16" height="20" fill="#ef4444" />
+              <line x1="360" y1="70" x2="360" y2="90" stroke="#ef4444" strokeWidth="2" />
             </>
           )}
 
