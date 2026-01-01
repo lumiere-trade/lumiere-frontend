@@ -240,22 +240,24 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
   }
 
   return (
-    <div className="space-y-4">
-      {rules.map((rule, idx) => (
-        <div key={idx} className="grid grid-cols-2 gap-6 items-start">
-          {/* Left: Rule Description */}
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed m-0">
-              {ruleDescriptions[idx] || ''}
-            </pre>
-          </div>
+    <div className="bg-muted/30 rounded-lg p-6">
+      <div className="space-y-6">
+        {rules.map((rule, idx) => (
+          <div key={idx} className="grid grid-cols-2 gap-6 items-start">
+            {/* Left: Rule Description */}
+            <div className="prose prose-sm max-w-none dark:prose-invert">
+              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed m-0">
+                {ruleDescriptions[idx] || ''}
+              </pre>
+            </div>
 
-          {/* Right: SVG Visualization */}
-          <div className="flex items-center">
-            {renderSVG(rule)}
+            {/* Right: SVG Visualization */}
+            <div className="flex items-center">
+              {renderSVG(rule)}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
