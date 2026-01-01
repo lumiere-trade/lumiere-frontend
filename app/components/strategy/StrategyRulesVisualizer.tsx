@@ -40,6 +40,75 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
   const renderSVG = (rule: string) => {
     const ruleLower = rule.toLowerCase()
 
+    // 0. MACD Histogram (check BEFORE MACD crossover)
+    if (ruleLower.includes('macd_histogram')) {
+      const isPositive = ruleLower.includes('>') && (ruleLower.includes('0') || ruleLower.includes('zero'))
+      const isNegative = ruleLower.includes('<') && (ruleLower.includes('0') || ruleLower.includes('zero'))
+      const isContracting = ruleLower.includes('falling') || ruleLower.includes('contracting')
+      const isRising = ruleLower.includes('rising') || ruleLower.includes('expanding')
+
+      // Histogram > 0
+      if (isPositive) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+            <rect x="80" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <rect x="120" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <rect x="160" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <rect x="200" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <rect x="240" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <text x="140" y="15" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Histogram &gt; 0</text>
+          </svg>
+        )
+      }
+
+      // Histogram < 0
+      if (isNegative) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+            <rect x="80" y="60" width="20" height="35" fill="#ef4444" opacity="0.8" />
+            <rect x="120" y="60" width="20" height="35" fill="#ef4444" opacity="0.8" />
+            <rect x="160" y="60" width="20" height="35" fill="#ef4444" opacity="0.8" />
+            <rect x="200" y="60" width="20" height="35" fill="#ef4444" opacity="0.8" />
+            <rect x="240" y="60" width="20" height="35" fill="#ef4444" opacity="0.8" />
+            <text x="140" y="110" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Histogram &lt; 0</text>
+          </svg>
+        )
+      }
+
+      // Histogram Contracting
+      if (isContracting) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+            <rect x="70" y="10" width="20" height="50" fill="#22c55e" opacity="0.8" />
+            <rect x="110" y="20" width="20" height="40" fill="#22c55e" opacity="0.8" />
+            <rect x="150" y="30" width="20" height="30" fill="#22c55e" opacity="0.8" />
+            <rect x="190" y="40" width="20" height="20" fill="#22c55e" opacity="0.8" />
+            <rect x="230" y="50" width="20" height="10" fill="#22c55e" opacity="0.8" />
+            <text x="100" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Contracting</text>
+          </svg>
+        )
+      }
+
+      // Histogram Rising
+      if (isRising) {
+        return (
+          <svg viewBox="0 0 400 120" className="w-full h-36">
+            <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+            <rect x="60" y="45" width="20" height="15" fill="#22c55e" opacity="0.8" />
+            <rect x="100" y="35" width="20" height="25" fill="#22c55e" opacity="0.8" />
+            <rect x="140" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
+            <rect x="180" y="15" width="20" height="45" fill="#22c55e" opacity="0.8" />
+            <rect x="220" y="5" width="20" height="55" fill="#22c55e" opacity="0.8" />
+            <rect x="260" y="-5" width="20" height="65" fill="#22c55e" opacity="0.8" />
+            <text x="120" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram Rising</text>
+          </svg>
+        )
+      }
+    }
+
     // 1. MACD Crossover
     if (ruleLower.includes('macd') && ruleLower.includes('crosses')) {
       const crossesAbove = ruleLower.includes('crosses_above')
