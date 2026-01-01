@@ -91,7 +91,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <rect x="160" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
             <rect x="200" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
             <rect x="240" y="25" width="20" height="35" fill="#22c55e" opacity="0.8" />
-            <text x="140" y="15" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Histogram &gt; 0</text>
+            <text x="140" y="100" fill="#22c55e" fontSize="12" fontWeight="600">Histogram &gt; 0</text>
           </svg>
         )
       }
@@ -152,14 +152,14 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       if (macdAbove) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
-            {/* Signal line - below */}
-            <path d="M 0 75 Q 100 76 200 75 T 400 76" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
-            {/* MACD line - above */}
-            <path d="M 0 35 Q 100 38 200 40 T 400 42" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            {/* Signal line - parallel, below */}
+            <line x1="0" y1="75" x2="400" y2="75" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
+            {/* MACD line - parallel, above */}
+            <line x1="0" y1="40" x2="400" y2="40" stroke="#3b82f6" strokeWidth="2.5" />
             {/* Labels */}
-            <text x="10" y="30" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
+            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
-            <text x="135" y="15" fill="#22c55e" fontSize="12" fontWeight="600">MACD &gt; Signal</text>
+            <text x="135" y="110" fill="#22c55e" fontSize="12" fontWeight="600">MACD &gt; Signal</text>
           </svg>
         )
       }
@@ -168,12 +168,12 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       if (macdBelow) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
-            {/* Signal line - above */}
-            <path d="M 0 35 Q 100 36 200 35 T 400 36" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
-            {/* MACD line - below */}
-            <path d="M 0 75 Q 100 78 200 80 T 400 82" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            {/* Signal line - parallel, above */}
+            <line x1="0" y1="40" x2="400" y2="40" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
+            {/* MACD line - parallel, below */}
+            <line x1="0" y1="75" x2="400" y2="75" stroke="#3b82f6" strokeWidth="2.5" />
             {/* Labels */}
-            <text x="10" y="30" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+            <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
             <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             <text x="135" y="110" fill="#ef4444" fontSize="12" fontWeight="600">MACD &lt; Signal</text>
           </svg>
@@ -186,7 +186,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="5,5" />
+          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
 
           {/* Signal line - reduced thickness */}
           <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
