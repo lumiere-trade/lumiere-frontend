@@ -260,6 +260,11 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 2.5. MA Comparison (without crossover)
     if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
       const fastAbove = ruleLower.includes('>')
+      
+      // Extract MA values from rule text (e.g., "EMA(20) > EMA(50)")
+      const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
+      const firstMA = maMatches[0] || 'Fast MA'
+      const secondMA = maMatches[1] || 'Slow MA'
 
       // Fast MA > Slow MA
       if (fastAbove) {
@@ -274,9 +279,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
 
             {/* Labels */}
-            <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
-            <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
-            <text x="200" y="115" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">Fast MA &gt; Slow MA</text>
+            <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
+            <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
+            <text x="200" y="115" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &gt; {secondMA}</text>
           </svg>
         )
       }
@@ -293,9 +298,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
 
           {/* Labels */}
-          <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Slow MA</text>
-          <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Fast MA</text>
-          <text x="200" y="115" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">Fast MA &lt; Slow MA</text>
+          <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
+          <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
+          <text x="200" y="115" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &lt; {secondMA}</text>
         </svg>
       )
     }
