@@ -368,15 +368,15 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
           
           {/* Red bars below SMA - no opacity */}
-          <rect x="60" y="80" width="20" height="30" fill="#ef4444" />
-          <rect x="100" y="85" width="20" height="25" fill="#ef4444" />
-          <rect x="140" y="82" width="20" height="28" fill="#ef4444" />
-          <rect x="180" y="78" width="20" height="32" fill="#ef4444" />
+          <rect x="60" y="70" width="20" height="30" fill="#ef4444" />
+          <rect x="100" y="75" width="20" height="25" fill="#ef4444" />
+          <rect x="140" y="72" width="20" height="28" fill="#ef4444" />
+          <rect x="180" y="68" width="20" height="32" fill="#ef4444" />
           
           {/* Green bars - last one breaks through SMA - no opacity */}
-          <rect x="220" y="65" width="20" height="45" fill="#22c55e" />
-          <rect x="260" y="60" width="20" height="50" fill="#22c55e" />
-          <rect x="300" y="30" width="20" height="80" fill="#22c55e" />
+          <rect x="220" y="55" width="20" height="45" fill="#22c55e" />
+          <rect x="260" y="50" width="20" height="50" fill="#22c55e" />
+          <rect x="300" y="20" width="20" height="80" fill="#22c55e" />
           
           {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
