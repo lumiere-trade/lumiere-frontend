@@ -225,10 +225,16 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 2.5. MA Comparison (without crossover)
-    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
-      const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
+    // 2.5. MA Comparison (without crossover) - includes Volume_SMA
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
+      const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
       if (maMatches.length < 2) return null
+      
+      // Skip if "Volume > Volume_SMA" (only 1 Volume_SMA, not a comparison)
+      const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
+      if (volumeSmaMatches.length === 1 && ruleLower.includes('volume') && !ruleLower.includes('volume_sma >') && !ruleLower.includes('volume_sma <')) {
+        return null
+      }
 
       const fastAbove = ruleLower.includes('>')
       const firstMA = maMatches[0] || 'Fast MA'
