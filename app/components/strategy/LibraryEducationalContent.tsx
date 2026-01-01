@@ -67,28 +67,42 @@ export function LibraryEducationalContent() {
           </div>
         </TabsContent>
 
-        {/* Entry Logic Tab - Educational Content + Visualizer */}
+        {/* Entry Logic Tab - Side by Side Layout */}
         <TabsContent value="entry" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.entry_logic}
-              </pre>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left: Educational Text */}
+            <div className="bg-muted/30 rounded-lg p-6">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
+                  {educationalContent.entry_logic}
+                </pre>
+              </div>
+            </div>
+            
+            {/* Right: Visual Guide */}
+            <div>
+              <StrategyConditionsVisualizer mode="entry" />
             </div>
           </div>
-          <StrategyConditionsVisualizer mode="entry" />
         </TabsContent>
 
-        {/* Exit Logic Tab - Educational Content + Visualizer */}
+        {/* Exit Logic Tab - Side by Side Layout */}
         <TabsContent value="exit" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.exit_logic}
-              </pre>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left: Educational Text */}
+            <div className="bg-muted/30 rounded-lg p-6">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
+                  {educationalContent.exit_logic}
+                </pre>
+              </div>
+            </div>
+            
+            {/* Right: Visual Guide */}
+            <div>
+              <StrategyConditionsVisualizer mode="exit" />
             </div>
           </div>
-          <StrategyConditionsVisualizer mode="exit" />
         </TabsContent>
 
         {/* Risk/Reward Tab */}
