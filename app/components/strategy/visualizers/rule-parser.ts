@@ -50,7 +50,7 @@ export function parseRule(rule: string): ParsedRule {
   }
   
   // Moving Average Crossover
-  if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
+  if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
     const crossesAbove = ruleLower.includes('crosses_above')
     const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
     
@@ -72,21 +72,54 @@ export function parseRule(rule: string): ParsedRule {
     }
   }
   
-  // Moving Average Comparison (no crossover) - includes Volume_SMA
-  if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && 
+  // Volume Spike - MOVED UP: Check BEFORE MA comparison
+  // Pattern: Volume > Volume_SMA(20) * 1.3
+  if (ruleLower.startsWith('volume >') || ruleLower.startsWith('volume<')) {
+    const periodMatch = rule.match(/Volume_SMA\((\d+)\)/i)
+    const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
+    
+    const period = periodMatch ? parseInt(periodMatch[1]) : 20
+    const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.2
+    
+    return {
+      type: 'volume_spike',
+      rawText: rule,
+      params: { period, multiplier }
+    }
+  }
+  
+  // Volume Divergence - Two Volume_SMA comparison
+  // Pattern: Volume_SMA(20) > Volume_SMA(50) * 1.15
+  if (ruleLower.includes('volume_sma')) {
+    const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
+    
+    if (volumeSmaMatches.length >= 2) {
+      const periods = volumeSmaMatches.map(m => parseInt(m.match(/\d+/)![0]))
+      const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
+      const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.15
+      
+      return {
+        type: 'volume_divergence',
+        rawText: rule,
+        params: {
+          shortPeriod: Math.min(...periods),
+          longPeriod: Math.max(...periods),
+          multiplier
+        }
+      }
+    }
+  }
+  
+  // Moving Average Comparison (no crossover)
+  if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && 
       (ruleLower.includes('>') || ruleLower.includes('<')) && 
       !ruleLower.includes('crosses') && 
       !ruleLower.includes('close') && 
       !ruleLower.includes('price') &&
-      !ruleLower.includes('bollinger')) {
+      !ruleLower.includes('bollinger') &&
+      !ruleLower.startsWith('volume')) {  // ADDED: exclude Volume patterns
     
-    const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
-    
-    // Skip single Volume_SMA (handled by volume_spike)
-    const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-    if (volumeSmaMatches.length === 1) {
-      return { type: 'unknown', rawText: rule, params: {} }
-    }
+    const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
     
     if (maMatches.length >= 2) {
       const fastAbove = ruleLower.includes('>')
@@ -196,47 +229,6 @@ export function parseRule(rule: string): ParsedRule {
     }
   }
   
-  // Volume Divergence (two Volume_SMA comparison)
-  if (ruleLower.includes('volume_sma')) {
-    const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-    
-    if (volumeSmaMatches.length >= 2) {
-      const periods = volumeSmaMatches.map(m => parseInt(m.match(/\d+/)![0]))
-      const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
-      const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.15
-      
-      return {
-        type: 'volume_divergence',
-        rawText: rule,
-        params: {
-          shortPeriod: Math.min(...periods),
-          longPeriod: Math.max(...periods),
-          multiplier
-        }
-      }
-    }
-  }
-  
-  // Volume Spike (single Volume comparison)
-  if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
-    const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-    
-    // Only single Volume_SMA
-    if (volumeSmaMatches.length < 2) {
-      const periodMatch = rule.match(/Volume_SMA\((\d+)\)/i) || rule.match(/SMA\((\d+)\)/i)
-      const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
-      
-      const period = periodMatch ? parseInt(periodMatch[1]) : 20
-      const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.2
-      
-      return {
-        type: 'volume_spike',
-        rawText: rule,
-        params: { period, multiplier }
-      }
-    }
-  }
-  
   // Stochastic
   if (ruleLower.includes('stochastic')) {
     const thresholdMatch = rule.match(/[><]\s*(\d+)/)
@@ -264,9 +256,8 @@ export function parseRule(rule: string): ParsedRule {
     }
   }
   
-  // ATR - FIXED: detect rising/falling keywords
+  // ATR
   if (ruleLower.includes('atr')) {
-    // Check for rising/falling keywords first
     if (ruleLower.includes('rising') || ruleLower.includes('expanding') || ruleLower.includes('increasing')) {
       return {
         type: 'atr',
@@ -282,7 +273,6 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
     
-    // Fallback to > < operators
     const highVolatility = ruleLower.includes('>')
     return {
       type: 'atr',
