@@ -265,6 +265,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       if (fastAbove) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
+            <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+
             {/* Slow MA line - same curve as MACD, positioned below */}
             <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
 
@@ -282,6 +284,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       // Fast MA < Slow MA
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
+          <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+
           {/* Slow MA line - same curve as MACD, positioned above */}
           <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
 
