@@ -15,10 +15,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
   const rules = mode === 'entry' ? editedStrategy.entry_rules : editedStrategy.exit_rules
   if (!rules || rules.length === 0) return null
 
-  // Parse educational text by lines
   const lines = educationalText.split('\n').filter(line => line.trim())
 
-  // Extract rule descriptions (lines starting with numbers)
   const ruleDescriptions: string[] = []
   let currentRule = ''
 
@@ -40,7 +38,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
   const renderSVG = (rule: string) => {
     const ruleLower = rule.toLowerCase()
 
-    // 0. MACD Histogram (check BEFORE MACD crossover)
+    // 0. MACD Histogram
     if (ruleLower.includes('macd_histogram')) {
       const crossesAbove = ruleLower.includes('crosses_above') && (ruleLower.includes('0') || ruleLower.includes('zero'))
       const crossesBelow = ruleLower.includes('crosses_below') && (ruleLower.includes('0') || ruleLower.includes('zero'))
@@ -49,7 +47,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const isContracting = ruleLower.includes('falling') || ruleLower.includes('contracting')
       const isRising = ruleLower.includes('rising') || ruleLower.includes('expanding')
 
-      // Histogram Crosses Above 0
       if (crossesAbove) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -65,7 +62,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Histogram Crosses Below 0
       if (crossesBelow) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -81,7 +77,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Histogram > 0
       if (isPositive) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -96,7 +91,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Histogram < 0
       if (isNegative) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -111,7 +105,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Histogram Contracting
       if (isContracting) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -126,7 +119,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Histogram Rising
       if (isRising) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
@@ -148,15 +140,11 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       const macdAbove = ruleLower.includes('>') || ruleLower.includes('above')
       const macdBelow = ruleLower.includes('<') || ruleLower.includes('below')
 
-      // MACD > Signal
       if (macdAbove) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
-            {/* Signal line - parallel, below */}
             <line x1="0" y1="75" x2="400" y2="75" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
-            {/* MACD line - parallel, above */}
             <line x1="0" y1="40" x2="400" y2="40" stroke="#3b82f6" strokeWidth="2.5" />
-            {/* Labels */}
             <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
             <text x="200" y="110" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">MACD &gt; Signal</text>
@@ -164,15 +152,11 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // MACD < Signal
       if (macdBelow) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
-            {/* Signal line - parallel, above */}
             <line x1="0" y1="40" x2="400" y2="40" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
-            {/* MACD line - parallel, below */}
             <line x1="0" y1="75" x2="400" y2="75" stroke="#3b82f6" strokeWidth="2.5" />
-            {/* Labels */}
             <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
             <text x="10" y="95" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             <text x="200" y="110" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">MACD &lt; Signal</text>
@@ -187,18 +171,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-
-          {/* Signal line - reduced thickness */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
-
-          {/* MACD line - curved crossover, reduced thickness */}
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
                 stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-
-          {/* Intersection point - mathematically calculated */}
           <circle cx={crossesAbove ? "120" : "167"} cy="71" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
-
-          {/* Text labels - adjusted positioning for bullish */}
           {crossesAbove ? (
             <>
               <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
@@ -210,8 +186,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
             </>
           )}
-
-          {/* Cross label - centered above intersection point */}
           <text x="200" y="110" textAnchor="middle" fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {crossesAbove ? "Bullish Cross" : "Bearish Cross"}
           </text>
@@ -222,27 +196,17 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 2. EMA/SMA Crossover
     if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
       const crossesAbove = ruleLower.includes('crosses_above')
-      
-      // Extract MA values from rule text (e.g., "EMA(50) crosses_above EMA(200)")
       const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
       const fastMA = maMatches[0] || 'Fast MA'
       const slowMA = maMatches[1] || 'Slow MA'
-      
+
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-
-          {/* Slow MA line - same as Signal line */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
-
-          {/* Fast MA line - curved crossover, same as MACD line */}
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
                 stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-
-          {/* Intersection point */}
           <circle cx={crossesAbove ? "120" : "167"} cy="71" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
-
-          {/* Text labels */}
           {crossesAbove ? (
             <>
               <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{slowMA}</text>
@@ -254,8 +218,6 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{slowMA}</text>
             </>
           )}
-
-          {/* Cross label - centered */}
           <text x="200" y="110" textAnchor="middle" fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600">
             {crossesAbove ? "Golden Cross" : "Death Cross"}
           </text>
@@ -265,30 +227,19 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 2.5. MA Comparison (without crossover) - includes Volume_SMA
     if ((ruleLower.includes('ema') || ruleLower.includes('sma') || ruleLower.includes('volume_sma')) && (ruleLower.includes('>') || ruleLower.includes('<')) && !ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
-      // Check if this is a comparison between two MAs (not Volume > Volume_SMA)
       const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
       if (maMatches.length < 2) return null
-      
+
       const fastAbove = ruleLower.includes('>')
-      
-      // Extract MA values from rule text (e.g., "EMA(20) > EMA(50)")
-      const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
       const firstMA = maMatches[0] || 'Fast MA'
       const secondMA = maMatches[1] || 'Slow MA'
 
-      // Fast MA > Slow MA
       if (fastAbove) {
         return (
           <svg viewBox="0 0 400 120" className="w-full h-36">
             <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-
-            {/* Slow MA line - same curve as MACD, positioned below */}
             <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
-
-            {/* Fast MA line - same curve as MACD, positioned above */}
             <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-
-            {/* Labels */}
             <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
             <text x="10" y="115" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
             <text x="200" y="115" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &gt; {secondMA}</text>
@@ -296,18 +247,11 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         )
       }
 
-      // Fast MA < Slow MA
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-
-          {/* Slow MA line - same curve as MACD, positioned above */}
           <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#f97316" strokeWidth="2.5" opacity="0.7" fill="none" />
-
-          {/* Fast MA line - same curve as MACD, positioned below */}
           <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
-
-          {/* Labels */}
           <text x="10" y="20" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{secondMA}</text>
           <text x="10" y="105" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{firstMA}</text>
           <text x="200" y="115" fill="#ef4444" fontSize="12" fontWeight="600" textAnchor="middle">{firstMA} &lt; {secondMA}</text>
@@ -315,109 +259,72 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
+    // 3. Price vs MA
     if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<') || ruleLower.includes('crosses'))) {
       const crossesBelow = ruleLower.includes('crosses_below')
       const crossesAbove = ruleLower.includes('crosses_above')
       const above = crossesAbove ? true : crossesBelow ? false : ruleLower.includes('>')
-      
-      // Extract MA value from rule text (e.g., "Close > EMA(20)")
       const maMatch = rule.match(/(EMA|SMA)\((\d+)\)/i)
       const maLabel = maMatch ? maMatch[0] : 'MA'
 
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          {/* MA line - orange */}
           <line x1="0" y1="60" x2="400" y2="60" stroke="#f97316" strokeWidth="2" opacity="0.7" />
-
           {above ? (
             <>
-              {/* Candlesticks - 8 candles: 7 below MA, last one breaks above through MA */}
-              {/* Green candle 1 */}
               <line x1="80" y1="75" x2="80" y2="68" stroke="#22c55e" strokeWidth="2" />
               <rect x="72" y="75" width="16" height="15" fill="#22c55e" opacity="0.8" />
               <line x1="80" y1="90" x2="80" y2="95" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 2 */}
               <line x1="120" y1="70" x2="120" y2="63" stroke="#ef4444" strokeWidth="2" />
               <rect x="112" y="70" width="16" height="20" fill="#ef4444" opacity="0.8" />
               <line x1="120" y1="90" x2="120" y2="98" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 3 */}
               <line x1="160" y1="73" x2="160" y2="66" stroke="#22c55e" strokeWidth="2" />
               <rect x="152" y="73" width="16" height="17" fill="#22c55e" opacity="0.8" />
               <line x1="160" y1="90" x2="160" y2="96" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 4 */}
               <line x1="200" y1="72" x2="200" y2="65" stroke="#ef4444" strokeWidth="2" />
               <rect x="192" y="72" width="16" height="18" fill="#ef4444" opacity="0.8" />
               <line x1="200" y1="90" x2="200" y2="95" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 5 */}
               <line x1="240" y1="74" x2="240" y2="67" stroke="#22c55e" strokeWidth="2" />
               <rect x="232" y="74" width="16" height="16" fill="#22c55e" opacity="0.8" />
               <line x1="240" y1="90" x2="240" y2="94" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 6 */}
               <line x1="280" y1="68" x2="280" y2="62" stroke="#ef4444" strokeWidth="2" />
               <rect x="272" y="68" width="16" height="22" fill="#ef4444" opacity="0.8" />
               <line x1="280" y1="90" x2="280" y2="100" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 7 */}
               <line x1="320" y1="71" x2="320" y2="64" stroke="#22c55e" strokeWidth="2" />
               <rect x="312" y="71" width="16" height="19" fill="#22c55e" opacity="0.8" />
               <line x1="320" y1="90" x2="320" y2="97" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Green candle 8 - breaks ABOVE MA with wick through */}
               <line x1="360" y1="50" x2="360" y2="20" stroke="#22c55e" strokeWidth="2" />
               <rect x="352" y="50" width="16" height="20" fill="#22c55e" />
               <line x1="360" y1="70" x2="360" y2="90" stroke="#22c55e" strokeWidth="2" />
             </>
           ) : (
             <>
-              {/* Candlesticks - 8 candles: 7 above MA, last one breaks below through MA */}
-              {/* Red candle 1 */}
               <line x1="80" y1="40" x2="80" y2="33" stroke="#ef4444" strokeWidth="2" />
               <rect x="72" y="40" width="16" height="15" fill="#ef4444" opacity="0.8" />
               <line x1="80" y1="55" x2="80" y2="61" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 2 */}
               <line x1="120" y1="35" x2="120" y2="28" stroke="#22c55e" strokeWidth="2" />
               <rect x="112" y="35" width="16" height="20" fill="#22c55e" opacity="0.8" />
               <line x1="120" y1="55" x2="120" y2="62" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 3 */}
               <line x1="160" y1="38" x2="160" y2="31" stroke="#ef4444" strokeWidth="2" />
               <rect x="152" y="38" width="16" height="17" fill="#ef4444" opacity="0.8" />
               <line x1="160" y1="55" x2="160" y2="60" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 4 */}
               <line x1="200" y1="32" x2="200" y2="25" stroke="#22c55e" strokeWidth="2" />
               <rect x="192" y="32" width="16" height="23" fill="#22c55e" opacity="0.8" />
               <line x1="200" y1="55" x2="200" y2="60" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 5 */}
               <line x1="240" y1="37" x2="240" y2="30" stroke="#ef4444" strokeWidth="2" />
               <rect x="232" y="37" width="16" height="18" fill="#ef4444" opacity="0.8" />
               <line x1="240" y1="55" x2="240" y2="59" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Green candle 6 */}
               <line x1="280" y1="38" x2="280" y2="30" stroke="#22c55e" strokeWidth="2" />
               <rect x="272" y="38" width="16" height="17" fill="#22c55e" opacity="0.8" />
               <line x1="280" y1="55" x2="280" y2="58" stroke="#22c55e" strokeWidth="2" />
-
-              {/* Red candle 7 */}
               <line x1="320" y1="41" x2="320" y2="34" stroke="#ef4444" strokeWidth="2" />
               <rect x="312" y="41" width="16" height="14" fill="#ef4444" opacity="0.8" />
               <line x1="320" y1="55" x2="320" y2="60" stroke="#ef4444" strokeWidth="2" />
-
-              {/* Red candle 8 - breaks BELOW MA with wick through */}
               <line x1="360" y1="50" x2="360" y2="20" stroke="#ef4444" strokeWidth="2" />
               <rect x="352" y="50" width="16" height="20" fill="#ef4444" />
               <line x1="360" y1="70" x2="360" y2="90" stroke="#ef4444" strokeWidth="2" />
             </>
           )}
-
-          {/* Labels */}
           <text x="10" y="55" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{maLabel}</text>
           <text x="200" y="110" fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
             {above ? `Close > ${maLabel}` : `Close < ${maLabel}`}
@@ -429,39 +336,25 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     // 4. RSI
     if (ruleLower.includes('rsi') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const isAbove = ruleLower.includes('>')
-      
-      // Extract RSI period and threshold (e.g., "RSI(14) > 45")
       const rsiMatch = rule.match(/RSI\((\d+)\)/i)
       const rsiPeriod = rsiMatch ? `RSI(${rsiMatch[1]})` : 'RSI'
-      
       const thresholdMatch = rule.match(/[><]\s*(\d+)/)
       const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : 50
-      
-      // Map threshold to y-coordinate (RSI 0-100 -> y 110-10)
       const thresholdY = 110 - threshold
-      
+
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          {/* Zone lines - dotted like MACD */}
           <line x1="0" y1="40" x2="400" y2="40" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
           <line x1="0" y1="80" x2="400" y2="80" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
-          
-          {/* Threshold line - flat orange line */}
           <line x1="0" y1={thresholdY} x2="400" y2={thresholdY} stroke="#f97316" strokeWidth="2" opacity="0.7" />
-          
-          {/* RSI curve - positioned completely above or below threshold */}
           {isAbove ? (
             <path d="M 0 60 Q 100 50 200 30 T 400 20" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
           ) : (
             <path d="M 0 95 Q 100 85 200 65 T 400 55" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
           )}
-          
-          {/* Zone labels */}
           <text x="5" y="38" fill="currentColor" opacity="0.5" fontSize="10">70</text>
           <text x="5" y="78" fill="currentColor" opacity="0.5" fontSize="10">30</text>
           <text x="5" y={thresholdY + 5} fill="currentColor" opacity="0.5" fontSize="10">{threshold}</text>
-          
-          {/* Bottom label with RSI period */}
           <text x="200" y="115" fill={isAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
             {rsiPeriod} {isAbove ? '>' : '<'} {threshold}
           </text>
@@ -497,29 +390,21 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       )
     }
 
-    // 6. Volume - bars below SMA with one breaking through
+    // 6. Volume
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
-      // Skip if this is Volume_SMA comparison (handled by MA Comparison)
       const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
       if (volumeSmaMatches.length >= 2) return null
-      
+
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
-          {/* Volume SMA - straight line */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
-
-          {/* Red bars below SMA - no opacity */}
           <rect x="60" y="72" width="20" height="23" fill="#ef4444" />
           <rect x="100" y="70" width="20" height="25" fill="#ef4444" />
           <rect x="140" y="67" width="20" height="28" fill="#ef4444" />
           <rect x="180" y="63" width="20" height="32" fill="#ef4444" />
-
-          {/* Green bars - last one breaks through SMA - no opacity */}
           <rect x="220" y="50" width="20" height="45" fill="#22c55e" />
           <rect x="260" y="45" width="20" height="50" fill="#22c55e" />
           <rect x="300" y="15" width="20" height="80" fill="#22c55e" />
-
-          {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
           <text x="200" y="112" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
         </svg>
