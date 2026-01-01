@@ -1,6 +1,12 @@
 /**
  * Visual constants for strategy rule visualizations
  * Educational style - clarity over fancy effects
+ * 
+ * Font sizes aligned with project Tailwind typography:
+ * - Base font-size: 12px (html root)
+ * - text-sm: 10px
+ * - text-md: 11px (custom)
+ * - text-base: 12px
  */
 
 export const COLORS = {
@@ -59,9 +65,8 @@ export const DIMENSIONS = {
   pointRadius: 6,
   pointStroke: 2,
   
-  // Text
-  fontSize: 12,
-  fontSizeSmall: 10,
+  // Text - aligned with project Tailwind scale
+  fontSize: 12,        // text-base (1rem = 12px) - USE THIS FOR ALL LABELS
   fontWeight: 600,
 } as const
 
