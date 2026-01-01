@@ -27,21 +27,21 @@ export function StrategyConditionsVisualizer({ mode = 'both' }: StrategyConditio
               <div className="text-sm font-mono text-muted-foreground">{rule}</div>
               <svg viewBox="0 0 400 120" className="w-full h-32">
                 <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="5,5" />
-                
-                {/* Signal line - curved, same thickness as MACD */}
-                <path d="M 0 70 Q 100 72 200 70 Q 300 68 400 70" 
+
+                {/* Signal line - same thickness as MACD */}
+                <path d="M 0 70 Q 100 72 200 70 Q 300 68 400 70"
                       stroke="#f97316" strokeWidth="3" fill="none" opacity="0.7" />
-                
+
                 {/* MACD line - curved crossover */}
-                <path d={crossesAbove ? 
-                        "M 0 90 Q 100 80 200 50 Q 300 35 400 40" : 
-                        "M 0 40 Q 100 50 200 80 Q 300 85 400 90"} 
+                <path d={crossesAbove ?
+                        "M 0 90 Q 100 80 200 50 Q 300 35 400 40" :
+                        "M 0 40 Q 100 50 200 80 Q 300 85 400 90"}
                       stroke="#3b82f6" strokeWidth="3" fill="none" />
-                
-                {/* Intersection point */}
-                <circle cx="200" cy="70" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
-                
-                {/* Text labels - semibold */}
+
+                {/* Intersection point - exact crossover */}
+                <circle cx="200" cy={crossesAbove ? 60 : 75} r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
+
+                {/* Text labels - semibold, correctly positioned */}
                 {crossesAbove ? (
                   <>
                     <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
@@ -50,10 +50,10 @@ export function StrategyConditionsVisualizer({ mode = 'both' }: StrategyConditio
                 ) : (
                   <>
                     <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
-                    <text x="10" y="80" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+                    <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
                   </>
                 )}
-                
+
                 <text x="150" y={crossesAbove ? "30" : "110"} fill={crossesAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
                   {crossesAbove ? "Bullish Cross" : "Bearish Cross"}
                 </text>
@@ -70,9 +70,9 @@ export function StrategyConditionsVisualizer({ mode = 'both' }: StrategyConditio
               <div className="text-sm font-mono text-muted-foreground">{rule}</div>
               <svg viewBox="0 0 400 120" className="w-full h-32">
                 <path d="M 0 70 Q 100 68 200 70 Q 300 72 400 70" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
-                <path d={crossesAbove ? 
-                        "M 0 85 Q 100 78 200 65 Q 300 58 400 55" : 
-                        "M 0 55 Q 100 62 200 75 Q 300 82 400 85"} 
+                <path d={crossesAbove ?
+                        "M 0 85 Q 100 78 200 65 Q 300 58 400 55" :
+                        "M 0 55 Q 100 62 200 75 Q 300 82 400 85"}
                       stroke="#3b82f6" strokeWidth="2" fill="none" />
                 <circle cx="200" cy="70" r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
                 <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="10">Slow MA</text>
@@ -93,8 +93,8 @@ export function StrategyConditionsVisualizer({ mode = 'both' }: StrategyConditio
               <div className="text-sm font-mono text-muted-foreground">{rule}</div>
               <svg viewBox="0 0 400 120" className="w-full h-32">
                 <path d="M 0 70 Q 100 65 200 70 Q 300 73 400 75" stroke="#f97316" strokeWidth="2" fill="none" opacity="0.7" />
-                <path d={above ? 
-                        "M 0 50 L 50 55 L 100 45 L 150 50 L 200 40 L 250 45 L 300 50 L 350 48 L 400 52" : 
+                <path d={above ?
+                        "M 0 50 L 50 55 L 100 45 L 150 50 L 200 40 L 250 45 L 300 50 L 350 48 L 400 52" :
                         "M 0 90 L 50 85 L 100 95 L 150 90 L 200 100 L 250 95 L 300 90 L 350 92 L 400 88"}
                       stroke={above ? "#22c55e" : "#ef4444"} strokeWidth="2" fill="none" />
                 <rect x="0" y={above ? "35" : "75"} width="400" height="30" fill={above ? "#22c55e" : "#ef4444"} opacity="0.1" />
@@ -255,9 +255,9 @@ export function StrategyConditionsVisualizer({ mode = 'both' }: StrategyConditio
               <div className="text-sm font-mono text-muted-foreground">{rule}</div>
               <svg viewBox="0 0 400 120" className="w-full h-32">
                 <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeOpacity="0.1" strokeDasharray="5,5" />
-                <path d={isRising ? "M 0 90 Q 100 80 200 50 Q 300 30 400 20" : "M 0 20 Q 100 40 200 70 Q 300 90 400 100"} 
+                <path d={isRising ? "M 0 90 Q 100 80 200 50 Q 300 30 400 20" : "M 0 20 Q 100 40 200 70 Q 300 90 400 100"}
                       stroke={isRising ? "#22c55e" : "#ef4444"} strokeWidth="3" fill="none" />
-                <path d={isRising ? "M 380 25 L 400 20 L 390 35" : "M 380 95 L 400 100 L 390 85"} 
+                <path d={isRising ? "M 380 25 L 400 20 L 390 35" : "M 380 95 L 400 100 L 390 85"}
                       fill={isRising ? "#22c55e" : "#ef4444"} />
                 <text x="150" y={isRising ? "15" : "115"} fill={isRising ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="bold">
                   {isRising ? "Rising Trend" : "Falling Trend"}
