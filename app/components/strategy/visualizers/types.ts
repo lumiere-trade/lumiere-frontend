@@ -11,6 +11,8 @@ export type RuleType =
   | 'price_vs_ma'
   | 'rsi_threshold'
   | 'bollinger_bands'
+  | 'bollinger_width'
+  | 'bollinger_middle'
   | 'volume_divergence'
   | 'volume_spike'
   | 'stochastic'
@@ -38,6 +40,8 @@ export type RuleParams =
   | PriceVsMAParams
   | RSIThresholdParams
   | BollingerBandsParams
+  | BollingerWidthParams
+  | BollingerMiddleParams
   | VolumeDivergenceParams
   | VolumeSpikeParams
   | StochasticParams
@@ -85,6 +89,15 @@ export interface RSIThresholdParams {
 export interface BollingerBandsParams {
   band: 'upper' | 'lower'
   action: 'touches' | 'crosses'
+}
+
+export interface BollingerWidthParams {
+  condition: 'wide' | 'narrow' | 'expanding' | 'contracting'
+  threshold?: number
+}
+
+export interface BollingerMiddleParams {
+  priceAbove: boolean
 }
 
 export interface VolumeDivergenceParams {

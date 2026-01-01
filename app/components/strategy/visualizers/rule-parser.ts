@@ -77,7 +77,8 @@ export function parseRule(rule: string): ParsedRule {
       (ruleLower.includes('>') || ruleLower.includes('<')) && 
       !ruleLower.includes('crosses') && 
       !ruleLower.includes('close') && 
-      !ruleLower.includes('price')) {
+      !ruleLower.includes('price') &&
+      !ruleLower.includes('bollinger')) {
     
     const maMatches = rule.match(/(EMA|SMA|Volume_SMA)\((\d+)\)/gi) || []
     
@@ -103,7 +104,8 @@ export function parseRule(rule: string): ParsedRule {
   
   // Price vs MA
   if ((ruleLower.includes('close') || ruleLower.includes('price')) && 
-      (ruleLower.includes('ema') || ruleLower.includes('sma'))) {
+      (ruleLower.includes('ema') || ruleLower.includes('sma')) &&
+      !ruleLower.includes('bollinger')) {
     
     const maMatch = rule.match(/(EMA|SMA)\((\d+)\)/i)
     if (maMatch) {
@@ -129,6 +131,53 @@ export function parseRule(rule: string): ParsedRule {
     }
   }
   
+  // Bollinger Width - BOLLINGER_WIDTH comparisons
+  if (ruleLower.includes('bollinger_width')) {
+    const thresholdMatch = rule.match(/([\d.]+)/)
+    const threshold = thresholdMatch ? parseFloat(thresholdMatch[1]) : 0.035
+    
+    let condition: 'wide' | 'narrow' | 'expanding' | 'contracting'
+    
+    if (ruleLower.includes('rising') || ruleLower.includes('expanding')) {
+      condition = 'expanding'
+    } else if (ruleLower.includes('falling') || ruleLower.includes('contracting')) {
+      condition = 'contracting'
+    } else if (ruleLower.includes('>')) {
+      condition = 'wide'
+    } else {
+      condition = 'narrow'
+    }
+    
+    return {
+      type: 'bollinger_width',
+      rawText: rule,
+      params: { condition, threshold }
+    }
+  }
+  
+  // Bollinger Middle - Price vs BOLLINGER_MIDDLE
+  if (ruleLower.includes('bollinger_middle')) {
+    const priceAbove = ruleLower.includes('>') || ruleLower.includes('above')
+    return {
+      type: 'bollinger_middle',
+      rawText: rule,
+      params: { priceAbove }
+    }
+  }
+  
+  // Bollinger Bands - Touch upper/lower
+  if (ruleLower.includes('bollinger') && !ruleLower.includes('width') && !ruleLower.includes('middle')) {
+    const touchesLower = ruleLower.includes('lower') || ruleLower.includes('<')
+    return {
+      type: 'bollinger_bands',
+      rawText: rule,
+      params: {
+        band: touchesLower ? 'lower' : 'upper',
+        action: 'touches'
+      }
+    }
+  }
+  
   // RSI Threshold
   if (ruleLower.includes('rsi') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
     const rsiMatch = rule.match(/RSI\((\d+)\)/i)
@@ -143,19 +192,6 @@ export function parseRule(rule: string): ParsedRule {
         type: 'rsi_threshold',
         rawText: rule,
         params: { period, threshold, operator }
-      }
-    }
-  }
-  
-  // Bollinger Bands
-  if (ruleLower.includes('bollinger')) {
-    const touchesLower = ruleLower.includes('lower') || ruleLower.includes('<')
-    return {
-      type: 'bollinger_bands',
-      rawText: rule,
-      params: {
-        band: touchesLower ? 'lower' : 'upper',
-        action: 'touches'
       }
     }
   }

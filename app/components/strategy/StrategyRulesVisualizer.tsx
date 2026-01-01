@@ -5,6 +5,8 @@ import { parseRule } from "./visualizers/rule-parser"
 import {
   CrossoverPattern,
   BandPattern,
+  BollingerWidthPattern,
+  BollingerMiddlePattern,
   VolumePattern,
   ThresholdPattern,
   CandlestickPattern,
@@ -111,6 +113,17 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       
       case 'bollinger_bands':
         return <BandPattern touchPoint={parsed.params.band} />
+      
+      case 'bollinger_width':
+        return (
+          <BollingerWidthPattern
+            condition={parsed.params.condition}
+            threshold={parsed.params.threshold}
+          />
+        )
+      
+      case 'bollinger_middle':
+        return <BollingerMiddlePattern priceAbove={parsed.params.priceAbove} />
       
       case 'volume_divergence':
         return (
