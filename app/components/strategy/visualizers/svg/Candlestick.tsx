@@ -27,14 +27,13 @@ export function Candlestick({
         strokeWidth={DIMENSIONS.candleWickWidth}
       />
       
-      {/* Body */}
+      {/* Body - NO OPACITY */}
       <rect
         x={x - width / 2}
         y={bodyTop}
         width={width}
         height={bodyHeight || 1}
         fill={color}
-        opacity={bullish ? 1 : 0.8}
       />
       
       {/* Lower wick */}

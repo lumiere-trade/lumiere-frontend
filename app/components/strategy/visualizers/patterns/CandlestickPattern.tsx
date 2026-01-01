@@ -32,7 +32,7 @@ export function CandlestickPattern({
     { x: 240, open: 38, high: 30, low: 41, close: 37, bullish: false },
     { x: 280, open: 37, high: 30, low: 42, close: 38, bullish: true },
     { x: 320, open: 38, high: 34, low: 41, close: 39, bullish: false },
-    { x: 360, open: 39, high: 50, low: 70, close: 20, bullish: false }, // Strong bearish
+    { x: 360, open: 39, high: 50, low: 70, close: 95, bullish: false }, // Strong bearish
   ]
 
   return (
@@ -66,16 +66,17 @@ export function CandlestickPattern({
         y={55}
         text={`${maType}(${maPeriod})`}
         opacity={COLORS.textMutedOpacity}
-        fontSize={DIMENSIONS.fontSizeSmall}
+        fontSize={DIMENSIONS.fontSize}
         anchor="start"
       />
       
-      {/* Bottom description */}
+      {/* Bottom description - compact format to fit in viewBox */}
       <Text
         x={DIMENSIONS.width / 2}
         y={LAYOUT.labelY}
-        text={priceAboveMA ? `Close > ${maType}(${maPeriod})` : `Close < ${maType}(${maPeriod})`}
+        text={`Close ${priceAboveMA ? '>' : '<'} ${maType}(${maPeriod})`}
         color={priceAboveMA ? COLORS.bullish : COLORS.bearish}
+        fontSize={DIMENSIONS.fontSize}
       />
     </svg>
   )
