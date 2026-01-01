@@ -1,5 +1,5 @@
 import { Line, Path, Circle, Text } from '../svg'
-import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX } from '../constants'
+import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX, getIndicatorColor } from '../constants'
 
 interface CrossoverPatternProps {
   type: 'golden' | 'death' | 'macd_bullish' | 'macd_bearish'
@@ -14,6 +14,18 @@ export function CrossoverPattern({
 }: CrossoverPatternProps) {
   const isBullish = type === 'golden' || type === 'macd_bullish'
   const crossX = isBullish ? 120 : 167
+  
+  // Extract periods if MA labels, otherwise use default colors
+  const isMACrossover = type === 'golden' || type === 'death'
+  let fastColor = COLORS.fastLine
+  let slowColor = COLORS.slowLine
+  
+  if (isMACrossover) {
+    const fastPeriod = parseInt(fastLabel.match(/\d+/)?.[0] || '50')
+    const slowPeriod = parseInt(slowLabel.match(/\d+/)?.[0] || '100')
+    fastColor = getIndicatorColor(fastPeriod)
+    slowColor = getIndicatorColor(slowPeriod)
+  }
   
   // Path definitions
   const fastPath = isBullish
@@ -38,14 +50,14 @@ export function CrossoverPattern({
       {/* Slow line (always horizontal-ish) */}
       <Path
         d={slowPath}
-        color={COLORS.slowLine}
-        opacity={0.7}
+        color={slowColor}
+        opacity={0.8}
       />
       
       {/* Fast line (curves to cross) */}
       <Path
         d={fastPath}
-        color={COLORS.fastLine}
+        color={fastColor}
       />
       
       {/* Crossover point */}
@@ -56,21 +68,25 @@ export function CrossoverPattern({
         fill={isBullish ? COLORS.bullish : COLORS.bearish}
       />
       
-      {/* Labels */}
+      {/* Labels - CONSISTENT FONT SIZE */}
       {isBullish ? (
         <>
           <Text
             x={10}
             y={LAYOUT.centerY}
             text={slowLabel}
-            opacity={COLORS.textMutedOpacity}
+            color={slowColor}
+            opacity={0.7}
+            fontSize={DIMENSIONS.fontSize}
             anchor="start"
           />
           <Text
             x={10}
             y={LAYOUT.bottomY + 5}
             text={fastLabel}
-            opacity={COLORS.textMutedOpacity}
+            color={fastColor}
+            opacity={0.7}
+            fontSize={DIMENSIONS.fontSize}
             anchor="start"
           />
         </>
@@ -80,14 +96,18 @@ export function CrossoverPattern({
             x={10}
             y={LAYOUT.labelStartY}
             text={fastLabel}
-            opacity={COLORS.textMutedOpacity}
+            color={fastColor}
+            opacity={0.7}
+            fontSize={DIMENSIONS.fontSize}
             anchor="start"
           />
           <Text
             x={10}
             y={85}
             text={slowLabel}
-            opacity={COLORS.textMutedOpacity}
+            color={slowColor}
+            opacity={0.7}
+            fontSize={DIMENSIONS.fontSize}
             anchor="start"
           />
         </>
@@ -99,6 +119,7 @@ export function CrossoverPattern({
         y={LAYOUT.labelY}
         text={isBullish ? "Bullish Cross" : "Bearish Cross"}
         color={isBullish ? COLORS.bullish : COLORS.bearish}
+        fontSize={DIMENSIONS.fontSize}
       />
     </svg>
   )

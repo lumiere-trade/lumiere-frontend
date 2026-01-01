@@ -1,5 +1,5 @@
 import { Path, Text } from '../svg'
-import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX } from '../constants'
+import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX, getIndicatorColor } from '../constants'
 
 interface MAComparisonPatternProps {
   firstMA: string
@@ -13,14 +13,17 @@ export function MAComparisonPattern({
   fastAbove 
 }: MAComparisonPatternProps) {
   
-  // Two parallel-ish paths showing one consistently above the other
-  const topPath = fastAbove
-    ? "M 0 60 Q 100 50 200 20 T 400 10"
-    : "M 0 60 Q 100 50 200 20 T 400 10"
+  // Extract periods from MA strings (e.g., "SMA(10)" -> 10)
+  const firstPeriod = parseInt(firstMA.match(/\d+/)?.[0] || '10')
+  const secondPeriod = parseInt(secondMA.match(/\d+/)?.[0] || '20')
   
-  const bottomPath = fastAbove
-    ? "M 0 95 Q 100 85 200 55 T 400 45"
-    : "M 0 95 Q 100 85 200 55 T 400 45"
+  // Get consistent colors based on periods
+  const firstColor = getIndicatorColor(firstPeriod)
+  const secondColor = getIndicatorColor(secondPeriod)
+  
+  // Two parallel-ish paths showing one consistently above the other
+  const topPath = "M 0 35 Q 100 33 200 30 T 400 28"
+  const bottomPath = "M 0 85 Q 100 83 200 80 T 400 78"
 
   return (
     <svg viewBox={VIEWBOX} className="w-full h-36">
@@ -36,31 +39,33 @@ export function MAComparisonPattern({
       {/* Bottom MA */}
       <Path
         d={bottomPath}
-        color={COLORS.slowLine}
-        opacity={0.7}
+        color={secondColor}
+        opacity={0.9}
       />
       
       {/* Top MA */}
       <Path
         d={topPath}
-        color={COLORS.fastLine}
+        color={firstColor}
       />
       
       {/* Labels */}
       <Text
         x={10}
-        y={25}
+        y={33}
         text={firstMA}
-        opacity={COLORS.textMutedOpacity}
-        fontSize={DIMENSIONS.fontSizeSmall}
+        color={firstColor}
+        opacity={0.7}
+        fontSize={DIMENSIONS.fontSize}
         anchor="start"
       />
       <Text
         x={10}
-        y={108}
+        y={83}
         text={secondMA}
-        opacity={COLORS.textMutedOpacity}
-        fontSize={DIMENSIONS.fontSizeSmall}
+        color={secondColor}
+        opacity={0.7}
+        fontSize={DIMENSIONS.fontSize}
         anchor="start"
       />
       
@@ -70,6 +75,7 @@ export function MAComparisonPattern({
         y={LAYOUT.labelY + 8}
         text={`${firstMA} ${fastAbove ? '>' : '<'} ${secondMA}`}
         color={fastAbove ? COLORS.bullish : COLORS.bearish}
+        fontSize={DIMENSIONS.fontSize}
       />
     </svg>
   )

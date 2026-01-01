@@ -1,5 +1,5 @@
 import { Line, Candlestick, Text } from '../svg'
-import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX } from '../constants'
+import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX, getIndicatorColor } from '../constants'
 
 interface CandlestickPatternProps {
   priceAboveMA: boolean
@@ -13,6 +13,7 @@ export function CandlestickPattern({
   maType 
 }: CandlestickPatternProps) {
   const maY = LAYOUT.centerY
+  const maColor = getIndicatorColor(maPeriod)
   
   // Candles - alternating bullish/bearish pattern
   const candles = priceAboveMA ? [
@@ -43,8 +44,8 @@ export function CandlestickPattern({
         y1={maY}
         x2={DIMENSIONS.width}
         y2={maY}
-        color={COLORS.slowLine}
-        opacity={0.7}
+        color={maColor}
+        opacity={0.8}
       />
       
       {/* Candlesticks */}
@@ -65,7 +66,8 @@ export function CandlestickPattern({
         x={10}
         y={55}
         text={`${maType}(${maPeriod})`}
-        opacity={COLORS.textMutedOpacity}
+        color={maColor}
+        opacity={0.7}
         fontSize={DIMENSIONS.fontSize}
         anchor="start"
       />

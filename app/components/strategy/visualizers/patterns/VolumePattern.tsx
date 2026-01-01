@@ -1,5 +1,5 @@
 import { Line, Path, Rect, Text } from '../svg'
-import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX } from '../constants'
+import { COLORS, DIMENSIONS, LAYOUT, VIEWBOX, getIndicatorColor } from '../constants'
 
 interface VolumePatternProps {
   mode: 'divergence' | 'spike'
@@ -20,6 +20,9 @@ export function VolumePattern({
     const shortPath = "M 0 95 Q 100 90 200 60 T 400 30"
     const longPath = "M 0 60 Q 100 58 200 60 T 400 62"
     
+    const shortColor = getIndicatorColor(shortPeriod)
+    const longColor = getIndicatorColor(longPeriod)
+    
     return (
       <svg viewBox={VIEWBOX} className="w-full h-36">
         {/* Reference line */}
@@ -36,14 +39,14 @@ export function VolumePattern({
         {/* Long MA (baseline) */}
         <Path
           d={longPath}
-          color={COLORS.slowLine}
-          opacity={0.7}
+          color={longColor}
+          opacity={0.8}
         />
         
         {/* Short MA (diverging upward) */}
         <Path
           d={shortPath}
-          color={COLORS.fastLine}
+          color={shortColor}
         />
         
         {/* Labels */}
@@ -51,16 +54,18 @@ export function VolumePattern({
           x={10}
           y={65}
           text={`Volume_SMA(${longPeriod})`}
-          opacity={COLORS.textMutedOpacity}
-          fontSize={DIMENSIONS.fontSizeSmall}
+          color={longColor}
+          opacity={0.7}
+          fontSize={DIMENSIONS.fontSize}
           anchor="start"
         />
         <Text
           x={10}
           y={108}
           text={`Volume_SMA(${shortPeriod})`}
-          opacity={COLORS.textMutedOpacity}
-          fontSize={DIMENSIONS.fontSizeSmall}
+          color={shortColor}
+          opacity={0.7}
+          fontSize={DIMENSIONS.fontSize}
           anchor="start"
         />
         
@@ -70,21 +75,25 @@ export function VolumePattern({
           y={LAYOUT.labelY}
           text={`Volume_SMA(${shortPeriod}) > Volume_SMA(${longPeriod})`}
           color={COLORS.bullish}
+          fontSize={DIMENSIONS.fontSize}
         />
       </svg>
     )
   }
   
   // mode === 'spike'
-  // Volume spike detection - bar chart with spike
+  // Volume spike - RISING bars showing increasing volume
+  const baselineColor = getIndicatorColor(shortPeriod)
+  
+  // ASCENDING volume bars - shows rising volume trend
   const bars = [
-    { x: 60, height: 23 },
-    { x: 100, height: 25 },
-    { x: 140, height: 28 },
-    { x: 180, height: 32 },
-    { x: 220, height: 45 },  // Spike
-    { x: 260, height: 50 },  // Spike continuation
-    { x: 300, height: 80 },  // Major spike
+    { x: 60, height: 18 },   // Low
+    { x: 100, height: 22 },  // Rising
+    { x: 140, height: 28 },  // Rising
+    { x: 180, height: 35 },  // Rising
+    { x: 220, height: 45 },  // Spike above threshold
+    { x: 260, height: 55 },  // Higher spike
+    { x: 300, height: 70 },  // Highest - major spike
   ]
   
   const baselineY = 70
@@ -97,12 +106,13 @@ export function VolumePattern({
         y1={baselineY}
         x2={DIMENSIONS.width}
         y2={baselineY}
-        color={COLORS.slowLine}
-        opacity={0.7}
+        color={baselineColor}
+        opacity={0.8}
       />
       
-      {/* Volume bars */}
+      {/* Volume bars - ascending pattern */}
       {bars.map((bar, idx) => {
+        // Bars above threshold (last 3) are green (high volume)
         const isSpike = bar.height > 40
         return (
           <Rect
@@ -112,7 +122,7 @@ export function VolumePattern({
             width={20}
             height={bar.height}
             fill={isSpike ? COLORS.volumeHigh : COLORS.volumeNormal}
-            opacity={isSpike ? 1 : 0.8}
+            opacity={0.9}
           />
         )
       })}
@@ -122,8 +132,9 @@ export function VolumePattern({
         x={10}
         y={65}
         text={`Volume SMA(${shortPeriod})`}
-        opacity={COLORS.textMutedOpacity}
-        fontSize={DIMENSIONS.fontSizeSmall}
+        color={baselineColor}
+        opacity={0.7}
+        fontSize={DIMENSIONS.fontSize}
         anchor="start"
       />
       
@@ -133,6 +144,7 @@ export function VolumePattern({
         y={LAYOUT.labelY + 2}
         text="High Volume"
         color={COLORS.bullish}
+        fontSize={DIMENSIONS.fontSize}
       />
     </svg>
   )

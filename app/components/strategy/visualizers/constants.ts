@@ -6,15 +6,44 @@
  * Font sizes aligned with Tailwind typography scale
  */
 
+// Period-based indicator colors for consistency across visualizations
+export const INDICATOR_COLORS: Record<number, string> = {
+  5: '#8b5cf6',     // violet-500
+  10: '#3b82f6',    // blue-500
+  13: '#06b6d4',    // cyan-500
+  20: '#10b981',    // emerald-500
+  34: '#84cc16',    // lime-500
+  50: '#f59e0b',    // amber-500
+  100: '#f97316',   // orange-500
+  200: '#ef4444',   // red-500
+}
+
+// Fallback function for unlisted periods
+export function getIndicatorColor(period: number): string {
+  // Try exact match first
+  if (INDICATOR_COLORS[period]) {
+    return INDICATOR_COLORS[period]
+  }
+  
+  // Interpolate between known periods
+  if (period < 10) return INDICATOR_COLORS[5]
+  if (period < 20) return INDICATOR_COLORS[10]
+  if (period < 34) return INDICATOR_COLORS[20]
+  if (period < 50) return INDICATOR_COLORS[34]
+  if (period < 100) return INDICATOR_COLORS[50]
+  if (period < 200) return INDICATOR_COLORS[100]
+  return INDICATOR_COLORS[200]
+}
+
 export const COLORS = {
   // Signal colors - using theme-aware values
   bullish: '#22c55e',       // green-500
   bearish: '#ef4444',       // red-500
   neutral: '#f97316',       // orange-500
   
-  // Indicator colors - softer, theme-integrated
-  fastLine: '#3b82f6',      // blue-500
-  slowLine: '#f59e0b',      // amber-500 (softer than orange)
+  // Legacy indicator colors (for backwards compatibility)
+  fastLine: '#3b82f6',      // blue-500 (use getIndicatorColor instead)
+  slowLine: '#f59e0b',      // amber-500 (use getIndicatorColor instead)
   price: '#10b981',         // emerald-500
   
   // Volume colors
