@@ -189,7 +189,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
 
           {/* Signal line - reduced thickness */}
-          <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
+          <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
 
           {/* MACD line - curved crossover, reduced thickness */}
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
@@ -227,7 +227,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
 
           {/* Slow MA line - same as Signal line */}
-          <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="2.5" fill="none" opacity="0.7" />
+          <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2.5" opacity="0.7" />
 
           {/* Fast MA line - curved crossover, same as MACD line */}
           <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
