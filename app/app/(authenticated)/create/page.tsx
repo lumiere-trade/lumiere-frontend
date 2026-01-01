@@ -7,7 +7,6 @@ import { useProphet } from "@/hooks/use-prophet"
 import { useUpdateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
 import { EmptyStateView } from "./_components/EmptyStateView"
 import { ConversationView } from "./_components/ConversationView"
-import { LibraryPreviewView } from "./_components/LibraryPreviewView"
 import { useStrategyLoader } from "./_hooks/useStrategyLoader"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -34,6 +33,8 @@ function CreatePageContent() {
     openDetailsPanel,
     isDirty,
     registerStopProphet,
+    setEducationalContent,
+    setDetailsPanelTab,
     isLoadingStrategy,
   } = useStrategy()
 
@@ -55,13 +56,15 @@ function CreatePageContent() {
     registerStopProphet(stopGeneration)
   }, [registerStopProphet, stopGeneration])
 
-  const { educationalContent } = useStrategyLoader({
+  useStrategyLoader({
     strategyId,
     libraryId,
     currentStrategy: strategy,
     setStrategy,
+    setEducationalContent,
     clearStrategy,
     openDetailsPanel,
+    setDetailsPanelTab,
   })
 
   useEffect(() => {
@@ -136,9 +139,7 @@ function CreatePageContent() {
   }
 
   // View routing based on actual state, not URL params
-  // This allows conversation to work even when strategy.id is null
-
-  // Active conversation (has messages)
+  // Active conversation (has messages) OR library strategy loaded
   if (messages.length > 0) {
     return (
       <ConversationView
@@ -156,22 +157,6 @@ function CreatePageContent() {
         error={error}
         generatedStrategy={strategy}
         onViewStrategy={handleViewStrategy}
-      />
-    )
-  }
-
-  // Library template preview (has strategy but no messages)
-  if (libraryId && strategy && messages.length === 0) {
-    return (
-      <LibraryPreviewView
-        strategy={strategy}
-        educationalContent={educationalContent}
-        inputValue={inputValue}
-        onInputChange={setInputValue}
-        onSend={handleSend}
-        onViewStrategy={handleViewStrategy}
-        isHealthy={isHealthy}
-        isSending={isSending}
       />
     )
   }

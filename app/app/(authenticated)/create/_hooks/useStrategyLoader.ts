@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from '@/lib/api/architect'
 import { toast } from 'sonner'
-import type { Strategy } from '@/contexts/StrategyContext'
+import type { Strategy, DetailsPanelTab } from '@/contexts/StrategyContext'
 import type { EducationalContent } from '@/lib/api/architect'
 
 interface UseStrategyLoaderProps {
@@ -11,8 +11,10 @@ interface UseStrategyLoaderProps {
   libraryId: string | null
   currentStrategy: Strategy | null
   setStrategy: (strategy: Strategy | null) => void
+  setEducationalContent: (content: EducationalContent | null) => void
   clearStrategy: () => Promise<void>
   openDetailsPanel: () => void
+  setDetailsPanelTab: (tab: DetailsPanelTab) => void
 }
 
 export function useStrategyLoader({
@@ -20,10 +22,11 @@ export function useStrategyLoader({
   libraryId,
   currentStrategy,
   setStrategy,
+  setEducationalContent,
   clearStrategy,
   openDetailsPanel,
+  setDetailsPanelTab,
 }: UseStrategyLoaderProps) {
-  const [educationalContent, setEducationalContent] = useState<EducationalContent | undefined>(undefined)
 
   useEffect(() => {
     const loadData = async () => {
@@ -32,7 +35,7 @@ export function useStrategyLoader({
 
         if (isDifferentStrategy) {
           await clearStrategy()
-          setEducationalContent(undefined)
+          setEducationalContent(null)
           await loadUserStrategy(strategyId)
         }
       }
@@ -43,11 +46,11 @@ export function useStrategyLoader({
       else if (!strategyId && !libraryId && currentStrategy) {
         await clearStrategy()
         setStrategy(null)
-        setEducationalContent(undefined)
+        setEducationalContent(null)
       } else {
         if (!strategyId && !libraryId && !currentStrategy) {
           setStrategy(null)
-          setEducationalContent(undefined)
+          setEducationalContent(null)
         }
       }
     }
@@ -102,7 +105,9 @@ export function useStrategyLoader({
       }
 
       setStrategy(newStrategy)
+      setEducationalContent(null) // User strategies don't have educational content
       toast.success(`Strategy "${strategyData.name}" loaded`)
+      setDetailsPanelTab('parameters')
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       toast.error('Failed to load strategy')
@@ -149,14 +154,15 @@ export function useStrategyLoader({
       }
 
       setStrategy(newStrategy)
-      setEducationalContent(lib.educational_content)
+      setEducationalContent(lib.educational_content || null)
       toast.success(`Library strategy "${lib.name}" loaded as template`)
+      setDetailsPanelTab('library') // Open Library tab for library strategies
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       toast.error('Failed to load library strategy')
-      setEducationalContent(undefined)
+      setEducationalContent(null)
     }
   }
 
-  return { educationalContent }
+  return {}
 }

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react'
 import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
-import { createConversation } from '@/lib/api/architect'
+import { EducationalContent, createConversation } from '@/lib/api/architect'
 
 export interface ChatMessage {
   id: string
@@ -31,7 +31,7 @@ export interface Strategy {
   updatedAt: string | null
 }
 
-export type DetailsPanelTab = 'parameters' | 'code' | 'backtest'
+export type DetailsPanelTab = 'library' | 'parameters' | 'code' | 'backtest'
 
 interface StrategyContextType {
   // Base strategy (saved version from DB)
@@ -46,6 +46,10 @@ interface StrategyContextType {
   editedName: string
   updateEditedStrategy: (updates: Partial<StrategyJSON>) => void
   setEditedName: (name: string) => void
+
+  // Educational content (for library strategies)
+  educationalContent: EducationalContent | null
+  setEducationalContent: (content: EducationalContent | null) => void
 
   // Dirty state (auto-calculated)
   isDirty: boolean
@@ -97,6 +101,9 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   // Edited strategy (working copy)
   const [editedStrategy, setEditedStrategy] = useState<StrategyJSON | null>(null)
   const [editedName, setEditedName] = useState('')
+
+  // Educational content (library strategies)
+  const [educationalContent, setEducationalContent] = useState<EducationalContent | null>(null)
 
   // Dirty state
   const [isDirty, setIsDirty] = useState(false)
@@ -221,6 +228,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setStrategyState(null)
     setEditedStrategy(null)
     setEditedName('')
+    setEducationalContent(null)
     setIsDirty(false)
     setBacktestResults(null)
     setIsBacktesting(false)
@@ -280,6 +288,8 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         editedName,
         updateEditedStrategy,
         setEditedName,
+        educationalContent,
+        setEducationalContent,
         isDirty,
         isLoadingStrategy,
         navigateToCreate,

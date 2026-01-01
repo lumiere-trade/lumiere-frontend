@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
+import { LibraryEducationalContent } from "./LibraryEducationalContent"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
   useCreateStrategy,
@@ -20,8 +21,8 @@ import { toast } from "sonner"
 interface StrategyDetailsPanelProps {
   isOpen: boolean
   onToggle: () => void
-  activeTab: 'parameters' | 'code' | 'backtest'
-  onTabChange: (tab: 'parameters' | 'code' | 'backtest') => void
+  activeTab: 'library' | 'parameters' | 'code' | 'backtest'
+  onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest') => void
   onOpenStrategies?: () => void
   onOpenChat?: () => void
 }
@@ -45,6 +46,7 @@ export function StrategyDetailsPanel({
     isBacktesting,
     setBacktestResults,
     setIsBacktesting,
+    educationalContent,
     isParametersFullscreen,
     expandParametersFullscreen,
     collapseParametersFullscreen,
@@ -319,7 +321,19 @@ export function StrategyDetailsPanel({
         <div className={`border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto">
+            {/* Library tab - only show if educational content exists */}
+            {educationalContent && (
+              <Button
+                variant={activeTab === 'library' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('library')}
+                className="gap-2 min-w-[120px] text-md"
+              >
+                <BookOpen className="h-5 w-5" />
+                Library
+              </Button>
+            )}
             <Button
               variant={activeTab === 'parameters' ? 'default' : 'outline'}
               size="sm"
@@ -384,6 +398,10 @@ export function StrategyDetailsPanel({
         <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 ${
           isParametersFullscreen ? 'ml-12' : ''
         }`}>
+          {activeTab === 'library' && (
+            <LibraryEducationalContent />
+          )}
+
           {activeTab === 'parameters' && (
             <StrategyParameters
               hideActions={true}
