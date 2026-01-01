@@ -218,9 +218,8 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         </svg>
       )
     }
-
+    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price')) {
     // 2. EMA/SMA Crossover
-    if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses')) {
       const crossesAbove = ruleLower.includes('crosses_above')
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
