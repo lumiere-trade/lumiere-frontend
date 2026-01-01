@@ -367,19 +367,20 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           {/* Volume SMA - straight line */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
           
-          {/* Small red bars below SMA */}
-          <rect x="60" y="80" width="20" height="30" fill="#ef4444" opacity="0.3" />
-          <rect x="100" y="85" width="20" height="25" fill="#ef4444" opacity="0.3" />
-          <rect x="140" y="82" width="20" height="28" fill="#ef4444" opacity="0.3" />
+          {/* Red bars below SMA - no opacity */}
+          <rect x="60" y="80" width="20" height="30" fill="#ef4444" />
+          <rect x="100" y="85" width="20" height="25" fill="#ef4444" />
+          <rect x="140" y="82" width="20" height="28" fill="#ef4444" />
+          <rect x="180" y="78" width="20" height="32" fill="#ef4444" />
           
-          {/* Green bars - last one breaks through SMA */}
-          <rect x="220" y="65" width="20" height="45" fill="#22c55e" opacity="0.6" />
-          <rect x="260" y="60" width="20" height="50" fill="#22c55e" opacity="0.6" />
+          {/* Green bars - last one breaks through SMA - no opacity */}
+          <rect x="220" y="65" width="20" height="45" fill="#22c55e" />
+          <rect x="260" y="60" width="20" height="50" fill="#22c55e" />
           <rect x="300" y="30" width="20" height="80" fill="#22c55e" />
           
           {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
-          <text x="200" y="20" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
+          <text x="200" y="110" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
         </svg>
       )
     }
