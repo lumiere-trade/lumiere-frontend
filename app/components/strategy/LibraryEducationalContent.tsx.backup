@@ -4,7 +4,6 @@ import { useState } from "react"
 import { BookOpen, TrendingUp, TrendingDown, Target, Lightbulb } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { useStrategy } from "@/contexts/StrategyContext"
-import { StrategyConditionsVisualizer } from "./StrategyConditionsVisualizer"
 
 export function LibraryEducationalContent() {
   const { strategy, educationalContent } = useStrategy()
@@ -56,62 +55,17 @@ export function LibraryEducationalContent() {
           })}
         </TabsList>
 
-        {/* Concept Tab */}
-        <TabsContent value="concept" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.concept}
-              </pre>
+        {tabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+            <div className="bg-muted/30 rounded-lg p-6">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
+                  {tab.content}
+                </pre>
+              </div>
             </div>
-          </div>
-        </TabsContent>
-
-        {/* Entry Logic Tab - Educational Content + Visualizer */}
-        <TabsContent value="entry" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.entry_logic}
-              </pre>
-            </div>
-          </div>
-          <StrategyConditionsVisualizer mode="entry" />
-        </TabsContent>
-
-        {/* Exit Logic Tab - Educational Content + Visualizer */}
-        <TabsContent value="exit" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.exit_logic}
-              </pre>
-            </div>
-          </div>
-          <StrategyConditionsVisualizer mode="exit" />
-        </TabsContent>
-
-        {/* Risk/Reward Tab */}
-        <TabsContent value="risk" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.risk_reward}
-              </pre>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Philosophy Tab */}
-        <TabsContent value="philosophy" className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
-              <pre className="whitespace-pre-wrap font-sans text-base leading-relaxed">
-                {educationalContent.philosophy}
-              </pre>
-            </div>
-          </div>
-        </TabsContent>
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   )
