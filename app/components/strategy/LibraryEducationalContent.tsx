@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { BookOpen, TrendingUp, TrendingDown, Target, Lightbulb } from "lucide-react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
 import { useStrategy } from "@/contexts/StrategyContext"
 
 export function LibraryEducationalContent() {
@@ -36,40 +37,36 @@ export function LibraryEducationalContent() {
     <div className="space-y-6">
       {/* Strategy Header */}
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-foreground">{strategy?.name}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{strategy?.name}</h2>
         <p className="text-base text-muted-foreground">{strategy?.description}</p>
       </div>
 
       {/* Educational Tabs */}
-      <div className="space-y-4">
-        <div className="flex gap-2 overflow-x-auto pb-2">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as any)} className="w-full">
+        <TabsList className={`grid w-full items-center !p-0`} style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                }`}
-              >
+              <TabsTrigger key={tab.id} value={tab.id} className="text-md !h-auto gap-2">
                 <Icon className="h-4 w-4" />
                 {tab.label}
-              </button>
+              </TabsTrigger>
             )
           })}
-        </div>
+        </TabsList>
 
-        <div className="bg-muted/30 rounded-lg p-6">
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-              {tabs.find(t => t.id === activeTab)?.content}
-            </pre>
-          </div>
-        </div>
-      </div>
+        {tabs.map((tab) => (
+          <TabsContent key={tab.id} value={tab.id} className="space-y-4">
+            <div className="bg-muted/30 rounded-lg p-6">
+              <div className="prose prose-sm max-w-none dark:prose-invert">
+                <pre className="whitespace-pre-wrap font-sans text-md leading-relaxed">
+                  {tab.content}
+                </pre>
+              </div>
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
     </div>
   )
 }
