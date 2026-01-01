@@ -47,30 +47,25 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         <svg viewBox="0 0 400 120" className="w-full h-32">
           <line x1="0" y1="60" x2="400" y2="60" stroke="currentColor" strokeOpacity="0.1" strokeDasharray="5,5" />
           
-          {/* Signal line - passes through intersection point */}
-          <path d={crossesAbove ? 
-                  "M 0 65 Q 100 63 200 60 Q 300 57 400 55" : 
-                  "M 0 70 Q 100 72 200 75 Q 300 77 400 80"} 
-                stroke="#f97316" strokeWidth="3" fill="none" opacity="0.7" />
+          {/* Signal line - same thickness as MACD */}
+          <path d="M 0 70 Q 100 72 200 70 T 400 70" stroke="#f97316" strokeWidth="3" fill="none" opacity="0.7" />
           
-          {/* MACD line - passes through intersection point */}
-          <path d={crossesAbove ? 
-                  "M 0 90 Q 100 80 200 60 Q 300 40 400 35" : 
-                  "M 0 45 Q 100 55 200 75 Q 300 90 400 95"}
+          {/* MACD line - curved crossover */}
+          <path d={crossesAbove ? "M 0 90 Q 100 80 200 50 T 400 40" : "M 0 40 Q 100 50 200 80 T 400 90"}
                 stroke="#3b82f6" strokeWidth="3" fill="none" />
           
-          {/* Intersection point - exact crossover */}
-          <circle cx="200" cy={crossesAbove ? 60 : 75} r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
+          {/* Intersection point - adjusted position */}
+          <circle cx="200" cy={crossesAbove ? 67 : 73} r="6" fill={crossesAbove ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
           
           {/* Text labels - semibold, correctly positioned */}
           {crossesAbove ? (
             <>
-              <text x="10" y="60" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
+              <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
               <text x="10" y="100" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
             </>
           ) : (
             <>
-              <text x="10" y="40" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
+              <text x="10" y="35" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MACD</text>
               <text x="10" y="85" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Signal</text>
             </>
           )}
