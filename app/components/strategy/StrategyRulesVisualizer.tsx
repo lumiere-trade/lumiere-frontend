@@ -395,6 +395,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
 
     // 6. Volume
     if (ruleLower.includes('volume') && (ruleLower.includes('>') || ruleLower.includes('sma'))) {
+      // Skip Volume_SMA comparisons (handled by MA Comparison)
+      const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
+      if (volumeSmaMatches.length >= 2) return null
+      
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
