@@ -426,29 +426,40 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     if (ruleLower.includes('rsi') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
       const isAbove = ruleLower.includes('>')
       
-      // Extract threshold value from rule (e.g., "RSI(14) > 45" -> 45)
+      // Extract RSI period and threshold (e.g., "RSI(14) > 45")
+      const rsiMatch = rule.match(/RSI\((\d+)\)/i)
+      const rsiPeriod = rsiMatch ? `RSI(${rsiMatch[1]})` : 'RSI'
+      
       const thresholdMatch = rule.match(/[><]\s*(\d+)/)
       const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : 50
       
-      // Map threshold to y-coordinate (RSI range 0-100 -> SVG y 110-10)
+      // Map threshold to y-coordinate (RSI 0-100 -> y 110-10)
       const thresholdY = 110 - threshold
       
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
+          {/* Zone lines - dotted like MACD */}
+          <line x1="0" y1="40" x2="400" y2="40" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+          <line x1="0" y1="80" x2="400" y2="80" stroke="currentColor" strokeWidth="1" strokeDasharray="5,5" opacity="0.3" />
+          
           {/* Threshold line - flat orange line */}
           <line x1="0" y1={thresholdY} x2="400" y2={thresholdY} stroke="#f97316" strokeWidth="2" opacity="0.7" />
           
-          {/* RSI curve - same curve as EMA, positioned above or below threshold */}
+          {/* RSI curve - positioned completely above or below threshold */}
           {isAbove ? (
-            <path d="M 0 95 Q 100 85 200 55 T 400 45" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            <path d="M 0 60 Q 100 50 200 30 T 400 20" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
           ) : (
-            <path d="M 0 60 Q 100 50 200 20 T 400 10" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
+            <path d="M 0 95 Q 100 85 200 65 T 400 55" stroke="#3b82f6" strokeWidth="2.5" fill="none" />
           )}
           
-          {/* Labels */}
+          {/* Zone labels */}
+          <text x="5" y="38" fill="currentColor" opacity="0.5" fontSize="10">70</text>
+          <text x="5" y="78" fill="currentColor" opacity="0.5" fontSize="10">30</text>
           <text x="5" y={thresholdY + 5} fill="currentColor" opacity="0.5" fontSize="10">{threshold}</text>
+          
+          {/* Bottom label with RSI period */}
           <text x="200" y="115" fill={isAbove ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
-            RSI {isAbove ? '>' : '<'} {threshold}
+            {rsiPeriod} {isAbove ? '>' : '<'} {threshold}
           </text>
         </svg>
       )
