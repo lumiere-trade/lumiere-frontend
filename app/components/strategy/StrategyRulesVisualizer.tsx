@@ -258,13 +258,17 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
     }
 
     // 3. Price vs MA - Candlestick visualization with wicks and MA breakthrough
-    if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<'))) {
-      const above = ruleLower.includes('>')
+    if ((ruleLower.includes('close') || ruleLower.includes('price')) && (ruleLower.includes('ema') || ruleLower.includes('sma')) && (ruleLower.includes('>') || ruleLower.includes('<') || ruleLower.includes('crosses'))) {
+      // Check for crosses_below or crosses_above first, then fall back to > or 
+      const crossesBelow = ruleLower.includes('crosses_below')
+      const crossesAbove = ruleLower.includes('crosses_above')
+      const above = crossesAbove ? true : crossesBelow ? false : ruleLower.includes('>')
+      
       return (
         <svg viewBox="0 0 400 120" className="w-full h-36">
           {/* MA line - orange */}
           <line x1="0" y1="60" x2="400" y2="60" stroke="#f97316" strokeWidth="2" opacity="0.7" />
-          
+
           {above ? (
             <>
               {/* Candlesticks - 4 below MA, last one breaks above through MA */}
@@ -272,22 +276,22 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               <line x1="70" y1="90" x2="70" y2="100" stroke="#ef4444" strokeWidth="2" />
               <rect x="62" y="65" width="16" height="25" fill="#ef4444" opacity="0.8" />
               <line x1="70" y1="65" x2="70" y2="58" stroke="#ef4444" strokeWidth="2" />
-              
+
               {/* Red candle 2 - below MA, wick above */}
               <line x1="140" y1="70" x2="140" y2="63" stroke="#ef4444" strokeWidth="2" />
               <rect x="132" y="70" width="16" height="20" fill="#ef4444" opacity="0.8" />
               <line x1="140" y1="90" x2="140" y2="98" stroke="#ef4444" strokeWidth="2" />
-              
+
               {/* Green candle 3 - below MA, wick above and below */}
               <line x1="210" y1="72" x2="210" y2="65" stroke="#22c55e" strokeWidth="2" />
               <rect x="202" y="72" width="16" height="18" fill="#22c55e" opacity="0.8" />
               <line x1="210" y1="90" x2="210" y2="95" stroke="#22c55e" strokeWidth="2" />
-              
+
               {/* Red candle 4 - below MA, wick below */}
               <line x1="280" y1="68" x2="280" y2="62" stroke="#ef4444" strokeWidth="2" />
               <rect x="272" y="68" width="16" height="22" fill="#ef4444" opacity="0.8" />
               <line x1="280" y1="90" x2="280" y2="100" stroke="#ef4444" strokeWidth="2" />
-              
+
               {/* Green candle 5 - breaks ABOVE MA with wick through */}
               <line x1="350" y1="50" x2="350" y2="20" stroke="#22c55e" strokeWidth="2" />
               <rect x="342" y="50" width="16" height="20" fill="#22c55e" />
@@ -300,29 +304,29 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
               <line x1="70" y1="30" x2="70" y2="22" stroke="#22c55e" strokeWidth="2" />
               <rect x="62" y="30" width="16" height="25" fill="#22c55e" opacity="0.8" />
               <line x1="70" y1="55" x2="70" y2="58" stroke="#22c55e" strokeWidth="2" />
-              
+
               {/* Red candle 2 - above MA, wick below */}
               <line x1="140" y1="35" x2="140" y2="28" stroke="#ef4444" strokeWidth="2" />
               <rect x="132" y="35" width="16" height="20" fill="#ef4444" opacity="0.8" />
               <line x1="140" y1="55" x2="140" y2="62" stroke="#ef4444" strokeWidth="2" />
-              
+
               {/* Green candle 3 - above MA, wick above and below */}
               <line x1="210" y1="32" x2="210" y2="25" stroke="#22c55e" strokeWidth="2" />
               <rect x="202" y="32" width="16" height="23" fill="#22c55e" opacity="0.8" />
               <line x1="210" y1="55" x2="210" y2="60" stroke="#22c55e" strokeWidth="2" />
-              
+
               {/* Red candle 4 - above MA, wick above */}
               <line x1="280" y1="38" x2="280" y2="30" stroke="#ef4444" strokeWidth="2" />
               <rect x="272" y="38" width="16" height="17" fill="#ef4444" opacity="0.8" />
               <line x1="280" y1="55" x2="280" y2="58" stroke="#ef4444" strokeWidth="2" />
-              
+
               {/* Red candle 5 - breaks BELOW MA with wick through */}
               <line x1="350" y1="50" x2="350" y2="20" stroke="#ef4444" strokeWidth="2" />
               <rect x="342" y="50" width="16" height="20" fill="#ef4444" />
               <line x1="350" y1="70" x2="350" y2="90" stroke="#ef4444" strokeWidth="2" />
             </>
           )}
-          
+
           {/* Labels */}
           <text x="10" y="55" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MA</text>
           <text x="200" y="110" fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
@@ -386,18 +390,18 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
         <svg viewBox="0 0 400 120" className="w-full h-36">
           {/* Volume SMA - straight line */}
           <line x1="0" y1="70" x2="400" y2="70" stroke="#f97316" strokeWidth="2" opacity="0.7" />
-          
+
           {/* Red bars below SMA - no opacity */}
           <rect x="60" y="72" width="20" height="23" fill="#ef4444" />
           <rect x="100" y="70" width="20" height="25" fill="#ef4444" />
           <rect x="140" y="67" width="20" height="28" fill="#ef4444" />
           <rect x="180" y="63" width="20" height="32" fill="#ef4444" />
-          
+
           {/* Green bars - last one breaks through SMA - no opacity */}
           <rect x="220" y="50" width="20" height="45" fill="#22c55e" />
           <rect x="260" y="45" width="20" height="50" fill="#22c55e" />
           <rect x="300" y="15" width="20" height="80" fill="#22c55e" />
-          
+
           {/* Labels */}
           <text x="10" y="65" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">Volume SMA</text>
           <text x="200" y="112" fill="#22c55e" fontSize="12" fontWeight="600" textAnchor="middle">High Volume</text>
