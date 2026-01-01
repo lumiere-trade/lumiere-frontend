@@ -404,9 +404,9 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
           )}
 
           {/* Labels */}
-          <text x="10" y="55" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">MA</text>
+          <text x="10" y="55" fill="currentColor" opacity="0.5" fontSize="12" fontWeight="600">{maLabel}</text>
           <text x="200" y="110" fill={above ? "#22c55e" : "#ef4444"} fontSize="12" fontWeight="600" textAnchor="middle">
-            {above ? "Close > MA" : "Close < MA"}
+            {above ? `Close > ${maLabel}` : `Close < ${maLabel}`}
           </text>
         </svg>
       )
