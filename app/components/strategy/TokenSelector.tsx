@@ -6,10 +6,9 @@
 
 import { useState, useMemo } from 'react';
 import { useChronicler } from '@/hooks';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@lumiere/shared/components/ui/button';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -88,58 +87,67 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Search by name, symbol, or address..."
-            value={search}
-            onValueChange={setSearch}
-          />
-          <CommandList>
-            <CommandEmpty>No tokens found.</CommandEmpty>
-            <CommandGroup>
-              {filteredTokens.map((token) => (
-                <CommandItem
+        <div className="flex flex-col">
+          {/* Search Input */}
+          <div className="p-3 border-b border-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search by name, symbol, or address..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+            </div>
+          </div>
+
+          {/* Token List */}
+          <div className="max-h-[300px] overflow-y-auto">
+            {filteredTokens.length === 0 ? (
+              <div className="py-6 text-center text-sm text-muted-foreground">
+                No tokens found
+              </div>
+            ) : (
+              filteredTokens.map((token) => (
+                <button
                   key={token.address}
-                  value={token.address}
-                  onSelect={(currentValue) => {
-                    onChange?.(currentValue, token.symbol);
+                  onClick={() => {
+                    onChange?.(token.address, token.symbol);
                     setOpen(false);
                     setSearch('');
                   }}
-                  className="cursor-pointer"
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-card transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-3 flex-1">
-                    <Image
-                      src={token.logo_uri}
-                      alt={token.symbol}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{token.symbol}</span>
-                        <span className="text-xs text-muted-foreground">{token.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {token.address.slice(0, 8)}...{token.address.slice(-6)}
+                  <Image
+                    src={token.logo_uri}
+                    alt={token.symbol}
+                    width={32}
+                    height={32}
+                    className="rounded-full flex-shrink-0"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <div className="flex flex-col items-start flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm">{token.symbol}</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {token.name}
                       </span>
                     </div>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {token.address.slice(0, 8)}...{token.address.slice(-6)}
+                    </span>
                   </div>
-                  <Check
-                    className={cn(
-                      'ml-auto h-4 w-4',
-                      value === token.address ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
+                  {value === token.address && (
+                    <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                  )}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
       </PopoverContent>
     </Popover>
   );
