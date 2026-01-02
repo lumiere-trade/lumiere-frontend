@@ -117,7 +117,12 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
                     setOpen(false);
                     setSearch('');
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-card transition-colors cursor-pointer"
+                  className={cn(
+                    "w-full flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer",
+                    value === token.address 
+                      ? "bg-muted" 
+                      : "hover:bg-muted"
+                  )}
                 >
                   <Image
                     src={token.logo_uri}
