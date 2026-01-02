@@ -96,7 +96,7 @@ export function VolumePattern({
     { x: 300, height: 70 },  // Highest - major spike
   ]
   
-  const baselineY = 70
+  const baselineY = 90  // Position baseline lower so bars can grow upward
   
   return (
     <svg viewBox={VIEWBOX} className="w-full h-36">
@@ -110,7 +110,7 @@ export function VolumePattern({
         opacity={0.8}
       />
       
-      {/* Volume bars - ascending pattern */}
+      {/* Volume bars - ascending pattern, drawn ABOVE baseline */}
       {bars.map((bar, idx) => {
         // Bars above threshold (last 3) are green (high volume)
         const isSpike = bar.height > 40
@@ -118,7 +118,7 @@ export function VolumePattern({
           <Rect
             key={idx}
             x={bar.x - 10}
-            y={baselineY + 2}
+            y={baselineY - bar.height}  // DRAW UPWARD from baseline
             width={20}
             height={bar.height}
             fill={isSpike ? COLORS.volumeHigh : COLORS.volumeNormal}
@@ -130,7 +130,7 @@ export function VolumePattern({
       {/* Labels */}
       <Text
         x={10}
-        y={65}
+        y={88}
         text={`Volume SMA(${shortPeriod})`}
         color={baselineColor}
         opacity={0.7}
