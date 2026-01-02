@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown } from "lucide-react"
@@ -16,6 +16,8 @@ import {
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import { BacktestResponse } from "@/lib/api/cartographe"
 import { BacktestResults } from "@/components/strategy/BacktestResults"
+import { TokenSelector } from "@/components/strategy/TokenSelector"
+import { useChronicler } from "@/hooks"
 import { toast } from "sonner"
 import {
   Select,
@@ -33,6 +35,7 @@ interface StrategyParametersProps {
 export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, updateStrategy, isDirty } = useStrategy()
+  const { tokens } = useChronicler()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -40,6 +43,15 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   const [showCode, setShowCode] = useState(false)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
+
+  // Find token address from symbol (e.g., "SOL/USDC" -> SOL address)
+  const selectedTokenAddress = useMemo(() => {
+    if (!editedStrategy?.symbol) return undefined;
+    
+    const symbolPart = editedStrategy.symbol.split('/')[0];
+    const token = tokens.find(t => t.symbol === symbolPart);
+    return token?.address;
+  }, [editedStrategy?.symbol, tokens]);
 
   if (!strategy || !editedStrategy) {
     return (
@@ -58,6 +70,14 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   const handleFieldChange = (field: keyof StrategyJSON, value: any) => {
     updateEditedStrategy({ [field]: value })
+  }
+
+  const handleTokenChange = (tokenAddress: string, tokenSymbol: string) => {
+    // Convert symbol to "SYMBOL/USDC" format for strategy
+    const tradingPair = `${tokenSymbol}/USDC`;
+    handleFieldChange('symbol', tradingPair);
+    
+    log.info('Token changed', { tokenAddress, tokenSymbol, tradingPair });
   }
 
   const handleSave = async () => {
@@ -344,21 +364,14 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           <div className="bg-card border border-primary/20 rounded-2xl p-6">
             <div className="space-y-3">
               <label className="text-base font-semibold text-foreground">Trading Pair</label>
-              <Select
-                value={editedStrategy.symbol}
-                onValueChange={(value) => handleFieldChange('symbol', value)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SOL/USDC">SOL/USDC</SelectItem>
-                  <SelectItem value="BTC/USDC">BTC/USDC</SelectItem>
-                  <SelectItem value="ETH/USDC">ETH/USDC</SelectItem>
-                  <SelectItem value="BONK/USDC">BONK/USDC</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">Asset to trade</p>
+              <TokenSelector
+                value={selectedTokenAddress}
+                onChange={handleTokenChange}
+                className="w-full"
+              />
+              <p className="text-sm text-muted-foreground">
+                Selected: {editedStrategy.symbol || 'None'}
+              </p>
             </div>
           </div>
 

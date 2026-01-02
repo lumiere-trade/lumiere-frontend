@@ -10,5 +10,9 @@ export * from './use-strategies';
 export * from './queries/use-architect-queries';
 export * from './mutations/use-architect-mutations';
 
+// Chronicler hooks
+export * from './use-chronicler';
+export * from './queries/use-chronicler-queries';
+
 // Media query hooks
 export * from './use-media-query';
