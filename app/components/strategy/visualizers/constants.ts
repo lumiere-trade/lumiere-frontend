@@ -80,19 +80,19 @@ export const DIMENSIONS = {
   // Candlestick dimensions
   candleWidth: 16,
   candleGap: 8,
-  candleWickWidth: 2,
+  candleWickWidth: 1.5,     // Thinner wicks
   
-  // Line widths
-  lineThick: 2.5,
-  lineThin: 1,
-  lineReference: 1,
+  // Line widths - MADE THINNER
+  lineThick: 2,             // Main lines (was 2.5)
+  lineThin: 1,              // Thin lines
+  lineReference: 1,         // Reference/grid lines
   
   // Points/Circles
-  pointRadius: 6,
-  pointStroke: 2,
+  pointRadius: 5,           // Slightly smaller (was 6)
+  pointStroke: 1.5,         // Thinner stroke (was 2)
   
   // Text - aligned with project Tailwind scale
-  fontSize: 12,        // text-base (1rem = 12px) - USE THIS FOR ALL LABELS
+  fontSize: 12,             // text-base (1rem = 12px)
   fontWeight: 600,
 } as const
 
