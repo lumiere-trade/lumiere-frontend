@@ -315,10 +315,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                     startEditing(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting}
-                                  className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="p-1.5 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title="Rename strategy"
                                 >
-                                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                                  <Pencil className="h-4 w-4 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -326,10 +326,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                     handleDelete(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting || isThisDeleting}
-                                  className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="p-1.5 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-3 w-3 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-4 w-4 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
                             )}
@@ -463,10 +463,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                     startEditing(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting}
-                                  className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="p-1.5 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title="Rename strategy"
                                 >
-                                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                                  <Pencil className="h-4 w-4 text-muted-foreground" />
                                 </button>
                                 <button
                                   onClick={(e) => {
@@ -474,10 +474,10 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                                     handleDelete(strategyItem.id, strategyItem.name)
                                   }}
                                   disabled={isDeleting || isThisDeleting}
-                                  className="p-1 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  className="p-1.5 rounded hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                   title={isThisDeleting ? "Deleting..." : "Delete strategy"}
                                 >
-                                  <Trash2 className={`h-3 w-3 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
+                                  <Trash2 className={`h-4 w-4 text-muted-foreground ${isThisDeleting ? 'animate-pulse' : ''}`} />
                                 </button>
                               </div>
                             )}
