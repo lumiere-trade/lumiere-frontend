@@ -6,7 +6,7 @@ import { ParsedRule, RuleType } from './types'
  */
 export function parseRule(rule: string): ParsedRule {
   const ruleLower = rule.toLowerCase()
-  
+
   // MACD Histogram patterns
   if (ruleLower.includes('macd_histogram')) {
     if (ruleLower.includes('crosses_above') && (ruleLower.includes('0') || ruleLower.includes('zero'))) {
@@ -28,17 +28,17 @@ export function parseRule(rule: string): ParsedRule {
       return { type: 'macd_histogram', rawText: rule, params: { condition: 'falling' } }
     }
   }
-  
+
   // MACD Crossover (without histogram)
   if (ruleLower.includes('macd') && ruleLower.includes('crosses') && !ruleLower.includes('histogram')) {
     const crossesAbove = ruleLower.includes('crosses_above')
-    return { 
-      type: 'macd_crossover', 
-      rawText: rule, 
-      params: { direction: crossesAbove ? 'above' : 'below' } 
+    return {
+      type: 'macd_crossover',
+      rawText: rule,
+      params: { direction: crossesAbove ? 'above' : 'below' }
     }
   }
-  
+
   // MACD vs Signal comparison (no crossover)
   if (ruleLower.includes('macd') && ruleLower.includes('signal') && !ruleLower.includes('crosses') && !ruleLower.includes('histogram')) {
     const macdAbove = ruleLower.includes('>') || ruleLower.includes('above')
@@ -48,17 +48,17 @@ export function parseRule(rule: string): ParsedRule {
       params: { operator: macdAbove ? 'gt' : 'lt' }
     }
   }
-  
+
   // Moving Average Crossover
   if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && ruleLower.includes('crosses') && !ruleLower.includes('close') && !ruleLower.includes('price') && !ruleLower.includes('volume')) {
     const crossesAbove = ruleLower.includes('crosses_above')
     const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
-    
+
     if (maMatches.length >= 2) {
       const fast = maMatches[0].match(/\d+/)![0]
       const slow = maMatches[1].match(/\d+/)![0]
       const type = maMatches[0].toUpperCase().startsWith('EMA') ? 'EMA' : 'SMA'
-      
+
       return {
         type: 'ma_crossover',
         rawText: rule,
@@ -71,33 +71,33 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Volume Spike - MOVED UP: Check BEFORE MA comparison
   // Pattern: Volume > Volume_SMA(20) * 1.3
   if (ruleLower.startsWith('volume >') || ruleLower.startsWith('volume<')) {
     const periodMatch = rule.match(/Volume_SMA\((\d+)\)/i)
     const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
-    
+
     const period = periodMatch ? parseInt(periodMatch[1]) : 20
     const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.2
-    
+
     return {
       type: 'volume_spike',
       rawText: rule,
       params: { period, multiplier }
     }
   }
-  
+
   // Volume Divergence - Two Volume_SMA comparison
   // Pattern: Volume_SMA(20) > Volume_SMA(50) * 1.15
   if (ruleLower.includes('volume_sma')) {
     const volumeSmaMatches = rule.match(/Volume_SMA\((\d+)\)/gi) || []
-    
+
     if (volumeSmaMatches.length >= 2) {
       const periods = volumeSmaMatches.map(m => parseInt(m.match(/\d+/)![0]))
       const multiplierMatch = rule.match(/\*\s*([\d.]+)/)
       const multiplier = multiplierMatch ? parseFloat(multiplierMatch[1]) : 1.15
-      
+
       return {
         type: 'volume_divergence',
         rawText: rule,
@@ -109,18 +109,18 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Moving Average Comparison (no crossover)
-  if ((ruleLower.includes('ema') || ruleLower.includes('sma')) && 
-      (ruleLower.includes('>') || ruleLower.includes('<')) && 
-      !ruleLower.includes('crosses') && 
-      !ruleLower.includes('close') && 
+  if ((ruleLower.includes('ema') || ruleLower.includes('sma')) &&
+      (ruleLower.includes('>') || ruleLower.includes('<')) &&
+      !ruleLower.includes('crosses') &&
+      !ruleLower.includes('close') &&
       !ruleLower.includes('price') &&
       !ruleLower.includes('bollinger') &&
-      !ruleLower.startsWith('volume')) {  // ADDED: exclude Volume patterns
-    
+      !ruleLower.startsWith('volume')) {
+
     const maMatches = rule.match(/(EMA|SMA)\((\d+)\)/gi) || []
-    
+
     if (maMatches.length >= 2) {
       const fastAbove = ruleLower.includes('>')
       return {
@@ -134,17 +134,18 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Price vs MA
-  if ((ruleLower.includes('close') || ruleLower.includes('price')) && 
+  if ((ruleLower.includes('close') || ruleLower.includes('price')) &&
       (ruleLower.includes('ema') || ruleLower.includes('sma')) &&
-      !ruleLower.includes('bollinger')) {
-    
+      !ruleLower.includes('bollinger') &&
+      !ruleLower.includes('open')) {
+
     const maMatch = rule.match(/(EMA|SMA)\((\d+)\)/i)
     if (maMatch) {
       const period = parseInt(maMatch[2])
       const type = maMatch[1].toUpperCase() as 'EMA' | 'SMA'
-      
+
       let operator: 'gt' | 'lt' | 'crosses_above' | 'crosses_below'
       if (ruleLower.includes('crosses_above')) {
         operator = 'crosses_above'
@@ -155,7 +156,7 @@ export function parseRule(rule: string): ParsedRule {
       } else {
         operator = 'lt'
       }
-      
+
       return {
         type: 'price_vs_ma',
         rawText: rule,
@@ -163,14 +164,14 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Bollinger Width - BOLLINGER_WIDTH comparisons
   if (ruleLower.includes('bollinger_width')) {
     const thresholdMatch = rule.match(/([\d.]+)/)
     const threshold = thresholdMatch ? parseFloat(thresholdMatch[1]) : 0.035
-    
+
     let condition: 'wide' | 'narrow' | 'expanding' | 'contracting'
-    
+
     if (ruleLower.includes('rising') || ruleLower.includes('expanding')) {
       condition = 'expanding'
     } else if (ruleLower.includes('falling') || ruleLower.includes('contracting')) {
@@ -180,14 +181,14 @@ export function parseRule(rule: string): ParsedRule {
     } else {
       condition = 'narrow'
     }
-    
+
     return {
       type: 'bollinger_width',
       rawText: rule,
       params: { condition, threshold }
     }
   }
-  
+
   // Bollinger Middle - Price vs BOLLINGER_MIDDLE
   if (ruleLower.includes('bollinger_middle')) {
     const priceAbove = ruleLower.includes('>') || ruleLower.includes('above')
@@ -197,7 +198,7 @@ export function parseRule(rule: string): ParsedRule {
       params: { priceAbove }
     }
   }
-  
+
   // Bollinger Bands - Touch upper/lower
   if (ruleLower.includes('bollinger') && !ruleLower.includes('width') && !ruleLower.includes('middle')) {
     const touchesLower = ruleLower.includes('lower') || ruleLower.includes('<')
@@ -210,17 +211,17 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // RSI Threshold
   if (ruleLower.includes('rsi') && (ruleLower.includes('>') || ruleLower.includes('<'))) {
     const rsiMatch = rule.match(/RSI\((\d+)\)/i)
     const thresholdMatch = rule.match(/[><]\s*(\d+)/)
-    
+
     if (rsiMatch && thresholdMatch) {
       const period = parseInt(rsiMatch[1])
       const threshold = parseInt(thresholdMatch[1])
       const operator = ruleLower.includes('>') ? 'gt' : 'lt'
-      
+
       return {
         type: 'rsi_threshold',
         rawText: rule,
@@ -228,21 +229,21 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Stochastic
   if (ruleLower.includes('stochastic')) {
     const thresholdMatch = rule.match(/[><]\s*(\d+)/)
     const threshold = thresholdMatch ? parseInt(thresholdMatch[1]) : 50
     const operator = ruleLower.includes('>') ? 'gt' : 'lt'
     const zone = threshold > 60 ? 'overbought' : threshold < 40 ? 'oversold' : 'overbought'
-    
+
     return {
       type: 'stochastic',
       rawText: rule,
       params: { threshold, operator, zone }
     }
   }
-  
+
   // ADX
   if (ruleLower.includes('adx')) {
     const strongTrend = ruleLower.includes('>') && (ruleLower.includes('25') || ruleLower.includes('20'))
@@ -255,7 +256,7 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // ATR
   if (ruleLower.includes('atr')) {
     if (ruleLower.includes('rising') || ruleLower.includes('expanding') || ruleLower.includes('increasing')) {
@@ -272,7 +273,7 @@ export function parseRule(rule: string): ParsedRule {
         params: { condition: 'low_volatility' }
       }
     }
-    
+
     const highVolatility = ruleLower.includes('>')
     return {
       type: 'atr',
@@ -282,7 +283,7 @@ export function parseRule(rule: string): ParsedRule {
       }
     }
   }
-  
+
   // Trend
   if (ruleLower.includes('rising') || ruleLower.includes('falling')) {
     const direction = ruleLower.includes('rising') ? 'rising' : 'falling'
@@ -292,38 +293,22 @@ export function parseRule(rule: string): ParsedRule {
       params: { direction }
     }
   }
-  
-  // Unknown pattern
-  return { type: 'unknown', rawText: rule, params: {} }
-}
 
   // Candle Direction - Close vs Open
-  if ((ruleLower.includes('close') || ruleLower.includes('open')) && 
-      !ruleLower.includes('ema') && 
-      !ruleLower.includes('sma') && 
+  if ((ruleLower.includes('close') && ruleLower.includes('open')) &&
+      !ruleLower.includes('ema') &&
+      !ruleLower.includes('sma') &&
       !ruleLower.includes('bollinger')) {
-    const bullish = ruleLower.includes('close >') || 
+    const bullish = ruleLower.includes('close >') ||
                     (ruleLower.includes('close') && ruleLower.includes('>') && ruleLower.includes('open'))
-    
-    return {
-      type: 'candle_direction',
-      rawText: rule,
-  
-  // Candle Direction - Close vs Open
-  if ((ruleLower.includes('close') && ruleLower.includes('open')) && 
-      !ruleLower.includes('ema') && 
-      !ruleLower.includes('sma') && 
-      !ruleLower.includes('bollinger')) {
-    const bullish = ruleLower.includes('close >') || 
-                    (ruleLower.includes('close') && ruleLower.includes('>') && ruleLower.includes('open'))
-    
+
     return {
       type: 'candle_direction',
       rawText: rule,
       params: { bullish }
     }
   }
-  
+
   // Unknown pattern
   return { type: 'unknown', rawText: rule, params: {} }
 }

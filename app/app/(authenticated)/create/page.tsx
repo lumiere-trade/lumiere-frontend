@@ -87,7 +87,6 @@ function CreatePageContent() {
             name: strategy.name,
             description: strategy.description,
             tsdl_code: JSON.stringify(strategy.tsdl, null, 2),
-            base_plugins: strategy.basePlugins,
             parameters: strategy.tsdl
           }
         }).then(() => {
