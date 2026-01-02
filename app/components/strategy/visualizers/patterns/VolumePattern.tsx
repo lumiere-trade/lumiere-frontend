@@ -127,10 +127,10 @@ export function VolumePattern({
         )
       })}
       
-      {/* Label - positioned on baseline */}
+      {/* Label - positioned BELOW baseline */}
       <Text
         x={10}
-        y={58}
+        y={72}
         text={`Volume SMA(${shortPeriod})`}
         color={baselineColor}
         opacity={0.7}
