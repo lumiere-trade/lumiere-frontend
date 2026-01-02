@@ -137,9 +137,9 @@ function CreatePageContent() {
     )
   }
 
-  // View routing based on actual state, not URL params
-  // Active conversation (has messages) OR library strategy loaded
-  if (messages.length > 0) {
+  // View routing based on strategy existence
+  // Show ConversationView if strategy is loaded (library template, user strategy, or active conversation)
+  if (strategy) {
     return (
       <ConversationView
         messages={messages}
@@ -160,7 +160,7 @@ function CreatePageContent() {
     )
   }
 
-  // Default: Empty state (new strategy, no messages)
+  // Default: Empty state (no strategy loaded)
   return (
     <EmptyStateView
       inputValue={inputValue}
