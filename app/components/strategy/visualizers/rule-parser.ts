@@ -296,3 +296,34 @@ export function parseRule(rule: string): ParsedRule {
   // Unknown pattern
   return { type: 'unknown', rawText: rule, params: {} }
 }
+
+  // Candle Direction - Close vs Open
+  if ((ruleLower.includes('close') || ruleLower.includes('open')) && 
+      !ruleLower.includes('ema') && 
+      !ruleLower.includes('sma') && 
+      !ruleLower.includes('bollinger')) {
+    const bullish = ruleLower.includes('close >') || 
+                    (ruleLower.includes('close') && ruleLower.includes('>') && ruleLower.includes('open'))
+    
+    return {
+      type: 'candle_direction',
+      rawText: rule,
+  
+  // Candle Direction - Close vs Open
+  if ((ruleLower.includes('close') && ruleLower.includes('open')) && 
+      !ruleLower.includes('ema') && 
+      !ruleLower.includes('sma') && 
+      !ruleLower.includes('bollinger')) {
+    const bullish = ruleLower.includes('close >') || 
+                    (ruleLower.includes('close') && ruleLower.includes('>') && ruleLower.includes('open'))
+    
+    return {
+      type: 'candle_direction',
+      rawText: rule,
+      params: { bullish }
+    }
+  }
+  
+  // Unknown pattern
+  return { type: 'unknown', rawText: rule, params: {} }
+}

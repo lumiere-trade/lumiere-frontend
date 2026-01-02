@@ -10,6 +10,7 @@ import {
   VolumePattern,
   ThresholdPattern,
   CandlestickPattern,
+  CandleDirectionPattern,
   TrendPattern,
   MACDHistogramPattern,
   MAComparisonPattern,
@@ -51,11 +52,11 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
   // Render visualization for each rule
   const renderVisualization = (rule: string, index: number) => {
     const parsed = parseRule(rule)
-    
+
     switch (parsed.type) {
       case 'macd_histogram':
         return <MACDHistogramPattern condition={parsed.params.condition} />
-      
+
       case 'macd_crossover':
         return (
           <CrossoverPattern
@@ -64,7 +65,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             slowLabel="Signal"
           />
         )
-      
+
       case 'macd_comparison':
         return (
           <CrossoverPattern
@@ -73,7 +74,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             slowLabel="Signal"
           />
         )
-      
+
       case 'ma_crossover':
         return (
           <CrossoverPattern
@@ -82,7 +83,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             slowLabel={`${parsed.params.type}(${parsed.params.slowPeriod})`}
           />
         )
-      
+
       case 'ma_comparison':
         return (
           <MAComparisonPattern
@@ -91,7 +92,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             fastAbove={parsed.params.operator === 'gt'}
           />
         )
-      
+
       case 'price_vs_ma':
         return (
           <CandlestickPattern
@@ -100,7 +101,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             maType={parsed.params.maType}
           />
         )
-      
+
       case 'rsi_threshold':
         return (
           <ThresholdPattern
@@ -110,10 +111,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             period={parsed.params.period}
           />
         )
-      
+
       case 'bollinger_bands':
         return <BandPattern touchPoint={parsed.params.band} />
-      
+
       case 'bollinger_width':
         return (
           <BollingerWidthPattern
@@ -121,10 +122,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             threshold={parsed.params.threshold}
           />
         )
-      
+
       case 'bollinger_middle':
         return <BollingerMiddlePattern priceAbove={parsed.params.priceAbove} />
-      
+
       case 'volume_divergence':
         return (
           <VolumePattern
@@ -134,7 +135,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             multiplier={parsed.params.multiplier}
           />
         )
-      
+
       case 'volume_spike':
         return (
           <VolumePattern
@@ -143,7 +144,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             multiplier={parsed.params.multiplier}
           />
         )
-      
+
       case 'stochastic':
         return (
           <ThresholdPattern
@@ -152,7 +153,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             operator={parsed.params.operator}
           />
         )
-      
+
       case 'adx':
         return (
           <ThresholdPattern
@@ -161,7 +162,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             operator="gt"
           />
         )
-      
+
       case 'atr':
         return (
           <TrendPattern
@@ -169,10 +170,13 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
             indicator="ATR"
           />
         )
-      
+
       case 'trend':
         return <TrendPattern direction={parsed.params.direction} />
-      
+
+      case 'candle_direction':
+        return <CandleDirectionPattern bullish={parsed.params.bullish} />
+
       default:
         // Unknown rule type - no visualization
         return null
@@ -184,10 +188,10 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
       <div className="space-y-6">
         {rules.map((rule, idx) => {
           const visualization = renderVisualization(rule, idx)
-          
+
           // Skip if no visualization available
           if (!visualization) return null
-          
+
           return (
             <div key={idx} className="grid grid-cols-2 gap-6 items-start">
               {/* Left: Text description */}
@@ -196,7 +200,7 @@ export function StrategyRulesVisualizer({ mode, educationalText }: StrategyRules
                   {ruleDescriptions[idx] || ''}
                 </pre>
               </div>
-              
+
               {/* Right: Visual diagram */}
               <div className="flex items-center">
                 {visualization}

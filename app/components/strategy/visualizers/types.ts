@@ -1,8 +1,4 @@
-/**
- * TypeScript types for strategy rule visualization
- */
-
-export type RuleType =
+export type RuleType = 
   | 'macd_crossover'
   | 'macd_histogram'
   | 'macd_comparison'
@@ -19,36 +15,16 @@ export type RuleType =
   | 'adx'
   | 'atr'
   | 'trend'
+  | 'candle_direction'
   | 'unknown'
-
-export type ComparisonOperator = 'gt' | 'gte' | 'lt' | 'lte' | 'crosses_above' | 'crosses_below'
-
-export type TrendDirection = 'rising' | 'falling' | 'expanding' | 'contracting'
 
 export interface ParsedRule {
   type: RuleType
   rawText: string
-  params: RuleParams
+  params: Record<string, any>
 }
 
-export type RuleParams =
-  | MACDCrossoverParams
-  | MACDHistogramParams
-  | MACDComparisonParams
-  | MACrossoverParams
-  | MAComparisonParams
-  | PriceVsMAParams
-  | RSIThresholdParams
-  | BollingerBandsParams
-  | BollingerWidthParams
-  | BollingerMiddleParams
-  | VolumeDivergenceParams
-  | VolumeSpikeParams
-  | StochasticParams
-  | ADXParams
-  | ATRParams
-  | TrendParams
-
+// ... rest of type definitions (keep existing)
 export interface MACDCrossoverParams {
   direction: 'above' | 'below'
 }
@@ -88,7 +64,7 @@ export interface RSIThresholdParams {
 
 export interface BollingerBandsParams {
   band: 'upper' | 'lower'
-  action: 'touches' | 'crosses'
+  action: 'touches' | 'breaks'
 }
 
 export interface BollingerWidthParams {
@@ -127,8 +103,11 @@ export interface ATRParams {
 }
 
 export interface TrendParams {
-  direction: TrendDirection
-  indicator?: string
+  direction: 'rising' | 'falling'
+}
+
+export interface CandleDirectionParams {
+  bullish: boolean
 }
 
 // SVG Component Props
@@ -137,7 +116,7 @@ export interface SVGLineProps {
   y1: number
   x2: number
   y2: number
-  color: string
+  color?: string
   width?: number
   opacity?: number
   dash?: string
@@ -145,19 +124,21 @@ export interface SVGLineProps {
 
 export interface SVGPathProps {
   d: string
-  color: string
+  color?: string
   width?: number
   opacity?: number
   fill?: string
+  fillOpacity?: number
 }
 
 export interface SVGCircleProps {
   cx: number
   cy: number
-  r: number
-  fill: string
+  r?: number
+  fill?: string
   stroke?: string
   strokeWidth?: number
+  opacity?: number
 }
 
 export interface SVGTextProps {
@@ -165,9 +146,9 @@ export interface SVGTextProps {
   y: number
   text: string
   color?: string
-  opacity?: number
   fontSize?: number
   fontWeight?: number
+  opacity?: number
   anchor?: 'start' | 'middle' | 'end'
 }
 
@@ -176,10 +157,11 @@ export interface SVGRectProps {
   y: number
   width: number
   height: number
-  fill: string
-  opacity?: number
+  fill?: string
   stroke?: string
   strokeWidth?: number
+  opacity?: number
+  rx?: number
 }
 
 export interface CandlestickProps {
