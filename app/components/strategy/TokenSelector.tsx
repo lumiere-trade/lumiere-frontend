@@ -7,7 +7,6 @@
 import { useState, useMemo } from 'react';
 import { useChronicler } from '@/hooks';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@lumiere/shared/components/ui/button';
 import { Check, ChevronsUpDown, Loader2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
@@ -26,7 +25,7 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
   // Filter tokens based on search
   const filteredTokens = useMemo(() => {
     if (!search) return tokens;
-    
+
     const searchLower = search.toLowerCase();
     return tokens.filter(
       (token) =>
@@ -41,29 +40,31 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
 
   if (isLoading) {
     return (
-      <Button variant="outline" className={cn('w-full justify-start', className)} disabled>
+      <div className={cn('w-full px-4 py-2 border border-input rounded-lg bg-background flex items-center justify-start text-muted-foreground', className)}>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Loading tokens...
-      </Button>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Button variant="outline" className={cn('w-full justify-start', className)} disabled>
+      <div className={cn('w-full px-4 py-2 border border-input rounded-lg bg-background flex items-center justify-start text-destructive', className)}>
         Error loading tokens
-      </Button>
+      </div>
     );
   }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+        <button
           role="combobox"
           aria-expanded={open}
-          className={cn('w-full justify-between', className)}
+          className={cn(
+            'w-full px-4 py-2 border border-input rounded-lg bg-background hover:bg-muted transition-colors flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+            className
+          )}
         >
           {selectedToken ? (
             <div className="flex items-center gap-2">
@@ -81,10 +82,10 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
               <span className="text-xs text-muted-foreground">{selectedToken.name}</span>
             </div>
           ) : (
-            'Select token...'
+            <span className="text-muted-foreground">Select token...</span>
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
+        </button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
         <div className="flex flex-col">
@@ -119,8 +120,8 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 transition-colors cursor-pointer",
-                    value === token.address 
-                      ? "bg-muted" 
+                    value === token.address
+                      ? "bg-muted"
                       : "hover:bg-muted"
                   )}
                 >
