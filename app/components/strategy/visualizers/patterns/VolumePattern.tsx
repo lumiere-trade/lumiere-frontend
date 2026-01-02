@@ -82,7 +82,7 @@ export function VolumePattern({
   }
   
   // mode === 'spike'
-  // Volume spike - RISING bars showing increasing volume
+  // Volume spike - RISING bars centered on baseline
   const baselineColor = getIndicatorColor(shortPeriod)
   
   // ASCENDING volume bars - shows rising volume trend
@@ -96,11 +96,11 @@ export function VolumePattern({
     { x: 300, height: 70 },  // Highest - major spike
   ]
   
-  const baselineY = 90  // Position baseline lower so bars can grow upward
+  const baselineY = 60  // Center position
   
   return (
     <svg viewBox={VIEWBOX} className="w-full h-36">
-      {/* Baseline (SMA) */}
+      {/* Baseline (SMA) - centered */}
       <Line
         x1={0}
         y1={baselineY}
@@ -127,10 +127,10 @@ export function VolumePattern({
         )
       })}
       
-      {/* Labels */}
+      {/* Label - positioned on baseline */}
       <Text
         x={10}
-        y={88}
+        y={58}
         text={`Volume SMA(${shortPeriod})`}
         color={baselineColor}
         opacity={0.7}
