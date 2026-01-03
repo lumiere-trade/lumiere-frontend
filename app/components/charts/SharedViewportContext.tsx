@@ -189,7 +189,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
   const candlesRef = useRef(candles)
   candlesRef.current = candles
 
-  // Recalculate viewport when zoom/pan changes
+  // Recalculate viewport when zoom/pan changes + DEBUG
   const recalculateViewport = useCallback((
     zoom: number,
     offsetX: number,
@@ -199,11 +199,19 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     const visibleCandles = Math.floor(width / candleWidth)
 
     // Calculate startIdx from offsetX
-    // offsetX = 0 means show first candles
-    // offsetX < 0 means pan left (show later candles)
-    // offsetX > 0 means pan right (show earlier candles, but clamped to 0)
     const startIdx = Math.max(0, Math.floor(-offsetX / candleWidth))
     const endIdx = Math.min(candlesRef.current.length - 1, startIdx + visibleCandles - 1)
+
+    // DEBUG
+    console.log('VIEWPORT DEBUG:', {
+      width,
+      candleWidth,
+      visibleCandles,
+      offsetX,
+      startIdx,
+      endIdx,
+      totalCandles: candlesRef.current.length
+    })
 
     return {
       startIdx,
@@ -432,22 +440,22 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     setState(prev => {
       // Calculate padding (match renderer logic)
       const paddingLeft = Math.max(15, containerWidth * 0.02)
-      
+
       // Find NEAREST candle center
       const exactPosition = (x - paddingLeft) / prev.sharedViewport.candleWidth
       const relativePosition = Math.floor(exactPosition + 0.5)
       const candleIndex = prev.sharedViewport.startIdx + relativePosition
-      
+
       // Clamp to valid range
       const clampedIndex = Math.max(
-        prev.sharedViewport.startIdx, 
+        prev.sharedViewport.startIdx,
         Math.min(prev.sharedViewport.endIdx, candleIndex)
       )
-      
+
       // Calculate CENTER X of this candle (snap point)
       const relativeIndex = clampedIndex - prev.sharedViewport.startIdx
       const snappedX = paddingLeft + (relativeIndex * prev.sharedViewport.candleWidth) + (prev.sharedViewport.candleWidth / 2)
-      
+
       // DEBUG
       console.log('SNAP DEBUG:', {
         rawX: x,
@@ -459,9 +467,10 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
         clampedIndex,
         relativeIndex,
         snappedX: snappedX.toFixed(2),
-        expectedCenter: (paddingLeft + relativeIndex * prev.sharedViewport.candleWidth + prev.sharedViewport.candleWidth / 2).toFixed(2)
+        expectedCenter: (paddingLeft + relativeIndex * prev.sharedViewport.candleWidth + prev.sharedViewport.candleWidth / 2).toFixed(2),
+        viewport: { start: prev.sharedViewport.startIdx, end: prev.sharedViewport.endIdx }
       })
-      
+
       return {
         ...prev,
         mouse: { x: snappedX, y, panelId }
