@@ -151,6 +151,9 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
   const [hoveredTrade, setHoveredTrade] = useState<Trade | null>(null)
 
+  // Store last raw mouse position for re-snapping after zoom
+  const lastRawMouseRef = useRef<{ x: number; y: number; panelId: string } | null>(null)
+
   // Update panels when indicators change - PRESERVE visibility state
   useEffect(() => {
     setState(prev => {
@@ -250,9 +253,25 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
       newOffsetX = Math.max(maxOffset, Math.min(minOffset, newOffsetX))
 
+      const newViewport = recalculateViewport(newZoom, newOffsetX, containerWidth)
+
+      // Re-snap mouse to new candle center after zoom
+      let newMouse = prev.mouse
+      if (lastRawMouseRef.current) {
+        const { x: rawX, y, panelId } = lastRawMouseRef.current
+        const exactPosition = (rawX - paddingLeft) / newViewport.candleWidth
+        const relativePosition = Math.floor(exactPosition)
+        const candleIndex = newViewport.startIdx + relativePosition
+        const clampedIndex = Math.max(newViewport.startIdx, Math.min(newViewport.endIdx, candleIndex))
+        const relativeIndex = clampedIndex - newViewport.startIdx
+        const snappedX = paddingLeft + (relativeIndex * newViewport.candleWidth) + (newViewport.candleWidth / 2)
+        newMouse = { x: snappedX, y, panelId }
+      }
+
       return {
         ...prev,
-        sharedViewport: recalculateViewport(newZoom, newOffsetX, containerWidth)
+        sharedViewport: newViewport,
+        mouse: newMouse
       }
     })
   }, [containerWidth, recalculateViewport])
@@ -436,6 +455,9 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
   // Mouse tracking with SNAP to candle center (TradingView behavior) + DEBUG
   const updateMouse = useCallback((x: number, y: number, panelId: string) => {
+    // Store raw mouse position for re-snapping after zoom
+    lastRawMouseRef.current = { x, y, panelId }
+
     setState(prev => {
       // Calculate padding (match renderer logic)
       const paddingLeft = Math.max(15, containerWidth * 0.02)
@@ -482,6 +504,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
   }, [containerWidth])
 
   const clearMouse = useCallback(() => {
+    lastRawMouseRef.current = null
     setState(prev => ({
       ...prev,
       mouse: null
