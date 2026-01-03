@@ -42,11 +42,24 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const containerWidth = containerRef.current.getBoundingClientRect().width
     const paddingLeft = Math.max(15, containerWidth * 0.02)
 
-    // Calculate RELATIVE index within viewport (centered on candle)
-    const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
+    // FIXED: state.mouse.x is already CENTER of candle (after snap in SharedViewportContext)
+    // So we just need: (center - paddingLeft) / candleWidth to find which candle
+    // OLD (WRONG): const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
+    const relativeIdx = Math.floor((state.mouse.x - paddingLeft) / candleWidth)
 
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
+
+    // DEBUG - verify correct candle is selected
+    console.log('OHLC CANDLE DEBUG:', {
+      mouseX: state.mouse.x,
+      paddingLeft,
+      candleWidth,
+      relativeIdx,
+      candleIdx,
+      startIdx,
+      candleData: candleIdx >= 0 && candleIdx < candles.length ? candles[candleIdx] : null
+    })
 
     // Clamp to valid range
     if (candleIdx < 0 || candleIdx >= candles.length) return null
@@ -70,8 +83,8 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const containerWidth = containerRef.current.getBoundingClientRect().width
     const paddingLeft = Math.max(15, containerWidth * 0.02)
 
-    // Calculate RELATIVE index within viewport (centered on candle)
-    const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
+    // FIXED: Same formula as hoveredCandle
+    const relativeIdx = Math.floor((state.mouse.x - paddingLeft) / candleWidth)
 
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
