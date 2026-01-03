@@ -427,13 +427,13 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     })
   }, [onVisibilityChange])
 
-  // Mouse tracking with SNAP to candle center (TradingView behavior)
+  // Mouse tracking with SNAP to candle center (TradingView behavior) + DEBUG
   const updateMouse = useCallback((x: number, y: number, panelId: string) => {
     setState(prev => {
       // Calculate padding (match renderer logic)
       const paddingLeft = Math.max(15, containerWidth * 0.02)
       
-      // Find NEAREST candle center using simpler formula
+      // Find NEAREST candle center
       const exactPosition = (x - paddingLeft) / prev.sharedViewport.candleWidth
       const relativePosition = Math.floor(exactPosition + 0.5)
       const candleIndex = prev.sharedViewport.startIdx + relativePosition
@@ -447,6 +447,20 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       // Calculate CENTER X of this candle (snap point)
       const relativeIndex = clampedIndex - prev.sharedViewport.startIdx
       const snappedX = paddingLeft + (relativeIndex * prev.sharedViewport.candleWidth) + (prev.sharedViewport.candleWidth / 2)
+      
+      // DEBUG
+      console.log('SNAP DEBUG:', {
+        rawX: x,
+        paddingLeft,
+        candleWidth: prev.sharedViewport.candleWidth,
+        exactPosition: exactPosition.toFixed(2),
+        relativePosition,
+        candleIndex,
+        clampedIndex,
+        relativeIndex,
+        snappedX: snappedX.toFixed(2),
+        expectedCenter: (paddingLeft + relativeIndex * prev.sharedViewport.candleWidth + prev.sharedViewport.candleWidth / 2).toFixed(2)
+      })
       
       return {
         ...prev,
