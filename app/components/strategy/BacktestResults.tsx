@@ -228,7 +228,9 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
           <TabsContent value="price" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">{results.symbol} · {results.timeframe}</CardTitle>
+                <CardTitle className="text-base">
+                  {results.symbol} • {format(new Date(results.start_date), 'MMM dd, yyyy')} - {format(new Date(results.end_date), 'MMM dd, yyyy')} • {results.timeframe}
+                </CardTitle>
                 <CardDescription className="text-sm">
                   {indicator_data && indicator_data.length > 0
                     ? `${indicator_data.length} indicators loaded • Toggle visibility below`
