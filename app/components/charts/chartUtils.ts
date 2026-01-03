@@ -97,8 +97,8 @@ export function priceToY(
   return paddingTop + ((priceMax - price) / priceRange) * chartHeight
 }
 
-// Index to X coordinate - FIXED to use relative positioning
-// NOTE: offsetX is NOT used here because startIdx/endIdx already incorporate it
+// Index to X coordinate - Returns CENTER of candle
+// CHANGED: Now returns center instead of left edge for proper crosshair alignment
 export function indexToX(
   index: number,
   candleWidth: number,
@@ -108,8 +108,25 @@ export function indexToX(
 ): number {
   // Use relative index from viewport startIdx
   const relativeIndex = index - startIdx
-  // offsetX is already incorporated in startIdx/endIdx calculation
-  return paddingLeft + (relativeIndex * candleWidth)
+  // Calculate left edge
+  const leftEdge = paddingLeft + (relativeIndex * candleWidth)
+  // Return CENTER of candle (left edge + half width)
+  const center = leftEdge + (candleWidth / 2)
+  
+  // DEBUG - log occasionally to verify
+  if (relativeIndex === 0 && Math.random() < 0.01) {
+    console.log('indexToX DEBUG:', {
+      index,
+      startIdx,
+      relativeIndex,
+      candleWidth,
+      paddingLeft,
+      leftEdge: leftEdge.toFixed(2),
+      center: center.toFixed(2)
+    })
+  }
+  
+  return center
 }
 
 // Debounce (optimization for resize/scroll)
@@ -204,7 +221,7 @@ export function formatTime(timestamp: number, candles?: Candle[]): string {
   if (interval < HOUR) {
     return format(date, 'HH:mm')
   }
-  
+
   // 1h - 4h candles - show date + time
   if (interval < DAY) {
     return format(date, 'M/d HH:mm')
