@@ -189,7 +189,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
   const candlesRef = useRef(candles)
   candlesRef.current = candles
 
-  // Recalculate viewport when zoom/pan changes
+  // Recalculate viewport when zoom/pan changes + DEBUG
   const recalculateViewport = useCallback((
     zoom: number,
     offsetX: number,
@@ -201,6 +201,16 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     // Calculate startIdx from offsetX
     const startIdx = Math.max(0, Math.floor(-offsetX / candleWidth))
     const endIdx = Math.min(candlesRef.current.length - 1, startIdx + visibleCandles - 1)
+
+    console.log('VIEWPORT DEBUG:', {
+      width,
+      candleWidth,
+      visibleCandles,
+      offsetX,
+      startIdx,
+      endIdx,
+      totalCandles: candlesRef.current.length
+    })
 
     return {
       startIdx,
