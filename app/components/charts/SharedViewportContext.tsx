@@ -433,8 +433,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       // Calculate padding (match renderer logic)
       const paddingLeft = Math.max(15, containerWidth * 0.02)
       
-      // Calculate which candle index we're over
-      const relativePosition = Math.floor((x - paddingLeft) / prev.sharedViewport.candleWidth)
+      // Find NEAREST candle center (round instead of floor)
+      const relativePosition = Math.round((x - paddingLeft - prev.sharedViewport.candleWidth / 2) / prev.sharedViewport.candleWidth)
       const candleIndex = prev.sharedViewport.startIdx + relativePosition
       
       // Clamp to valid range
