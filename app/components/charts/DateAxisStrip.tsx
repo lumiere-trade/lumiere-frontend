@@ -17,7 +17,7 @@ function getPadding(width: number) {
 // Parse timeframe string to minutes
 function timeframeToMinutes(timeframe: string): number {
   const match = timeframe.match(/^(\d+)([mhd])$/i)
-  if (!match) return 15 // Default to 15m
+  if (!match) return 15
 
   const value = parseInt(match[1])
   const unit = match[2].toLowerCase()
@@ -30,25 +30,25 @@ function timeframeToMinutes(timeframe: string): number {
   }
 }
 
-// Format date based on timeframe
+// Format date based on timeframe (matching TradingView)
 function formatDate(timestamp: number, timeframe: string): string {
   const date = new Date(timestamp)
   const minutes = timeframeToMinutes(timeframe)
 
   // < 1d (< 1440 minutes) -> date + time
   if (minutes < 1440) {
-    const day = date.getDate()
+    const day = date.getDate().toString().padStart(2, '0')
     const month = date.toLocaleString('en-US', { month: 'short' })
     const hours = date.getHours().toString().padStart(2, '0')
     const mins = date.getMinutes().toString().padStart(2, '0')
     return `${day} ${month} ${hours}:${mins}`
   }
 
-  // >= 1d -> date only
-  const day = date.getDate()
+  // >= 1d -> date only with '25 format
+  const day = date.getDate().toString().padStart(2, '0')
   const month = date.toLocaleString('en-US', { month: 'short' })
   const year = date.getFullYear().toString().slice(-2)
-  return `${day} ${month} ${year}`
+  return `${day} ${month} '${year}`
 }
 
 export function DateAxisStrip() {
