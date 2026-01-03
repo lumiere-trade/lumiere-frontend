@@ -151,8 +151,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
   const [hoveredTrade, setHoveredTrade] = useState<Trade | null>(null)
 
-  // Store last raw mouse position for re-snapping after zoom
-  const lastRawMouseRef = useRef<{ x: number; y: number; panelId: string } | null>(null)
+  // Store last candle index (absolute) for re-snapping after zoom
+  const lastCandleRef = useRef<{ candleIndex: number; y: number; panelId: string } | null>(null)
 
   // Update panels when indicators change - PRESERVE visibility state
   useEffect(() => {
@@ -255,17 +255,18 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
       const newViewport = recalculateViewport(newZoom, newOffsetX, containerWidth)
 
-      // Re-snap mouse to new candle center after zoom
+      // Re-snap mouse to SAME candle (by absolute index) in new viewport
       let newMouse = prev.mouse
-      if (lastRawMouseRef.current) {
-        const { x: rawX, y, panelId } = lastRawMouseRef.current
-        const exactPosition = (rawX - paddingLeft) / newViewport.candleWidth
-        const relativePosition = Math.floor(exactPosition)
-        const candleIndex = newViewport.startIdx + relativePosition
-        const clampedIndex = Math.max(newViewport.startIdx, Math.min(newViewport.endIdx, candleIndex))
-        const relativeIndex = clampedIndex - newViewport.startIdx
-        const snappedX = paddingLeft + (relativeIndex * newViewport.candleWidth) + (newViewport.candleWidth / 2)
-        newMouse = { x: snappedX, y, panelId }
+      if (lastCandleRef.current) {
+        const { candleIndex, y, panelId } = lastCandleRef.current
+        
+        // Check if candle is visible in new viewport
+        if (candleIndex >= newViewport.startIdx && candleIndex <= newViewport.endIdx) {
+          // Calculate position of SAME candle in new viewport
+          const relativeIndex = candleIndex - newViewport.startIdx
+          const snappedX = paddingLeft + (relativeIndex * newViewport.candleWidth) + (newViewport.candleWidth / 2)
+          newMouse = { x: snappedX, y, panelId }
+        }
       }
 
       return {
@@ -455,9 +456,6 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
 
   // Mouse tracking with SNAP to candle center (TradingView behavior) + DEBUG
   const updateMouse = useCallback((x: number, y: number, panelId: string) => {
-    // Store raw mouse position for re-snapping after zoom
-    lastRawMouseRef.current = { x, y, panelId }
-
     setState(prev => {
       // Calculate padding (match renderer logic)
       const paddingLeft = Math.max(15, containerWidth * 0.02)
@@ -472,6 +470,9 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
         prev.sharedViewport.startIdx,
         Math.min(prev.sharedViewport.endIdx, candleIndex)
       )
+
+      // Store ABSOLUTE candle index for re-snapping after zoom
+      lastCandleRef.current = { candleIndex: clampedIndex, y, panelId }
 
       // Calculate CENTER X of this candle (snap point)
       const relativeIndex = clampedIndex - prev.sharedViewport.startIdx
@@ -504,7 +505,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
   }, [containerWidth])
 
   const clearMouse = useCallback(() => {
-    lastRawMouseRef.current = null
+    lastCandleRef.current = null
     setState(prev => ({
       ...prev,
       mouse: null
