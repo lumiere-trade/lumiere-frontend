@@ -205,15 +205,6 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     const startIdx = Math.max(0, Math.floor(-offsetX / candleWidth))
     const endIdx = Math.min(candlesRef.current.length - 1, startIdx + visibleCandles - 1)
 
-    console.log('VIEWPORT DEBUG:', {
-      width,
-      candleWidth,
-      visibleCandles,
-      offsetX,
-      startIdx,
-      endIdx,
-      totalCandles: candlesRef.current.length
-    })
 
     return {
       startIdx,
@@ -482,20 +473,6 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       const candleLeftEdge = paddingLeft + (relativePosition * prev.sharedViewport.candleWidth)
       const trueCandleCenter = candleLeftEdge + (prev.sharedViewport.candleWidth / 2)
 
-      console.log('SNAP DEBUG:', {
-        rawX: x,
-        paddingLeft,
-        candleWidth: prev.sharedViewport.candleWidth,
-        exactPosition: exactPosition.toFixed(2),
-        relativePosition,
-        candleIndex,
-        clampedIndex,
-        relativeIndex,
-        snappedX: snappedX.toFixed(2),
-        trueCandleCenter: trueCandleCenter.toFixed(2),
-        candleLeftEdge: candleLeftEdge.toFixed(2),
-        viewport: { start: prev.sharedViewport.startIdx, end: prev.sharedViewport.endIdx }
-      })
 
       return {
         ...prev,

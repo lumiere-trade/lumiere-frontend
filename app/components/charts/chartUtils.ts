@@ -112,20 +112,7 @@ export function indexToX(
   const leftEdge = paddingLeft + (relativeIndex * candleWidth)
   // Return CENTER of candle (left edge + half width)
   const center = leftEdge + (candleWidth / 2)
-  
-  // DEBUG - log occasionally to verify
-  if (relativeIndex === 0 && Math.random() < 0.01) {
-    console.log('indexToX DEBUG:', {
-      index,
-      startIdx,
-      relativeIndex,
-      candleWidth,
-      paddingLeft,
-      leftEdge: leftEdge.toFixed(2),
-      center: center.toFixed(2)
-    })
-  }
-  
+
   return center
 }
 

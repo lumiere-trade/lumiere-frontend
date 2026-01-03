@@ -51,15 +51,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     const candleIdx = startIdx + relativeIdx
 
     // DEBUG - verify correct candle is selected
-    console.log('OHLC CANDLE DEBUG:', {
-      mouseX: state.mouse.x,
-      paddingLeft,
-      candleWidth,
-      relativeIdx,
-      candleIdx,
-      startIdx,
-      candleData: candleIdx >= 0 && candleIdx < candles.length ? candles[candleIdx] : null
-    })
 
     // Clamp to valid range
     if (candleIdx < 0 || candleIdx >= candles.length) return null
