@@ -242,6 +242,7 @@ export const BacktestResults = memo(function BacktestResults({ results, onClose,
                     candles={candles}
                     trades={chartTrades}
                     indicatorData={indicator_data || []}
+                    timeframe={results.timeframe}
                     mode="C"
                     showIndicatorToggles={true}
                     initialVisibility={indicatorVisibility}

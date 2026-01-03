@@ -17,6 +17,7 @@ interface MultiPanelChartProps {
   candles: Candle[]
   trades: Trade[]
   indicatorData: IndicatorData[]
+  timeframe?: string
   mode?: 'L' | 'C'
   showIndicatorToggles?: boolean
   initialVisibility?: Record<string, boolean>
@@ -251,6 +252,7 @@ export function MultiPanelChart({
   candles,
   trades,
   indicatorData,
+  timeframe = '15m',
   mode = 'C',
   showIndicatorToggles = true,
   initialVisibility,
@@ -343,6 +345,7 @@ export function MultiPanelChart({
         indicators={indicators}
         containerWidth={containerWidth}
         trades={trades}
+        timeframe={timeframe}
         onVisibilityChange={onVisibilityChange}
       >
         <MultiPanelChartInner showIndicatorToggles={showIndicatorToggles} />

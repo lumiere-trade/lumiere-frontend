@@ -9,6 +9,7 @@ interface SharedViewportContextValue {
   candles: Candle[]
   trades: Trade[]
   hoveredTrade: Trade | null
+  timeframe: string
 
   // Viewport controls (synchronized across panels)
   handleZoom: (delta: number, mouseX: number) => void
@@ -54,10 +55,11 @@ interface Props {
   trades: Trade[]
   children: React.ReactNode
   containerWidth: number
+  timeframe: string
   onVisibilityChange?: (visibility: Record<string, boolean>) => void
 }
 
-export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, onVisibilityChange }: Props) {
+export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, timeframe, onVisibilityChange }: Props) {
   // Initialize shared viewport - show LAST candles (newest data)
   const candleWidth = 8
   const visibleCandles = Math.floor(containerWidth / candleWidth)
@@ -453,6 +455,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     candles,
     trades,
     hoveredTrade,
+    timeframe,
     handleZoom,
     handlePan,
     handleReset,

@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { indexToX } from './chartUtils'
 
-const DATE_STRIP_HEIGHT = 30 // Height of the date strip
+const DATE_STRIP_HEIGHT = 30
 
 // Match padding calculation from renderers
 function getPadding(width: number) {
@@ -14,12 +14,49 @@ function getPadding(width: number) {
   }
 }
 
+// Parse timeframe string to minutes
+function timeframeToMinutes(timeframe: string): number {
+  const match = timeframe.match(/^(\d+)([mhd])$/i)
+  if (!match) return 15 // Default to 15m
+
+  const value = parseInt(match[1])
+  const unit = match[2].toLowerCase()
+
+  switch (unit) {
+    case 'm': return value
+    case 'h': return value * 60
+    case 'd': return value * 1440
+    default: return 15
+  }
+}
+
+// Format date based on timeframe
+function formatDate(timestamp: number, timeframe: string): string {
+  const date = new Date(timestamp)
+  const minutes = timeframeToMinutes(timeframe)
+
+  // < 1d (< 1440 minutes) -> date + time
+  if (minutes < 1440) {
+    const day = date.getDate()
+    const month = date.toLocaleString('en-US', { month: 'short' })
+    const hours = date.getHours().toString().padStart(2, '0')
+    const mins = date.getMinutes().toString().padStart(2, '0')
+    return `${day} ${month} ${hours}:${mins}`
+  }
+
+  // >= 1d -> date only
+  const day = date.getDate()
+  const month = date.toLocaleString('en-US', { month: 'short' })
+  const year = date.getFullYear().toString().slice(-2)
+  return `${day} ${month} ${year}`
+}
+
 export function DateAxisStrip() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastResizeTimeRef = useRef<number>(0)
-  const { state, candles } = useSharedViewport()
+  const { state, candles, timeframe } = useSharedViewport()
   const [themeVersion, setThemeVersion] = useState(0)
 
   // Setup canvas with resize detection
@@ -153,8 +190,7 @@ export function DateAxisStrip() {
 
       if (x < padding.left || x > width - padding.right) continue
 
-      const date = new Date(candle.t)
-      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+      const dateStr = formatDate(candle.t, timeframe)
 
       ctx.fillText(dateStr, x, height / 2)
     }
@@ -168,8 +204,7 @@ export function DateAxisStrip() {
 
       if (candleIndex >= 0 && candleIndex < candles.length) {
         const candle = candles[candleIndex]
-        const date = new Date(candle.t)
-        const dateStr = `${date.getMonth() + 1}/${date.getDate()}`
+        const dateStr = formatDate(candle.t, timeframe)
 
         // Draw highlight background
         const textWidth = ctx.measureText(dateStr).width
@@ -182,7 +217,7 @@ export function DateAxisStrip() {
         ctx.fillText(dateStr, mouseX, height / 2)
       }
     }
-  }, [state, candles, themeVersion])
+  }, [state, candles, timeframe, themeVersion])
 
   // Trigger render on state/theme change
   useEffect(() => {
