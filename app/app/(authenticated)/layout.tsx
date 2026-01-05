@@ -62,15 +62,15 @@ function AuthenticatedLayoutContent({
     }
   }, [isDetailsPanelOpen, isLargeScreen])
 
-  // Auto-close DetailsPanel when StrategyPanel opens (small screens only, unless fullscreen)
+  // Auto-close DetailsPanel when StrategyPanel opens (small screens only)
   useEffect(() => {
     // Skip auto-close on large screens
     if (isLargeScreen) return
 
-    if (isSidebarOpen && isDetailsPanelOpen && !strategyContext.isParametersFullscreen) {
+    if (isSidebarOpen && isDetailsPanelOpen) {
       strategyContext.closeDetailsPanel()
     }
-  }, [isSidebarOpen, isLargeScreen, strategyContext.isParametersFullscreen])
+  }, [isSidebarOpen, isLargeScreen])
 
   if (!storage.hasToken() || isLoading) {
     return null
@@ -84,28 +84,11 @@ function AuthenticatedLayoutContent({
     }
   }
 
-  const handleOpenStrategies = () => {
-    setIsSidebarOpen(true)
-  }
-
-  const handleOpenChat = () => {
-    // Collapse fullscreen to restore normal layout where chat is visible
-    if (strategyContext.isParametersFullscreen) {
-      strategyContext.collapseParametersFullscreen()
-    }
-  }
-
   // RESPONSIVE PADDING CALCULATION
-  const isFullscreen = strategyContext.isParametersFullscreen || false
-
   let leftPadding: string
   let rightPadding: string
 
-  if (isFullscreen) {
-    // Fullscreen mode: no side panels
-    leftPadding = '32px'
-    rightPadding = '32px'
-  } else if (isLargeScreen) {
+  if (isLargeScreen) {
     // Large screen (≥1920px): Support 3-panel layout
     leftPadding = isSidebarOpen ? '300px' : '32px'
     // CRITICAL: Only apply details panel padding on /create page
@@ -123,13 +106,11 @@ function AuthenticatedLayoutContent({
       {/* Header - Fixed at top */}
       <NavigationHeader currentPage={currentPage} />
 
-      {/* Sidebar - Fixed positioning (hidden in fullscreen) */}
-      {!isFullscreen && (
-        <StrategyPanel
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-      )}
+      {/* Sidebar - Fixed positioning */}
+      <StrategyPanel
+        isOpen={isSidebarOpen}
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
 
       {/* Main Content Area with smooth padding transitions */}
       <main
@@ -150,8 +131,6 @@ function AuthenticatedLayoutContent({
           onToggle={handleDetailsPanelToggle}
           activeTab={strategyContext.detailsPanelTab}
           onTabChange={strategyContext.setDetailsPanelTab}
-          onOpenStrategies={handleOpenStrategies}
-          onOpenChat={handleOpenChat}
         />
       )}
     </div>

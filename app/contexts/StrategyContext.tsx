@@ -86,10 +86,6 @@ interface StrategyContextType {
   openDetailsPanel: () => void
   closeDetailsPanel: () => void
   setDetailsPanelTab: (tab: DetailsPanelTab) => void
-
-  isParametersFullscreen: boolean
-  expandParametersFullscreen: () => void
-  collapseParametersFullscreen: () => void
 }
 
 const StrategyContext = createContext<StrategyContextType | undefined>(undefined)
@@ -122,7 +118,6 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   const [isChatExpanded, setIsChatExpanded] = useState(false)
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
   const [detailsPanelTab, setDetailsPanelTab] = useState<DetailsPanelTab>('parameters')
-  const [isParametersFullscreen, setIsParametersFullscreen] = useState(false)
 
   // Ref to Prophet stopGeneration callback
   const stopProphetRef = useRef<(() => void) | null>(null)
@@ -237,7 +232,6 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setProgressStage('')
     setProgressMessage('')
     setDetailsPanelTab('parameters')
-    setIsParametersFullscreen(false)
   }
 
   // Navigation helper - checks for unsaved changes before navigating
@@ -269,12 +263,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
   const expandChat = () => setIsChatExpanded(true)
   const collapseChat = () => setIsChatExpanded(false)
   const openDetailsPanel = () => setIsDetailsPanelOpen(true)
-  const closeDetailsPanel = () => {
-    setIsDetailsPanelOpen(false)
-    setIsParametersFullscreen(false)
-  }
-  const expandParametersFullscreen = () => setIsParametersFullscreen(true)
-  const collapseParametersFullscreen = () => setIsParametersFullscreen(false)
+  const closeDetailsPanel = () => setIsDetailsPanelOpen(false)
 
   return (
     <StrategyContext.Provider
@@ -314,9 +303,6 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         openDetailsPanel,
         closeDetailsPanel,
         setDetailsPanelTab,
-        isParametersFullscreen,
-        expandParametersFullscreen,
-        collapseParametersFullscreen,
       }}
     >
       {children}

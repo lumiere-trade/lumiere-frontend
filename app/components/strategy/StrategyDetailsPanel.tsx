@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { BookOpen, Sliders, Code, Play, MessageSquare, Layers, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
@@ -23,8 +23,6 @@ interface StrategyDetailsPanelProps {
   onToggle: () => void
   activeTab: 'library' | 'parameters' | 'code' | 'backtest'
   onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest') => void
-  onOpenStrategies?: () => void
-  onOpenChat?: () => void
 }
 
 export function StrategyDetailsPanel({
@@ -32,8 +30,6 @@ export function StrategyDetailsPanel({
   onToggle,
   activeTab,
   onTabChange,
-  onOpenStrategies,
-  onOpenChat
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
   const {
@@ -47,9 +43,6 @@ export function StrategyDetailsPanel({
     setBacktestResults,
     setIsBacktesting,
     educationalContent,
-    isParametersFullscreen,
-    expandParametersFullscreen,
-    collapseParametersFullscreen,
     isDirty
   } = useStrategy()
 
@@ -57,9 +50,6 @@ export function StrategyDetailsPanel({
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
-
-  // Transition state - freeze chart rendering
-  const [isTransitioning, setIsTransitioning] = useState(false)
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -156,47 +146,23 @@ export function StrategyDetailsPanel({
     }
   }
 
-  const handleToggleFullscreen = () => {
-    // Start transition - blur charts
-    setIsTransitioning(true)
-
-    if (isParametersFullscreen) {
-      collapseParametersFullscreen()
-    } else {
-      expandParametersFullscreen()
-    }
-
-    // Resume after animation completes
-    setTimeout(() => {
-      setIsTransitioning(false)
-    }, 320) // 300ms transition + 20ms buffer
-  }
-
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
-
-  // GPU-optimized: Calculate width in vw units instead of Tailwind classes
-  const panelWidthVw = isParametersFullscreen ? 100 : 50
 
   return (
     <>
       {/* Collapsed state - thin strip on right */}
       <div
-        className="fixed right-0 top-0 h-screen w-8 z-10 bg-card border-l border-primary/20"
+        className="fixed right-0 top-0 h-screen w-8 z-10 bg-card border-l border-primary/20 transition-transform duration-300 ease-in-out"
         style={{
           transform: isOpen ? 'translateX(100%)' : 'translateX(0)',
-          transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: isOpen ? 'auto' : 'transform',
         }}
       >
         <div className="h-full flex items-center justify-center" style={{ marginTop: '54px' }}>
           <button
             onClick={onToggle}
-            className="h-full w-full px-2 hover:bg-card"
-            style={{
-              transition: 'background-color 150ms ease-in-out',
-            }}
+            className="h-full w-full px-2 hover:bg-card transition-colors"
             title="Open strategy details"
           >
             <ChevronLeft className="h-5 w-5 text-primary" />
@@ -204,113 +170,27 @@ export function StrategyDetailsPanel({
         </div>
       </div>
 
-      {/* Expanded state - GPU-optimized responsive width */}
+      {/* Expanded state - fixed 50vw width */}
       <div
-        className="fixed right-0 top-[54px] h-[calc(100vh-54px)] bg-background border-l border-border z-10 flex flex-col"
+        className="fixed right-0 top-[54px] h-[calc(100vh-54px)] bg-background border-l border-border z-10 flex flex-col transition-transform duration-300 ease-in-out"
         style={{
-          width: `${panelWidthVw}vw`,
+          width: '50vw',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 300ms cubic-bezier(0.4, 0, 0.2, 1), width 300ms cubic-bezier(0.4, 0, 0.2, 1)',
-          willChange: (isOpen || isParametersFullscreen) ? 'transform, width' : 'auto',
-          backfaceVisibility: 'hidden',
-          WebkitBackfaceVisibility: 'hidden',
-          perspective: 1000,
         }}
       >
-        {/* Fullscreen mode - Left sidebar with collapsed panels */}
-        {isParametersFullscreen && isOpen && (
-          <div
-            className="absolute left-0 top-0 h-full w-12 bg-card border-r border-primary/20 flex flex-col gap-2 py-4 items-center z-20"
-            style={{
-              transform: 'translateZ(0)',
-            }}
-          >
-            {/* Strategies Panel Toggle */}
-            {onOpenStrategies && (
-              <button
-                onClick={onOpenStrategies}
-                className="p-2 rounded-lg hover:bg-primary/10 group"
-                style={{
-                  transition: 'background-color 150ms ease-in-out',
-                }}
-                title="Open strategies"
-              >
-                <Layers className="h-5 w-5 text-primary" />
-              </button>
-            )}
-
-            {/* Chat Panel Toggle */}
-            {onOpenChat && (
-              <button
-                onClick={onOpenChat}
-                className="p-2 rounded-lg hover:bg-primary/10 group"
-                style={{
-                  transition: 'background-color 150ms ease-in-out',
-                }}
-                title="Open chat"
-              >
-                <MessageSquare className="h-5 w-5 text-primary" />
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Half-width mode - 2 buttons stacked */}
-        {isOpen && !isParametersFullscreen && (
+        {/* Close button */}
+        {isOpen && (
           <div
             className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20"
             style={{
               left: '0',
-              transform: 'translate(-50%, 0) translateZ(0)',
-            }}
-          >
-            <div className="flex flex-col gap-2 pointer-events-auto">
-              {/* Expand to Fullscreen Button */}
-              <button
-                onClick={handleToggleFullscreen}
-                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md"
-                style={{
-                  transition: 'background-color 150ms ease-in-out',
-                  transform: 'translateZ(0)',
-                }}
-                title="Expand to fullscreen"
-              >
-                <ChevronLeft className="h-4 w-4 text-primary mx-auto" />
-              </button>
-
-              {/* Close Button */}
-              <button
-                onClick={onToggle}
-                className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md"
-                style={{
-                  transition: 'background-color 150ms ease-in-out',
-                  transform: 'translateZ(0)',
-                }}
-                title="Close sidebar"
-              >
-                <ChevronRight className="h-4 w-4 text-primary mx-auto" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Fullscreen mode - 1 button only */}
-        {isOpen && isParametersFullscreen && (
-          <div
-            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-30"
-            style={{
-              left: 'calc(3rem)',
-              transform: 'translate(-50%, 0) translateZ(0)',
+              transform: 'translate(-50%, 0)',
             }}
           >
             <button
-              onClick={handleToggleFullscreen}
-              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md pointer-events-auto"
-              style={{
-                transition: 'background-color 150ms ease-in-out',
-                transform: 'translateZ(0)',
-              }}
-              title="Collapse to half"
+              onClick={onToggle}
+              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md pointer-events-auto transition-colors"
+              title="Close sidebar"
             >
               <ChevronRight className="h-4 w-4 text-primary mx-auto" />
             </button>
@@ -318,9 +198,7 @@ export function StrategyDetailsPanel({
         )}
 
         {/* Header with tab navigation */}
-        <div className={`border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between ${
-          isParametersFullscreen ? 'ml-12' : ''
-        }`}>
+        <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 overflow-x-auto">
             {/* Library tab - only show if educational content exists */}
             {educationalContent && (
@@ -395,9 +273,7 @@ export function StrategyDetailsPanel({
         </div>
 
         {/* Scrollable content area */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4 ${
-          isParametersFullscreen ? 'ml-12' : ''
-        }`}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4">
           {activeTab === 'library' && (
             <LibraryEducationalContent />
           )}
@@ -434,7 +310,7 @@ export function StrategyDetailsPanel({
                 </div>
               )}
               {!isBacktesting && backtestResults && (
-                <BacktestResults results={backtestResults} isTransitioning={isTransitioning} />
+                <BacktestResults results={backtestResults} isTransitioning={false} />
               )}
             </div>
           )}
