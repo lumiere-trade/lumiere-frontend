@@ -24,7 +24,7 @@ export class TimeoutError extends Error {
   }
 }
 
-function getAuthToken(): string | null {
+export function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
   try {
     return localStorage.getItem('lumiere_auth_token')

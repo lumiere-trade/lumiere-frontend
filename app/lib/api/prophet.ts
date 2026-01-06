@@ -1,9 +1,12 @@
 /**
- * Prophet API Client - SSE Streaming
+ * Prophet API Client - SSE Streaming (via Pourtier Gateway)
+ * All requests go through Pourtier with JWT authentication
  * Updated for MVP with simplified strategy schema
  */
 
-const PROPHET_URL = process.env.NEXT_PUBLIC_PROPHET_URL || 'http://localhost:9081'
+import { getAuthToken } from './client'
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000'
 
 export interface ProphetMessage {
   role: string;
@@ -80,8 +83,22 @@ export type SSEEvent =
   | { type: 'done'; data: { conversation_id: string; message_count?: number } }
   | { type: 'error'; data: { error: string } };
 
+function getHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
+
 /**
  * Send chat message to Prophet AI with SSE streaming.
+ * Routes through Pourtier API Gateway for authentication.
  */
 export async function sendChatMessageStream(
   request: ProphetChatRequest,
@@ -93,11 +110,9 @@ export async function sendChatMessageStream(
   signal?: AbortSignal
 ): Promise<void> {
   try {
-    const response = await fetch(`${PROPHET_URL}/chat`, {
+    const response = await fetch(`${API_URL}/api/prophet/chat`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify(request),
       signal,
     });
@@ -143,10 +158,10 @@ export async function sendChatMessageStream(
             onToken(eventData.token);
           } else if (eventType === 'progress') {
             onProgress(eventData as ProgressEvent);
-          } else if (eventType === 'strategy_generated') {
-            onStrategyGenerated(eventData as StrategyGeneratedEvent);
           } else if (eventType === 'done') {
             onComplete(fullMessage, conversationId);
+          } else if (eventType === 'strategy_generated') {
+            onStrategyGenerated(eventData as StrategyGeneratedEvent);
           } else if (eventType === 'error') {
             onError(new Error(eventData.error));
           }
@@ -163,11 +178,9 @@ export async function sendChatMessageStream(
 }
 
 export async function getProphetHealth(): Promise<ProphetHealthResponse> {
-  const response = await fetch(`${PROPHET_URL}/health`, {
+  const response = await fetch(`${API_URL}/api/prophet/health`, {
     method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getHeaders(),
   });
 
   if (!response.ok) {
