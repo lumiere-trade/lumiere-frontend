@@ -161,12 +161,23 @@ export function StrategyDetailsPanel({
       return
     }
 
+    if (!editedStrategy) {
+      toast.error('Strategy data not available')
+      return
+    }
+
     try {
       setDeploymentStatus('deploying')
       log.info('Deploying strategy', { strategyId: strategy.id })
 
-      await deployStrategyMutation.mutateAsync(strategy.id)
-      
+      // Construct DeployStrategyRequest with full payload
+      await deployStrategyMutation.mutateAsync({
+        user_id: strategy.userId || 'vladimir', // TODO: Get from auth context
+        strategy_json: editedStrategy,
+        initial_capital: 10000, // TODO: Make configurable from UI
+        is_paper_trading: true, // TODO: Make configurable from UI
+      })
+
       setDeploymentStatus('deployed')
       updateStrategy({ status: 'active' })
     } catch (error) {
@@ -183,7 +194,7 @@ export function StrategyDetailsPanel({
       log.info('Stopping strategy', { strategyId: strategy.id })
 
       await stopStrategyMutation.mutateAsync(strategy.id)
-      
+
       setDeploymentStatus('idle')
       updateStrategy({ status: 'paused' })
     } catch (error) {
