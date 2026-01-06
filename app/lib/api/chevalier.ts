@@ -8,60 +8,37 @@ import { post, get } from './client';
 import { logger, LogCategory } from '@/lib/debug';
 
 // ============================================================================
-// TYPES
+// TYPES (Aligned with Backend DTOs)
 // ============================================================================
 
 export interface DeployStrategyRequest {
-  strategy_id: string;
+  user_id: string;
+  strategy_json: Record<string, any>;
+  initial_capital: number;
+  is_paper_trading: boolean;
 }
 
 export interface DeployStrategyResponse {
-  execution_id: string;
   strategy_id: string;
-  status: 'STARTING' | 'RUNNING';
-  deployed_at: string;
-  message: string;
+  status: string;
+  created_at: string;
+  is_paper_trading: boolean;
 }
 
-export interface StopStrategyRequest {
+export interface StrategyStatusResponse {
   strategy_id: string;
-}
-
-export interface StopStrategyResponse {
-  execution_id: string;
-  strategy_id: string;
-  status: 'STOPPING' | 'STOPPED';
-  stopped_at: string;
-  message: string;
-}
-
-export interface ExecutionStatus {
-  execution_id: string;
-  strategy_id: string;
+  status: string;
   user_id: string;
-  status: 'STARTING' | 'RUNNING' | 'STOPPING' | 'STOPPED' | 'ERROR';
-  deployed_at: string;
-  stopped_at: string | null;
-  error_message: string | null;
-  
-  // Runtime stats
-  signals_today: number;
-  trades_today: number;
-  pnl_today: number;
-  last_signal_at: string | null;
-  last_trade_at: string | null;
-  
-  // Resource usage
-  cpu_percent: number | null;
-  memory_mb: number | null;
-  uptime_seconds: number | null;
+  token_symbol: string;
+  current_capital: number;
+  is_paper_trading: boolean;
+  created_at: string;
 }
 
 export interface HealthResponse {
   status: string;
   service: string;
-  version: string;
-  active_executions: number;
+  timestamp: string;
 }
 
 // ============================================================================
@@ -73,110 +50,176 @@ const LOG_CATEGORY = LogCategory.API;
 
 /**
  * Deploy strategy for live trading
+ * 
+ * Creates a new deployed strategy and starts execution immediately.
+ * Strategy is immutable once deployed - any changes require new deployment.
  */
 export const deployStrategy = async (
-  strategyId: string
+  request: DeployStrategyRequest
 ): Promise<DeployStrategyResponse> => {
-  logger.info(LOG_CATEGORY, 'Deploying strategy', { strategyId });
+  logger.info(LOG_CATEGORY, 'Deploying strategy', { request });
 
   try {
     const result = await post<DeployStrategyResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/deploy`
+      `${CHEVALIER_PREFIX}/strategies/deploy`,
+      request
     );
-    
+
     logger.info(LOG_CATEGORY, 'Strategy deployed successfully', {
-      strategyId,
-      executionId: result.execution_id,
+      strategyId: result.strategy_id,
       status: result.status,
+      isPaperTrading: result.is_paper_trading,
     });
-    
+
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to deploy strategy', { 
-      error, 
-      strategyId 
+    logger.error(LOG_CATEGORY, 'Failed to deploy strategy', { error });
+    throw error;
+  }
+};
+
+/**
+ * Pause running strategy
+ * 
+ * Stops signal evaluation but keeps subscriptions active.
+ * Can be resumed later without re-warmup.
+ */
+export const pauseStrategy = async (
+  strategyId: string
+): Promise<{ status: string; strategy_id: string }> => {
+  logger.info(LOG_CATEGORY, 'Pausing strategy', { strategyId });
+
+  try {
+    const result = await post<{ status: string; strategy_id: string }>(
+      `${CHEVALIER_PREFIX}/strategies/${strategyId}/pause`
+    );
+
+    logger.info(LOG_CATEGORY, 'Strategy paused successfully', {
+      strategyId,
+      status: result.status,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to pause strategy', {
+      error,
+      strategyId
     });
     throw error;
   }
 };
 
 /**
- * Stop running strategy
+ * Resume paused strategy
+ * 
+ * Restores indicator state and restarts evaluation.
+ */
+export const resumeStrategy = async (
+  strategyId: string
+): Promise<{ status: string; strategy_id: string }> => {
+  logger.info(LOG_CATEGORY, 'Resuming strategy', { strategyId });
+
+  try {
+    const result = await post<{ status: string; strategy_id: string }>(
+      `${CHEVALIER_PREFIX}/strategies/${strategyId}/resume`
+    );
+
+    logger.info(LOG_CATEGORY, 'Strategy resumed successfully', {
+      strategyId,
+      status: result.status,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to resume strategy', {
+      error,
+      strategyId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Stop strategy permanently
+ * 
+ * Cleanup: Unsubscribe, delete state, archive strategy.
  */
 export const stopStrategy = async (
   strategyId: string
-): Promise<StopStrategyResponse> => {
+): Promise<{ status: string; strategy_id: string }> => {
   logger.info(LOG_CATEGORY, 'Stopping strategy', { strategyId });
 
   try {
-    const result = await post<StopStrategyResponse>(
+    const result = await post<{ status: string; strategy_id: string }>(
       `${CHEVALIER_PREFIX}/strategies/${strategyId}/stop`
     );
-    
+
     logger.info(LOG_CATEGORY, 'Strategy stopped successfully', {
       strategyId,
-      executionId: result.execution_id,
       status: result.status,
     });
-    
+
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to stop strategy', { 
-      error, 
-      strategyId 
+    logger.error(LOG_CATEGORY, 'Failed to stop strategy', {
+      error,
+      strategyId
     });
     throw error;
   }
 };
 
 /**
- * Get strategy execution status
+ * Get strategy status
  */
-export const getExecutionStatus = async (
+export const getStrategyStatus = async (
   strategyId: string
-): Promise<ExecutionStatus> => {
-  logger.debug(LOG_CATEGORY, 'Fetching execution status', { strategyId });
+): Promise<StrategyStatusResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching strategy status', { strategyId });
 
   try {
-    const result = await get<ExecutionStatus>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/status`
+    const result = await get<StrategyStatusResponse>(
+      `${CHEVALIER_PREFIX}/strategies/${strategyId}`
     );
-    
-    logger.info(LOG_CATEGORY, 'Execution status fetched', {
+
+    logger.info(LOG_CATEGORY, 'Strategy status fetched', {
       strategyId,
       status: result.status,
-      signalsToday: result.signals_today,
-      tradesToday: result.trades_today,
+      currentCapital: result.current_capital,
     });
-    
+
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to fetch execution status', { 
-      error, 
-      strategyId 
+    logger.error(LOG_CATEGORY, 'Failed to fetch strategy status', {
+      error,
+      strategyId
     });
     throw error;
   }
 };
 
 /**
- * Get all active executions for current user
+ * Get all active strategies (optionally filtered by user)
  */
-export const getActiveExecutions = async (): Promise<ExecutionStatus[]> => {
-  logger.debug(LOG_CATEGORY, 'Fetching active executions');
+export const getActiveStrategies = async (
+  userId?: string
+): Promise<StrategyStatusResponse[]> => {
+  logger.debug(LOG_CATEGORY, 'Fetching active strategies', { userId });
 
   try {
-    const result = await get<{ executions: ExecutionStatus[] }>(
-      `${CHEVALIER_PREFIX}/executions/active`
-    );
-    
-    logger.info(LOG_CATEGORY, 'Active executions fetched', {
-      count: result.executions.length,
+    const url = userId
+      ? `${CHEVALIER_PREFIX}/strategies/active?user_id=${userId}`
+      : `${CHEVALIER_PREFIX}/strategies/active`;
+
+    const result = await get<StrategyStatusResponse[]>(url);
+
+    logger.info(LOG_CATEGORY, 'Active strategies fetched', {
+      count: result.length,
     });
-    
-    return result.executions;
+
+    return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to fetch active executions', { error });
+    logger.error(LOG_CATEGORY, 'Failed to fetch active strategies', { error });
     throw error;
   }
 };
@@ -189,13 +232,12 @@ export const getHealth = async (): Promise<HealthResponse> => {
 
   try {
     const result = await get<HealthResponse>(`${CHEVALIER_PREFIX}/health`);
-    
+
     logger.info(LOG_CATEGORY, 'Chevalier health check passed', {
       status: result.status,
-      version: result.version,
-      activeExecutions: result.active_executions,
+      service: result.service,
     });
-    
+
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Chevalier health check failed', { error });
