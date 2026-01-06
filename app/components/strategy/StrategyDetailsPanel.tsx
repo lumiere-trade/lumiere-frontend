@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2, Rocket, StopCircle } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
@@ -17,7 +16,9 @@ import {
   useDeployStrategy,
   useStopStrategy
 } from "@/hooks/mutations/use-chevalier-mutations"
+import { useStrategyDeploymentStatus } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategy } from "@/contexts/StrategyContext"
+import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
@@ -36,6 +37,8 @@ export function StrategyDetailsPanel({
   onTabChange,
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
+  const { user } = useAuth()
+  
   const {
     strategy,
     editedStrategy,
@@ -57,8 +60,17 @@ export function StrategyDetailsPanel({
   const deployStrategyMutation = useDeployStrategy()
   const stopStrategyMutation = useStopStrategy()
 
-  // Deployment status (simulated for now - will be replaced with real query)
-  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deployed' | 'deploying' | 'stopping'>('idle')
+  const { 
+    data: deploymentData, 
+    isLoading: isLoadingDeployment 
+  } = useStrategyDeploymentStatus(strategy?.id)
+
+  const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
+  const chevalierStatus = deploymentData?.status || null
+  
+  const isDeployed = chevalierStatus === 'ACTIVE' || chevalierStatus === 'PAUSED' || chevalierStatus === 'ERROR'
+  const canDeploy = strategy?.id && !isDirty && !isLibraryStrategy && !chevalierStatus
+  const canStop = isDeployed && !isLibraryStrategy
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -167,22 +179,16 @@ export function StrategyDetailsPanel({
     }
 
     try {
-      setDeploymentStatus('deploying')
       log.info('Deploying strategy', { strategyId: strategy.id })
 
-      // Construct DeployStrategyRequest with full payload
       await deployStrategyMutation.mutateAsync({
-        user_id: strategy.userId || 'vladimir', // TODO: Get from auth context
+        user_id: user?.id || 'vladimir',
         strategy_json: editedStrategy,
-        initial_capital: 10000, // TODO: Make configurable from UI
-        is_paper_trading: true, // TODO: Make configurable from UI
+        initial_capital: 10000,
+        is_paper_trading: true,
       })
-
-      setDeploymentStatus('deployed')
-      updateStrategy({ status: 'active' })
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
-      setDeploymentStatus('idle')
     }
   }
 
@@ -190,16 +196,10 @@ export function StrategyDetailsPanel({
     if (!strategy?.id) return
 
     try {
-      setDeploymentStatus('stopping')
       log.info('Stopping strategy', { strategyId: strategy.id })
-
       await stopStrategyMutation.mutateAsync(strategy.id)
-
-      setDeploymentStatus('idle')
-      updateStrategy({ status: 'paused' })
     } catch (error) {
       log.error('Failed to stop strategy', { error })
-      setDeploymentStatus('deployed')
     }
   }
 
@@ -207,10 +207,9 @@ export function StrategyDetailsPanel({
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
-  const isDeploymentLoading = deploymentStatus === 'deploying' || deploymentStatus === 'stopping'
-
-  const canDeploy = strategy?.id && !isDirty && deploymentStatus === 'idle'
-  const isDeployed = deploymentStatus === 'deployed' || strategy?.status === 'active'
+  const isDeploymentLoading = deployStrategyMutation.isPending || 
+                               stopStrategyMutation.isPending ||
+                               isLoadingDeployment
 
   return (
     <>
@@ -313,71 +312,73 @@ export function StrategyDetailsPanel({
             </Button>
           </div>
 
-          {/* RIGHT: Action Buttons - Deploy THEN Save */}
-          <div className="flex items-center gap-2">
-            {/* 1. Deploy/Stop Button (LEFT) */}
-            {isDeployed ? (
+          {/* RIGHT: Action Buttons - ONLY for owned strategies */}
+          {!isLibraryStrategy && (
+            <div className="flex items-center gap-2">
+              {canStop ? (
+                <Button
+                  size="sm"
+                  onClick={handleStop}
+                  disabled={isDeploymentLoading}
+                  variant="destructive"
+                  className="gap-2 min-w-[120px] text-md"
+                >
+                  {stopStrategyMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Stopping...
+                    </>
+                  ) : (
+                    <>
+                      <StopCircle className="h-4 w-4" />
+                      {chevalierStatus === 'PAUSED' && 'Stop (Paused)'}
+                      {chevalierStatus === 'ERROR' && 'Stop (Error)'}
+                      {chevalierStatus === 'ACTIVE' && 'Stop'}
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={handleDeploy}
+                  disabled={!canDeploy || isDeploymentLoading}
+                  variant="default"
+                  className="gap-2 min-w-[120px] text-md bg-green-600 hover:bg-green-700"
+                >
+                  {deployStrategyMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <Rocket className="h-4 w-4" />
+                      Deploy
+                    </>
+                  )}
+                </Button>
+              )}
+
               <Button
                 size="sm"
-                onClick={handleStop}
-                disabled={isDeploymentLoading}
-                variant="destructive"
+                onClick={handleSave}
+                disabled={!isDirty || isSaving || !strategy}
                 className="gap-2 min-w-[120px] text-md"
               >
-                {deploymentStatus === 'stopping' ? (
+                {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Stopping...
+                    Saving...
                   </>
                 ) : (
                   <>
-                    <StopCircle className="h-4 w-4" />
-                    Stop
+                    <Save className="h-4 w-4" />
+                    Save
                   </>
                 )}
               </Button>
-            ) : (
-              <Button
-                size="sm"
-                onClick={handleDeploy}
-                disabled={!canDeploy || isDeploymentLoading}
-                variant="default"
-                className="gap-2 min-w-[120px] text-md bg-green-600 hover:bg-green-700"
-              >
-                {deploymentStatus === 'deploying' ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Deploying...
-                  </>
-                ) : (
-                  <>
-                    <Rocket className="h-4 w-4" />
-                    Deploy
-                  </>
-                )}
-              </Button>
-            )}
-
-            {/* 2. Save Button (RIGHT) */}
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!isDirty || isSaving || !strategy}
-              className="gap-2 min-w-[120px] text-md"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
-              )}
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* Scrollable content area */}

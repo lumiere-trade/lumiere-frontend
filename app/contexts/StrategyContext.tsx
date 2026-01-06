@@ -15,6 +15,7 @@ export interface ChatMessage {
 
 export interface Strategy {
   id: string | null
+  userId: string | null
   name: string
   description: string
   tsdl: StrategyJSON

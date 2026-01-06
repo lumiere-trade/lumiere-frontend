@@ -5,6 +5,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { deployStrategy, stopStrategy } from '@/lib/api/chevalier';
+import { chevalierKeys } from '@/hooks/queries/use-chevalier-queries';
 import type { DeployStrategyRequest } from '@/lib/api/chevalier';
 
 // ============================================================================
@@ -17,21 +18,25 @@ import type { DeployStrategyRequest } from '@/lib/api/chevalier';
  */
 export const useDeployStrategy = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (request: DeployStrategyRequest) => deployStrategy(request),
     onSuccess: (data) => {
       toast.success('Strategy deployed successfully!', {
         description: `Strategy ID: ${data.strategy_id.slice(0, 8)}... | Paper: ${data.is_paper_trading ? 'Yes' : 'No'}`,
       });
-      
+
       // Invalidate strategy queries to refresh status
       queryClient.invalidateQueries({
         queryKey: ['architect', 'strategies']
       });
-      
+
       queryClient.invalidateQueries({
-        queryKey: ['chevalier', 'active']
+        queryKey: chevalierKeys.strategies()
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: chevalierKeys.strategyStatus(data.strategy_id)
       });
     },
     onError: (error: any) => {
@@ -49,19 +54,23 @@ export const useDeployStrategy = () => {
  */
 export const useStopStrategy = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (strategyId: string) => stopStrategy(strategyId),
-    onSuccess: () => {
+    onSuccess: (_, strategyId) => {
       toast.success('Strategy stopped successfully!');
-      
+
       // Invalidate queries
       queryClient.invalidateQueries({
         queryKey: ['architect', 'strategies']
       });
-      
+
       queryClient.invalidateQueries({
-        queryKey: ['chevalier', 'active']
+        queryKey: chevalierKeys.strategies()
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: chevalierKeys.strategyStatus(strategyId)
       });
     },
     onError: (error: any) => {

@@ -60,6 +60,7 @@ export function useProphet() {
       // No strategy yet - create initial empty strategy with conversation
       setStrategy({
         id: null,
+        userId: null,
         name: '',
         description: '',
         tsdl: {
@@ -160,6 +161,7 @@ export function useProphet() {
           // Create new strategy from Prophet response
           setStrategy({
             id: null,
+            userId: null,
             name: strategyEvent.strategy_name,
             description: strategyEvent.strategy_json.description,
             tsdl: strategyEvent.strategy_json,

@@ -93,6 +93,7 @@ export function useStrategyLoader({
 
       const newStrategy = {
         id: strategyData.id,
+        userId: strategyData.user_id,
         name: strategyData.name,
         description: strategyData.description,
         tsdl: tsdlJson,
@@ -105,7 +106,7 @@ export function useStrategyLoader({
       }
 
       setStrategy(newStrategy)
-      setEducationalContent(null) // User strategies don't have educational content
+      setEducationalContent(null)
       toast.success(`Strategy "${strategyData.name}" loaded`)
       setDetailsPanelTab('parameters')
       setTimeout(() => openDetailsPanel(), 100)
@@ -139,6 +140,7 @@ export function useStrategyLoader({
 
       const newStrategy = {
         id: null,
+        userId: null,
         name: lib.name,
         description: lib.description,
         tsdl: strategyJson as any,
@@ -156,7 +158,7 @@ export function useStrategyLoader({
       setStrategy(newStrategy)
       setEducationalContent(lib.educational_content || null)
       toast.success(`Library strategy "${lib.name}" loaded as template`)
-      setDetailsPanelTab('library') // Open Library tab for library strategies
+      setDetailsPanelTab('library')
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       toast.error('Failed to load library strategy')
