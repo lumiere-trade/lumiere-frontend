@@ -114,3 +114,17 @@ export interface TransactionListResponse {
   transactions: EscrowTransactionDto[];
   total: number;
 }
+
+// ============================================================================
+// DEPLOYMENT TYPES
+// ============================================================================
+
+export type DeploymentStatus = 'STARTING' | 'RUNNING' | 'STOPPING' | 'STOPPED' | 'ERROR';
+
+export interface DeploymentInfo {
+  execution_id: string;
+  status: DeploymentStatus;
+  deployed_at: string | null;
+  stopped_at: string | null;
+  error_message: string | null;
+}

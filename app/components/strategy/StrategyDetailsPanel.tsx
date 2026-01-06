@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2, Rocket, StopCircle } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
@@ -13,6 +13,10 @@ import {
   useUpdateStrategy,
   useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
+import {
+  useDeployStrategy,
+  useStopStrategy
+} from "@/hooks/mutations/use-chevalier-mutations"
 import { useStrategy } from "@/contexts/StrategyContext"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
@@ -50,6 +54,11 @@ export function StrategyDetailsPanel({
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
+  const deployStrategyMutation = useDeployStrategy()
+  const stopStrategyMutation = useStopStrategy()
+
+  // Deployment status (simulated for now - will be replaced with real query)
+  const [deploymentStatus, setDeploymentStatus] = useState<'idle' | 'deployed' | 'deploying' | 'stopping'>('idle')
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -87,11 +96,8 @@ export function StrategyDetailsPanel({
         name: editedName
       })
 
-      // Sync editedName with editedStrategy.name before saving
       updateEditedStrategy({ name: editedName })
 
-      // FIRST: Update strategy in Context immediately
-      // This makes strategy.tsdl = editedStrategy, so isDirty becomes false
       updateStrategy({
         name: editedName,
         description: editedStrategy.description,
@@ -100,7 +106,6 @@ export function StrategyDetailsPanel({
 
       let strategyId: string
 
-      // SECOND: Save to backend
       if (isEditing) {
         await updateStrategyMutation.mutateAsync({
           strategyId: strategy.id,
@@ -124,7 +129,6 @@ export function StrategyDetailsPanel({
         })
         strategyId = strategyResponse.strategy_id
 
-        // Update with new ID from backend
         updateStrategy({ id: strategyId })
       }
 
@@ -146,9 +150,56 @@ export function StrategyDetailsPanel({
     }
   }
 
+  const handleDeploy = async () => {
+    if (!strategy?.id) {
+      toast.error('Please save strategy before deploying')
+      return
+    }
+
+    if (isDirty) {
+      toast.error('Please save changes before deploying')
+      return
+    }
+
+    try {
+      setDeploymentStatus('deploying')
+      log.info('Deploying strategy', { strategyId: strategy.id })
+
+      await deployStrategyMutation.mutateAsync(strategy.id)
+      
+      setDeploymentStatus('deployed')
+      updateStrategy({ status: 'active' })
+    } catch (error) {
+      log.error('Failed to deploy strategy', { error })
+      setDeploymentStatus('idle')
+    }
+  }
+
+  const handleStop = async () => {
+    if (!strategy?.id) return
+
+    try {
+      setDeploymentStatus('stopping')
+      log.info('Stopping strategy', { strategyId: strategy.id })
+
+      await stopStrategyMutation.mutateAsync(strategy.id)
+      
+      setDeploymentStatus('idle')
+      updateStrategy({ status: 'paused' })
+    } catch (error) {
+      log.error('Failed to stop strategy', { error })
+      setDeploymentStatus('deployed')
+    }
+  }
+
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
+
+  const isDeploymentLoading = deploymentStatus === 'deploying' || deploymentStatus === 'stopping'
+
+  const canDeploy = strategy?.id && !isDirty && deploymentStatus === 'idle'
+  const isDeployed = deploymentStatus === 'deployed' || strategy?.status === 'active'
 
   return (
     <>
@@ -197,10 +248,10 @@ export function StrategyDetailsPanel({
           </div>
         )}
 
-        {/* Header with tab navigation */}
+        {/* Header with tab navigation and action buttons */}
         <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+          {/* LEFT: Tab Navigation */}
           <div className="flex items-center gap-2 overflow-x-auto">
-            {/* Library tab - only show if educational content exists */}
             {educationalContent && (
               <Button
                 variant={activeTab === 'library' ? 'default' : 'outline'}
@@ -251,25 +302,71 @@ export function StrategyDetailsPanel({
             </Button>
           </div>
 
-          {/* Save Button - Right side */}
-          <Button
-            size="sm"
-            onClick={handleSave}
-            disabled={!isDirty || isSaving || !strategy}
-            className="gap-2 min-w-[120px] text-md"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
+          {/* RIGHT: Action Buttons - Deploy THEN Save */}
+          <div className="flex items-center gap-2">
+            {/* 1. Deploy/Stop Button (LEFT) */}
+            {isDeployed ? (
+              <Button
+                size="sm"
+                onClick={handleStop}
+                disabled={isDeploymentLoading}
+                variant="destructive"
+                className="gap-2 min-w-[120px] text-md"
+              >
+                {deploymentStatus === 'stopping' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Stopping...
+                  </>
+                ) : (
+                  <>
+                    <StopCircle className="h-4 w-4" />
+                    Stop
+                  </>
+                )}
+              </Button>
             ) : (
-              <>
-                <Save className="h-4 w-4" />
-                Save
-              </>
+              <Button
+                size="sm"
+                onClick={handleDeploy}
+                disabled={!canDeploy || isDeploymentLoading}
+                variant="default"
+                className="gap-2 min-w-[120px] text-md bg-green-600 hover:bg-green-700"
+              >
+                {deploymentStatus === 'deploying' ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Deploying...
+                  </>
+                ) : (
+                  <>
+                    <Rocket className="h-4 w-4" />
+                    Deploy
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
+
+            {/* 2. Save Button (RIGHT) */}
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!isDirty || isSaving || !strategy}
+              className="gap-2 min-w-[120px] text-md"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Save
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Scrollable content area */}
