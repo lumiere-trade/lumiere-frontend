@@ -19,7 +19,6 @@ export interface Strategy {
   name: string
   description: string
   tsdl: StrategyJSON
-  status: 'draft' | 'active' | 'paused' | 'archived'
   basePlugins: string[]
   version: string
 

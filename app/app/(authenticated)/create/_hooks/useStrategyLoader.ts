@@ -97,7 +97,6 @@ export function useStrategyLoader({
         name: strategyData.name,
         description: strategyData.description,
         tsdl: tsdlJson,
-        status: strategyData.status,
         basePlugins: strategyData.base_plugins,
         version: strategyData.version,
         conversation: conversationData,
@@ -144,7 +143,6 @@ export function useStrategyLoader({
         name: lib.name,
         description: lib.description,
         tsdl: strategyJson as any,
-        status: 'draft' as const,
         basePlugins: [strategyType],
         version: '1.0.0',
         conversation: {

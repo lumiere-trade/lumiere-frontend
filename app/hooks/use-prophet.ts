@@ -77,7 +77,6 @@ export function useProphet() {
           take_profit: null,
           trailing_stop: null,
         },
-        status: 'draft',
         basePlugins: ['indicator_based'],
         version: '1.0.0',
         conversation: {
@@ -165,7 +164,6 @@ export function useProphet() {
             name: strategyEvent.strategy_name,
             description: strategyEvent.strategy_json.description,
             tsdl: strategyEvent.strategy_json,
-            status: 'draft',
             basePlugins: [strategyType],
             version: '1.0.0',
             conversation: {
