@@ -26,8 +26,10 @@ export function useProphet() {
   const abortControllerRef = useRef<AbortController | null>(null)
 
   // Health check query
-  const { data: healthData, error: healthError } = useProphetHealthQuery()
-  const isHealthy = healthData?.status === 'healthy'
+  const { data: healthData, error: healthError, isLoading } = useProphetHealthQuery()
+  
+  // Optimistic: assume healthy unless explicit error
+  const isHealthy = healthError ? false : (healthData?.status === 'healthy' || isLoading)
 
   const sendMessage = async (message: string) => {
     if (!message.trim()) return
