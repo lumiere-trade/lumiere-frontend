@@ -356,54 +356,56 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           Indicator Based
         </span>
 
-        {/* Description with Edit */}
-        <div className="group">
-          {isEditingDescription ? (
-            <div className="space-y-2">
-              <textarea
-                value={tempDescription}
-                onChange={(e) => setTempDescription(e.target.value)}
-                onKeyDown={handleDescriptionKeyDown}
-                autoFocus
-                rows={3}
-                className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
-              />
-              <div className="flex items-center gap-2">
+        {/* Description with Edit - in Card */}
+        <div className="bg-card border border-primary/20 rounded-2xl p-4">
+          <div className="group">
+            {isEditingDescription ? (
+              <div className="space-y-2">
+                <textarea
+                  value={tempDescription}
+                  onChange={(e) => setTempDescription(e.target.value)}
+                  onKeyDown={handleDescriptionKeyDown}
+                  autoFocus
+                  rows={3}
+                  className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleConfirmDescription}
+                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                  >
+                    <Check className="h-4 w-4" />
+                    Save
+                  </button>
+                  <button
+                    onClick={handleCancelEditDescription}
+                    className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-start gap-2">
+                <p className="text-muted-foreground leading-relaxed flex-1">
+                  {editedStrategy.description}
+                </p>
                 <button
-                  onClick={handleConfirmDescription}
-                  className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                  onClick={handleStartEditDescription}
+                  className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                  title="Edit description"
                 >
-                  <Check className="h-4 w-4" />
-                  Save
-                </button>
-                <button
-                  onClick={handleCancelEditDescription}
-                  className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-                >
-                  Cancel
+                  <Pencil className="h-4 w-4" />
                 </button>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-start gap-2">
-              <p className="text-muted-foreground leading-relaxed flex-1">
-                {editedStrategy.description}
-              </p>
-              <button
-                onClick={handleStartEditDescription}
-                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                title="Edit description"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {hasIndicators && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground ">
+          <h3 className="text-xl font-semibold text-foreground">
             Technical Indicators
           </h3>
 
