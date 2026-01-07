@@ -352,71 +352,79 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column - Strategy Info Card */}
-          <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-4">
-            {/* Description with Edit */}
-            <label className="text-base font-semibold text-foreground">Description</label>
-            <div className="group">
-              {isEditingDescription ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={tempDescription}
-                    onChange={(e) => setTempDescription(e.target.value)}
-                    onKeyDown={handleDescriptionKeyDown}
-                    autoFocus
-                    rows={3}
-                    className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
-                  />
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={handleConfirmDescription}
-                      className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-                    >
-                      <Check className="h-4 w-4" />
-                      Save
-                    </button>
-                    <button
-                      onClick={handleCancelEditDescription}
-                      className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+          {/* Left Column - Description & Tags */}
+          <div className="flex flex-col gap-6">
+            {/* Description Card */}
+            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
+              <div className="space-y-3">
+                <label className="text-base font-semibold text-foreground">Description</label>
+                <div className="group">
+                  {isEditingDescription ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={tempDescription}
+                        onChange={(e) => setTempDescription(e.target.value)}
+                        onKeyDown={handleDescriptionKeyDown}
+                        autoFocus
+                        rows={3}
+                        className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleConfirmDescription}
+                          className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                        >
+                          <Check className="h-4 w-4" />
+                          Save
+                        </button>
+                        <button
+                          onClick={handleCancelEditDescription}
+                          className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-2">
+                      <p className="text-muted-foreground leading-relaxed flex-1">
+                        {editedStrategy.description}
+                      </p>
+                      <button
+                        onClick={handleStartEditDescription}
+                        className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                        title="Edit description"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex items-start gap-2">
-                  <p className="text-muted-foreground leading-relaxed flex-1">
-                    {editedStrategy.description}
-                  </p>
-                  <button
-                    onClick={handleStartEditDescription}
-                    className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                    title="Edit description"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
 
-            {/* Tags */}
-            <label className="text-base font-semibold text-foreground">Tags</label>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                Indicator Based
-              </span>
-              {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
-                >
-                  {indicator}
-                </span>
-              ))}
+            {/* Tags Card */}
+            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
+              <div className="space-y-3">
+                <label className="text-base font-semibold text-foreground">Tags</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                    Indicator Based
+                  </span>
+                  {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
+                    >
+                      {indicator}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Right Column - Trading Pair & Timeframe as separate cards */}
+          {/* Right Column - Trading Pair & Timeframe */}
           <div className="flex flex-col gap-6">
             {/* Trading Pair Card */}
             <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
