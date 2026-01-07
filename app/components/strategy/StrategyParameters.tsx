@@ -310,52 +310,52 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       {/* Strategy Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-foreground">Strategy</h3>
+        {/* Strategy Name as Section Header */}
+        <div className="flex items-center gap-2">
+          {isEditingName ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="text"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                autoFocus
+                className="text-xl font-semibold text-foreground bg-background border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1"
+              />
+              <button
+                onClick={handleConfirmName}
+                className="p-2 hover:bg-muted rounded-lg transition-colors text-green-600"
+                title="Confirm"
+              >
+                <Check className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleCancelEditName}
+                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                title="Cancel"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <h3 className="text-xl font-semibold text-foreground">{editedName}</h3>
+              <button
+                onClick={handleStartEditName}
+                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                title="Edit name"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column - Strategy Info Card */}
           <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-4">
-            {/* Strategy Name with Edit */}
-            <div className="flex items-center gap-2">
-              {isEditingName ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <input
-                    type="text"
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    onKeyDown={handleNameKeyDown}
-                    autoFocus
-                    className="text-xl font-semibold text-foreground bg-background border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1"
-                  />
-                  <button
-                    onClick={handleConfirmName}
-                    className="p-2 hover:bg-muted rounded-lg transition-colors text-green-600"
-                    title="Confirm"
-                  >
-                    <Check className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={handleCancelEditName}
-                    className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
-                    title="Cancel"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-xl font-semibold text-foreground">{editedName}</h2>
-                  <button
-                    onClick={handleStartEditName}
-                    className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                    title="Edit name"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Type Badge + Indicator Badges */}
+            {/* Tags */}
+            <label className="text-base font-semibold text-foreground">Tags</label>
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
                 Indicator Based
