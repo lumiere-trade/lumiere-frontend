@@ -308,7 +308,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       )}
 
-      {/* Strategy Header - Name, Type Badge, Description */}
+      {/* Strategy Header - Name, Badges, Description */}
       <div className="space-y-4">
         {/* Strategy Name with Edit */}
         <div className="flex items-center gap-2">
@@ -351,10 +351,20 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           )}
         </div>
 
-        {/* Type Badge */}
-        <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-          Indicator Based
-        </span>
+        {/* Type Badge + Indicator Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+            Indicator Based
+          </span>
+          {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
+            <span
+              key={idx}
+              className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
+            >
+              {indicator}
+            </span>
+          ))}
+        </div>
 
         {/* Description with Edit - in Card */}
         <div className="bg-card border border-primary/20 rounded-2xl p-4">
@@ -403,25 +413,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       </div>
 
+      {/* Entry/Exit Conditions */}
       {hasIndicators && (
         <div className="space-y-4">
-          <h3 className="text-xl font-semibold text-foreground">
-            Technical Indicators
-          </h3>
-
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
-            <div className="flex flex-wrap gap-2">
-              {editedStrategy.indicators.map((indicator, idx) => (
-                <div
-                  key={idx}
-                  className="px-3 py-1.5 bg-background border border-primary/30 rounded-lg text-md font-mono text-foreground"
-                >
-                  {indicator}
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-3">
               <div className="flex items-center gap-2">
