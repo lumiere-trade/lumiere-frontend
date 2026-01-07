@@ -414,39 +414,43 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           </div>
         </div>
 
-        {/* Right Column - Trading Pair & Timeframe */}
-        <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-6">
-          {/* Trading Pair */}
-          <div className="space-y-3">
-            <label className="text-base font-semibold text-foreground">Trading Pair</label>
-            <TokenSelector
-              value={selectedTokenAddress}
-              onChange={handleTokenChange}
-              className="w-full"
-            />
+        {/* Right Column - Trading Pair & Timeframe as separate cards */}
+        <div className="space-y-6">
+          {/* Trading Pair Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Trading Pair</label>
+              <TokenSelector
+                value={selectedTokenAddress}
+                onChange={handleTokenChange}
+                className="w-full"
+              />
+            </div>
           </div>
 
-          {/* Timeframe */}
-          <div className="space-y-3">
-            <label className="text-base font-semibold text-foreground">Timeframe</label>
-            <Select
-              value={editedStrategy.timeframe}
-              onValueChange={(value) => handleFieldChange('timeframe', value)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1m">1 Minute</SelectItem>
-                <SelectItem value="5m">5 Minutes</SelectItem>
-                <SelectItem value="15m">15 Minutes</SelectItem>
-                <SelectItem value="30m">30 Minutes</SelectItem>
-                <SelectItem value="1h">1 Hour</SelectItem>
-                <SelectItem value="4h">4 Hours</SelectItem>
-                <SelectItem value="1d">1 Day</SelectItem>
-                <SelectItem value="1w">1 Week</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Timeframe Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Timeframe</label>
+              <Select
+                value={editedStrategy.timeframe}
+                onValueChange={(value) => handleFieldChange('timeframe', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 Minute</SelectItem>
+                  <SelectItem value="5m">5 Minutes</SelectItem>
+                  <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="30m">30 Minutes</SelectItem>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="4h">4 Hours</SelectItem>
+                  <SelectItem value="1d">1 Day</SelectItem>
+                  <SelectItem value="1w">1 Week</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
