@@ -4,7 +4,7 @@
  * Communicates through Pourtier proxy (/api/chevalier/*)
  */
 
-import { post, get } from './client';
+import { post, get, ApiError } from './client';
 import { logger, LogCategory } from '@/lib/debug';
 
 // ============================================================================
@@ -171,7 +171,7 @@ export const stopStrategy = async (
 
 /**
  * Get strategy status
- * 
+ *
  * Note: 404 is a valid response (strategy not deployed)
  */
 export const getStrategyStatus = async (
@@ -191,9 +191,9 @@ export const getStrategyStatus = async (
     });
 
     return result;
-  } catch (error: any) {
+  } catch (error) {
     // 404 is expected when strategy is not deployed - don't log as error
-    if (error.response?.status === 404) {
+    if (error instanceof ApiError && error.statusCode === 404) {
       logger.debug(LOG_CATEGORY, 'Strategy not deployed', { strategyId });
     } else {
       logger.error(LOG_CATEGORY, 'Failed to fetch strategy status', {
