@@ -309,7 +309,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       )}
 
       {/* Strategy Section */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Strategy Name as Section Header */}
         <div className="flex items-center gap-2">
           {isEditingName ? (
@@ -351,116 +351,114 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           )}
         </div>
 
+        {/* Row 1: Description + Trading Pair */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column - Description & Tags */}
-          <div className="flex flex-col gap-6">
-            {/* Description Card */}
-            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground">Description</label>
-                <div className="group">
-                  {isEditingDescription ? (
-                    <div className="space-y-2">
-                      <textarea
-                        value={tempDescription}
-                        onChange={(e) => setTempDescription(e.target.value)}
-                        onKeyDown={handleDescriptionKeyDown}
-                        autoFocus
-                        rows={3}
-                        className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
-                      />
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={handleConfirmDescription}
-                          className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-                        >
-                          <Check className="h-4 w-4" />
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancelEditDescription}
-                          className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-start gap-2">
-                      <p className="text-muted-foreground leading-relaxed flex-1">
-                        {editedStrategy.description}
-                      </p>
+          {/* Description Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 h-full">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Description</label>
+              <div className="group">
+                {isEditingDescription ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={tempDescription}
+                      onChange={(e) => setTempDescription(e.target.value)}
+                      onKeyDown={handleDescriptionKeyDown}
+                      autoFocus
+                      rows={3}
+                      className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
+                    />
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={handleStartEditDescription}
-                        className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                        title="Edit description"
+                        onClick={handleConfirmDescription}
+                        className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Check className="h-4 w-4" />
+                        Save
+                      </button>
+                      <button
+                        onClick={handleCancelEditDescription}
+                        className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
+                      >
+                        Cancel
                       </button>
                     </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Tags Card */}
-            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground">Tags</label>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                    Indicator Based
-                  </span>
-                  {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
-                    <span
-                      key={idx}
-                      className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-2">
+                    <p className="text-muted-foreground leading-relaxed flex-1">
+                      {editedStrategy.description}
+                    </p>
+                    <button
+                      onClick={handleStartEditDescription}
+                      className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                      title="Edit description"
                     >
-                      {indicator}
-                    </span>
-                  ))}
-                </div>
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Right Column - Trading Pair & Timeframe */}
-          <div className="flex flex-col gap-6">
-            {/* Trading Pair Card */}
-            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground">Trading Pair</label>
-                <TokenSelector
-                  value={selectedTokenAddress}
-                  onChange={handleTokenChange}
-                  className="w-full"
-                />
+          {/* Trading Pair Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 h-full">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Trading Pair</label>
+              <TokenSelector
+                value={selectedTokenAddress}
+                onChange={handleTokenChange}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Row 2: Tags + Timeframe */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Tags Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 h-full">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Tags</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                  Indicator Based
+                </span>
+                {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
+                  <span
+                    key={idx}
+                    className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
+                  >
+                    {indicator}
+                  </span>
+                ))}
               </div>
             </div>
+          </div>
 
-            {/* Timeframe Card */}
-            <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
-              <div className="space-y-3">
-                <label className="text-base font-semibold text-foreground">Timeframe</label>
-                <Select
-                  value={editedStrategy.timeframe}
-                  onValueChange={(value) => handleFieldChange('timeframe', value)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1m">1 Minute</SelectItem>
-                    <SelectItem value="5m">5 Minutes</SelectItem>
-                    <SelectItem value="15m">15 Minutes</SelectItem>
-                    <SelectItem value="30m">30 Minutes</SelectItem>
-                    <SelectItem value="1h">1 Hour</SelectItem>
-                    <SelectItem value="4h">4 Hours</SelectItem>
-                    <SelectItem value="1d">1 Day</SelectItem>
-                    <SelectItem value="1w">1 Week</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Timeframe Card */}
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 h-full">
+            <div className="space-y-3">
+              <label className="text-base font-semibold text-foreground">Timeframe</label>
+              <Select
+                value={editedStrategy.timeframe}
+                onValueChange={(value) => handleFieldChange('timeframe', value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1m">1 Minute</SelectItem>
+                  <SelectItem value="5m">5 Minutes</SelectItem>
+                  <SelectItem value="15m">15 Minutes</SelectItem>
+                  <SelectItem value="30m">30 Minutes</SelectItem>
+                  <SelectItem value="1h">1 Hour</SelectItem>
+                  <SelectItem value="4h">4 Hours</SelectItem>
+                  <SelectItem value="1d">1 Day</SelectItem>
+                  <SelectItem value="1w">1 Week</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
