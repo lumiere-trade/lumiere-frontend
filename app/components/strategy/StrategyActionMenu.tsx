@@ -8,14 +8,16 @@ import {
   useUndeployDeployment
 } from '@/hooks/mutations/use-chevalier-mutations'
 import type { StrategyStatus } from '@/lib/api/types'
-import { Loader2, Pause, Play, Square, Trash2 } from 'lucide-react'
+import { Loader2, Pause, Play, Square, Trash2, Rocket } from 'lucide-react'
 
 interface StrategyActionMenuProps {
-  deploymentId: string
-  currentStatus: StrategyStatus
+  deploymentId: string | null
+  currentStatus: StrategyStatus | null
   isOpen: boolean
   onClose: () => void
   onActionComplete?: () => void
+  onDeploy?: () => Promise<void>
+  canDeploy?: boolean
 }
 
 interface Action {
@@ -23,7 +25,7 @@ interface Action {
   icon: React.ReactNode
   handler: () => Promise<any>
   confirm: boolean
-  variant?: 'default' | 'destructive'
+  variant?: 'default' | 'destructive' | 'success'
 }
 
 export function StrategyActionMenu({
@@ -31,7 +33,9 @@ export function StrategyActionMenu({
   currentStatus,
   isOpen,
   onClose,
-  onActionComplete
+  onActionComplete,
+  onDeploy,
+  canDeploy = true
 }: StrategyActionMenuProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
@@ -67,6 +71,25 @@ export function StrategyActionMenu({
 
   const getActionsForStatus = (): Action[] => {
     const actions: Action[] = []
+
+    // No deployment exists - show Deploy option
+    if (currentStatus === null) {
+      if (onDeploy && canDeploy) {
+        actions.push({
+          label: 'Deploy',
+          icon: <Rocket className="h-4 w-4" />,
+          handler: async () => {
+            await onDeploy()
+          },
+          confirm: false,
+          variant: 'success'
+        })
+      }
+      return actions
+    }
+
+    // Deployment exists - show lifecycle actions
+    if (!deploymentId) return actions
 
     switch (currentStatus) {
       case 'ACTIVE':
@@ -164,6 +187,8 @@ export function StrategyActionMenu({
             disabled:opacity-50 disabled:cursor-not-allowed transition-colors
             ${action.variant === 'destructive'
               ? 'hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400'
+              : action.variant === 'success'
+              ? 'hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400'
               : 'hover:bg-gray-50 dark:hover:bg-gray-700'
             }
           `}

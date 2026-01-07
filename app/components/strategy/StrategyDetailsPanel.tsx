@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2, Rocket } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
@@ -84,8 +84,8 @@ export function StrategyDetailsPanel({
   const deploymentStatus = deploymentData?.status || null
   const deploymentId = deploymentData?.deployment_id || null
 
-  const isDeployed = ['ACTIVE', 'PAUSED', 'STOPPED', 'ERROR'].includes(deploymentStatus || '')
-  const canDeploy = strategy?.id && !isDirty && !isLibraryStrategy && !deploymentStatus
+  // Can deploy if: strategy is saved, no unsaved changes, not a library strategy
+  const canDeploy = !!strategy?.id && !isDirty && !isLibraryStrategy
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -229,7 +229,7 @@ export function StrategyDetailsPanel({
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
-  const isDeploymentLoading = deployStrategyMutation.isPending || isLoadingDeployment
+  const isDeploying = deployStrategyMutation.isPending
 
   return (
     <>
@@ -335,36 +335,17 @@ export function StrategyDetailsPanel({
           {/* RIGHT: Action Buttons - ONLY for owned strategies */}
           {!isLibraryStrategy && (
             <div className="flex items-center gap-2">
-              {/* Status Badge with Dropdown Actions */}
-              {isDeployed && deploymentStatus && deploymentId && (
+              {/* Status Badge with Dropdown Actions - Always shown */}
+              {!isLoadingDeployment && (
                 <StrategyStatusBadge
                   status={deploymentStatus}
                   deploymentId={deploymentId}
+                  architectStrategyId={strategy?.id}
                   onActionComplete={handleActionComplete}
+                  onDeploy={handleDeploy}
+                  isDeploying={isDeploying}
+                  canDeploy={canDeploy}
                 />
-              )}
-
-              {/* Deploy Button - Only show if not deployed */}
-              {!isDeployed && (
-                <Button
-                  size="sm"
-                  onClick={handleDeploy}
-                  disabled={!canDeploy || isDeploymentLoading}
-                  variant="default"
-                  className="gap-2 min-w-[120px] text-md bg-green-600 hover:bg-green-700"
-                >
-                  {deployStrategyMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Deploying...
-                    </>
-                  ) : (
-                    <>
-                      <Rocket className="h-4 w-4" />
-                      Deploy
-                    </>
-                  )}
-                </Button>
               )}
 
               {/* Save Button */}

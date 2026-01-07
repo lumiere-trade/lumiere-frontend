@@ -38,16 +38,13 @@ function StrategyCard({ strategy, highlighted, onActionComplete }: StrategyCardP
           <div className="flex items-center gap-2">
             {isLoadingDeployment ? (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : deploymentStatus && deploymentId ? (
+            ) : (
               <StrategyStatusBadge
                 status={deploymentStatus}
                 deploymentId={deploymentId}
+                architectStrategyId={strategy.id}
                 onActionComplete={onActionComplete}
               />
-            ) : (
-              <Badge variant="outline" className="text-muted-foreground">
-                Not Deployed
-              </Badge>
             )}
           </div>
         </div>
