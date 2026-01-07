@@ -4,29 +4,12 @@ import { ArrowDownToLine } from "lucide-react"
 import { useEscrowTransactionsQuery } from "@/hooks/queries/use-escrow-queries"
 
 export function RecentActivity() {
-  const { data: transactionsData, isLoading } = useEscrowTransactionsQuery()
-
-  if (isLoading) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="rounded-lg border border-primary/20 bg-card p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20">
-              <ArrowDownToLine className="h-4 w-4 text-primary" />
-            </div>
-            Recent Deposits
-          </h3>
-          <div className="text-center py-6 text-muted-foreground text-sm">
-            Loading...
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const { data: transactionsData } = useEscrowTransactionsQuery()
 
   const transactions = transactionsData?.transactions || []
   const deposits = transactions.filter(tx => tx.type === 'deposit').slice(0, 3)
 
+  // Don't show anything if no deposits (no flicker)
   if (deposits.length === 0) {
     return null
   }
@@ -36,13 +19,13 @@ export function RecentActivity() {
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffMins = Math.floor(diffMs / 60000)
-    
+
     if (diffMins < 1) return 'Just now'
     if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
-    
+
     const diffHours = Math.floor(diffMins / 60)
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
-    
+
     const diffDays = Math.floor(diffHours / 24)
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`
   }
@@ -56,7 +39,7 @@ export function RecentActivity() {
           </div>
           Recent Deposits
         </h3>
-        
+
         <div className="space-y-3">
           {deposits.map((tx) => (
             <div
