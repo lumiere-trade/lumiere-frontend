@@ -50,7 +50,7 @@ const LOG_CATEGORY = LogCategory.API;
 
 /**
  * Deploy strategy for live trading
- * 
+ *
  * Creates a new deployed strategy and starts execution immediately.
  * Strategy is immutable once deployed - any changes require new deployment.
  */
@@ -80,7 +80,7 @@ export const deployStrategy = async (
 
 /**
  * Pause running strategy
- * 
+ *
  * Stops signal evaluation but keeps subscriptions active.
  * Can be resumed later without re-warmup.
  */
@@ -111,7 +111,7 @@ export const pauseStrategy = async (
 
 /**
  * Resume paused strategy
- * 
+ *
  * Restores indicator state and restarts evaluation.
  */
 export const resumeStrategy = async (
@@ -141,7 +141,7 @@ export const resumeStrategy = async (
 
 /**
  * Stop strategy permanently
- * 
+ *
  * Cleanup: Unsubscribe, delete state, archive strategy.
  */
 export const stopStrategy = async (
@@ -171,6 +171,8 @@ export const stopStrategy = async (
 
 /**
  * Get strategy status
+ * 
+ * Note: 404 is a valid response (strategy not deployed)
  */
 export const getStrategyStatus = async (
   strategyId: string
@@ -182,18 +184,23 @@ export const getStrategyStatus = async (
       `${CHEVALIER_PREFIX}/strategies/${strategyId}`
     );
 
-    logger.info(LOG_CATEGORY, 'Strategy status fetched', {
+    logger.debug(LOG_CATEGORY, 'Strategy status fetched', {
       strategyId,
       status: result.status,
       currentCapital: result.current_capital,
     });
 
     return result;
-  } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to fetch strategy status', {
-      error,
-      strategyId
-    });
+  } catch (error: any) {
+    // 404 is expected when strategy is not deployed - don't log as error
+    if (error.response?.status === 404) {
+      logger.debug(LOG_CATEGORY, 'Strategy not deployed', { strategyId });
+    } else {
+      logger.error(LOG_CATEGORY, 'Failed to fetch strategy status', {
+        error,
+        strategyId
+      });
+    }
     throw error;
   }
 };
