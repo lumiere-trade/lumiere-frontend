@@ -3,47 +3,99 @@
  * Deployment status queries
  */
 import { useQuery } from '@tanstack/react-query';
-import { getStrategyStatus, getActiveStrategies } from '@/lib/api/chevalier';
+import {
+  getActiveDeployment,
+  getActiveDeployments,
+  getDeploymentStatus,
+  getDeploymentHistory
+} from '@/lib/api/chevalier';
 import { ApiError } from '@/lib/api/client';
+import { useAuth } from '@/hooks/use-auth';
 
 export const chevalierKeys = {
   all: ['chevalier'] as const,
-  strategies: () => [...chevalierKeys.all, 'strategies'] as const,
-  strategyStatus: (strategyId: string) => [...chevalierKeys.strategies(), strategyId] as const,
-  activeStrategies: (userId?: string) => [...chevalierKeys.strategies(), 'active', userId] as const,
+  deployments: () => [...chevalierKeys.all, 'deployments'] as const,
+  deployment: (deploymentId: string) =>
+    [...chevalierKeys.deployments(), deploymentId] as const,
+  activeDeployment: (architectStrategyId: string) =>
+    [...chevalierKeys.deployments(), 'active', architectStrategyId] as const,
+  activeDeployments: (userId?: string) =>
+    [...chevalierKeys.deployments(), 'active', 'all', userId] as const,
+  history: (architectStrategyId: string) =>
+    [...chevalierKeys.deployments(), 'history', architectStrategyId] as const,
+  // Legacy keys for backward compatibility
+  strategies: () => chevalierKeys.deployments(),
+  strategyStatus: (id: string) => chevalierKeys.activeDeployment(id),
 };
 
 /**
- * Fetch deployment status for a specific strategy
- * Returns null if strategy is not deployed (404)
+ * Fetch active deployment for specific Architect strategy
+ * Returns null if no active deployment exists (404 is expected)
  */
-export const useStrategyDeploymentStatus = (strategyId: string | null | undefined) => {
+export const useStrategyDeploymentStatus = (
+  architectStrategyId: string | null | undefined
+) => {
   return useQuery({
-    queryKey: chevalierKeys.strategyStatus(strategyId || ''),
+    queryKey: chevalierKeys.activeDeployment(architectStrategyId || ''),
     queryFn: async () => {
+      if (!architectStrategyId) return null;
+
       try {
-        return await getStrategyStatus(strategyId!);
+        return await getActiveDeployment(architectStrategyId);
       } catch (error) {
-        // 404 means strategy not deployed - return null instead of error
         if (error instanceof ApiError && error.statusCode === 404) {
           return null;
         }
         throw error;
       }
     },
-    enabled: !!strategyId,
-    staleTime: 5 * 60 * 1000,
-    retry: false,
+    enabled: !!architectStrategyId,
+    staleTime: 30 * 1000,
+    retry: (failureCount, error) => {
+      if (error instanceof ApiError && error.statusCode === 404) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 };
 
 /**
- * Fetch all active strategies
+ * Fetch deployment by deployment instance ID
  */
-export const useActiveStrategies = (userId?: string) => {
+export const useDeploymentStatus = (deploymentId: string | null | undefined) => {
   return useQuery({
-    queryKey: chevalierKeys.activeStrategies(userId),
-    queryFn: () => getActiveStrategies(userId),
+    queryKey: chevalierKeys.deployment(deploymentId || ''),
+    queryFn: () => getDeploymentStatus(deploymentId!),
+    enabled: !!deploymentId,
     staleTime: 30 * 1000,
   });
 };
+
+/**
+ * Fetch deployment history for Architect strategy
+ */
+export const useDeploymentHistory = (
+  architectStrategyId: string | null | undefined
+) => {
+  return useQuery({
+    queryKey: chevalierKeys.history(architectStrategyId || ''),
+    queryFn: () => getDeploymentHistory(architectStrategyId!),
+    enabled: !!architectStrategyId,
+    staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Fetch all active deployments
+ */
+export const useActiveDeployments = (userId?: string) => {
+  return useQuery({
+    queryKey: chevalierKeys.activeDeployments(userId),
+    queryFn: () => getActiveDeployments(userId),
+    staleTime: 30 * 1000,
+  });
+};
+
+// Legacy alias
+export const useActiveStrategies = useActiveDeployments;

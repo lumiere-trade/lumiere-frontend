@@ -107,11 +107,10 @@ export interface DepositResponse {
 // ============================================================================
 
 export type StrategyStatus =
-  | 'INACTIVE'     // Not deployed yet
   | 'ACTIVE'       // Running live
   | 'PAUSED'       // Temporarily stopped
   | 'STOPPED'      // Permanently stopped
-  | 'UNDEPLOYED'   // Removed from system
+  | 'UNDEPLOYED'   // Archived
   | 'ERROR'        // Failed state
 
 export interface Strategy {
@@ -125,15 +124,42 @@ export interface Strategy {
   parameters: Record<string, any>
   created_at: string
   updated_at: string
-  deployment_status?: StrategyStatus
 }
 
-export interface StrategyStatusResponse {
-  strategy_id: string
+// ============================================================================
+// DEPLOYMENT TYPES (Chevalier)
+// ============================================================================
+
+export interface DeploymentStatusResponse {
+  deployment_id: string
+  architect_strategy_id: string
+  version: number
   status: StrategyStatus
   user_id: string
   token_symbol: string
   current_capital: number
   is_paper_trading: boolean
   created_at: string
+  undeployed_at: string | null
 }
+
+export interface DeploymentHistoryItem {
+  deployment_id: string
+  version: number
+  status: StrategyStatus
+  deployed_at: string
+  undeployed_at: string | null
+  initial_capital: number
+  final_capital: number | null
+  total_pnl: number | null
+  total_trades: number
+  is_paper_trading: boolean
+}
+
+export interface DeploymentHistoryResponse {
+  architect_strategy_id: string
+  deployments: DeploymentHistoryItem[]
+}
+
+// Legacy alias for backward compatibility
+export type StrategyStatusResponse = DeploymentStatusResponse

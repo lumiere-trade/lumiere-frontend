@@ -1,18 +1,17 @@
 "use client"
 
 import { useState } from 'react'
-import { toast } from 'sonner'
 import {
-  usePauseStrategy,
-  useResumeStrategy,
-  useStopStrategy,
-  useUndeployStrategy
+  usePauseDeployment,
+  useResumeDeployment,
+  useStopDeployment,
+  useUndeployDeployment
 } from '@/hooks/mutations/use-chevalier-mutations'
 import type { StrategyStatus } from '@/lib/api/types'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Pause, Play, Square, Trash2 } from 'lucide-react'
 
 interface StrategyActionMenuProps {
-  strategyId: string
+  deploymentId: string
   currentStatus: StrategyStatus
   isOpen: boolean
   onClose: () => void
@@ -21,13 +20,14 @@ interface StrategyActionMenuProps {
 
 interface Action {
   label: string
-  icon: string
+  icon: React.ReactNode
   handler: () => Promise<any>
   confirm: boolean
+  variant?: 'default' | 'destructive'
 }
 
 export function StrategyActionMenu({
-  strategyId,
+  deploymentId,
   currentStatus,
   isOpen,
   onClose,
@@ -35,10 +35,10 @@ export function StrategyActionMenu({
 }: StrategyActionMenuProps) {
   const [loading, setLoading] = useState<string | null>(null)
 
-  const pauseMutation = usePauseStrategy()
-  const resumeMutation = useResumeStrategy()
-  const stopMutation = useStopStrategy()
-  const undeployMutation = useUndeployStrategy()
+  const pauseMutation = usePauseDeployment()
+  const resumeMutation = useResumeDeployment()
+  const stopMutation = useStopDeployment()
+  const undeployMutation = useUndeployDeployment()
 
   const handleAction = async (
     action: () => Promise<any>,
@@ -73,15 +73,16 @@ export function StrategyActionMenu({
         actions.push(
           {
             label: 'Pause',
-            icon: '⏸',
-            handler: () => pauseMutation.mutateAsync(strategyId),
+            icon: <Pause className="h-4 w-4" />,
+            handler: () => pauseMutation.mutateAsync(deploymentId),
             confirm: false
           },
           {
             label: 'Stop',
-            icon: '⏹',
-            handler: () => stopMutation.mutateAsync(strategyId),
-            confirm: true
+            icon: <Square className="h-4 w-4" />,
+            handler: () => stopMutation.mutateAsync(deploymentId),
+            confirm: true,
+            variant: 'destructive'
           }
         )
         break
@@ -89,39 +90,42 @@ export function StrategyActionMenu({
         actions.push(
           {
             label: 'Resume',
-            icon: '▶',
-            handler: () => resumeMutation.mutateAsync(strategyId),
+            icon: <Play className="h-4 w-4" />,
+            handler: () => resumeMutation.mutateAsync(deploymentId),
             confirm: false
           },
           {
             label: 'Stop',
-            icon: '⏹',
-            handler: () => stopMutation.mutateAsync(strategyId),
-            confirm: true
+            icon: <Square className="h-4 w-4" />,
+            handler: () => stopMutation.mutateAsync(deploymentId),
+            confirm: true,
+            variant: 'destructive'
           }
         )
         break
       case 'STOPPED':
         actions.push({
           label: 'Undeploy',
-          icon: '🗑',
-          handler: () => undeployMutation.mutateAsync(strategyId),
-          confirm: true
+          icon: <Trash2 className="h-4 w-4" />,
+          handler: () => undeployMutation.mutateAsync(deploymentId),
+          confirm: true,
+          variant: 'destructive'
         })
         break
       case 'ERROR':
         actions.push(
           {
             label: 'Stop',
-            icon: '⏹',
-            handler: () => stopMutation.mutateAsync(strategyId),
+            icon: <Square className="h-4 w-4" />,
+            handler: () => stopMutation.mutateAsync(deploymentId),
             confirm: false
           },
           {
             label: 'Undeploy',
-            icon: '🗑',
-            handler: () => undeployMutation.mutateAsync(strategyId),
-            confirm: true
+            icon: <Trash2 className="h-4 w-4" />,
+            handler: () => undeployMutation.mutateAsync(deploymentId),
+            confirm: true,
+            variant: 'destructive'
           }
         )
         break
@@ -141,9 +145,16 @@ export function StrategyActionMenu({
           key={action.label}
           onClick={() => handleAction(action.handler, action.label, action.confirm)}
           disabled={loading !== null}
-          className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className={`
+            w-full px-4 py-2 text-left text-sm flex items-center gap-3
+            disabled:opacity-50 disabled:cursor-not-allowed transition-colors
+            ${action.variant === 'destructive'
+              ? 'hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400'
+              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+            }
+          `}
         >
-          <span className="text-base">{action.icon}</span>
+          {action.icon}
           <span>{action.label}</span>
           {loading === action.label && (
             <Loader2 className="ml-auto h-4 w-4 animate-spin" />

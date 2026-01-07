@@ -6,13 +6,18 @@
 
 import { post, get, ApiError } from './client';
 import { logger, LogCategory } from '@/lib/debug';
-import type { StrategyStatus, StrategyStatusResponse } from './types';
+import type {
+  StrategyStatus,
+  DeploymentStatusResponse,
+  DeploymentHistoryResponse
+} from './types';
 
 // ============================================================================
 // TYPES (Aligned with Backend DTOs)
 // ============================================================================
 
 export interface DeployStrategyRequest {
+  strategy_id: string;
   user_id: string;
   strategy_json: Record<string, any>;
   initial_capital: number;
@@ -20,26 +25,27 @@ export interface DeployStrategyRequest {
 }
 
 export interface DeployStrategyResponse {
-  strategy_id: string;
+  deployment_id: string;
+  architect_strategy_id: string;
+  version: number;
   status: StrategyStatus;
   created_at: string;
   is_paper_trading: boolean;
 }
 
 export interface StrategyActionResponse {
-  status: StrategyStatus;
-  strategy_id: string;
+  status: string;
+  deployment_id: string;
   message?: string;
 }
 
 export interface HealthResponse {
   status: string;
   service: string;
-  timestamp: string;
 }
 
 // Re-export for convenience
-export type { StrategyStatus, StrategyStatusResponse } from './types';
+export type { StrategyStatus, DeploymentStatusResponse } from './types';
 
 // ============================================================================
 // CHEVALIER API (through Pourtier proxy)
@@ -51,13 +57,16 @@ const LOG_CATEGORY = LogCategory.API;
 /**
  * Deploy strategy for live trading
  *
- * Creates a new deployed strategy and starts execution immediately.
- * Strategy is immutable once deployed - any changes require new deployment.
+ * Creates a new deployment instance with versioning.
+ * Only ONE active deployment per architect_strategy_id allowed.
  */
 export const deployStrategy = async (
   request: DeployStrategyRequest
 ): Promise<DeployStrategyResponse> => {
-  logger.info(LOG_CATEGORY, 'Deploying strategy', { request });
+  logger.info(LOG_CATEGORY, 'Deploying strategy', {
+    strategyId: request.strategy_id,
+    isPaperTrading: request.is_paper_trading
+  });
 
   try {
     const result = await post<DeployStrategyResponse>(
@@ -66,9 +75,9 @@ export const deployStrategy = async (
     );
 
     logger.info(LOG_CATEGORY, 'Strategy deployed successfully', {
-      strategyId: result.strategy_id,
+      deploymentId: result.deployment_id,
+      version: result.version,
       status: result.status,
-      isPaperTrading: result.is_paper_trading,
     });
 
     return result;
@@ -79,158 +88,156 @@ export const deployStrategy = async (
 };
 
 /**
- * Pause running strategy
+ * Pause running deployment
  *
  * Stops signal evaluation but keeps subscriptions active.
  * Can be resumed later without re-warmup.
  */
-export const pauseStrategy = async (
-  strategyId: string
+export const pauseDeployment = async (
+  deploymentId: string
 ): Promise<StrategyActionResponse> => {
-  logger.info(LOG_CATEGORY, 'Pausing strategy', { strategyId });
+  logger.info(LOG_CATEGORY, 'Pausing deployment', { deploymentId });
 
   try {
     const result = await post<StrategyActionResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/pause`
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/pause`
     );
 
-    logger.info(LOG_CATEGORY, 'Strategy paused successfully', {
-      strategyId,
+    logger.info(LOG_CATEGORY, 'Deployment paused successfully', {
+      deploymentId,
       status: result.status,
     });
 
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to pause strategy', {
+    logger.error(LOG_CATEGORY, 'Failed to pause deployment', {
       error,
-      strategyId
+      deploymentId
     });
     throw error;
   }
 };
 
 /**
- * Resume paused strategy
+ * Resume paused deployment
  *
  * Restores indicator state and restarts evaluation.
  */
-export const resumeStrategy = async (
-  strategyId: string
+export const resumeDeployment = async (
+  deploymentId: string
 ): Promise<StrategyActionResponse> => {
-  logger.info(LOG_CATEGORY, 'Resuming strategy', { strategyId });
+  logger.info(LOG_CATEGORY, 'Resuming deployment', { deploymentId });
 
   try {
     const result = await post<StrategyActionResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/resume`
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/resume`
     );
 
-    logger.info(LOG_CATEGORY, 'Strategy resumed successfully', {
-      strategyId,
+    logger.info(LOG_CATEGORY, 'Deployment resumed successfully', {
+      deploymentId,
       status: result.status,
     });
 
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to resume strategy', {
+    logger.error(LOG_CATEGORY, 'Failed to resume deployment', {
       error,
-      strategyId
+      deploymentId
     });
     throw error;
   }
 };
 
 /**
- * Stop strategy permanently
+ * Stop deployment permanently
  *
- * Closes any open positions and marks strategy as stopped.
- * Strategy can be undeployed after stopping.
+ * Closes any open positions and marks deployment as stopped.
+ * Deployment can be undeployed after stopping.
  */
-export const stopStrategy = async (
-  strategyId: string
+export const stopDeployment = async (
+  deploymentId: string
 ): Promise<StrategyActionResponse> => {
-  logger.info(LOG_CATEGORY, 'Stopping strategy', { strategyId });
+  logger.info(LOG_CATEGORY, 'Stopping deployment', { deploymentId });
 
   try {
     const result = await post<StrategyActionResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/stop`
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/stop`
     );
 
-    logger.info(LOG_CATEGORY, 'Strategy stopped successfully', {
-      strategyId,
+    logger.info(LOG_CATEGORY, 'Deployment stopped successfully', {
+      deploymentId,
       status: result.status,
     });
 
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to stop strategy', {
+    logger.error(LOG_CATEGORY, 'Failed to stop deployment', {
       error,
-      strategyId
+      deploymentId
     });
     throw error;
   }
 };
 
 /**
- * Undeploy strategy
+ * Undeploy (archive) deployment
  *
- * Complete cleanup: Unsubscribe, delete state, remove from active strategies.
- * Final lifecycle action - strategy moves to UNDEPLOYED status.
+ * Final lifecycle action - deployment moves to UNDEPLOYED status.
+ * Requires deployment to be STOPPED first.
  */
-export const undeployStrategy = async (
-  strategyId: string
+export const undeployDeployment = async (
+  deploymentId: string
 ): Promise<StrategyActionResponse> => {
-  logger.info(LOG_CATEGORY, 'Undeploying strategy', { strategyId });
+  logger.info(LOG_CATEGORY, 'Undeploying deployment', { deploymentId });
 
   try {
     const result = await post<StrategyActionResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}/undeploy`
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/undeploy`
     );
 
-    logger.info(LOG_CATEGORY, 'Strategy undeployed successfully', {
-      strategyId,
+    logger.info(LOG_CATEGORY, 'Deployment undeployed successfully', {
+      deploymentId,
       status: result.status,
     });
 
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to undeploy strategy', {
+    logger.error(LOG_CATEGORY, 'Failed to undeploy deployment', {
       error,
-      strategyId
+      deploymentId
     });
     throw error;
   }
 };
 
 /**
- * Get strategy status
+ * Get active deployment for specific Architect strategy
  *
- * Note: 404 is a valid response (strategy not deployed)
+ * Returns 404 if no active deployment exists.
  */
-export const getStrategyStatus = async (
-  strategyId: string
-): Promise<StrategyStatusResponse> => {
-  logger.debug(LOG_CATEGORY, 'Fetching strategy status', { strategyId });
+export const getActiveDeployment = async (
+  architectStrategyId: string
+): Promise<DeploymentStatusResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching active deployment', { architectStrategyId });
 
   try {
-    const result = await get<StrategyStatusResponse>(
-      `${CHEVALIER_PREFIX}/strategies/${strategyId}`
+    const result = await get<DeploymentStatusResponse>(
+      `${CHEVALIER_PREFIX}/strategies/${architectStrategyId}/active`
     );
 
-    logger.debug(LOG_CATEGORY, 'Strategy status fetched', {
-      strategyId,
+    logger.debug(LOG_CATEGORY, 'Active deployment fetched', {
+      deploymentId: result.deployment_id,
       status: result.status,
-      currentCapital: result.current_capital,
     });
 
     return result;
   } catch (error) {
-    // 404 is expected when strategy is not deployed - don't log as error
     if (error instanceof ApiError && error.statusCode === 404) {
-      logger.debug(LOG_CATEGORY, 'Strategy not deployed', { strategyId });
+      logger.debug(LOG_CATEGORY, 'No active deployment', { architectStrategyId });
     } else {
-      logger.error(LOG_CATEGORY, 'Failed to fetch strategy status', {
+      logger.error(LOG_CATEGORY, 'Failed to fetch active deployment', {
         error,
-        strategyId
+        architectStrategyId
       });
     }
     throw error;
@@ -238,27 +245,83 @@ export const getStrategyStatus = async (
 };
 
 /**
- * Get all active strategies (optionally filtered by user)
+ * Get deployment by deployment instance ID
  */
-export const getActiveStrategies = async (
+export const getDeploymentStatus = async (
+  deploymentId: string
+): Promise<DeploymentStatusResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching deployment status', { deploymentId });
+
+  try {
+    const result = await get<DeploymentStatusResponse>(
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}`
+    );
+
+    logger.debug(LOG_CATEGORY, 'Deployment status fetched', {
+      deploymentId,
+      status: result.status,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch deployment status', {
+      error,
+      deploymentId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get deployment history for Architect strategy
+ */
+export const getDeploymentHistory = async (
+  architectStrategyId: string
+): Promise<DeploymentHistoryResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching deployment history', { architectStrategyId });
+
+  try {
+    const result = await get<DeploymentHistoryResponse>(
+      `${CHEVALIER_PREFIX}/strategies/${architectStrategyId}/history`
+    );
+
+    logger.debug(LOG_CATEGORY, 'Deployment history fetched', {
+      architectStrategyId,
+      count: result.deployments.length,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch deployment history', {
+      error,
+      architectStrategyId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get all active deployments (optionally filtered by user)
+ */
+export const getActiveDeployments = async (
   userId?: string
-): Promise<StrategyStatusResponse[]> => {
-  logger.debug(LOG_CATEGORY, 'Fetching active strategies', { userId });
+): Promise<DeploymentStatusResponse[]> => {
+  logger.debug(LOG_CATEGORY, 'Fetching active deployments', { userId });
 
   try {
     const url = userId
-      ? `${CHEVALIER_PREFIX}/strategies/active?user_id=${userId}`
-      : `${CHEVALIER_PREFIX}/strategies/active`;
+      ? `${CHEVALIER_PREFIX}/strategies/deployments/active?user_id=${userId}`
+      : `${CHEVALIER_PREFIX}/strategies/deployments/active`;
 
-    const result = await get<StrategyStatusResponse[]>(url);
+    const result = await get<DeploymentStatusResponse[]>(url);
 
-    logger.info(LOG_CATEGORY, 'Active strategies fetched', {
+    logger.info(LOG_CATEGORY, 'Active deployments fetched', {
       count: result.length,
     });
 
     return result;
   } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to fetch active strategies', { error });
+    logger.error(LOG_CATEGORY, 'Failed to fetch active deployments', { error });
     throw error;
   }
 };
@@ -283,3 +346,14 @@ export const getHealth = async (): Promise<HealthResponse> => {
     throw error;
   }
 };
+
+// ============================================================================
+// LEGACY EXPORTS (for backward compatibility during migration)
+// ============================================================================
+
+export const pauseStrategy = pauseDeployment;
+export const resumeStrategy = resumeDeployment;
+export const stopStrategy = stopDeployment;
+export const undeployStrategy = undeployDeployment;
+export const getStrategyStatus = getActiveDeployment;
+export const getActiveStrategies = getActiveDeployments;

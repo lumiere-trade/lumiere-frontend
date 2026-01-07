@@ -22,7 +22,6 @@ import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
-import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 
 interface StrategyDetailsPanelProps {
@@ -39,7 +38,6 @@ export function StrategyDetailsPanel({
   onTabChange,
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
-  const router = useRouter()
   const { user } = useAuth()
 
   const {
@@ -62,24 +60,29 @@ export function StrategyDetailsPanel({
   const createConversationMutation = useCreateConversation()
   const deployStrategyMutation = useDeployStrategy()
 
+  // Query deployment status by Architect strategy ID
   const {
     data: deploymentData,
     isLoading: isLoadingDeployment,
     refetch: refetchDeploymentStatus
   } = useStrategyDeploymentStatus(strategy?.id)
 
-  // DEBUG: Log deployment status
+  // Debug logging
   useEffect(() => {
-    console.log('[StrategyDetailsPanel] Debug Info:', {
-      strategyId: strategy?.id,
-      deploymentData,
-      isLoadingDeployment,
-      deploymentStatus: deploymentData?.status || null
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[StrategyDetailsPanel] Deployment state:', {
+        architectStrategyId: strategy?.id,
+        deploymentId: deploymentData?.deployment_id,
+        status: deploymentData?.status,
+        version: deploymentData?.version,
+        isLoading: isLoadingDeployment
+      })
+    }
   }, [strategy?.id, deploymentData, isLoadingDeployment])
 
   const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
   const deploymentStatus = deploymentData?.status || null
+  const deploymentId = deploymentData?.deployment_id || null
 
   const isDeployed = ['ACTIVE', 'PAUSED', 'STOPPED', 'ERROR'].includes(deploymentStatus || '')
   const canDeploy = strategy?.id && !isDirty && !isLibraryStrategy && !deploymentStatus
@@ -190,11 +193,20 @@ export function StrategyDetailsPanel({
       return
     }
 
+    if (!user?.id) {
+      toast.error('User not authenticated')
+      return
+    }
+
     try {
-      log.info('Deploying strategy', { strategyId: strategy.id })
+      log.info('Deploying strategy', {
+        architectStrategyId: strategy.id,
+        userId: user.id
+      })
 
       await deployStrategyMutation.mutateAsync({
-        user_id: user?.id || 'vladimir',
+        strategy_id: strategy.id,
+        user_id: user.id,
         strategy_json: editedStrategy,
         initial_capital: 10000,
         is_paper_trading: true,
@@ -203,7 +215,6 @@ export function StrategyDetailsPanel({
       // Refetch deployment status after deploy
       await refetchDeploymentStatus()
 
-      toast.success('Strategy deployed successfully!')
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
     }
@@ -325,10 +336,10 @@ export function StrategyDetailsPanel({
           {!isLibraryStrategy && (
             <div className="flex items-center gap-2">
               {/* Status Badge with Dropdown Actions */}
-              {isDeployed && deploymentStatus && strategy?.id && (
+              {isDeployed && deploymentStatus && deploymentId && (
                 <StrategyStatusBadge
                   status={deploymentStatus}
-                  strategyId={strategy.id}
+                  deploymentId={deploymentId}
                   onActionComplete={handleActionComplete}
                 />
               )}

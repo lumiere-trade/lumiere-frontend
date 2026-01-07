@@ -20,14 +20,15 @@ function StrategyCard({ strategy, highlighted, onActionComplete }: StrategyCardP
   const router = useRouter()
   const { data: deploymentData, isLoading: isLoadingDeployment } = useStrategyDeploymentStatus(strategy.id)
 
-  const deploymentStatus = deploymentData?.status || 'INACTIVE'
+  const deploymentStatus = deploymentData?.status || null
+  const deploymentId = deploymentData?.deployment_id || null
 
   const handleEdit = () => {
     router.push(`/create?strategy=${strategy.id}`)
   }
 
   return (
-    <Card 
+    <Card
       data-strategy-id={strategy.id}
       className={`transition-all ${highlighted ? 'ring-2 ring-primary shadow-lg' : ''}`}
     >
@@ -37,12 +38,16 @@ function StrategyCard({ strategy, highlighted, onActionComplete }: StrategyCardP
           <div className="flex items-center gap-2">
             {isLoadingDeployment ? (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : (
+            ) : deploymentStatus && deploymentId ? (
               <StrategyStatusBadge
                 status={deploymentStatus}
-                strategyId={strategy.id}
+                deploymentId={deploymentId}
                 onActionComplete={onActionComplete}
               />
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">
+                Not Deployed
+              </Badge>
             )}
           </div>
         </div>
