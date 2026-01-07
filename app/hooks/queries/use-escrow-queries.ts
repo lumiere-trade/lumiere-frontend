@@ -9,7 +9,8 @@ import { setAuthToken } from '@/lib/api/client';
 
 export const ESCROW_QUERY_KEYS = {
   balance: ['escrow', 'balance'] as const,
-  transactions: (type?: TransactionType) => 
+  walletBalance: (address: string) => ['wallet', 'balance', address] as const,
+  transactions: (type?: TransactionType) =>
     type ? ['escrow', 'transactions', type] : ['escrow', 'transactions'] as const,
 };
 
@@ -25,6 +26,25 @@ export function useEscrowBalanceQuery() {
     },
     enabled: storage.hasToken(),
     staleTime: 10 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 2,
+  })
+}
+
+export function useWalletBalanceQuery(walletAddress: string) {
+  return useQuery<string>({
+    queryKey: ESCROW_QUERY_KEYS.walletBalance(walletAddress),
+    queryFn: async () => {
+      const token = storage.getToken()
+      if (token) {
+        setAuthToken(token)
+      }
+      const response = await escrowApi.getWalletBalance(walletAddress)
+      return response.balance
+    },
+    enabled: storage.hasToken() && !!walletAddress,
+    staleTime: 2 * 60 * 1000,
     gcTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
     retry: 2,
