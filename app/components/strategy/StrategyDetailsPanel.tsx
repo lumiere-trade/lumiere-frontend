@@ -23,6 +23,7 @@ import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 
 interface StrategyDetailsPanelProps {
   isOpen: boolean
@@ -66,6 +67,16 @@ export function StrategyDetailsPanel({
     isLoading: isLoadingDeployment,
     refetch: refetchDeploymentStatus
   } = useStrategyDeploymentStatus(strategy?.id)
+
+  // DEBUG: Log deployment status
+  useEffect(() => {
+    console.log('[StrategyDetailsPanel] Debug Info:', {
+      strategyId: strategy?.id,
+      deploymentData,
+      isLoadingDeployment,
+      deploymentStatus: deploymentData?.status || null
+    })
+  }, [strategy?.id, deploymentData, isLoadingDeployment])
 
   const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
   const deploymentStatus = deploymentData?.status || null
@@ -189,8 +200,10 @@ export function StrategyDetailsPanel({
         is_paper_trading: true,
       })
 
-      // Redirect to dashboard after successful deploy
-      router.push(`/dashboard?tab=active&highlight=${strategy.id}`)
+      // Refetch deployment status after deploy
+      await refetchDeploymentStatus()
+
+      toast.success('Strategy deployed successfully!')
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
     }
