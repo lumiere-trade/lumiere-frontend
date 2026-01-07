@@ -124,13 +124,13 @@ export function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Filter empty messages, but keep those with strategy marker
+  // Filter empty messages (FIXED: ba55b9f logic restored)
   const visibleMessages = messages.filter(msg => {
     const hasContent = msg.content && msg.content.trim().length > 0
     const hasStrategyMarker = msg.content.includes('<<view_strategy>>')
 
     // If currently streaming, show it even if empty (will fill up)
-    if (msg.isStreaming && hasContent) {
+    if (msg.isStreaming) {
       return true
     }
 
