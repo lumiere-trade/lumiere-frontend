@@ -104,16 +104,30 @@ export function StrategyActionMenu({
         )
         break
       case 'STOPPED':
-        actions.push({
-          label: 'Undeploy',
-          icon: <Trash2 className="h-4 w-4" />,
-          handler: () => undeployMutation.mutateAsync(deploymentId),
-          confirm: true,
-          variant: 'destructive'
-        })
+        actions.push(
+          {
+            label: 'Resume',
+            icon: <Play className="h-4 w-4" />,
+            handler: () => resumeMutation.mutateAsync(deploymentId),
+            confirm: false
+          },
+          {
+            label: 'Undeploy',
+            icon: <Trash2 className="h-4 w-4" />,
+            handler: () => undeployMutation.mutateAsync(deploymentId),
+            confirm: true,
+            variant: 'destructive'
+          }
+        )
         break
       case 'ERROR':
         actions.push(
+          {
+            label: 'Resume',
+            icon: <Play className="h-4 w-4" />,
+            handler: () => resumeMutation.mutateAsync(deploymentId),
+            confirm: false
+          },
           {
             label: 'Stop',
             icon: <Square className="h-4 w-4" />,
