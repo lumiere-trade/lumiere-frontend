@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown } from "lucide-react"
+import { Code, Play, Save, Loader2, X, ArrowUp, ArrowDown, Pencil, Check } from "lucide-react"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -43,11 +43,15 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   const [showCode, setShowCode] = useState(false)
   const [backtestResults, setBacktestResults] = useState<BacktestResponse | null>(null)
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [tempName, setTempName] = useState('')
+  const [isEditingDescription, setIsEditingDescription] = useState(false)
+  const [tempDescription, setTempDescription] = useState('')
 
   // Find token address from symbol (e.g., "SOL/USDC" -> SOL address)
   const selectedTokenAddress = useMemo(() => {
     if (!editedStrategy?.symbol) return undefined;
-    
+
     const symbolPart = editedStrategy.symbol.split('/')[0];
     const token = tokens.find(t => t.symbol === symbolPart);
     return token?.address;
@@ -76,8 +80,55 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
     // Convert symbol to "SYMBOL/USDC" format for strategy
     const tradingPair = `${tokenSymbol}/USDC`;
     handleFieldChange('symbol', tradingPair);
-    
+
     log.info('Token changed', { tokenAddress, tokenSymbol, tradingPair });
+  }
+
+  // Name editing handlers
+  const handleStartEditName = () => {
+    setTempName(editedName)
+    setIsEditingName(true)
+  }
+
+  const handleConfirmName = () => {
+    setEditedName(tempName)
+    setIsEditingName(false)
+  }
+
+  const handleCancelEditName = () => {
+    setTempName('')
+    setIsEditingName(false)
+  }
+
+  const handleNameKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleConfirmName()
+    } else if (e.key === 'Escape') {
+      handleCancelEditName()
+    }
+  }
+
+  // Description editing handlers
+  const handleStartEditDescription = () => {
+    setTempDescription(editedStrategy.description)
+    setIsEditingDescription(true)
+  }
+
+  const handleConfirmDescription = () => {
+    handleFieldChange('description', tempDescription)
+    setIsEditingDescription(false)
+  }
+
+  const handleCancelEditDescription = () => {
+    setTempDescription('')
+    setIsEditingDescription(false)
+  }
+
+  const handleDescriptionKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      handleCancelEditDescription()
+    }
+    // Note: Enter not used for textarea to allow multiline
   }
 
   const handleSave = async () => {
@@ -257,33 +308,96 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
       )}
 
+      {/* Strategy Header - Name, Type Badge, Description */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-foreground">Strategy</h3>
+        {/* Strategy Name with Edit */}
+        <div className="flex items-center gap-2">
+          {isEditingName ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="text"
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
+                onKeyDown={handleNameKeyDown}
+                autoFocus
+                className="text-2xl font-bold text-foreground bg-background border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1"
+              />
+              <button
+                onClick={handleConfirmName}
+                className="p-2 hover:bg-muted rounded-lg transition-colors text-green-600"
+                title="Confirm"
+              >
+                <Check className="h-5 w-5" />
+              </button>
+              <button
+                onClick={handleCancelEditName}
+                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                title="Cancel"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-foreground">{editedName}</h2>
+              <button
+                onClick={handleStartEditName}
+                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                title="Edit name"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
 
-        <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-4">
-          <div className="space-y-2">
-            <label className="text-base font-semibold text-muted-foreground">Type</label>
-            <span className="block px-3 py-1.5 bg-primary/10 text-primary rounded-full text-md font-medium w-fit">
-              Indicator Based
-            </span>
-          </div>
+        {/* Type Badge */}
+        <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+          Indicator Based
+        </span>
 
-          <div className="space-y-2">
-            <label className="text-base font-semibold text-foreground">Name</label>
-            <input
-              type="text"
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
-              className="w-full px-4 py-2 bg-background border border-primary/20 rounded-lg text-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-base font-semibold text-foreground">Description</label>
-            <p className="text-md text-muted-foreground">
-              {editedStrategy.description}
-            </p>
-          </div>
+        {/* Description with Edit */}
+        <div className="group">
+          {isEditingDescription ? (
+            <div className="space-y-2">
+              <textarea
+                value={tempDescription}
+                onChange={(e) => setTempDescription(e.target.value)}
+                onKeyDown={handleDescriptionKeyDown}
+                autoFocus
+                rows={3}
+                className="w-full text-muted-foreground bg-background border border-primary/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none leading-relaxed"
+              />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleConfirmDescription}
+                  className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors flex items-center gap-1.5"
+                >
+                  <Check className="h-4 w-4" />
+                  Save
+                </button>
+                <button
+                  onClick={handleCancelEditDescription}
+                  className="px-3 py-1.5 bg-muted text-muted-foreground rounded-lg text-sm font-medium hover:bg-muted/80 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-2">
+              <p className="text-muted-foreground leading-relaxed flex-1">
+                {editedStrategy.description}
+              </p>
+              <button
+                onClick={handleStartEditDescription}
+                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                title="Edit description"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
