@@ -320,7 +320,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 onChange={(e) => setTempName(e.target.value)}
                 onKeyDown={handleNameKeyDown}
                 autoFocus
-                className="text-2xl font-bold text-foreground bg-background border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1"
+                className="text-xl font-semibold text-foreground bg-background border border-primary/30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 flex-1"
               />
               <button
                 onClick={handleConfirmName}
@@ -339,7 +339,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-foreground">{editedName}</h2>
+              <h2 className="text-xl font-semibold text-foreground">{editedName}</h2>
               <button
                 onClick={handleStartEditName}
                 className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
