@@ -424,9 +424,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               onChange={handleTokenChange}
               className="w-full"
             />
-            <p className="text-sm text-muted-foreground">
-              Selected: {editedStrategy.symbol || 'None'}
-            </p>
           </div>
 
           {/* Timeframe */}
@@ -450,7 +447,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 <SelectItem value="1w">1 Week</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-sm text-muted-foreground">Candle interval</p>
           </div>
         </div>
       </div>
