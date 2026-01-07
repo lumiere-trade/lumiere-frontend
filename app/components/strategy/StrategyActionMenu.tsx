@@ -8,7 +8,7 @@ import {
   useUndeployDeployment
 } from '@/hooks/mutations/use-chevalier-mutations'
 import type { StrategyStatus } from '@/lib/api/types'
-import { Loader2, Pause, Play, Square, Trash2, Rocket } from 'lucide-react'
+import { Loader2, Pause, Play, Square, Trash2, Rocket, Check } from 'lucide-react'
 
 interface StrategyActionMenuProps {
   deploymentId: string | null
@@ -176,25 +176,25 @@ export function StrategyActionMenu({
   if (!isOpen || actions.length === 0) return null
 
   return (
-    <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+    <div className="absolute top-full right-0 mt-2 w-44 bg-background rounded-xl shadow-lg border border-border py-1 z-50">
       {actions.map((action) => (
         <button
           key={action.label}
           onClick={() => handleAction(action.handler, action.label, action.confirm)}
           disabled={loading !== null}
           className={`
-            w-full px-4 py-2 text-left text-sm flex items-center gap-3
+            w-full px-3 py-2.5 text-left text-sm flex items-center gap-3
             disabled:opacity-50 disabled:cursor-not-allowed transition-colors
             ${action.variant === 'destructive'
-              ? 'hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400'
+              ? 'text-destructive hover:bg-muted'
               : action.variant === 'success'
-              ? 'hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400'
-              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+              ? 'text-green-600 dark:text-green-500 hover:bg-muted'
+              : 'text-foreground hover:bg-muted'
             }
           `}
         >
           {action.icon}
-          <span>{action.label}</span>
+          <span className="font-medium">{action.label}</span>
           {loading === action.label && (
             <Loader2 className="ml-auto h-4 w-4 animate-spin" />
           )}
