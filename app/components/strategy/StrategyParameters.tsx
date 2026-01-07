@@ -415,9 +415,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         </div>
 
         {/* Right Column - Trading Pair & Timeframe as separate cards */}
-        <div className="space-y-6">
+        <div className="flex flex-col gap-6">
           {/* Trading Pair Card */}
-          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
             <div className="space-y-3">
               <label className="text-base font-semibold text-foreground">Trading Pair</label>
               <TokenSelector
@@ -429,7 +429,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           </div>
 
           {/* Timeframe Card */}
-          <div className="bg-card border border-primary/20 rounded-2xl p-6">
+          <div className="bg-card border border-primary/20 rounded-2xl p-6 flex-1">
             <div className="space-y-3">
               <label className="text-base font-semibold text-foreground">Timeframe</label>
               <Select
