@@ -508,11 +508,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-foreground">Risk Management</h3>
-        <div className="bg-primary/10 border border-primary/20 rounded-2xl p-4 mb-4">
-          <p className="text-sm text-muted-foreground">
-            MVP trades with 100% of available capital. Position sizing will be added in future updates.
-          </p>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-card border border-primary/20 rounded-2xl p-6">
             <div className="space-y-3">
