@@ -1,11 +1,12 @@
 "use client"
 
-import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2, Rocket, StopCircle } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, ChevronRight, ChevronLeft, Save, Loader2, Rocket } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
 import { LibraryEducationalContent } from "./LibraryEducationalContent"
+import { StrategyStatusBadge } from "./StrategyStatusBadge"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
   useCreateStrategy,
@@ -13,8 +14,7 @@ import {
   useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
 import {
-  useDeployStrategy,
-  useStopStrategy
+  useDeployStrategy
 } from "@/hooks/mutations/use-chevalier-mutations"
 import { useStrategyDeploymentStatus } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -22,6 +22,7 @@ import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface StrategyDetailsPanelProps {
   isOpen: boolean
@@ -37,8 +38,9 @@ export function StrategyDetailsPanel({
   onTabChange,
 }: StrategyDetailsPanelProps) {
   const log = useLogger('StrategyDetailsPanel', LogCategory.COMPONENT)
+  const router = useRouter()
   const { user } = useAuth()
-  
+
   const {
     strategy,
     editedStrategy,
@@ -58,19 +60,18 @@ export function StrategyDetailsPanel({
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
   const deployStrategyMutation = useDeployStrategy()
-  const stopStrategyMutation = useStopStrategy()
 
-  const { 
-    data: deploymentData, 
-    isLoading: isLoadingDeployment 
+  const {
+    data: deploymentData,
+    isLoading: isLoadingDeployment,
+    refetch: refetchDeploymentStatus
   } = useStrategyDeploymentStatus(strategy?.id)
 
   const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
-  const chevalierStatus = deploymentData?.status || null
-  
-  const isDeployed = chevalierStatus === 'ACTIVE' || chevalierStatus === 'PAUSED' || chevalierStatus === 'ERROR'
-  const canDeploy = strategy?.id && !isDirty && !isLibraryStrategy && !chevalierStatus
-  const canStop = isDeployed && !isLibraryStrategy
+  const deploymentStatus = deploymentData?.status || null
+
+  const isDeployed = ['ACTIVE', 'PAUSED', 'STOPPED', 'ERROR'].includes(deploymentStatus || '')
+  const canDeploy = strategy?.id && !isDirty && !isLibraryStrategy && !deploymentStatus
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -187,29 +188,24 @@ export function StrategyDetailsPanel({
         initial_capital: 10000,
         is_paper_trading: true,
       })
+
+      // Redirect to dashboard after successful deploy
+      router.push(`/dashboard?tab=active&highlight=${strategy.id}`)
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
     }
   }
 
-  const handleStop = async () => {
-    if (!strategy?.id) return
-
-    try {
-      log.info('Stopping strategy', { strategyId: strategy.id })
-      await stopStrategyMutation.mutateAsync(strategy.id)
-    } catch (error) {
-      log.error('Failed to stop strategy', { error })
-    }
+  const handleActionComplete = () => {
+    // Refetch deployment status after any lifecycle action
+    refetchDeploymentStatus()
   }
 
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
 
-  const isDeploymentLoading = deployStrategyMutation.isPending || 
-                               stopStrategyMutation.isPending ||
-                               isLoadingDeployment
+  const isDeploymentLoading = deployStrategyMutation.isPending || isLoadingDeployment
 
   return (
     <>
@@ -315,29 +311,17 @@ export function StrategyDetailsPanel({
           {/* RIGHT: Action Buttons - ONLY for owned strategies */}
           {!isLibraryStrategy && (
             <div className="flex items-center gap-2">
-              {canStop ? (
-                <Button
-                  size="sm"
-                  onClick={handleStop}
-                  disabled={isDeploymentLoading}
-                  variant="destructive"
-                  className="gap-2 min-w-[120px] text-md"
-                >
-                  {stopStrategyMutation.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Stopping...
-                    </>
-                  ) : (
-                    <>
-                      <StopCircle className="h-4 w-4" />
-                      {chevalierStatus === 'PAUSED' && 'Stop (Paused)'}
-                      {chevalierStatus === 'ERROR' && 'Stop (Error)'}
-                      {chevalierStatus === 'ACTIVE' && 'Stop'}
-                    </>
-                  )}
-                </Button>
-              ) : (
+              {/* Status Badge with Dropdown Actions */}
+              {isDeployed && deploymentStatus && strategy?.id && (
+                <StrategyStatusBadge
+                  status={deploymentStatus}
+                  strategyId={strategy.id}
+                  onActionComplete={handleActionComplete}
+                />
+              )}
+
+              {/* Deploy Button - Only show if not deployed */}
+              {!isDeployed && (
                 <Button
                   size="sm"
                   onClick={handleDeploy}
@@ -359,6 +343,7 @@ export function StrategyDetailsPanel({
                 </Button>
               )}
 
+              {/* Save Button */}
               <Button
                 size="sm"
                 onClick={handleSave}

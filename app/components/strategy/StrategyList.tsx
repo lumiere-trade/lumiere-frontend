@@ -1,18 +1,95 @@
-'use client';
+"use client"
 
-import { useStrategies } from '@/hooks/use-strategies';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Trash2, Edit, Play, Pause, Archive } from 'lucide-react';
-import { Strategy } from '@/lib/api/architect';
+import { useStrategies } from '@/hooks/use-strategies'
+import { Card, CardContent, CardHeader, CardTitle } from '@lumiere/shared/components/ui/card'
+import { Button } from '@lumiere/shared/components/ui/button'
+import { Badge } from '@lumiere/shared/components/ui/badge'
+import { Edit, Archive, Loader2 } from 'lucide-react'
+import { StrategyStatusBadge } from './StrategyStatusBadge'
+import { useStrategyDeploymentStatus } from '@/hooks/queries/use-chevalier-queries'
+import { useRouter } from 'next/navigation'
+import type { Strategy } from '@/lib/api/types'
 
-interface StrategyListProps {
-  status?: 'draft' | 'active' | 'paused' | 'archived';
+interface StrategyCardProps {
+  strategy: Strategy
+  highlighted?: boolean
+  onActionComplete?: () => void
 }
 
-export function StrategyList({ status }: StrategyListProps) {
-  const { strategies, isLoading, error, deleteStrategy } = useStrategies({ status });
+function StrategyCard({ strategy, highlighted, onActionComplete }: StrategyCardProps) {
+  const router = useRouter()
+  const { data: deploymentData, isLoading: isLoadingDeployment } = useStrategyDeploymentStatus(strategy.id)
+
+  const deploymentStatus = deploymentData?.status || 'INACTIVE'
+
+  const handleEdit = () => {
+    router.push(`/create?strategy=${strategy.id}`)
+  }
+
+  return (
+    <Card 
+      data-strategy-id={strategy.id}
+      className={`transition-all ${highlighted ? 'ring-2 ring-primary shadow-lg' : ''}`}
+    >
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">{strategy.name}</CardTitle>
+          <div className="flex items-center gap-2">
+            {isLoadingDeployment ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <StrategyStatusBadge
+                status={deploymentStatus}
+                strategyId={strategy.id}
+                onActionComplete={onActionComplete}
+              />
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          {strategy.description || 'No description provided'}
+        </p>
+
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span className="text-xs text-muted-foreground">Version:</span>
+          <Badge variant="outline">{strategy.version}</Badge>
+
+          {strategy.base_plugins && strategy.base_plugins.length > 0 && (
+            <>
+              <span className="text-xs text-muted-foreground ml-4">Plugins:</span>
+              {strategy.base_plugins.map((plugin) => (
+                <Badge key={plugin} variant="secondary">
+                  {plugin}
+                </Badge>
+              ))}
+            </>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleEdit}>
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button size="sm" variant="outline" disabled>
+            <Archive className="h-4 w-4 mr-2" />
+            Archive
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+interface StrategyListProps {
+  filter?: 'all' | 'active' | 'inactive'
+  highlightedStrategyId?: string | null
+}
+
+export function StrategyList({ filter = 'all', highlightedStrategyId }: StrategyListProps) {
+  const { strategies, isLoading, error } = useStrategies()
 
   if (isLoading) {
     return (
@@ -29,7 +106,7 @@ export function StrategyList({ status }: StrategyListProps) {
           </Card>
         ))}
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -41,106 +118,38 @@ export function StrategyList({ status }: StrategyListProps) {
           </p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
-  if (strategies.length === 0) {
+  if (!strategies || strategies.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              {status === 'active' 
-                ? 'No active strategies. Deploy a strategy to start trading!'
-                : 'No strategies yet. Create your first strategy with Prophet AI!'}
+              No strategies yet. Create your first strategy with Prophet AI!
             </p>
-            <Button>Create Strategy</Button>
+            <Button onClick={() => window.location.href = '/create'}>
+              Create Strategy
+            </Button>
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
-  const handleDelete = async (strategy: Strategy) => {
-    if (confirm(`Delete "${strategy.name}"? This cannot be undone.`)) {
-      try {
-        await deleteStrategy(strategy.id);
-      } catch (error) {
-        console.error('Delete failed:', error);
-      }
-    }
-  };
-
-  const getStatusBadge = (status: Strategy['status']) => {
-    const variants: Record<string, any> = {
-      active: 'default',
-      draft: 'secondary',
-      paused: 'outline',
-      archived: 'destructive',
-    };
-    return <Badge variant={variants[status]}>{status}</Badge>;
-  };
+  // Filter strategies based on filter prop (placeholder for now)
+  const filteredStrategies = strategies
 
   return (
     <div className="space-y-4">
-      {strategies.map((strategy) => (
-        <Card key={strategy.id}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-xl">{strategy.name}</CardTitle>
-              {getStatusBadge(strategy.status)}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              {strategy.description}
-            </p>
-
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-xs text-muted-foreground">Version:</span>
-              <Badge variant="outline">{strategy.version}</Badge>
-
-              <span className="text-xs text-muted-foreground ml-4">Plugins:</span>
-              {strategy.base_plugins.map((plugin) => (
-                <Badge key={plugin} variant="secondary">
-                  {plugin}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="flex gap-2">
-              {strategy.status === 'draft' && (
-                <Button size="sm" variant="default">
-                  <Play className="h-4 w-4 mr-2" />
-                  Deploy
-                </Button>
-              )}
-              {strategy.status === 'active' && (
-                <Button size="sm" variant="outline">
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pause
-                </Button>
-              )}
-              <Button size="sm" variant="outline">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button size="sm" variant="outline">
-                <Archive className="h-4 w-4 mr-2" />
-                Archive
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleDelete(strategy)}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {filteredStrategies.map((strategy) => (
+        <StrategyCard
+          key={strategy.id}
+          strategy={strategy}
+          highlighted={strategy.id === highlightedStrategyId}
+        />
       ))}
     </div>
-  );
+  )
 }

@@ -6,6 +6,7 @@
 
 import { post, get, ApiError } from './client';
 import { logger, LogCategory } from '@/lib/debug';
+import type { StrategyStatus, StrategyStatusResponse } from './types';
 
 // ============================================================================
 // TYPES (Aligned with Backend DTOs)
@@ -20,19 +21,15 @@ export interface DeployStrategyRequest {
 
 export interface DeployStrategyResponse {
   strategy_id: string;
-  status: string;
+  status: StrategyStatus;
   created_at: string;
   is_paper_trading: boolean;
 }
 
-export interface StrategyStatusResponse {
+export interface StrategyActionResponse {
+  status: StrategyStatus;
   strategy_id: string;
-  status: string;
-  user_id: string;
-  token_symbol: string;
-  current_capital: number;
-  is_paper_trading: boolean;
-  created_at: string;
+  message?: string;
 }
 
 export interface HealthResponse {
@@ -40,6 +37,9 @@ export interface HealthResponse {
   service: string;
   timestamp: string;
 }
+
+// Re-export for convenience
+export type { StrategyStatus, StrategyStatusResponse } from './types';
 
 // ============================================================================
 // CHEVALIER API (through Pourtier proxy)
@@ -86,11 +86,11 @@ export const deployStrategy = async (
  */
 export const pauseStrategy = async (
   strategyId: string
-): Promise<{ status: string; strategy_id: string }> => {
+): Promise<StrategyActionResponse> => {
   logger.info(LOG_CATEGORY, 'Pausing strategy', { strategyId });
 
   try {
-    const result = await post<{ status: string; strategy_id: string }>(
+    const result = await post<StrategyActionResponse>(
       `${CHEVALIER_PREFIX}/strategies/${strategyId}/pause`
     );
 
@@ -116,11 +116,11 @@ export const pauseStrategy = async (
  */
 export const resumeStrategy = async (
   strategyId: string
-): Promise<{ status: string; strategy_id: string }> => {
+): Promise<StrategyActionResponse> => {
   logger.info(LOG_CATEGORY, 'Resuming strategy', { strategyId });
 
   try {
-    const result = await post<{ status: string; strategy_id: string }>(
+    const result = await post<StrategyActionResponse>(
       `${CHEVALIER_PREFIX}/strategies/${strategyId}/resume`
     );
 
@@ -142,15 +142,16 @@ export const resumeStrategy = async (
 /**
  * Stop strategy permanently
  *
- * Cleanup: Unsubscribe, delete state, archive strategy.
+ * Closes any open positions and marks strategy as stopped.
+ * Strategy can be undeployed after stopping.
  */
 export const stopStrategy = async (
   strategyId: string
-): Promise<{ status: string; strategy_id: string }> => {
+): Promise<StrategyActionResponse> => {
   logger.info(LOG_CATEGORY, 'Stopping strategy', { strategyId });
 
   try {
-    const result = await post<{ status: string; strategy_id: string }>(
+    const result = await post<StrategyActionResponse>(
       `${CHEVALIER_PREFIX}/strategies/${strategyId}/stop`
     );
 
@@ -162,6 +163,37 @@ export const stopStrategy = async (
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to stop strategy', {
+      error,
+      strategyId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Undeploy strategy
+ *
+ * Complete cleanup: Unsubscribe, delete state, remove from active strategies.
+ * Final lifecycle action - strategy moves to UNDEPLOYED status.
+ */
+export const undeployStrategy = async (
+  strategyId: string
+): Promise<StrategyActionResponse> => {
+  logger.info(LOG_CATEGORY, 'Undeploying strategy', { strategyId });
+
+  try {
+    const result = await post<StrategyActionResponse>(
+      `${CHEVALIER_PREFIX}/strategies/${strategyId}/undeploy`
+    );
+
+    logger.info(LOG_CATEGORY, 'Strategy undeployed successfully', {
+      strategyId,
+      status: result.status,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to undeploy strategy', {
       error,
       strategyId
     });
