@@ -354,22 +354,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column - Strategy Info Card */}
           <div className="bg-card border border-primary/20 rounded-2xl p-6 space-y-4">
-            {/* Tags */}
-            <label className="text-base font-semibold text-foreground">Tags</label>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                Indicator Based
-              </span>
-              {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
-                <span
-                  key={idx}
-                  className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
-                >
-                  {indicator}
-                </span>
-              ))}
-            </div>
-
             {/* Description with Edit */}
             <label className="text-base font-semibold text-foreground">Description</label>
             <div className="group">
@@ -413,6 +397,22 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Tags */}
+            <label className="text-base font-semibold text-foreground">Tags</label>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
+                Indicator Based
+              </span>
+              {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-background border border-primary/30 rounded-full text-sm font-mono text-foreground"
+                >
+                  {indicator}
+                </span>
+              ))}
             </div>
           </div>
 
