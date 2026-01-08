@@ -10,7 +10,6 @@ import {
   getDeploymentHistory
 } from '@/lib/api/chevalier';
 import { ApiError } from '@/lib/api/client';
-import { useAuth } from '@/hooks/use-auth';
 
 export const chevalierKeys = {
   all: ['chevalier'] as const,
@@ -88,12 +87,27 @@ export const useDeploymentHistory = (
 
 /**
  * Fetch all active deployments
+ * Returns empty array if service unavailable or no deployments
  */
 export const useActiveDeployments = (userId?: string) => {
   return useQuery({
     queryKey: chevalierKeys.activeDeployments(userId),
-    queryFn: () => getActiveDeployments(userId),
+    queryFn: async () => {
+      try {
+        return await getActiveDeployments(userId);
+      } catch (error) {
+        // Return empty array if service unavailable or any error
+        // This prevents dashboard from crashing when Chevalier is down
+        if (error instanceof ApiError) {
+          console.warn('Chevalier service unavailable:', error.statusCode);
+          return [];
+        }
+        console.warn('Failed to fetch active deployments:', error);
+        return [];
+      }
+    },
     staleTime: 30 * 1000,
+    retry: false, // Don't retry if service is down
   });
 };
 
