@@ -420,11 +420,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           {/* Tags Card */}
           <div className="bg-card border border-primary/20 rounded-2xl p-6 h-full">
             <div className="space-y-3">
-              <label className="text-base font-semibold text-foreground">Tags</label>
+              <label className="text-base font-semibold text-foreground">Indicators</label>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-medium">
-                  Indicator Based
-                </span>
                 {hasIndicators && editedStrategy.indicators.map((indicator, idx) => (
                   <span
                     key={idx}
