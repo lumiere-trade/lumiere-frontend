@@ -42,7 +42,7 @@ interface DeployedStrategyConfig {
   strategyName: string
   symbol: string
   timeframe: string
-  indicatorNames: string[]  // e.g., ["RSI", "EMA_20"]
+  indicatorNames: string[]  // e.g., ["rsi_16", "ema_20"]
 }
 
 interface LiveDashboardContextType {
@@ -57,7 +57,7 @@ interface LiveDashboardContextType {
   // Chart data (transformed for MultiPanelChart)
   chartCandles: Candle[]
   chartTrades: Trade[]
-  
+
   // Indicator data for chart (GPU-calculated)
   indicatorData: IndicatorData[]
 
@@ -112,22 +112,40 @@ function chroniclerToLiveCandle(c: ChroniclerCandle): LiveCandle {
 }
 
 /**
+ * Normalize indicator name to standard format for GPU calculation
+ * Input formats: "RSI(16)", "EMA(20)", "MACD(12,26,9)"
+ * Output format: "rsi_16", "ema_20", "macd_12_26_9"
+ */
+function normalizeIndicatorName(name: string): string {
+  // Handle formats like "RSI(16)" -> "rsi_16"
+  const match = name.match(/^([A-Za-z]+)\(([^)]+)\)$/)
+  if (match) {
+    const type = match[1].toLowerCase()
+    const params = match[2].split(',').map(p => p.trim()).join('_')
+    return `${type}_${params}`
+  }
+  // Already in snake_case format or simple name
+  return name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+}
+
+/**
  * Parse indicator configs from strategy indicator names
  */
 function parseIndicatorConfigs(
   indicatorNames: string[]
 ): Record<string, { type: string; params?: number[] }> {
   const configs: Record<string, { type: string; params?: number[] }> = {}
-  
-  for (const name of indicatorNames) {
+
+  for (const rawName of indicatorNames) {
+    const name = normalizeIndicatorName(rawName)
     // Parse names like "rsi_16", "ema_20", "macd_12_26_9"
-    const parts = name.toLowerCase().split('_')
+    const parts = name.split('_')
     const type = parts[0].toUpperCase()
     const params = parts.slice(1).map(Number).filter(n => !isNaN(n))
-    
+
     configs[name] = { type, params: params.length > 0 ? params : undefined }
   }
-  
+
   return configs
 }
 
@@ -139,13 +157,13 @@ function transformToIndicatorData(
   indicatorConfigs: Record<string, { type: string; params?: number[] }>
 ): IndicatorData[] {
   const data: IndicatorData[] = []
-  
+
   for (const [name, values] of Object.entries(results)) {
     // Filter out NaN values and create IndicatorValue array
     const indicatorValues = values
       .map((value, index) => ({ index, value }))
       .filter(v => !isNaN(v.value))
-    
+
     if (indicatorValues.length > 0) {
       data.push({
         name: name.toUpperCase(),
@@ -153,7 +171,7 @@ function transformToIndicatorData(
       })
     }
   }
-  
+
   return data
 }
 
@@ -179,7 +197,7 @@ export function LiveDashboardProvider({
   // Warm-up state
   const [historicalCandles, setHistoricalCandles] = useState<LiveCandle[]>([])
   const [isWarmingUp, setIsWarmingUp] = useState(true)
-  
+
   // GPU-calculated indicator data for chart
   const [indicatorData, setIndicatorData] = useState<IndicatorData[]>([])
   const indicatorCalcPending = useRef(false)
@@ -270,24 +288,30 @@ export function LiveDashboardProvider({
     if (chartCandles.length < 50 || indicatorCalcPending.current) {
       return
     }
-    
+
     // Parse indicator configs from strategy
     const indicatorConfigs = parseIndicatorConfigs(config.indicatorNames)
-    
+
+    console.log('[GPU] Indicator configs:', {
+      rawNames: config.indicatorNames,
+      parsed: indicatorConfigs,
+    })
+
     if (Object.keys(indicatorConfigs).length === 0) {
+      console.log('[GPU] No indicators to calculate')
       return
     }
-    
+
     indicatorCalcPending.current = true
-    
+
     // Calculate indicators using GPU
     const startTime = performance.now()
-    
+
     calculateAllIndicators(chartCandles, indicatorConfigs)
       .then(results => {
         const elapsed = performance.now() - startTime
         console.log(`[GPU] Calculated ${Object.keys(results).length} indicators in ${elapsed.toFixed(2)}ms`)
-        
+
         const data = transformToIndicatorData(results, indicatorConfigs)
         setIndicatorData(data)
       })
@@ -394,6 +418,20 @@ export function useLiveDashboard() {
 // UTILITY: Parse strategy config from TSDL
 // ============================================================================
 
+/**
+ * Parse strategy configuration from TSDL JSON
+ * 
+ * TSDL structure (from Architect DB tsdl_code column):
+ * {
+ *   "name": "RSI(16) Momentum",
+ *   "symbol": "SOL/USDC",
+ *   "timeframe": "5m",
+ *   "indicators": ["RSI(16)"],      // <-- Direct array in root
+ *   "entry_rules": [...],
+ *   "exit_rules": [...],
+ *   ...
+ * }
+ */
 export function parseStrategyConfig(
   deploymentId: string,
   strategyId: string,
@@ -403,35 +441,17 @@ export function parseStrategyConfig(
   try {
     const tsdl = JSON.parse(tsdlCode)
 
-    // Extract indicator names from strategy
-    const indicatorNames: string[] = []
+    // TSDL has indicators array directly in root
+    // Format: ["RSI(16)", "EMA(20)", "MACD(12,26,9)"]
+    const rawIndicators: string[] = tsdl.indicators || []
 
-    // Check entry conditions for indicators
-    if (tsdl.strategy?.entry?.conditions) {
-      for (const condition of tsdl.strategy.entry.conditions) {
-        if (condition.indicator) {
-          const params = condition.params
-            ? `_${Object.values(condition.params).join('_')}`
-            : ''
-          indicatorNames.push(`${condition.indicator}${params}`)
-        }
-      }
-    }
+    // Normalize to snake_case for GPU calculation
+    const indicatorNames = rawIndicators.map(normalizeIndicatorName)
 
-    // Check exit conditions
-    if (tsdl.strategy?.exit?.conditions) {
-      for (const condition of tsdl.strategy.exit.conditions) {
-        if (condition.indicator) {
-          const params = condition.params
-            ? `_${Object.values(condition.params).join('_')}`
-            : ''
-          const name = `${condition.indicator}${params}`
-          if (!indicatorNames.includes(name)) {
-            indicatorNames.push(name)
-          }
-        }
-      }
-    }
+    console.log('[parseStrategyConfig] Parsed indicators:', {
+      raw: rawIndicators,
+      normalized: indicatorNames,
+    })
 
     return {
       deploymentId,
@@ -442,7 +462,7 @@ export function parseStrategyConfig(
       indicatorNames,
     }
   } catch (error) {
-    console.error('Failed to parse TSDL:', error)
+    console.error('[parseStrategyConfig] Failed to parse TSDL:', error)
 
     // Return defaults
     return {
