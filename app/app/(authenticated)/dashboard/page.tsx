@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useEffect } from "react"
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
 import { EmptyState } from "@/components/dashboard/EmptyState"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
@@ -38,6 +38,21 @@ function DashboardContent() {
     ? strategies.find(s => s.id === activeDeployment.architect_strategy_id)
     : null
 
+  // DEBUG LOGGING
+  useEffect(() => {
+    console.log('[DASHBOARD DEBUG] ======================')
+    console.log('[DASHBOARD DEBUG] user:', user?.id)
+    console.log('[DASHBOARD DEBUG] isLoadingStrategies:', isLoadingStrategies)
+    console.log('[DASHBOARD DEBUG] isLoadingDeployments:', isLoadingDeployments)
+    console.log('[DASHBOARD DEBUG] strategies:', strategies)
+    console.log('[DASHBOARD DEBUG] strategies.length:', strategies?.length)
+    console.log('[DASHBOARD DEBUG] hasStrategies:', hasStrategies)
+    console.log('[DASHBOARD DEBUG] activeDeployments:', activeDeployments)
+    console.log('[DASHBOARD DEBUG] activeDeployment:', activeDeployment)
+    console.log('[DASHBOARD DEBUG] activeStrategy:', activeStrategy)
+    console.log('[DASHBOARD DEBUG] ======================')
+  }, [user, isLoadingStrategies, isLoadingDeployments, strategies, hasStrategies, activeDeployments, activeDeployment, activeStrategy])
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -48,6 +63,7 @@ function DashboardContent() {
 
   // CASE 1: Has active deployment - show Live Dashboard
   if (activeDeployment && activeStrategy) {
+    console.log('[DASHBOARD] Rendering LiveDashboard')
     const strategyJson = JSON.parse(activeStrategy.tsdl_code || '{}')
 
     return (
@@ -67,6 +83,7 @@ function DashboardContent() {
 
   // CASE 2: Has strategies but none deployed
   if (hasStrategies) {
+    console.log('[DASHBOARD] Rendering NoActiveStrategy (has strategies)')
     return (
       <div className="container mx-auto px-6 py-8">
         <DashboardStats />
@@ -79,6 +96,7 @@ function DashboardContent() {
   }
 
   // CASE 3: No strategies at all
+  console.log('[DASHBOARD] Rendering EmptyState (no strategies)')
   return (
     <div className="container mx-auto px-6 py-8">
       <DashboardStats />
