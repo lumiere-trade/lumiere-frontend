@@ -1,68 +1,91 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
 import { EmptyState } from "@/components/dashboard/EmptyState"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
-import { StrategyList } from "@/components/strategy/StrategyList"
+import { LiveDashboard, NoActiveStrategy } from "@/components/dashboard/live"
+import { useActiveDeployments } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategies } from "@/hooks/use-strategies"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
+import { useAuth } from "@/hooks/use-auth"
+import {
+  usePauseDeployment,
+  useResumeDeployment,
+  useStopDeployment
+} from "@/hooks/mutations/use-chevalier-mutations"
 import { Spinner } from "@/components/ui/spinner"
 
 function DashboardContent() {
-  const searchParams = useSearchParams()
-  const activeTab = searchParams.get('tab') || 'all'
-  const highlightId = searchParams.get('highlight')
+  const { user } = useAuth()
+  const { strategies, isLoading: isLoadingStrategies } = useStrategies()
+  const {
+    data: activeDeployments,
+    isLoading: isLoadingDeployments
+  } = useActiveDeployments(user?.id)
 
-  const { strategies, isLoading } = useStrategies()
+  const pauseMutation = usePauseDeployment()
+  const resumeMutation = useResumeDeployment()
+  const stopMutation = useStopDeployment()
 
-  // Auto-scroll to highlighted strategy
-  useEffect(() => {
-    if (highlightId) {
-      const timer = setTimeout(() => {
-        const element = document.querySelector(`[data-strategy-id="${highlightId}"]`)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-      }, 500)
-      return () => clearTimeout(timer)
-    }
-  }, [highlightId])
+  const isLoading = isLoadingStrategies || isLoadingDeployments
+  const hasStrategies = !isLoadingStrategies && strategies && strategies.length > 0
 
-  const hasStrategies = !isLoading && strategies && strategies.length > 0
+  const activeDeployment = activeDeployments && activeDeployments.length > 0
+    ? activeDeployments[0]
+    : null
 
+  const activeStrategy = activeDeployment && strategies
+    ? strategies.find(s => s.id === activeDeployment.architect_strategy_id)
+    : null
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner className="w-8 h-8" />
+      </div>
+    )
+  }
+
+  // CASE 1: Has active deployment - show Live Dashboard
+  if (activeDeployment && activeStrategy) {
+    const strategyJson = JSON.parse(activeStrategy.tsdl_code || '{}')
+
+    return (
+      <LiveDashboard
+        deployment={activeDeployment}
+        strategyName={activeStrategy.name}
+        strategyJson={strategyJson}
+        onPause={() => pauseMutation.mutate(activeDeployment.deployment_id)}
+        onResume={() => resumeMutation.mutate(activeDeployment.deployment_id)}
+        onStop={() => stopMutation.mutate(activeDeployment.deployment_id)}
+        isPausing={pauseMutation.isPending}
+        isResuming={resumeMutation.isPending}
+        isStopping={stopMutation.isPending}
+      />
+    )
+  }
+
+  // CASE 2: Has strategies but none deployed
+  if (hasStrategies) {
+    return (
+      <div className="container mx-auto px-6 py-8">
+        <DashboardStats />
+        <NoActiveStrategy hasStrategies={true} />
+        <div className="mt-8">
+          <RecentActivity />
+        </div>
+      </div>
+    )
+  }
+
+  // CASE 3: No strategies at all
   return (
     <div className="container mx-auto px-6 py-8">
       <DashboardStats />
-
-      {!hasStrategies && <EmptyState />}
-
-      {hasStrategies && (
-        <div className="mb-8">
-          <Tabs defaultValue={activeTab} className="w-full">
-            <TabsList className="mb-6">
-              <TabsTrigger value="all">All Strategies</TabsTrigger>
-              <TabsTrigger value="active">Active</TabsTrigger>
-              <TabsTrigger value="inactive">Inactive</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              <StrategyList filter="all" highlightedStrategyId={highlightId} />
-            </TabsContent>
-
-            <TabsContent value="active">
-              <StrategyList filter="active" highlightedStrategyId={highlightId} />
-            </TabsContent>
-
-            <TabsContent value="inactive">
-              <StrategyList filter="inactive" highlightedStrategyId={highlightId} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
-
-      <RecentActivity />
+      <EmptyState />
+      <div className="mt-8">
+        <RecentActivity />
+      </div>
     </div>
   )
 }
