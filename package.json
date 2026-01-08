@@ -19,7 +19,7 @@
     "clean": "rm -rf node_modules marketing/node_modules app/node_modules shared/node_modules marketing/.next app/.next"
   },
   "engines": {
-    "node": ">=18.17.0",
+    "node": ">=18.17.0 <24",
     "npm": ">=9.0.0"
   },
   "repository": {
@@ -31,5 +31,8 @@
   "dependencies": {
     "gpu.js": "^2.16.0",
     "react-markdown": "^10.1.0"
+  },
+  "overrides": {
+    "gl": "npm:empty-npm-package@1.0.0"
   }
 }
