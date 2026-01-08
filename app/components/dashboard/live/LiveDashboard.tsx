@@ -50,6 +50,7 @@ export function LiveDashboard({
     recentTrades,
     indicators,
     error,
+    isWarmingUp,
   } = useLiveDashboard()
 
   // Strategy info for StrategyStatusCard
@@ -70,8 +71,8 @@ export function LiveDashboard({
   const todayPnL = realizedPnL  // TODO: Filter by today
   const openPnL = position?.unrealizedPnL || 0
 
-  // Loading state based on connection
-  const isLoadingData = !isConnected && chartCandles.length === 0
+  // Loading state based on warm-up
+  const isLoadingData = isWarmingUp && chartCandles.length === 0
 
   return (
     <div className="flex flex-col h-full">
@@ -94,6 +95,7 @@ export function LiveDashboard({
         />
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Chart Section */}
           <div className="xl:col-span-2">
             <Card>
               <CardHeader className="pb-2">
@@ -102,11 +104,9 @@ export function LiveDashboard({
                     {strategyJson.symbol || "SOL/USDC"} - {strategyJson.timeframe || "1h"}
                   </span>
                   <span className="text-sm font-normal text-muted-foreground">
-                    {chartCandles.length > 0
-                      ? `${chartCandles.length} candles`
-                      : isConnected
-                        ? "Waiting for data..."
-                        : "Connecting..."
+                    {isWarmingUp && chartCandles.length === 0
+                      ? "Loading history..."
+                      : `${chartCandles.length} candles`
                     }
                   </span>
                 </CardTitle>
@@ -125,11 +125,11 @@ export function LiveDashboard({
                   <div className="h-[500px] flex items-center justify-center text-muted-foreground border border-dashed border-primary/20 rounded-lg">
                     <div className="text-center">
                       <p className="text-lg font-medium">
-                        {isConnected ? "Waiting for Market Data" : "Connecting..."}
+                        {isWarmingUp ? "Loading Historical Data..." : "Connecting..."}
                       </p>
                       <p className="text-sm mt-1">
-                        {isConnected
-                          ? "Real-time data will appear shortly"
+                        {isWarmingUp
+                          ? "Fetching market history from Chronicler"
                           : connectionStatus.reconnectAttempts > 0
                             ? `Reconnecting (attempt ${connectionStatus.reconnectAttempts})...`
                             : "Establishing connection..."
@@ -142,6 +142,7 @@ export function LiveDashboard({
             </Card>
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-4">
             <PositionCard
               position={position}

@@ -1,6 +1,7 @@
 /**
  * Live Dashboard Context
  * Provides real-time trading data via WebSocket to LiveDashboard components
+ * Includes historical candle warm-up from Chronicler
  */
 
 "use client"
@@ -9,14 +10,18 @@ import {
   createContext,
   useContext,
   useMemo,
+  useEffect,
+  useState,
   ReactNode,
 } from 'react'
 import { useDashboardWebSocket } from '@/hooks/use-dashboard-websocket'
+import {
+  fetchWarmupCandles,
+  type ChroniclerCandle,
+} from '@/lib/api/chronicler'
 import type {
   ConnectionStatus,
   LiveCandle,
-  LivePosition,
-  LiveSignal,
   DashboardError,
 } from '@/lib/api/courier'
 import type { Candle, Trade } from '@/components/charts/types'
@@ -39,34 +44,37 @@ interface DeployedStrategyConfig {
 interface LiveDashboardContextType {
   // Strategy config
   config: DeployedStrategyConfig
-  
+
   // Connection
   connectionStatus: ConnectionStatus
   isConnected: boolean
   latencyMs: number | null
-  
+
   // Chart data (transformed for MultiPanelChart)
   chartCandles: Candle[]
   chartTrades: Trade[]
-  
+
   // Position data (transformed for PositionCard)
   position: Position | null
-  
+
   // Account data
   equity: number
   initialCapital: number
   realizedPnL: number
   totalTrades: number
-  
+
   // Signals (transformed for RecentTradesCard)
   recentTrades: RecentTrade[]
-  
+
   // Indicators
   indicators: Record<string, number>
-  
+
   // Error state
   error: DashboardError | null
-  
+
+  // Warm-up state
+  isWarmingUp: boolean
+
   // Actions
   connect: () => void
   disconnect: () => void
@@ -79,6 +87,24 @@ interface LiveDashboardContextType {
 const LiveDashboardContext = createContext<LiveDashboardContextType | undefined>(undefined)
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Transform Chronicler candle format to LiveCandle format
+ */
+function chroniclerToLiveCandle(c: ChroniclerCandle): LiveCandle {
+  return {
+    t: new Date(c.timestamp).getTime(),
+    o: parseFloat(c.open),
+    h: parseFloat(c.high),
+    l: parseFloat(c.low),
+    c: parseFloat(c.close),
+    v: parseFloat(c.volume),
+  }
+}
+
+// ============================================================================
 // PROVIDER
 // ============================================================================
 
@@ -87,6 +113,7 @@ interface LiveDashboardProviderProps {
   userId: string
   config: DeployedStrategyConfig
   initialCapital?: number
+  warmupCandles?: number
 }
 
 export function LiveDashboardProvider({
@@ -94,7 +121,52 @@ export function LiveDashboardProvider({
   userId,
   config,
   initialCapital = 10000,
+  warmupCandles = 500,
 }: LiveDashboardProviderProps) {
+  // Warm-up state
+  const [historicalCandles, setHistoricalCandles] = useState<LiveCandle[]>([])
+  const [isWarmingUp, setIsWarmingUp] = useState(true)
+
+  // Fetch historical candles on mount
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadWarmup() {
+      setIsWarmingUp(true)
+      try {
+        console.log('[Warmup] Fetching historical candles...', {
+          symbol: config.symbol,
+          timeframe: config.timeframe,
+          target: warmupCandles,
+        })
+
+        const candles = await fetchWarmupCandles(
+          config.symbol,
+          config.timeframe,
+          warmupCandles
+        )
+
+        if (!cancelled) {
+          const transformed = candles.map(chroniclerToLiveCandle)
+          setHistoricalCandles(transformed)
+          console.log('[Warmup] Loaded', transformed.length, 'historical candles')
+        }
+      } catch (err) {
+        console.error('[Warmup] Failed to load historical candles:', err)
+      } finally {
+        if (!cancelled) {
+          setIsWarmingUp(false)
+        }
+      }
+    }
+
+    loadWarmup()
+
+    return () => {
+      cancelled = true
+    }
+  }, [config.symbol, config.timeframe, warmupCandles])
+
   // WebSocket hook
   const {
     connectionStatus,
@@ -112,19 +184,30 @@ export function LiveDashboardProvider({
     deploymentId: config.deploymentId,
     enabled: true,
   })
-  
-  // Transform candles for chart
+
+  // Merge historical + live candles
   const chartCandles: Candle[] = useMemo(() => {
-    return liveCandles.map(c => ({
-      t: c.t,
-      o: c.o,
-      h: c.h,
-      l: c.l,
-      c: c.c,
-      v: c.v,
-    }))
-  }, [liveCandles])
-  
+    // Start with historical candles
+    const merged = [...historicalCandles]
+
+    // Add/update live candles
+    for (const live of liveCandles) {
+      const existingIdx = merged.findIndex(c => c.t === live.t)
+      if (existingIdx >= 0) {
+        // Update existing candle (same timestamp)
+        merged[existingIdx] = live
+      } else if (merged.length === 0 || live.t > merged[merged.length - 1].t) {
+        // Append new candle
+        merged.push(live)
+      }
+    }
+
+    // Sort by timestamp and limit to max candles
+    merged.sort((a, b) => a.t - b.t)
+
+    return merged.slice(-500)
+  }, [historicalCandles, liveCandles])
+
   // Transform signals to trades for chart markers
   const chartTrades: Trade[] = useMemo(() => {
     return signals.map(signal => ({
@@ -135,13 +218,13 @@ export function LiveDashboardProvider({
       indicators: signal.indicators,
     }))
   }, [signals])
-  
+
   // Transform position for PositionCard
   const position: Position | null = useMemo(() => {
     if (!livePosition || !livePosition.hasPosition) {
       return null
     }
-    
+
     return {
       side: livePosition.side || 'LONG',
       entryPrice: livePosition.entryPrice,
@@ -155,7 +238,7 @@ export function LiveDashboardProvider({
       entryTime: new Date(),  // TODO: Track entry time
     }
   }, [livePosition])
-  
+
   // Transform signals to recent trades for RecentTradesCard
   const recentTrades: RecentTrade[] = useMemo(() => {
     return signals.map(signal => ({
@@ -168,12 +251,12 @@ export function LiveDashboardProvider({
       timestamp: signal.timestamp,
     }))
   }, [signals, livePosition])
-  
+
   // Account values
   const equity = livePosition?.totalEquity || initialCapital
   const realizedPnL = livePosition?.realizedPnL || 0
   const totalTrades = livePosition?.totalTrades || 0
-  
+
   const value: LiveDashboardContextType = {
     config,
     connectionStatus,
@@ -189,10 +272,11 @@ export function LiveDashboardProvider({
     recentTrades,
     indicators,
     error,
+    isWarmingUp,
     connect,
     disconnect,
   }
-  
+
   return (
     <LiveDashboardContext.Provider value={value}>
       {children}
@@ -206,11 +290,11 @@ export function LiveDashboardProvider({
 
 export function useLiveDashboard() {
   const context = useContext(LiveDashboardContext)
-  
+
   if (context === undefined) {
     throw new Error('useLiveDashboard must be used within a LiveDashboardProvider')
   }
-  
+
   return context
 }
 
@@ -226,10 +310,10 @@ export function parseStrategyConfig(
 ): DeployedStrategyConfig {
   try {
     const tsdl = JSON.parse(tsdlCode)
-    
+
     // Extract indicator names from strategy
     const indicatorNames: string[] = []
-    
+
     // Check entry conditions for indicators
     if (tsdl.strategy?.entry?.conditions) {
       for (const condition of tsdl.strategy.entry.conditions) {
@@ -241,7 +325,7 @@ export function parseStrategyConfig(
         }
       }
     }
-    
+
     // Check exit conditions
     if (tsdl.strategy?.exit?.conditions) {
       for (const condition of tsdl.strategy.exit.conditions) {
@@ -256,7 +340,7 @@ export function parseStrategyConfig(
         }
       }
     }
-    
+
     return {
       deploymentId,
       strategyId,
@@ -267,7 +351,7 @@ export function parseStrategyConfig(
     }
   } catch (error) {
     console.error('Failed to parse TSDL:', error)
-    
+
     // Return defaults
     return {
       deploymentId,
