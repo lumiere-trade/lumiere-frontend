@@ -5,6 +5,7 @@ import { AccountSummary } from "./AccountSummary"
 import { PositionCard } from "./PositionCard"
 import { StrategyStatusCard } from "./StrategyStatusCard"
 import { RecentTradesCard } from "./RecentTradesCard"
+import { IndicatorPanel } from "@/components/dashboard/indicators"
 import { MultiPanelChart } from "@/components/charts/MultiPanelChart"
 import { Card, CardContent, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { useLiveDashboard } from "@/contexts/LiveDashboardContext"
@@ -73,6 +74,11 @@ export function LiveDashboard({
 
   // Loading state based on warm-up
   const isLoadingData = isWarmingUp && chartCandles.length === 0
+
+  // Get current price from last candle
+  const currentPrice = chartCandles.length > 0 
+    ? chartCandles[chartCandles.length - 1].c 
+    : 0
 
   return (
     <div className="flex flex-col h-full">
@@ -147,6 +153,13 @@ export function LiveDashboard({
             <PositionCard
               position={position}
               symbol={strategyJson.symbol || "SOL/USDC"}
+              isLoading={isLoadingData}
+            />
+
+            {/* Indicator Panel */}
+            <IndicatorPanel
+              indicators={indicators}
+              currentPrice={currentPrice}
               isLoading={isLoadingData}
             />
 
