@@ -3,12 +3,23 @@
 import { Wallet, BarChart3, TrendingUp } from "lucide-react"
 import { StatsCard } from "./StatsCard"
 import { useEscrow } from "@/hooks/use-escrow"
+import { useStrategies } from "@/hooks/use-strategies"
 
 export function DashboardStats() {
-  const { escrowBalance, isLoading } = useEscrow()
-  
+  const { escrowBalance, isLoading: isLoadingEscrow } = useEscrow()
+  const { strategies, isLoading: isLoadingStrategies } = useStrategies()
+
   const escrowBalanceNum = parseFloat(escrowBalance)
-  const formattedBalance = isLoading ? "..." : `$${escrowBalanceNum.toFixed(2)}`
+  const formattedBalance = isLoadingEscrow ? "..." : `$${escrowBalanceNum.toFixed(2)}`
+
+  const strategyCount = isLoadingStrategies ? "..." : strategies.length
+  const strategySubtitle = isLoadingStrategies
+    ? "Loading..."
+    : strategies.length === 0
+      ? "Deploy your first"
+      : strategies.length === 1
+        ? "1 strategy created"
+        : `${strategies.length} strategies created`
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
@@ -21,8 +32,8 @@ export function DashboardStats() {
       />
       <StatsCard
         title="Strategies"
-        value={0}
-        subtitle="Deploy your first"
+        value={strategyCount}
+        subtitle={strategySubtitle}
         icon={BarChart3}
         iconColor="text-primary"
       />
