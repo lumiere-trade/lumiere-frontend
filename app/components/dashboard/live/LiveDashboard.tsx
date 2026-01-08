@@ -43,6 +43,7 @@ export function LiveDashboard({
     latencyMs,
     chartCandles,
     chartTrades,
+    indicatorData,
     position,
     equity,
     initialCapital,
@@ -114,6 +115,11 @@ export function LiveDashboard({
                       ? "Loading history..."
                       : `${chartCandles.length} candles`
                     }
+                    {indicatorData.length > 0 && (
+                      <span className="ml-2 text-primary">
+                        | {indicatorData.length} indicators (GPU)
+                      </span>
+                    )}
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -122,7 +128,7 @@ export function LiveDashboard({
                   <MultiPanelChart
                     candles={chartCandles}
                     trades={chartTrades}
-                    indicatorData={[]}
+                    indicatorData={indicatorData}
                     timeframe={strategyJson.timeframe || "1h"}
                     mode="C"
                     showIndicatorToggles={true}
@@ -156,7 +162,7 @@ export function LiveDashboard({
               isLoading={isLoadingData}
             />
 
-            {/* Indicator Panel */}
+            {/* Indicator Panel - Real-time values */}
             <IndicatorPanel
               indicators={indicators}
               currentPrice={currentPrice}

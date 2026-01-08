@@ -29,6 +29,7 @@
   "author": "Lumiere Team",
   "license": "Apache-2.0",
   "dependencies": {
+    "gpu.js": "^2.16.0",
     "react-markdown": "^10.1.0"
   }
 }
