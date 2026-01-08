@@ -1,25 +1,19 @@
 "use client"
 
-import { useState } from "react"
 import { SystemStatusBar } from "./SystemStatusBar"
 import { AccountSummary } from "./AccountSummary"
-import { PositionCard, Position } from "./PositionCard"
+import { PositionCard } from "./PositionCard"
 import { StrategyStatusCard } from "./StrategyStatusCard"
-import { RecentTradesCard, RecentTrade } from "./RecentTradesCard"
+import { RecentTradesCard } from "./RecentTradesCard"
 import { MultiPanelChart } from "@/components/charts/MultiPanelChart"
 import { Card, CardContent, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
+import { useLiveDashboard } from "@/contexts/LiveDashboardContext"
 import type { StrategyStatus, DeploymentStatusResponse } from "@/lib/api/types"
-import type { Candle, Trade, Indicator } from "@/components/charts/types"
 
 interface LiveDashboardProps {
   deployment: DeploymentStatusResponse
   strategyName: string
   strategyJson: Record<string, any>
-  candles?: Candle[]
-  trades?: Trade[]
-  indicators?: Indicator[]
-  position?: Position | null
-  recentTrades?: RecentTrade[]
   onPause?: () => void
   onResume?: () => void
   onStop?: () => void
@@ -27,18 +21,12 @@ interface LiveDashboardProps {
   isPausing?: boolean
   isResuming?: boolean
   isStopping?: boolean
-  isLoadingData?: boolean
 }
 
 export function LiveDashboard({
   deployment,
   strategyName,
   strategyJson,
-  candles = [],
-  trades = [],
-  indicators = [],
-  position = null,
-  recentTrades = [],
   onPause,
   onResume,
   onStop,
@@ -46,41 +34,58 @@ export function LiveDashboard({
   isPausing = false,
   isResuming = false,
   isStopping = false,
-  isLoadingData = false
 }: LiveDashboardProps) {
-  const [isConnected] = useState(true)
-  const [lastUpdate] = useState(new Date())
-  const [latencyMs] = useState(45)
+  // Get real-time data from context
+  const {
+    connectionStatus,
+    isConnected,
+    latencyMs,
+    chartCandles,
+    chartTrades,
+    position,
+    equity,
+    initialCapital,
+    realizedPnL,
+    totalTrades,
+    recentTrades,
+    indicators,
+    error,
+  } = useLiveDashboard()
 
+  // Strategy info for StrategyStatusCard
   const strategyInfo = {
     name: strategyName,
     symbol: strategyJson.symbol || "SOL/USDC",
     timeframe: strategyJson.timeframe || "1h",
     status: deployment.status as StrategyStatus,
     deployedAt: new Date(deployment.created_at),
-    totalTrades: recentTrades.length,
+    totalTrades: totalTrades,
     winRate: recentTrades.length > 0
       ? (recentTrades.filter(t => t.pnl && t.pnl > 0).length / recentTrades.filter(t => t.pnl !== null).length) * 100
       : 0,
     version: deployment.version
   }
 
-  const initialCapital = 10000
-  const currentCapital = deployment.current_capital || initialCapital
-  const todayPnL = 0
+  // Calculate P&L values
+  const todayPnL = realizedPnL  // TODO: Filter by today
   const openPnL = position?.unrealizedPnL || 0
+
+  // Loading state based on connection
+  const isLoadingData = !isConnected && chartCandles.length === 0
 
   return (
     <div className="flex flex-col h-full">
       <SystemStatusBar
         isConnected={isConnected}
-        lastUpdate={lastUpdate}
+        lastUpdate={connectionStatus.lastMessageAt}
         latencyMs={latencyMs}
+        hasError={!!error}
+        errorMessage={error?.last_error}
       />
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <AccountSummary
-          equity={currentCapital}
+          equity={equity}
           initialCapital={initialCapital}
           todayPnL={todayPnL}
           openPnL={openPnL}
@@ -94,32 +99,41 @@ export function LiveDashboard({
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg flex items-center justify-between">
                   <span>
-                    {strategyJson.symbol} - {strategyJson.timeframe}
+                    {strategyJson.symbol || "SOL/USDC"} - {strategyJson.timeframe || "1h"}
                   </span>
                   <span className="text-sm font-normal text-muted-foreground">
-                    {candles.length > 0
-                      ? `${candles.length} candles loaded`
-                      : "Waiting for data..."
+                    {chartCandles.length > 0
+                      ? `${chartCandles.length} candles`
+                      : isConnected
+                        ? "Waiting for data..."
+                        : "Connecting..."
                     }
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {candles.length > 0 ? (
+                {chartCandles.length > 0 ? (
                   <MultiPanelChart
-                    candles={candles}
-                    trades={trades}
+                    candles={chartCandles}
+                    trades={chartTrades}
                     indicatorData={[]}
-                    timeframe={strategyJson.timeframe}
+                    timeframe={strategyJson.timeframe || "1h"}
                     mode="C"
                     showIndicatorToggles={true}
                   />
                 ) : (
                   <div className="h-[500px] flex items-center justify-center text-muted-foreground border border-dashed border-primary/20 rounded-lg">
                     <div className="text-center">
-                      <p className="text-lg font-medium">No Market Data</p>
+                      <p className="text-lg font-medium">
+                        {isConnected ? "Waiting for Market Data" : "Connecting..."}
+                      </p>
                       <p className="text-sm mt-1">
-                        Real-time data will appear when connected
+                        {isConnected
+                          ? "Real-time data will appear shortly"
+                          : connectionStatus.reconnectAttempts > 0
+                            ? `Reconnecting (attempt ${connectionStatus.reconnectAttempts})...`
+                            : "Establishing connection..."
+                        }
                       </p>
                     </div>
                   </div>

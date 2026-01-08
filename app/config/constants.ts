@@ -7,6 +7,12 @@ export const API_CONFIG = {
   TIMEOUT: 30000,
 } as const
 
+export const COURIER_CONFIG = {
+  WS_URL: process.env.NEXT_PUBLIC_COURIER_WS_URL || 'ws://localhost:9765',
+  RECONNECT_DELAY: 3000,
+  MAX_SIGNALS_HISTORY: 50,
+} as const
+
 export const AUTH_CONFIG = {
   TOKEN_KEY: 'lumiere_auth_token',
   MESSAGE: process.env.NEXT_PUBLIC_AUTH_MESSAGE || 'Sign this message to authenticate with Lumiere',
