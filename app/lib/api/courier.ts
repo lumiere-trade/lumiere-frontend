@@ -173,13 +173,23 @@ export function transformSignal(msg: DashboardSignal): LiveSignal {
 
 /**
  * Build WebSocket URL for dashboard channel
+ * 
+ * Production (Vercel): wss://api.lumiere.trade/courier/ws/dashboard.{user_id}
+ * Development (local): ws://localhost:9765/ws/dashboard.{user_id}
  */
 export function buildDashboardWsUrl(
   baseUrl: string,
   userId: string,
   token?: string
 ): string {
-  const url = `${baseUrl}/ws/dashboard.${userId}`
+  // Detect if production (wss://) or development (ws://)
+  const isProduction = baseUrl.startsWith('wss://')
+  
+  // Production uses /courier/ws/ path (nginx proxy)
+  // Development connects directly to Courier on /ws/
+  const wsPath = isProduction ? '/courier/ws' : '/ws'
+  
+  const url = `${baseUrl}${wsPath}/dashboard.${userId}`
   return token ? `${url}?token=${token}` : url
 }
 
