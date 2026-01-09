@@ -120,6 +120,28 @@ export function useStrategyLoader({
 
       const lib = await getLibraryStrategy(id)
 
+      // Fetch the library JSON file to get risk parameters
+      const libraryJsonUrl = `/library/${lib.category}/${lib.name.toLowerCase().replace(/\s+/g, '_')}.json`
+      let riskParams = {
+        stop_loss: 2.0,
+        take_profit: null,
+        trailing_stop: null
+      }
+
+      try {
+        const response = await fetch(libraryJsonUrl)
+        if (response.ok) {
+          const libraryJson = await response.json()
+          riskParams = {
+            stop_loss: libraryJson.stop_loss || 2.0,
+            take_profit: libraryJson.take_profit || null,
+            trailing_stop: libraryJson.trailing_stop || null
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load library JSON, using defaults:', err)
+      }
+
       const strategyJson = {
         name: lib.name,
         description: lib.description,
@@ -130,9 +152,9 @@ export function useStrategyLoader({
         entry_logic: lib.entry_logic,
         exit_rules: lib.exit_rules,
         exit_logic: lib.exit_logic,
-        stop_loss: lib.parameters.stop_loss,
-        take_profit: lib.parameters.take_profit,
-        trailing_stop: lib.parameters.trailing_stop,
+        stop_loss: riskParams.stop_loss,
+        take_profit: riskParams.take_profit,
+        trailing_stop: riskParams.trailing_stop,
       }
 
       const strategyType = 'indicator_based'
