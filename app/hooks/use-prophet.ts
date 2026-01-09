@@ -27,7 +27,7 @@ export function useProphet() {
 
   // Health check query
   const { data: healthData, error: healthError, isLoading } = useProphetHealthQuery()
-  
+
   // Optimistic: assume healthy unless explicit error
   const isHealthy = healthError ? false : (healthData?.status === 'healthy' || isLoading)
 
@@ -150,12 +150,15 @@ export function useProphet() {
         // MVP: All strategies are indicator-based
         const strategyType = 'indicator_based'
 
+        // Extract TSDL JSON from Prophet response (tsdl_json instead of strategy_json)
+        const tsdlJson = strategyEvent.tsdl_json
+
         if (strategy) {
           // Update existing strategy
           updateStrategy({
             name: strategyEvent.strategy_name,
-            description: strategyEvent.strategy_json.description,
-            tsdl: strategyEvent.strategy_json,
+            description: tsdlJson.description,
+            tsdl: tsdlJson,
             basePlugins: [strategyType]
           })
         } else {
@@ -164,8 +167,8 @@ export function useProphet() {
             id: null,
             userId: null,
             name: strategyEvent.strategy_name,
-            description: strategyEvent.strategy_json.description,
-            tsdl: strategyEvent.strategy_json,
+            description: tsdlJson.description,
+            tsdl: tsdlJson,
             basePlugins: [strategyType],
             version: '1.0.0',
             conversation: {
@@ -181,7 +184,6 @@ export function useProphet() {
           })
         }
 
-        // Prophet generated new strategy - isDirty is now auto-calculated in Context
         // Set default tab to parameters
         setDetailsPanelTab('parameters')
       },

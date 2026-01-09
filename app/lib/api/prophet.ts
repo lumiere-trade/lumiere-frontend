@@ -1,7 +1,7 @@
 /**
  * Prophet API Client - SSE Streaming (via Pourtier Gateway)
- * All requests go through Pourtier with JWT authentication
- * Updated for MVP with simplified strategy schema
+ * Updated: Prophet now returns tsdl_json (clean TSDL only)
+ * Frontend gets metadata from TSDL service
  */
 
 import { getAuthToken } from './client'
@@ -39,22 +39,22 @@ export interface ProphetHealthResponse {
   redis_cache?: string;
 }
 
-// MVP Strategy Schema - Only 12 fields
+// MVP Strategy Schema - TSDL JSON format
 export interface StrategyJSON {
-  // Core metadata (4 fields)
+  // Core metadata
   name: string;
   description: string;
   symbol: string;
   timeframe: string;
 
-  // Indicator-based strategy fields (5 fields)
+  // Indicator-based strategy fields
   indicators: string[];
   entry_rules: string[];
   entry_logic: string;
   exit_rules: string[];
   exit_logic: string;
 
-  // Risk management (3 fields)
+  // Risk management (values in TSDL, metadata from TSDL service)
   stop_loss: number;
   take_profit: number | null;
   trailing_stop: number | null;
@@ -66,13 +66,12 @@ export interface ProgressEvent {
   percent: number;
 }
 
+// Updated: Prophet returns clean tsdl_json only
 export interface StrategyGeneratedEvent {
-  strategy_json: StrategyJSON;
-  python_code: string;
+  tsdl_json: StrategyJSON;  // Changed from strategy_json
   strategy_id: string;
   strategy_name: string;
-  strategy_class_name: string;
-  metadata?: any;
+  // Removed: python_code, strategy_class_name, metadata
 }
 
 export type SSEEvent =
@@ -87,12 +86,12 @@ function getHeaders(): HeadersInit {
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
   };
-  
+
   const token = getAuthToken();
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  
+
   return headers;
 }
 

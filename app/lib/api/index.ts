@@ -1,12 +1,17 @@
 /**
- * API Layer Exports
+ * API Client Index
+ * Central export point for all API clients
  */
-export * from './client'
-export * from './types'
-export * as authApi from './auth'
-export * as escrowApi from './escrow'
-export * as storage from './storage'
-export * as cartographeApi from './cartographe'
 
-// Chronicler API
-export * from './chronicler';
+export * from './architect'
+export * from './auth'
+export * from './cartographe'
+export * from './chevalier'
+export * from './chronicler'
+export * from './client'
+export * from './courier'
+export * from './escrow'
+export * from './prophet'
+export * from './storage'
+export * from './tsdl'
+export * from './types'
