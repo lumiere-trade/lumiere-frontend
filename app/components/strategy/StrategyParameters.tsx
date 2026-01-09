@@ -19,6 +19,7 @@ import { BacktestResults } from "@/components/strategy/BacktestResults"
 import { TokenSelector } from "@/components/strategy/TokenSelector"
 import { useChronicler } from "@/hooks"
 import { toast } from "sonner"
+import { useParameterMetadataQuery } from "@/hooks/queries/use-tsdl-queries"
 import {
   Select,
   SelectContent,
@@ -36,6 +37,9 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, updateStrategy, isDirty } = useStrategy()
   const { tokens } = useChronicler()
+
+  // Fetch parameter metadata from TSDL
+  const { data: parameterMetadata } = useParameterMetadataQuery()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const createConversationMutation = useCreateConversation()
@@ -227,6 +231,28 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending ||
                    createConversationMutation.isPending
+
+  // Get parameter specs from TSDL metadata (with fallbacks)
+  const stopLossSpec = parameterMetadata?.stop_loss || {
+    min: 0.1,
+    max: 20.0,
+    step: 0.1,
+    description: "Maximum loss per trade"
+  }
+
+  const takeProfitSpec = parameterMetadata?.take_profit || {
+    min: 0.1,
+    max: 50.0,
+    step: 0.1,
+    description: "Fixed profit target"
+  }
+
+  const trailingStopSpec = parameterMetadata?.trailing_stop || {
+    min: 0.1,
+    max: 10.0,
+    step: 0.1,
+    description: "Dynamic trailing stop"
+  }
 
   return (
     <div className={`w-full space-y-6 ${compact ? 'pb-8' : 'max-w-4xl mx-auto pb-40'}`}>
@@ -529,12 +555,12 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               <Slider
                 value={[editedStrategy.stop_loss]}
                 onValueChange={([value]) => handleFieldChange('stop_loss', value)}
-                min={0.1}
-                max={20}
-                step={0.1}
+                min={stopLossSpec.min}
+                max={stopLossSpec.max}
+                step={stopLossSpec.step}
                 className="w-full"
               />
-              <p className="text-sm text-muted-foreground">Maximum loss per trade (required)</p>
+              <p className="text-sm text-muted-foreground">{stopLossSpec.description} (required)</p>
             </div>
           </div>
 
@@ -548,12 +574,12 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 <Slider
                   value={[editedStrategy.take_profit]}
                   onValueChange={([value]) => handleFieldChange('take_profit', value)}
-                  min={0.1}
-                  max={50}
-                  step={0.1}
+                  min={takeProfitSpec.min}
+                  max={takeProfitSpec.max}
+                  step={takeProfitSpec.step}
                   className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">Fixed profit target (optional)</p>
+                <p className="text-sm text-muted-foreground">{takeProfitSpec.description} (optional)</p>
               </div>
             </div>
           )}
@@ -568,12 +594,12 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 <Slider
                   value={[editedStrategy.trailing_stop]}
                   onValueChange={([value]) => handleFieldChange('trailing_stop', value)}
-                  min={0.1}
-                  max={10}
-                  step={0.1}
+                  min={trailingStopSpec.min}
+                  max={trailingStopSpec.max}
+                  step={trailingStopSpec.step}
                   className="w-full"
                 />
-                <p className="text-sm text-muted-foreground">Dynamic trailing stop (optional)</p>
+                <p className="text-sm text-muted-foreground">{trailingStopSpec.description} (optional)</p>
               </div>
             </div>
           )}
