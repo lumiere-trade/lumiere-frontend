@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from '@/lib/api/architect'
+import { tsdlApi } from '@/lib/api/tsdl'
 import { toast } from 'sonner'
 import type { Strategy, DetailsPanelTab } from '@/contexts/StrategyContext'
 import type { EducationalContent } from '@/lib/api/architect'
@@ -63,7 +64,11 @@ export function useStrategyLoader({
       toast.dismiss()
 
       const strategyData = await getStrategy(id)
-      const tsdlJson = JSON.parse(strategyData.tsdl_code)
+      
+      // IMPORTANT: Use TSDL API to parse and validate
+      // Frontend should NOT parse TSDL structure directly
+      const parsedJson = tsdlApi.parseTSDLCode(strategyData.tsdl_code)
+      const validatedTsdl = await tsdlApi.extractAll(parsedJson)
 
       const { conversations } = await getStrategyConversations(id)
 
@@ -96,7 +101,7 @@ export function useStrategyLoader({
         userId: strategyData.user_id,
         name: strategyData.name,
         description: strategyData.description,
-        tsdl: tsdlJson,
+        tsdl: validatedTsdl, // TSDL-validated data
         basePlugins: strategyData.base_plugins,
         version: strategyData.version,
         conversation: conversationData,
@@ -110,6 +115,7 @@ export function useStrategyLoader({
       setDetailsPanelTab('parameters')
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
+      console.error('Failed to load strategy:', error)
       toast.error('Failed to load strategy')
     }
   }
@@ -142,6 +148,7 @@ export function useStrategyLoader({
         console.warn('Could not load library JSON, using defaults:', err)
       }
 
+      // Build TSDL JSON for library strategy
       const strategyJson = {
         name: lib.name,
         description: lib.description,
@@ -157,6 +164,9 @@ export function useStrategyLoader({
         trailing_stop: riskParams.trailing_stop,
       }
 
+      // Validate through TSDL API
+      const validatedTsdl = await tsdlApi.extractAll(strategyJson as any)
+
       const strategyType = 'indicator_based'
 
       const newStrategy = {
@@ -164,7 +174,7 @@ export function useStrategyLoader({
         userId: null,
         name: lib.name,
         description: lib.description,
-        tsdl: strategyJson as any,
+        tsdl: validatedTsdl, // TSDL-validated data
         basePlugins: [strategyType],
         version: '1.0.0',
         conversation: {
@@ -181,6 +191,7 @@ export function useStrategyLoader({
       setDetailsPanelTab('library')
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
+      console.error('Failed to load library strategy:', error)
       toast.error('Failed to load library strategy')
       setEducationalContent(null)
     }
