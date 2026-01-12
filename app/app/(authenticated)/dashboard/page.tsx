@@ -1,11 +1,11 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { DashboardStats } from "@/components/dashboard/DashboardStats"
 import { EmptyState } from "@/components/dashboard/EmptyState"
 import { RecentActivity } from "@/components/dashboard/RecentActivity"
 import { LiveDashboard, NoActiveStrategy } from "@/components/dashboard/live"
-import { LiveDashboardProvider, parseStrategyConfig } from "@/contexts/LiveDashboardContext"
+import { LiveDashboardProvider, buildStrategyConfig } from "@/contexts/LiveDashboardContext"
 import { useActiveDeployments } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategies } from "@/hooks/use-strategies"
 import { useAuth } from "@/hooks/use-auth"
@@ -15,6 +15,7 @@ import {
   useStopDeployment
 } from "@/hooks/mutations/use-chevalier-mutations"
 import { Spinner } from "@/components/ui/spinner"
+import * as tsdlApi from "@/lib/api/tsdl"
 
 function DashboardContent() {
   const { user } = useAuth()
@@ -28,6 +29,10 @@ function DashboardContent() {
   const resumeMutation = useResumeDeployment()
   const stopMutation = useStopDeployment()
 
+  // State for TSDL validation
+  const [validatedData, setValidatedData] = useState<any>(null)
+  const [isValidating, setIsValidating] = useState(false)
+
   const isLoading = isLoadingStrategies || isLoadingDeployments
   const hasStrategies = !isLoadingStrategies && strategies && strategies.length > 0
 
@@ -39,7 +44,45 @@ function DashboardContent() {
     ? strategies.find(s => s.id === activeDeployment.architect_strategy_id)
     : null
 
-  if (isLoading) {
+  // Extract and validate TSDL data when active strategy changes
+  useEffect(() => {
+    if (!activeStrategy?.tsdl_code) {
+      setValidatedData(null)
+      return
+    }
+
+    let cancelled = false
+    setIsValidating(true)
+
+    async function validateTsdl() {
+      try {
+        const tsdlJson = tsdlApi.parseTSDLCode(activeStrategy.tsdl_code)
+        const validated = await tsdlApi.extractAll(tsdlJson)
+        
+        if (!cancelled) {
+          setValidatedData(validated)
+          console.log('[Dashboard] TSDL validated:', validated)
+        }
+      } catch (error) {
+        console.error('[Dashboard] TSDL validation failed:', error)
+        if (!cancelled) {
+          setValidatedData(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsValidating(false)
+        }
+      }
+    }
+
+    validateTsdl()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeStrategy?.tsdl_code, activeStrategy?.id])
+
+  if (isLoading || isValidating) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Spinner className="w-8 h-8" />
@@ -48,15 +91,17 @@ function DashboardContent() {
   }
 
   // CASE 1: Has active deployment - show Live Dashboard with WebSocket
-  if (activeDeployment && activeStrategy && user) {
-    const strategyJson = JSON.parse(activeStrategy.tsdl_code || '{}')
-    
-    // Parse strategy config for WebSocket context
-    const config = parseStrategyConfig(
+  if (activeDeployment && activeStrategy && validatedData && user) {
+    // Build strategy config from TSDL-validated data
+    const config = buildStrategyConfig(
       activeDeployment.deployment_id,
       activeStrategy.id,
-      activeStrategy.name,
-      activeStrategy.tsdl_code || '{}'
+      validatedData.name,
+      {
+        symbol: validatedData.symbol,
+        timeframe: validatedData.timeframe,
+        indicators: validatedData.indicators
+      }
     )
 
     return (
@@ -67,8 +112,8 @@ function DashboardContent() {
       >
         <LiveDashboard
           deployment={activeDeployment}
-          strategyName={activeStrategy.name}
-          strategyJson={strategyJson}
+          strategyName={validatedData.name}
+          strategyJson={validatedData}
           onPause={() => pauseMutation.mutate(activeDeployment.deployment_id)}
           onResume={() => resumeMutation.mutate(activeDeployment.deployment_id)}
           onStop={() => stopMutation.mutate(activeDeployment.deployment_id)}

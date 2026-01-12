@@ -415,63 +415,44 @@ export function useLiveDashboard() {
 }
 
 // ============================================================================
-// UTILITY: Parse strategy config from TSDL
+// UTILITY: Build config from TSDL-validated data
 // ============================================================================
 
 /**
- * Parse strategy configuration from TSDL JSON
+ * Build DeployedStrategyConfig from TSDL-validated data.
  * 
- * TSDL structure (from Architect DB tsdl_code column):
- * {
- *   "name": "RSI(16) Momentum",
- *   "symbol": "SOL/USDC",
- *   "timeframe": "5m",
- *   "indicators": ["RSI(16)"],      // <-- Direct array in root
- *   "entry_rules": [...],
- *   "exit_rules": [...],
- *   ...
- * }
+ * IMPORTANT: This accepts already-validated data from TSDL /data/all API.
+ * Do NOT pass raw tsdl_code - parse it through TSDL API first.
+ * 
+ * @param deploymentId - Deployment UUID
+ * @param strategyId - Architect strategy UUID  
+ * @param strategyName - Strategy name (from validated data)
+ * @param validatedData - Data from TSDL /data/all endpoint
  */
-export function parseStrategyConfig(
+export function buildStrategyConfig(
   deploymentId: string,
   strategyId: string,
   strategyName: string,
-  tsdlCode: string
+  validatedData: {
+    symbol: string
+    timeframe: string
+    indicators: string[]
+  }
 ): DeployedStrategyConfig {
-  try {
-    const tsdl = JSON.parse(tsdlCode)
+  // Normalize indicators for GPU calculation
+  const indicatorNames = validatedData.indicators.map(normalizeIndicatorName)
 
-    // TSDL has indicators array directly in root
-    // Format: ["RSI(16)", "EMA(20)", "MACD(12,26,9)"]
-    const rawIndicators: string[] = tsdl.indicators || []
+  console.log('[buildStrategyConfig] Built from validated data:', {
+    raw: validatedData.indicators,
+    normalized: indicatorNames,
+  })
 
-    // Normalize to snake_case for GPU calculation
-    const indicatorNames = rawIndicators.map(normalizeIndicatorName)
-
-    console.log('[parseStrategyConfig] Parsed indicators:', {
-      raw: rawIndicators,
-      normalized: indicatorNames,
-    })
-
-    return {
-      deploymentId,
-      strategyId,
-      strategyName,
-      symbol: tsdl.symbol || 'SOL/USDC',
-      timeframe: tsdl.timeframe || '1h',
-      indicatorNames,
-    }
-  } catch (error) {
-    console.error('[parseStrategyConfig] Failed to parse TSDL:', error)
-
-    // Return defaults
-    return {
-      deploymentId,
-      strategyId,
-      strategyName,
-      symbol: 'SOL/USDC',
-      timeframe: '1h',
-      indicatorNames: [],
-    }
+  return {
+    deploymentId,
+    strategyId,
+    strategyName,
+    symbol: validatedData.symbol,
+    timeframe: validatedData.timeframe,
+    indicatorNames,
   }
 }
