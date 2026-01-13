@@ -73,3 +73,12 @@ export async function submitWithdraw(
     signed_transaction: signedTx,
   })
 }
+
+// Export as object for query hooks compatibility
+export const escrowApi = {
+  getWalletBalance,
+  getEscrowBalance,
+  prepareDeposit,
+  prepareWithdraw,
+  prepareInitialize,
+}
