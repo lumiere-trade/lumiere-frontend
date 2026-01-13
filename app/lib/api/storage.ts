@@ -36,3 +36,11 @@ export function removeToken(): void {
 export function hasToken(): boolean {
   return getToken() !== null
 }
+
+// Export as both named exports AND default object for convenience
+export const storage = {
+  setToken,
+  getToken,
+  removeToken,
+  hasToken,
+}

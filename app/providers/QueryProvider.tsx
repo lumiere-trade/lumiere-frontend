@@ -4,10 +4,11 @@
  * React Query Provider
  * Wraps application with QueryClientProvider
  */
+
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { createQueryClient } from '@/lib/infrastructure/cache/query-client.config'
-import { storage, clearAuthToken } from '@/lib/api'
+import { removeToken, clearAuthToken } from '@/lib/api'
 
 interface QueryProviderProps {
   children: React.ReactNode
@@ -15,7 +16,7 @@ interface QueryProviderProps {
 
 const queryClient = createQueryClient({
   onAuthError: () => {
-    storage.removeToken()
+    removeToken()
     clearAuthToken()
   },
 })

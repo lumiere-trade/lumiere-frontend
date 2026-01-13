@@ -134,7 +134,7 @@ export function useExtractExitRules(tsdlJson: StrategyJSON | null) {
  * Extract risk parameters from TSDL JSON
  */
 export function useExtractParameters(tsdlJson: StrategyJSON | null) {
-  return useQuery
+  return useQuery <
     { stop_loss: number; take_profit: number | null; trailing_stop: number | null },
     Error
   >({
