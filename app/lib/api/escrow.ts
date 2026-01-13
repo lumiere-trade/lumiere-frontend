@@ -78,7 +78,11 @@ export async function submitWithdraw(
 export const escrowApi = {
   getWalletBalance,
   getEscrowBalance,
+  getEscrowTransactions,
+  prepareInitializeEscrow,
+  submitInitializeEscrow,
   prepareDeposit,
+  submitDeposit,
   prepareWithdraw,
-  prepareInitialize,
+  submitWithdraw,
 }
