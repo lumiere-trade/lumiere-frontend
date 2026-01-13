@@ -64,7 +64,7 @@ export function useStrategyLoader({
       toast.dismiss()
 
       const strategyData = await getStrategy(id)
-      
+
       // IMPORTANT: Use TSDL API to parse and validate
       // Frontend should NOT parse TSDL structure directly
       const parsedJson = tsdlApi.parseTSDLCode(strategyData.tsdl_code)
@@ -96,13 +96,16 @@ export function useStrategyLoader({
         }
       }
 
+      // Extract description from validated TSDL (with fallback)
+      const description = validatedTsdl.description || `${strategyData.name} - Strategy`
+
       const newStrategy = {
         id: strategyData.id,
         userId: strategyData.user_id,
         name: strategyData.name,
-        description: strategyData.description,
+        description: description,
         tsdl: validatedTsdl, // TSDL-validated data
-        basePlugins: strategyData.base_plugins,
+        basePlugins: ['indicator_based'], // Default, can be enhanced later
         version: strategyData.version,
         conversation: conversationData,
         createdAt: strategyData.created_at,
@@ -126,46 +129,13 @@ export function useStrategyLoader({
 
       const lib = await getLibraryStrategy(id)
 
-      // Fetch the library JSON file to get risk parameters
-      const libraryJsonUrl = `/library/${lib.category}/${lib.name.toLowerCase().replace(/\s+/g, '_')}.json`
-      let riskParams = {
-        stop_loss: 2.0,
-        take_profit: null,
-        trailing_stop: null
-      }
+      // IMPORTANT: Library now returns tsdl_code (Single Source of Truth)
+      // Parse TSDL code to get strategy data
+      const parsedJson = tsdlApi.parseTSDLCode(lib.tsdl_code)
+      const validatedTsdl = await tsdlApi.extractAll(parsedJson)
 
-      try {
-        const response = await fetch(libraryJsonUrl)
-        if (response.ok) {
-          const libraryJson = await response.json()
-          riskParams = {
-            stop_loss: libraryJson.stop_loss || 2.0,
-            take_profit: libraryJson.take_profit || null,
-            trailing_stop: libraryJson.trailing_stop || null
-          }
-        }
-      } catch (err) {
-        console.warn('Could not load library JSON, using defaults:', err)
-      }
-
-      // Build TSDL JSON for library strategy
-      const strategyJson = {
-        name: lib.name,
-        description: lib.description,
-        symbol: lib.symbol,
-        timeframe: lib.timeframe,
-        indicators: lib.indicators,
-        entry_rules: lib.entry_rules,
-        entry_logic: lib.entry_logic,
-        exit_rules: lib.exit_rules,
-        exit_logic: lib.exit_logic,
-        stop_loss: riskParams.stop_loss,
-        take_profit: riskParams.take_profit,
-        trailing_stop: riskParams.trailing_stop,
-      }
-
-      // Validate through TSDL API
-      const validatedTsdl = await tsdlApi.extractAll(strategyJson as any)
+      // Extract description from validated TSDL (with fallback)
+      const description = validatedTsdl.description || `${lib.name} - Library strategy`
 
       const strategyType = 'indicator_based'
 
@@ -173,7 +143,7 @@ export function useStrategyLoader({
         id: null,
         userId: null,
         name: lib.name,
-        description: lib.description,
+        description: description,
         tsdl: validatedTsdl, // TSDL-validated data
         basePlugins: [strategyType],
         version: '1.0.0',
