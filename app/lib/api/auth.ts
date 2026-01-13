@@ -73,3 +73,14 @@ export async function acceptDocuments(documentIds: string[]): Promise<void> {
 export async function getLegalDocuments(): Promise<LegalDocument[]> {
   return get<LegalDocument[]>('/api/legal/documents')
 }
+
+// Export as object for backward compatibility
+export const authApi = {
+  verifyWallet,
+  login,
+  createAccount,
+  getCurrentUser,
+  checkCompliance,
+  acceptDocuments,
+  getLegalDocuments,
+}
