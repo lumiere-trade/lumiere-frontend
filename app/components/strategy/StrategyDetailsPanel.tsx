@@ -259,29 +259,19 @@ export function StrategyDetailsPanel({
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
         }}
       >
-        {/* Close button */}
-        {isOpen && (
-          <div
-            className="absolute top-0 h-full flex items-center justify-center pointer-events-none z-20"
-            style={{
-              left: '0',
-              transform: 'translate(-50%, 0)',
-            }}
-          >
-            <button
-              onClick={onToggle}
-              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card rounded-lg shadow-md pointer-events-auto transition-colors"
-              title="Close sidebar"
-            >
-              <ChevronRight className="h-4 w-4 text-primary mx-auto" />
-            </button>
-          </div>
-        )}
-
         {/* Header with tab navigation and action buttons */}
         <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
-          {/* LEFT: Tab Navigation */}
+          {/* LEFT: Toggle button + Tab Navigation */}
           <div className="flex items-center gap-2 overflow-x-auto">
+            {/* Toggle button - in header left */}
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg border border-primary/20 hover:bg-card transition-colors shrink-0"
+              title="Close panel"
+            >
+              <ChevronRight className="h-4 w-4 text-primary" />
+            </button>
+
             {educationalContent && (
               <Button
                 variant={activeTab === 'library' ? 'default' : 'outline'}
