@@ -209,44 +209,38 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Close button */}
-        {isOpen && (
-          <div
-            className="absolute h-full flex items-center justify-center pointer-events-none z-20 translate-x-1/2 top-[54px]"
-            style={{ right: '0' }}
-          >
-            <button
-              onClick={onToggle}
-              className="h-12 w-7 bg-card border border-primary/20 hover:bg-card transition-colors rounded-lg pointer-events-auto shadow-md"
-              title="Close sidebar"
-            >
-              <ChevronLeft className="h-4 w-4 text-primary mx-auto" />
-            </button>
-          </div>
-        )}
-
         {/* Spacer for header */}
         <div className="h-[54px] shrink-0" />
 
-        {/* Global Search - Always visible at top */}
+        {/* Global Search with Toggle Button */}
         <div className="px-4 py-4 border-b border-primary/20">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search strategies..."
-              className="w-full pl-9 pr-9 py-2 text-base bg-card border border-primary/20 rounded-lg focus:outline-none focus:border-primary/40 transition-colors text-foreground placeholder:text-muted-foreground"
-            />
-            {searchQuery && (
-              <button
-                onClick={clearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity"
-              >
-                <X className="h-4 w-4 text-muted-foreground" />
-              </button>
-            )}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search strategies..."
+                className="w-full pl-9 pr-9 py-2 text-base bg-card border border-primary/20 rounded-lg focus:outline-none focus:border-primary/40 transition-colors text-foreground placeholder:text-muted-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-70 transition-opacity"
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
+            </div>
+            {/* Toggle button - top right next to search */}
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg border border-primary/20 hover:bg-card transition-colors shrink-0"
+              title="Close sidebar"
+            >
+              <ChevronLeft className="h-4 w-4 text-primary" />
+            </button>
           </div>
         </div>
 
