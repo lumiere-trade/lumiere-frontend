@@ -8,6 +8,7 @@ import { LiveDashboard, NoActiveStrategy } from "@/components/dashboard/live"
 import { LiveDashboardProvider, buildStrategyConfig } from "@/contexts/LiveDashboardContext"
 import { useActiveDeployments } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategies } from "@/hooks/use-strategies"
+import { useStrategy } from "@/hooks/queries/use-architect-queries"
 import { useAuth } from "@/hooks/use-auth"
 import {
   usePauseDeployment,
@@ -33,20 +34,24 @@ function DashboardContent() {
   const [validatedData, setValidatedData] = useState<any>(null)
   const [isValidating, setIsValidating] = useState(false)
 
-  const isLoading = isLoadingStrategies || isLoadingDeployments
   const hasStrategies = !isLoadingStrategies && strategies && strategies.length > 0
 
   const activeDeployment = activeDeployments && activeDeployments.length > 0
     ? activeDeployments[0]
     : null
 
-  const activeStrategy = activeDeployment && strategies
-    ? strategies.find(s => s.id === activeDeployment.architect_strategy_id)
-    : null
+  // Fetch full strategy details when we have an active deployment
+  // This is needed because the list endpoint doesn't return tsdl_code
+  const {
+    data: activeStrategyFull,
+    isLoading: isLoadingStrategy
+  } = useStrategy(activeDeployment?.architect_strategy_id)
+
+  const isLoading = isLoadingStrategies || isLoadingDeployments || isLoadingStrategy
 
   // Extract and validate TSDL data when active strategy changes
   useEffect(() => {
-    if (!activeStrategy?.tsdl_code) {
+    if (!activeStrategyFull?.tsdl_code) {
       setValidatedData(null)
       return
     }
@@ -56,9 +61,9 @@ function DashboardContent() {
 
     async function validateTsdl() {
       try {
-        const tsdlJson = tsdlApi.parseTSDLCode(activeStrategy.tsdl_code)
+        const tsdlJson = tsdlApi.parseTSDLCode(activeStrategyFull.tsdl_code)
         const validated = await tsdlApi.extractAll(tsdlJson)
-        
+
         if (!cancelled) {
           setValidatedData(validated)
           console.log('[Dashboard] TSDL validated:', validated)
@@ -80,7 +85,7 @@ function DashboardContent() {
     return () => {
       cancelled = true
     }
-  }, [activeStrategy?.tsdl_code, activeStrategy?.id])
+  }, [activeStrategyFull?.tsdl_code, activeStrategyFull?.id])
 
   if (isLoading || isValidating) {
     return (
@@ -91,11 +96,11 @@ function DashboardContent() {
   }
 
   // CASE 1: Has active deployment - show Live Dashboard with WebSocket
-  if (activeDeployment && activeStrategy && validatedData && user) {
+  if (activeDeployment && activeStrategyFull && validatedData && user) {
     // Build strategy config from TSDL-validated data
     const config = buildStrategyConfig(
       activeDeployment.deployment_id,
-      activeStrategy.id,
+      activeStrategyFull.id,
       validatedData.name,
       {
         symbol: validatedData.symbol,
