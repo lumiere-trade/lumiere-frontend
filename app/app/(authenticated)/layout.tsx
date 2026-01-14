@@ -20,13 +20,15 @@ function AuthenticatedLayoutContent({
   const pathname = usePathname()
   const { user, isLoading } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [isDetailsPanelOpen, setIsDetailsPanelOpen] = useState(false)
 
   const strategyContext = useStrategy()
   const isLargeScreen = useIsLargeScreen()
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
   const isCreatePage = pathname === '/create'
+
+  // Details panel is ALWAYS open on /create page
+  const isDetailsPanelOpen = isCreatePage
 
   useEffect(() => {
     logger.info(LogCategory.AUTH, 'Authenticated layout mounted, checking JWT...')
@@ -43,45 +45,19 @@ function AuthenticatedLayoutContent({
     }
   }, [router, user, isLoading])
 
-  // Sync isDetailsPanelOpen with StrategyContext
-  useEffect(() => {
-    setIsDetailsPanelOpen(strategyContext.isDetailsPanelOpen)
-  }, [strategyContext.isDetailsPanelOpen])
-
-  // RESPONSIVE AUTO-CLOSE LOGIC
-  // Small/Medium screens (≤1919px): MAX 2 panels - auto-close behavior
-  // Large screens (≥1920px): Allow 3 panels - no auto-close
-
-  // Auto-close StrategyPanel when DetailsPanel opens (small screens only)
+  // Auto-close StrategyPanel when on create page (small screens only)
   useEffect(() => {
     // Skip auto-close on large screens
     if (isLargeScreen) return
 
-    if (isDetailsPanelOpen && isSidebarOpen) {
+    // On small screens, close sidebar when on create page (details panel takes priority)
+    if (isCreatePage && isSidebarOpen) {
       setIsSidebarOpen(false)
     }
-  }, [isDetailsPanelOpen, isLargeScreen])
-
-  // Auto-close DetailsPanel when StrategyPanel opens (small screens only)
-  useEffect(() => {
-    // Skip auto-close on large screens
-    if (isLargeScreen) return
-
-    if (isSidebarOpen && isDetailsPanelOpen) {
-      strategyContext.closeDetailsPanel()
-    }
-  }, [isSidebarOpen, isLargeScreen])
+  }, [isCreatePage, isLargeScreen])
 
   if (!storage.hasToken() || isLoading) {
     return null
-  }
-
-  const handleDetailsPanelToggle = () => {
-    if (isDetailsPanelOpen) {
-      strategyContext.closeDetailsPanel()
-    } else {
-      strategyContext.openDetailsPanel()
-    }
   }
 
   // RESPONSIVE PADDING CALCULATION
@@ -91,14 +67,13 @@ function AuthenticatedLayoutContent({
   if (isLargeScreen) {
     // Large screen (≥1920px): Support 3-panel layout
     leftPadding = isSidebarOpen ? '300px' : '32px'
-    // CRITICAL: Only apply details panel padding on /create page
-    rightPadding = (isDetailsPanelOpen && isCreatePage) ? 'calc(50% + 32px)' : '32px'
+    // Details panel always open on /create page
+    rightPadding = isCreatePage ? 'calc(50% + 32px)' : '32px'
   } else {
     // Small/Medium screen (≤1919px): Max 2 panels
-    // Sidebar takes priority when both try to open (handled by auto-close logic)
-    leftPadding = isSidebarOpen && !isDetailsPanelOpen ? '300px' : '32px'
-    // CRITICAL: Only apply details panel padding on /create page
-    rightPadding = (isDetailsPanelOpen && isCreatePage) ? 'calc(50% + 32px)' : '32px'
+    // On create page, details panel takes priority
+    leftPadding = isSidebarOpen && !isCreatePage ? '300px' : '32px'
+    rightPadding = isCreatePage ? 'calc(50% + 32px)' : '32px'
   }
 
   return (
@@ -124,11 +99,9 @@ function AuthenticatedLayoutContent({
         {children}
       </main>
 
-      {/* Details Panel - Fixed positioning */}
+      {/* Details Panel - Always visible on /create page */}
       {isCreatePage && (
         <StrategyDetailsPanel
-          isOpen={isDetailsPanelOpen}
-          onToggle={handleDetailsPanelToggle}
           activeTab={strategyContext.detailsPanelTab}
           onTabChange={strategyContext.setDetailsPanelTab}
         />
