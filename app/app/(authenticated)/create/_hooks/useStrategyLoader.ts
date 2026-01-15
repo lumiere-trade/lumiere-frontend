@@ -99,14 +99,12 @@ export function useStrategyLoader({
       // Extract description from validated TSDL (with fallback)
       const description = validatedTsdl.description || `${strategyData.name} - Strategy`
 
-      const newStrategy = {
+      const newStrategy: Strategy = {
         id: strategyData.id,
         userId: strategyData.user_id,
         name: strategyData.name,
         description: description,
-        tsdl: validatedTsdl, // TSDL-validated data
-        basePlugins: ['indicator_based'], // Default, can be enhanced later
-        version: strategyData.version,
+        tsdl: validatedTsdl,
         conversation: conversationData,
         createdAt: strategyData.created_at,
         updatedAt: strategyData.updated_at
@@ -137,16 +135,12 @@ export function useStrategyLoader({
       // Extract description from validated TSDL (with fallback)
       const description = validatedTsdl.description || `${lib.name} - Library strategy`
 
-      const strategyType = 'indicator_based'
-
-      const newStrategy = {
+      const newStrategy: Strategy = {
         id: null,
         userId: null,
         name: lib.name,
         description: description,
-        tsdl: validatedTsdl, // TSDL-validated data
-        basePlugins: [strategyType],
-        version: '1.0.0',
+        tsdl: validatedTsdl,
         conversation: {
           id: null,
           messages: [],

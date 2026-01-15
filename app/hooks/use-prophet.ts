@@ -79,8 +79,6 @@ export function useProphet() {
           take_profit: null,
           trailing_stop: null,
         },
-        basePlugins: ['indicator_based'],
-        version: '1.0.0',
         conversation: {
           id: null,
           messages: newMessages
@@ -147,10 +145,7 @@ export function useProphet() {
         // Flag that strategy was generated (will open panel in onComplete)
         strategyWasGenerated = true
 
-        // MVP: All strategies are indicator-based
-        const strategyType = 'indicator_based'
-
-        // Extract TSDL JSON from Prophet response (tsdl_json instead of strategy_json)
+        // Extract TSDL JSON from Prophet response
         const tsdlJson = strategyEvent.tsdl_json
 
         if (strategy) {
@@ -158,8 +153,7 @@ export function useProphet() {
           updateStrategy({
             name: strategyEvent.strategy_name,
             description: tsdlJson.description,
-            tsdl: tsdlJson,
-            basePlugins: [strategyType]
+            tsdl: tsdlJson
           })
         } else {
           // Create new strategy from Prophet response
@@ -169,8 +163,6 @@ export function useProphet() {
             name: strategyEvent.strategy_name,
             description: tsdlJson.description,
             tsdl: tsdlJson,
-            basePlugins: [strategyType],
-            version: '1.0.0',
             conversation: {
               id: null,
               messages: newMessages.map(msg =>

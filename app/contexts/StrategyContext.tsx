@@ -19,8 +19,6 @@ export interface Strategy {
   name: string
   description: string
   tsdl: StrategyJSON
-  basePlugins: string[]
-  version: string
 
   conversation: {
     id: string | null

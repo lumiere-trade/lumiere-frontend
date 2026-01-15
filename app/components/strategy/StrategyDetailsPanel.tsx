@@ -70,7 +70,6 @@ export function StrategyDetailsPanel({
         architectStrategyId: strategy?.id,
         deploymentId: deploymentData?.deployment_id,
         status: deploymentData?.status,
-        version: deploymentData?.version,
         isLoading: isLoadingDeployment
       })
     }
@@ -136,7 +135,6 @@ export function StrategyDetailsPanel({
             name: editedName,
             description: editedStrategy.description,
             tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
-            base_plugins: strategy.basePlugins,
             parameters: { ...editedStrategy, name: editedName }
           }
         })
@@ -146,8 +144,6 @@ export function StrategyDetailsPanel({
           name: editedName,
           description: editedStrategy.description,
           tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
-          version: strategy.version,
-          base_plugins: strategy.basePlugins,
           parameters: { ...editedStrategy, name: editedName }
         })
         strategyId = strategyResponse.strategy_id
