@@ -13,11 +13,42 @@ export interface ProphetMessage {
   content: string;
 }
 
+export interface BacktestSummary {
+  // Performance metrics
+  total_return_pct: number;
+  cagr: number;
+  sharpe_ratio: number;
+  sortino_ratio: number;
+  max_drawdown_pct: number;
+  // Trade statistics
+  total_trades: number;
+  winning_trades: number;
+  losing_trades: number;
+  win_rate: number;
+  profit_factor: number;
+  // Trade analysis
+  avg_win?: number;
+  avg_loss?: number;
+  largest_win?: number;
+  largest_loss?: number;
+  avg_holding_time_minutes?: number;
+  longest_winning_streak?: number;
+  longest_losing_streak?: number;
+  // Meta
+  backtest_period: {
+    start: string;
+    end: string;
+  };
+  initial_capital: number;
+  final_equity: number;
+}
+
 export interface StrategyContext {
   strategy_id: string;
   current_tsdl: string;
   strategy_name?: string;
-  last_updated?: string;
+  last_updated?: string | null;
+  backtest_summary?: BacktestSummary;
 }
 
 export interface ProphetChatRequest {
@@ -68,10 +99,9 @@ export interface ProgressEvent {
 
 // Updated: Prophet returns clean tsdl_json only
 export interface StrategyGeneratedEvent {
-  tsdl_json: StrategyJSON;  // Changed from strategy_json
+  tsdl_json: StrategyJSON;
   strategy_id: string;
   strategy_name: string;
-  // Removed: python_code, strategy_class_name, metadata
 }
 
 export type SSEEvent =

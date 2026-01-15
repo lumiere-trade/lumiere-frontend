@@ -13,6 +13,7 @@ export function useProphet() {
     setStrategy,
     updateStrategy,
     updateConversation,
+    backtestResults,
     isGeneratingStrategy,
     setIsGeneratingStrategy,
     setStrategyGenerationProgress,
@@ -97,11 +98,48 @@ export function useProphet() {
     // This allows Prophet to modify existing strategies (even unsaved ones)
     let strategyContext = undefined
     if (strategy?.tsdl && strategy.name) {
+      // Build backtest summary if results exist
+      let backtestSummary = undefined
+      if (backtestResults?.metrics) {
+        const m = backtestResults.metrics
+        const ta = backtestResults.trade_analysis
+        backtestSummary = {
+          // Performance
+          total_return_pct: m.total_return_pct,
+          cagr: m.cagr,
+          sharpe_ratio: m.sharpe_ratio,
+          sortino_ratio: m.sortino_ratio,
+          max_drawdown_pct: m.max_drawdown_pct,
+          // Trades
+          total_trades: m.total_trades,
+          winning_trades: m.winning_trades,
+          losing_trades: m.losing_trades,
+          win_rate: m.win_rate,
+          profit_factor: m.profit_factor,
+          // Trade analysis
+          avg_win: ta?.avg_win,
+          avg_loss: ta?.avg_loss,
+          largest_win: ta?.largest_win,
+          largest_loss: ta?.largest_loss,
+          avg_holding_time_minutes: ta?.avg_holding_time_minutes,
+          longest_winning_streak: ta?.longest_winning_streak,
+          longest_losing_streak: ta?.longest_losing_streak,
+          // Meta
+          backtest_period: {
+            start: backtestResults.start_date,
+            end: backtestResults.end_date,
+          },
+          initial_capital: backtestResults.initial_capital,
+          final_equity: m.final_equity,
+        }
+      }
+
       strategyContext = {
         strategy_id: strategy.id || 'unsaved',
         current_tsdl: JSON.stringify(strategy.tsdl, null, 2),
         strategy_name: strategy.name,
-        last_updated: strategy.updatedAt || null
+        last_updated: strategy.updatedAt || null,
+        backtest_summary: backtestSummary
       }
     }
 
