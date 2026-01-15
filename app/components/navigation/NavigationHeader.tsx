@@ -12,6 +12,7 @@ import { WalletPanel } from "@/components/wallet/WalletPanel"
 import { DepositFundsModal } from "@/components/wallet/DepositFundsModal"
 import { UserProfileModal } from "@/components/navigation/UserProfileModal"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { PaletteToggle } from "@/components/PaletteToggle"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 
@@ -25,9 +26,12 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
   const { user, logout } = useAuth()
   const { disconnect } = useWallet()
   const { navigateToCreate } = useStrategy()
+
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
 
-  const walletAddress = user?.walletAddress ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` : "Not connected"
+  const walletAddress = user?.walletAddress 
+    ? `${user.walletAddress.slice(0, 4)}...${user.walletAddress.slice(-4)}` 
+    : "Not connected"
 
   useEffect(() => {
     if (user) {
@@ -76,7 +80,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
         <div className="flex items-center justify-between px-4 md:px-6 h-full">
           <Link href="/dashboard" className="transition-all hover:brightness-110">
             <div className="text-2xl md:text-3xl font-bold tracking-wider text-primary leading-none whitespace-nowrap">
-              LUMIÈRE
+              LUMIERE
             </div>
           </Link>
 
@@ -90,6 +94,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
                 DASHBOARD
               </Button>
             </Link>
+
             <Button
               variant="outline"
               size="lg"
@@ -124,6 +129,7 @@ export function NavigationHeader({ currentPage }: NavigationHeaderProps) {
               }
             />
 
+            <PaletteToggle />
             <ThemeToggle />
 
             <Button
