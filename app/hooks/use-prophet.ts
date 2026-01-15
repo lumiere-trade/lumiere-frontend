@@ -93,14 +93,15 @@ export function useProphet() {
     // Create new AbortController for this request
     abortControllerRef.current = new AbortController()
 
-    // Build strategy context if strategy exists
+    // Build strategy context - ALWAYS send if strategy exists with TSDL data
+    // This allows Prophet to modify existing strategies (even unsaved ones)
     let strategyContext = undefined
-    if (strategy?.id) {
+    if (strategy?.tsdl && strategy.name) {
       strategyContext = {
-        strategy_id: strategy.id,
+        strategy_id: strategy.id || 'unsaved',
         current_tsdl: JSON.stringify(strategy.tsdl, null, 2),
         strategy_name: strategy.name,
-        last_updated: strategy.updatedAt
+        last_updated: strategy.updatedAt || null
       }
     }
 
