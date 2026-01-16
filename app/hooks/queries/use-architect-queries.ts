@@ -1,14 +1,12 @@
 /**
  * Architect React Query Hooks
- * Strategy and Conversation queries
+ * Strategy queries
  */
 
 import { useQuery } from '@tanstack/react-query';
 import {
   getStrategies,
   getStrategy,
-  getConversation,
-  getStrategyConversations,
   getUserAnalytics,
   getLibraryCategories,
   getLibraryStrategies,
@@ -30,12 +28,6 @@ export const architectKeys = {
   strategyDetails: () => [...architectKeys.strategies(), 'detail'] as const,
   strategyDetail: (id: string) => [...architectKeys.strategyDetails(), id] as const,
 
-  // Conversations
-  conversations: () => [...architectKeys.all, 'conversations'] as const,
-  conversationDetail: (id: string) => [...architectKeys.conversations(), id] as const,
-  strategyConversations: (strategyId: string) =>
-    [...architectKeys.strategies(), strategyId, 'conversations'] as const,
-
   // Analytics
   analytics: () => [...architectKeys.all, 'analytics'] as const,
 
@@ -56,7 +48,6 @@ export const architectKeys = {
  * Fetch all strategies
  */
 export const useStrategies = (params?: {
-  status?: 'draft' | 'active' | 'paused' | 'archived';
   limit?: number;
   offset?: number;
 }) => {
@@ -74,34 +65,6 @@ export const useStrategy = (strategyId: string | undefined) => {
   return useQuery({
     queryKey: architectKeys.strategyDetail(strategyId || ''),
     queryFn: () => getStrategy(strategyId!),
-    enabled: !!strategyId,
-    staleTime: 5 * 60 * 1000,
-  });
-};
-
-// ============================================================================
-// CONVERSATION QUERIES
-// ============================================================================
-
-/**
- * Fetch conversation history
- */
-export const useConversation = (conversationId: string | undefined) => {
-  return useQuery({
-    queryKey: architectKeys.conversationDetail(conversationId || ''),
-    queryFn: () => getConversation(conversationId!),
-    enabled: !!conversationId,
-    staleTime: 2 * 60 * 1000, // 2 minutes (more frequent for active chats)
-  });
-};
-
-/**
- * Fetch conversations for strategy
- */
-export const useStrategyConversations = (strategyId: string | undefined) => {
-  return useQuery({
-    queryKey: architectKeys.strategyConversations(strategyId || ''),
-    queryFn: () => getStrategyConversations(strategyId!),
     enabled: !!strategyId,
     staleTime: 5 * 60 * 1000,
   });

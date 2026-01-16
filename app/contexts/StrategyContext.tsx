@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react'
 import { StrategyJSON } from '@/lib/api/prophet'
 import { BacktestResponse } from '@/lib/api/cartographe'
-import { EducationalContent, createConversation } from '@/lib/api/architect'
+import { EducationalContent } from '@/lib/api/architect'
 
 export interface ChatMessage {
   id: string
@@ -20,10 +20,8 @@ export interface Strategy {
   description: string
   tsdl: StrategyJSON
 
-  conversation: {
-    id: string | null
-    messages: ChatMessage[]
-  }
+  // Messages are ephemeral - not persisted to DB
+  messages: ChatMessage[]
 
   createdAt: string | null
   updatedAt: string | null
@@ -36,7 +34,9 @@ interface StrategyContextType {
   strategy: Strategy | null
   setStrategy: (strategy: Strategy | null) => void
   updateStrategy: (updates: Partial<Strategy>) => void
-  updateConversation: (updates: Partial<Strategy['conversation']>) => void
+  addMessage: (message: ChatMessage) => void
+  updateLastMessage: (content: string) => void
+  clearMessages: () => void
   clearStrategy: () => Promise<void>
 
   // Edited strategy (working copy)
@@ -172,37 +172,39 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
     setStrategyState(prev => prev ? { ...prev, ...updates } : null)
   }
 
-  const updateConversation = (updates: Partial<Strategy['conversation']>) => {
+  // Add a message to the conversation
+  const addMessage = (message: ChatMessage) => {
     setStrategyState(prev =>
       prev
-        ? { ...prev, conversation: { ...prev.conversation, ...updates } }
+        ? { ...prev, messages: [...prev.messages, message] }
+        : null
+    )
+  }
+
+  // Update the last message (for streaming)
+  const updateLastMessage = (content: string) => {
+    setStrategyState(prev => {
+      if (!prev || prev.messages.length === 0) return prev
+      const messages = [...prev.messages]
+      messages[messages.length - 1] = {
+        ...messages[messages.length - 1],
+        content
+      }
+      return { ...prev, messages }
+    })
+  }
+
+  // Clear all messages
+  const clearMessages = () => {
+    setStrategyState(prev =>
+      prev
+        ? { ...prev, messages: [] }
         : null
     )
   }
 
   const updateEditedStrategy = (updates: Partial<StrategyJSON>) => {
     setEditedStrategy(prev => prev ? { ...prev, ...updates } : null)
-  }
-
-  // Auto-save conversation before navigation (only for saved strategies)
-  const saveConversationBeforeNavigate = async () => {
-    if (!strategy?.id || !strategy.conversation.messages.length) {
-      return
-    }
-
-    try {
-      await createConversation({
-        strategy_id: strategy.id,
-        messages: strategy.conversation.messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          timestamp: msg.timestamp.toISOString()
-        }))
-      })
-    } catch (error) {
-      console.error('Failed to save conversation', error)
-      // Don't block navigation on error
-    }
   }
 
   const clearStrategy = async () => {
@@ -214,10 +216,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       stopProphetRef.current()
     }
 
-    // Auto-save conversation before clearing (only if strategy has ID)
-    await saveConversationBeforeNavigate()
-
-    // Then clear everything
+    // Clear everything (no need to save conversation - it's ephemeral)
     setStrategyState(null)
     setEditedStrategy(null)
     setEditedName('')
@@ -243,7 +242,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Clear strategy (includes auto-save)
+    // Clear strategy
     await clearStrategy()
 
     // CRITICAL: setStrategy(null) clears isLoadingStrategy immediately
@@ -269,7 +268,9 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
         strategy,
         setStrategy,
         updateStrategy,
-        updateConversation,
+        addMessage,
+        updateLastMessage,
+        clearMessages,
         clearStrategy,
         editedStrategy,
         editedName,

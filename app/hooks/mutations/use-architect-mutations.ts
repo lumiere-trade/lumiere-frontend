@@ -4,12 +4,8 @@ import {
   createStrategy,
   updateStrategy,
   deleteStrategy,
-  createConversation,
-  addMessage,
   CreateStrategyRequest,
   UpdateStrategyRequest,
-  CreateConversationRequest,
-  AddMessageRequest,
 } from '@/lib/api/architect';
 import { architectKeys } from '../queries/use-architect-queries';
 
@@ -71,53 +67,6 @@ export const useDeleteStrategy = () => {
       const message = error.response?.data?.detail || 'Failed to delete strategy';
       toast.error(message);
       console.error('Delete strategy error:', error);
-    },
-  });
-};
-
-// ============================================================================
-// CONVERSATION MUTATIONS
-// ============================================================================
-
-/**
- * Create conversation mutation
- */
-export const useCreateConversation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: CreateConversationRequest) => createConversation(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: architectKeys.strategyConversations(variables.strategy_id),
-      });
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to save conversation';
-      toast.error(message);
-      console.error('Create conversation error:', error);
-    },
-  });
-};
-
-/**
- * Add message mutation
- */
-export const useAddMessage = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ conversationId, message }: { conversationId: string; message: AddMessageRequest }) =>
-      addMessage(conversationId, message),
-    onSuccess: (_, { conversationId }) => {
-      queryClient.invalidateQueries({
-        queryKey: architectKeys.conversationDetail(conversationId),
-      });
-    },
-    onError: (error: any) => {
-      const message = error.response?.data?.detail || 'Failed to add message';
-      toast.error(message);
-      console.error('Add message error:', error);
     },
   });
 };
