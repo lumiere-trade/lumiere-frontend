@@ -179,22 +179,6 @@ export const deleteStrategy = async (strategyId: string): Promise<void> => {
 };
 
 /**
- * Get user analytics
- */
-export const getUserAnalytics = async (): Promise<{
-  total_strategies: number;
-}> => {
-  logger.debug(LOG_CATEGORY, 'Fetching user analytics');
-
-  try {
-    const result = await get(`${ARCHITECT_PREFIX}/strategies/analytics/me`);
-    logger.info(LOG_CATEGORY, 'User analytics fetched', { totalStrategies: result.total_strategies });
-    return result;
-  } catch (error) {
-    logger.error(LOG_CATEGORY, 'Failed to fetch user analytics', { error });
-    throw error;
-  }
-};
 
 // ============================================================================
 // LIBRARY API (through Pourtier proxy)

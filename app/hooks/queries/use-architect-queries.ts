@@ -7,7 +7,6 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getStrategies,
   getStrategy,
-  getUserAnalytics,
   getLibraryCategories,
   getLibraryStrategies,
   getLibraryStrategy,
@@ -27,9 +26,6 @@ export const architectKeys = {
   strategyList: (filters: string) => [...architectKeys.strategyLists(), filters] as const,
   strategyDetails: () => [...architectKeys.strategies(), 'detail'] as const,
   strategyDetail: (id: string) => [...architectKeys.strategyDetails(), id] as const,
-
-  // Analytics
-  analytics: () => [...architectKeys.all, 'analytics'] as const,
 
   // Library
   library: () => [...architectKeys.all, 'library'] as const,
@@ -67,21 +63,6 @@ export const useStrategy = (strategyId: string | undefined) => {
     queryFn: () => getStrategy(strategyId!),
     enabled: !!strategyId,
     staleTime: 5 * 60 * 1000,
-  });
-};
-
-// ============================================================================
-// ANALYTICS QUERIES
-// ============================================================================
-
-/**
- * Fetch user analytics
- */
-export const useUserAnalytics = () => {
-  return useQuery({
-    queryKey: architectKeys.analytics(),
-    queryFn: getUserAnalytics,
-    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 };
 
