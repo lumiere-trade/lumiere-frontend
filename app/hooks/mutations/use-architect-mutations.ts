@@ -19,7 +19,6 @@ export const useCreateStrategy = () => {
     mutationFn: (data: CreateStrategyRequest) => createStrategy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
     },
     onError: (error: any) => {
       const message = error.response?.data?.detail || 'Failed to create strategy';
@@ -60,7 +59,6 @@ export const useDeleteStrategy = () => {
     mutationFn: (strategyId: string) => deleteStrategy(strategyId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: architectKeys.strategyLists() });
-      queryClient.invalidateQueries({ queryKey: architectKeys.analytics() });
       toast.success('Strategy deleted successfully!');
     },
     onError: (error: any) => {
