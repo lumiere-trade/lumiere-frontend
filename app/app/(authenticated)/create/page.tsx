@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useStrategy } from "@/contexts/StrategyContext"
 import { useProphet } from "@/hooks/use-prophet"
-import { useUpdateStrategy, useCreateConversation } from "@/hooks/mutations/use-architect-mutations"
+import { useUpdateStrategy } from "@/hooks/mutations/use-architect-mutations"
 import { EmptyStateView } from "./_components/EmptyStateView"
 import { ConversationView } from "./_components/ConversationView"
 import { useStrategyLoader } from "./_hooks/useStrategyLoader"
@@ -48,7 +48,6 @@ function CreatePageContent() {
   } = useProphet()
 
   const updateStrategyMutation = useUpdateStrategy()
-  const createConversationMutation = useCreateConversation()
 
   const [inputValue, setInputValue] = useState("")
 
@@ -90,16 +89,6 @@ function CreatePageContent() {
             parameters: strategy.tsdl
           }
         }).then(() => {
-          if (strategy.conversation.messages.length > 0) {
-            return createConversationMutation.mutateAsync({
-              strategy_id: strategy.id!,
-              messages: strategy.conversation.messages.map(msg => ({
-                role: msg.role,
-                content: msg.content,
-                timestamp: msg.timestamp.toISOString()
-              }))
-            })
-          }
         }).catch(err => {
           console.error('Auto-save on unmount failed', err)
         })

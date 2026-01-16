@@ -11,7 +11,6 @@ import { StrategyJSON } from "@/lib/api/prophet"
 import {
   useCreateStrategy,
   useUpdateStrategy,
-  useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import { BacktestResponse } from "@/lib/api/cartographe"
@@ -42,7 +41,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const { data: parameterMetadata } = useParameterMetadataQuery()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
-  const createConversationMutation = useCreateConversation()
   const runBacktestMutation = useRunBacktest()
 
   const [showCode, setShowCode] = useState(false)
@@ -188,16 +186,6 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
       }
 
       // Save conversation if exists
-      if (strategy.conversation.messages.length > 0) {
-        await createConversationMutation.mutateAsync({
-          strategy_id: strategyId,
-          messages: strategy.conversation.messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          }))
-        })
-      }
 
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
     } catch (error) {
@@ -229,8 +217,8 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   }
 
   const isSaving = createStrategyMutation.isPending ||
-                   updateStrategyMutation.isPending ||
-                   createConversationMutation.isPending
+                   updateStrategyMutation.isPending
+
 
   // Get parameter specs from TSDL metadata (with fallbacks)
   const stopLossSpec = parameterMetadata?.stop_loss || {

@@ -11,7 +11,6 @@ import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
   useCreateStrategy,
   useUpdateStrategy,
-  useCreateConversation
 } from "@/hooks/mutations/use-architect-mutations"
 import {
   useDeployStrategy
@@ -53,7 +52,6 @@ export function StrategyDetailsPanel({
   const runBacktestMutation = useRunBacktest()
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
-  const createConversationMutation = useCreateConversation()
   const deployStrategyMutation = useDeployStrategy()
 
   // Query deployment status by Architect strategy ID
@@ -133,33 +131,19 @@ export function StrategyDetailsPanel({
           strategyId: strategy.id,
           updates: {
             name: editedName,
-            description: editedStrategy.description,
-            tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
-            parameters: { ...editedStrategy, name: editedName }
+            tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2)
           }
         })
         strategyId = strategy.id
       } else {
         const strategyResponse = await createStrategyMutation.mutateAsync({
           name: editedName,
-          description: editedStrategy.description,
           tsdl_code: JSON.stringify({ ...editedStrategy, name: editedName }, null, 2),
-          parameters: { ...editedStrategy, name: editedName }
+          version: '1.0.0'
         })
-        strategyId = strategyResponse.strategy_id
+        strategyId = strategyResponse.id
 
         updateStrategy({ id: strategyId })
-      }
-
-      if (strategy.conversation.messages.length > 0) {
-        await createConversationMutation.mutateAsync({
-          strategy_id: strategyId,
-          messages: strategy.conversation.messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          }))
-        })
       }
 
       toast.success(isEditing ? 'Strategy updated' : 'Strategy created')
@@ -218,8 +202,7 @@ export function StrategyDetailsPanel({
   }
 
   const isSaving = createStrategyMutation.isPending ||
-                   updateStrategyMutation.isPending ||
-                   createConversationMutation.isPending
+                   updateStrategyMutation.isPending
 
   const isDeploying = deployStrategyMutation.isPending
 

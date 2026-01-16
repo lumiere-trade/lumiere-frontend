@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { getStrategy, getStrategyConversations, getConversation, getLibraryStrategy } from '@/lib/api/architect'
+import { getStrategy, getLibraryStrategy } from '@/lib/api/architect'
 import { tsdlApi } from '@/lib/api/tsdl'
 import { toast } from 'sonner'
 import type { Strategy, DetailsPanelTab } from '@/contexts/StrategyContext'
@@ -70,32 +70,6 @@ export function useStrategyLoader({
       const parsedJson = tsdlApi.parseTSDLCode(strategyData.tsdl_code)
       const validatedTsdl = await tsdlApi.extractAll(parsedJson)
 
-      const { conversations } = await getStrategyConversations(id)
-
-      let conversationData = {
-        id: null as string | null,
-        messages: [] as any[],
-      }
-
-      if (conversations.length > 0) {
-        const latestConversation = conversations.sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )[0]
-
-        const fullConversation = await getConversation(latestConversation.id)
-        conversationData = {
-          id: fullConversation.id,
-          messages: fullConversation.messages.map(msg => ({
-            id: msg.id || Date.now().toString(),
-            role: msg.role,
-            content: msg.content,
-            timestamp: new Date(msg.timestamp),
-            isStreaming: false,
-            hasStrategy: false
-          })),
-        }
-      }
-
       // Extract description from validated TSDL (with fallback)
       const description = validatedTsdl.description || `${strategyData.name} - Strategy`
 
@@ -105,7 +79,7 @@ export function useStrategyLoader({
         name: strategyData.name,
         description: description,
         tsdl: validatedTsdl,
-        conversation: conversationData,
+        messages: [], // Start with empty messages - conversation is ephemeral
         createdAt: strategyData.created_at,
         updatedAt: strategyData.updated_at
       }
@@ -141,10 +115,7 @@ export function useStrategyLoader({
         name: lib.name,
         description: description,
         tsdl: validatedTsdl,
-        conversation: {
-          id: null,
-          messages: [],
-        },
+        messages: [], // Start with empty messages
         createdAt: null,
         updatedAt: null
       }
