@@ -20,6 +20,9 @@ export interface Strategy {
   description: string
   tsdl: StrategyJSON
 
+  // Conversation tracking for Prophet (persists conversation_id from backend)
+  conversationId: string | null
+
   // Messages are ephemeral - not persisted to DB
   messages: ChatMessage[]
 
@@ -216,7 +219,7 @@ export function StrategyProvider({ children }: { children: ReactNode }) {
       stopProphetRef.current()
     }
 
-    // Clear everything (no need to save conversation - it's ephemeral)
+    // Clear everything (conversation_id will be reset - Prophet starts new conversation)
     setStrategyState(null)
     setEditedStrategy(null)
     setEditedName('')

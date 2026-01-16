@@ -79,6 +79,7 @@ export function useProphet() {
           take_profit: null,
           trailing_stop: null,
         },
+        conversationId: null,
         messages: [userMessage, assistantMessage],
         createdAt: null,
         updatedAt: null
@@ -145,7 +146,7 @@ export function useProphet() {
     await sendChatMessageStream(
       {
         message,
-        conversation_id: undefined, // Conversations are ephemeral - no persistence
+        conversation_id: strategy?.conversationId || undefined,
         user_id: 'user-1',
         history: messages.map(msg => ({
           role: msg.role,
@@ -200,6 +201,11 @@ export function useProphet() {
       (fullMessage: string, convId: string) => {
         setIsStreaming(false)
         abortControllerRef.current = null
+
+        // CRITICAL: Save conversation_id from backend for next message
+        updateStrategy({
+          conversationId: convId
+        })
 
         // Add strategy marker if strategy was generated
         const finalMessage = strategyWasGenerated
