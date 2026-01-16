@@ -21,7 +21,9 @@ export function useProphet() {
     setProgressStage,
     setProgressMessage,
     openDetailsPanel,
-    setDetailsPanelTab
+    setDetailsPanelTab,
+    editedStrategy,
+    editedName
   } = useStrategy()
 
   const [isStreaming, setIsStreaming] = useState(false)
@@ -92,7 +94,7 @@ export function useProphet() {
     abortControllerRef.current = new AbortController()
 
     // Build strategy context - ALWAYS send if strategy exists with TSDL data
-    // This allows Prophet to modify existing strategies (even unsaved ones)
+    // CRITICAL: Use editedStrategy (working copy) so Prophet sees latest state
     let strategyContext = undefined
     if (strategy?.tsdl && strategy.name) {
       // Build backtest summary if results exist
@@ -131,10 +133,15 @@ export function useProphet() {
         }
       }
 
+      // CRITICAL: Use editedStrategy (working copy) so Prophet sees current state
+      // Including unsaved user edits (timeframe changes, indicator tweaks, etc.)
+      const currentTSDL = editedStrategy || strategy.tsdl
+      const currentName = editedName || strategy.name
+
       strategyContext = {
         strategy_id: strategy.id || 'unsaved',
-        current_tsdl: JSON.stringify(strategy.tsdl, null, 2),
-        strategy_name: strategy.name,
+        current_tsdl: JSON.stringify(currentTSDL, null, 2),
+        strategy_name: currentName,
         last_updated: strategy.updatedAt || null,
         backtest_summary: backtestSummary
       }
