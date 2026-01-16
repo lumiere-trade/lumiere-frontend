@@ -2,6 +2,7 @@
 
 import { MessageInput } from "@/components/strategy/MessageInput"
 import { MessageList } from "@/components/strategy/MessageList"
+import { StrategyInfoBanner } from "./StrategyInfoBanner"
 import type { ChatMessage, Strategy } from "@/contexts/StrategyContext"
 
 interface ConversationViewProps {
@@ -41,6 +42,15 @@ export function ConversationView({
     <div className="relative h-[calc(100vh-80px)]">
       {/* Full height scroll - scroll bar reaches bottom */}
       <div className="h-full overflow-y-auto">
+        {/* Strategy Info Banner - always shows when strategy loaded */}
+        {generatedStrategy && (
+          <StrategyInfoBanner
+            strategy={generatedStrategy}
+            onViewDetails={onViewStrategy}
+          />
+        )}
+
+        {/* Chat Messages */}
         <MessageList
           messages={messages}
           isSending={isSending}
