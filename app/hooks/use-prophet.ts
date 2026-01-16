@@ -12,7 +12,8 @@ export function useProphet() {
     strategy,
     setStrategy,
     updateStrategy,
-    updateConversation,
+    addMessage,
+    updateLastMessage,
     backtestResults,
     isGeneratingStrategy,
     setIsGeneratingStrategy,
@@ -35,9 +36,8 @@ export function useProphet() {
   const sendMessage = async (message: string) => {
     if (!message.trim()) return
 
-    // Extract conversation data from strategy
-    const conversationId = strategy?.conversation.id
-    const messages = strategy?.conversation.messages || []
+    // Get current messages from strategy
+    const messages = strategy?.messages || []
 
     const userMessage = {
       id: Date.now().toString(),
@@ -54,13 +54,12 @@ export function useProphet() {
       isStreaming: true
     }
 
-    const newMessages = [...messages, userMessage, assistantMessage]
-
-    // Update conversation or create new strategy with conversation
+    // Add both messages immediately
     if (strategy) {
-      updateConversation({ messages: newMessages })
+      addMessage(userMessage)
+      addMessage(assistantMessage)
     } else {
-      // No strategy yet - create initial empty strategy with conversation
+      // No strategy yet - create initial empty strategy with messages
       setStrategy({
         id: null,
         userId: null,
@@ -80,10 +79,7 @@ export function useProphet() {
           take_profit: null,
           trailing_stop: null,
         },
-        conversation: {
-          id: null,
-          messages: newMessages
-        },
+        messages: [userMessage, assistantMessage],
         createdAt: null,
         updatedAt: null
       })
@@ -149,7 +145,7 @@ export function useProphet() {
     await sendChatMessageStream(
       {
         message,
-        conversation_id: conversationId || undefined,
+        conversation_id: undefined, // Conversations are ephemeral - no persistence
         user_id: 'user-1',
         history: messages.map(msg => ({
           role: msg.role,
@@ -160,13 +156,7 @@ export function useProphet() {
       // onToken - stream response text
       (token: string) => {
         fullResponse += token
-        updateConversation({
-          messages: newMessages.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: fullResponse, isStreaming: true }
-              : msg
-          )
-        })
+        updateLastMessage(fullResponse)
       },
       // onProgress - strategy generation progress
       (progress: ProgressEvent) => {
@@ -195,23 +185,11 @@ export function useProphet() {
             tsdl: tsdlJson
           })
         } else {
-          // Create new strategy from Prophet response
-          setStrategy({
-            id: null,
-            userId: null,
+          // Create new strategy from Prophet response (messages already added above)
+          updateStrategy({
             name: strategyEvent.strategy_name,
             description: tsdlJson.description,
-            tsdl: tsdlJson,
-            conversation: {
-              id: null,
-              messages: newMessages.map(msg =>
-                msg.id === assistantMessage.id
-                  ? { ...msg, hasStrategy: true }
-                  : msg
-              )
-            },
-            createdAt: null,
-            updatedAt: null
+            tsdl: tsdlJson
           })
         }
 
@@ -228,15 +206,8 @@ export function useProphet() {
           ? `${fullMessage}\n\n<<view_strategy>>`
           : fullMessage
 
-        // Update conversation with final ID and marker
-        updateConversation({
-          id: convId,
-          messages: newMessages.map(msg =>
-            msg.id === assistantMessage.id
-              ? { ...msg, content: finalMessage, isStreaming: false }
-              : msg
-          )
-        })
+        // Update last message with final content
+        updateLastMessage(finalMessage)
 
         // Open details panel AFTER streaming completes if strategy was generated
         if (strategyWasGenerated) {
@@ -249,17 +220,8 @@ export function useProphet() {
         setIsGeneratingStrategy(false)
         abortControllerRef.current = null
 
-        updateConversation({
-          messages: newMessages.map(msg =>
-            msg.id === assistantMessage.id
-              ? {
-                  ...msg,
-                  content: `Error: ${error.message}`,
-                  isStreaming: false
-                }
-              : msg
-          )
-        })
+        // Update last message with error
+        updateLastMessage(`Error: ${error.message}`)
       },
       // signal - AbortSignal for cancellation
       abortControllerRef.current.signal
@@ -282,7 +244,7 @@ export function useProphet() {
   }
 
   return {
-    messages: strategy?.conversation.messages || [],
+    messages: strategy?.messages || [],
     isStreaming,
     isSending: isStreaming,
     isGeneratingStrategy,
