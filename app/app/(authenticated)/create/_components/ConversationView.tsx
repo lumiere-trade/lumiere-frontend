@@ -38,33 +38,36 @@ export function ConversationView({
   generatedStrategy,
   onViewStrategy,
 }: ConversationViewProps) {
+  // Show banner only when there are no messages and no active conversation
+  const showBanner = messages.length === 0 && !isSending && generatedStrategy
+
   return (
     <div className="relative h-[calc(100vh-80px)]">
-      {/* Full height scroll - scroll bar reaches bottom */}
-      <div className="h-full overflow-y-auto">
-        {/* Strategy Info Banner - always shows when strategy loaded */}
-        {generatedStrategy && (
-          <StrategyInfoBanner
-            strategy={generatedStrategy}
-            onViewDetails={onViewStrategy}
-          />
-        )}
-
-        {/* Chat Messages */}
-        <MessageList
-          messages={messages}
-          isSending={isSending}
-          isGeneratingStrategy={isGeneratingStrategy}
-          strategyGenerationProgress={strategyGenerationProgress}
-          progressStage={progressStage}
-          progressMessage={progressMessage}
-          error={error}
-          generatedStrategy={generatedStrategy}
-          onViewStrategy={onViewStrategy}
+      {/* Show banner OR chat messages, never both */}
+      {showBanner ? (
+        /* Strategy Info Banner - centered, no scroll */
+        <StrategyInfoBanner
+          strategy={generatedStrategy}
+          onViewDetails={onViewStrategy}
         />
-      </div>
+      ) : (
+        /* Chat Messages - full height scroll */
+        <div className="h-full overflow-y-auto">
+          <MessageList
+            messages={messages}
+            isSending={isSending}
+            isGeneratingStrategy={isGeneratingStrategy}
+            strategyGenerationProgress={strategyGenerationProgress}
+            progressStage={progressStage}
+            progressMessage={progressMessage}
+            error={error}
+            generatedStrategy={generatedStrategy}
+            onViewStrategy={onViewStrategy}
+          />
+        </div>
+      )}
 
-      {/* Absolute positioned input - always at bottom, leaves space for scrollbar */}
+      {/* Absolute positioned input - always at bottom */}
       <div className="absolute bottom-0 left-0 right-4 bg-background/95 backdrop-blur-sm pointer-events-none">
         <div className="w-full max-w-3xl mx-auto px-6 py-4 pointer-events-auto">
           <MessageInput
