@@ -38,21 +38,23 @@ export function ConversationView({
   generatedStrategy,
   onViewStrategy,
 }: ConversationViewProps) {
-  // Show banner only when there are no messages and no active conversation
   const showBanner = messages.length === 0 && !isSending && generatedStrategy
 
   return (
     <div className="relative h-[calc(100vh-80px)]">
-      {/* Show banner OR chat messages, never both */}
       {showBanner ? (
-        /* Strategy Info Banner - centered, no scroll */
         <StrategyInfoBanner
           strategy={generatedStrategy}
           onViewDetails={onViewStrategy}
         />
       ) : (
-        /* Chat Messages - full height scroll with overlay scrollbar */
-        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+        <div 
+          className="h-full overflow-y-auto"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: 'hsl(var(--muted)) transparent'
+          }}
+        >
           <MessageList
             messages={messages}
             isSending={isSending}
@@ -67,7 +69,6 @@ export function ConversationView({
         </div>
       )}
 
-      {/* Absolute positioned input - always at bottom */}
       <div className="absolute bottom-0 left-0 right-4 bg-background/95 backdrop-blur-sm pointer-events-none">
         <div className="w-full max-w-3xl mx-auto px-6 py-4 pointer-events-auto">
           <MessageInput
