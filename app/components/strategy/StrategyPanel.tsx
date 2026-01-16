@@ -23,7 +23,6 @@ import {
 } from "@/hooks/queries/use-architect-queries"
 import { useUpdateStrategy } from "@/hooks/mutations/use-architect-mutations"
 import { toast } from "sonner"
-import { createConversation } from "@/lib/api/architect"
 
 interface StrategyPanelProps {
   isOpen: boolean
@@ -69,42 +68,14 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
       return
     }
 
-    // Auto-save conversation before navigating (without clearing strategy)
-    if (strategy?.id && strategy.conversation.messages.length > 0) {
-      try {
-        await createConversation({
-          strategy_id: strategy.id,
-          messages: strategy.conversation.messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          }))
-        })
-      } catch (error) {
-        console.error('Auto-save failed:', error)
-      }
-    }
+    // No conversation auto-save - conversations are ephemeral
 
     // Navigate directly - let create/page useEffect handle loading
     router.push(`/create?strategy=${strategyId}`)
   }
 
   const handleLibraryStrategyClick = async (strategyId: string) => {
-    // Auto-save conversation before navigating (without clearing strategy)
-    if (strategy?.id && strategy.conversation.messages.length > 0) {
-      try {
-        await createConversation({
-          strategy_id: strategy.id,
-          messages: strategy.conversation.messages.map(msg => ({
-            role: msg.role,
-            content: msg.content,
-            timestamp: msg.timestamp.toISOString()
-          }))
-        })
-      } catch (error) {
-        console.error('Auto-save failed:', error)
-      }
-    }
+    // No conversation auto-save - conversations are ephemeral
 
     // Navigate directly - let create/page useEffect handle loading
     router.push(`/create?library=${strategyId}`)
