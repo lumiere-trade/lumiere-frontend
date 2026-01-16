@@ -87,13 +87,12 @@ function AuthenticatedLayoutContent({
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
       />
 
-      {/* Main Content Area with smooth padding transitions */}
+      {/* Main Content Area - no transitions */}
       <main
         className="flex-1 overflow-y-auto bg-background"
         style={{
           paddingLeft: leftPadding,
           paddingRight: rightPadding,
-          transition: 'padding-left 300ms ease-in-out, padding-right 300ms ease-in-out'
         }}
       >
         {children}
