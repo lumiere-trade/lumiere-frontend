@@ -1,6 +1,7 @@
 /**
  * Chronicler API Client
  * Market data service for Solana tokens
+ * Communicates through Pourtier proxy (/api/chronicler/*)
  */
 
 import { getAuthToken } from './client'
@@ -91,7 +92,7 @@ export const getTokens = async (): Promise<TokensResponse> => {
       headers['Authorization'] = `Bearer ${token}`
     }
 
-    const response = await fetch(`${API_URL}/chronicler/tokens`, { headers })
+    const response = await fetch(`${API_URL}/api/chronicler/tokens`, { headers })
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`)
     }
@@ -134,7 +135,7 @@ export async function fetchOHLCV(
   logger.debug(LogCategory.API, 'Fetching OHLCV', { tokenAddress, timeframe, startTime, endTime })
 
   const response = await fetch(
-    `${API_URL}/chronicler/ohlcv?${params.toString()}`,
+    `${API_URL}/api/chronicler/ohlcv?${params.toString()}`,
     { headers }
   )
 
