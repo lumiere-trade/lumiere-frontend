@@ -51,8 +51,8 @@ export function ConversationView({
           onViewDetails={onViewStrategy}
         />
       ) : (
-        /* Chat Messages - full height scroll */
-        <div className="h-full overflow-y-auto">
+        /* Chat Messages - full height scroll with overlay scrollbar */
+        <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
           <MessageList
             messages={messages}
             isSending={isSending}
