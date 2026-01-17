@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { NavigationHeader } from "@/components/navigation/NavigationHeader"
 import { SplitView } from "@/components/layout"
+import { StrategyPanel } from "@/components/strategy/StrategyPanel"
 import { StrategyProvider } from "@/contexts/StrategyContext"
 import { storage } from "@/lib/api"
 import { useAuth } from "@/hooks/use-auth"
@@ -17,6 +18,7 @@ function AuthenticatedLayoutContent({
   const router = useRouter()
   const pathname = usePathname()
   const { user, isLoading } = useAuth()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const currentPage = pathname?.includes('/create') ? 'create' : 'dashboard'
   const isCreatePage = pathname === '/create'
@@ -53,10 +55,16 @@ function AuthenticatedLayoutContent({
             {children}
           </SplitView>
         ) : (
-          // Other pages: Normal full-width layout
-          <main className="h-full overflow-y-auto bg-background">
-            {children}
-          </main>
+          // Dashboard: Sidebar + Content (no split view, no details panel)
+          <div className="h-full flex">
+            <StrategyPanel
+              isOpen={isSidebarOpen}
+              onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+            />
+            <main className="flex-1 overflow-y-auto bg-background">
+              {children}
+            </main>
+          </div>
         )}
       </div>
     </div>
