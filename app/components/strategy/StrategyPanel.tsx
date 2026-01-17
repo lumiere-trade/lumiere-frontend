@@ -4,6 +4,7 @@
  * StrategyPanel - Sidebar for strategy management
  * Used inside LeftPanel flex layout (not fixed positioning)
  * Collapsed: 64px, Expanded: 240px
+ * Uses transform translate for smooth slide animation
  */
 
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -164,7 +165,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
 
   return (
     <aside className={cn(
-      "h-full flex flex-col bg-card transition-all duration-300 border-r border-border shrink-0",
+      "h-full flex flex-col bg-card border-r border-border shrink-0 transition-all duration-300 ease-in-out",
       isOpen ? "w-[240px]" : "w-16"
     )}>
       {/* Collapsed state */}
