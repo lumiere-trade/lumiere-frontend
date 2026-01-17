@@ -174,28 +174,28 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
           <div className="p-2 border-b border-border">
             <button
               onClick={onToggle}
-              className="w-full p-2 rounded hover:bg-background transition-colors"
+              className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="Open sidebar"
             >
               <ChevronRight className="h-5 w-5 mx-auto" />
             </button>
           </div>
-          <nav className="flex-1 p-2 space-y-1">
+          <nav className="flex-1 flex flex-col items-center space-y-1 py-2">
             <button
               onClick={handleNewStrategy}
-              className="w-full p-2 rounded hover:bg-background transition-colors"
+              className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="New Strategy"
             >
               <Plus className="h-5 w-5 mx-auto" />
             </button>
             <button
-              className="w-full p-2 rounded hover:bg-background transition-colors"
+              className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="Strategies"
             >
               <Layers className="h-5 w-5 mx-auto" />
             </button>
             <button
-              className="w-full p-2 rounded hover:bg-background transition-colors"
+              className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="Library"
             >
               <BookOpen className="h-5 w-5 mx-auto" />
