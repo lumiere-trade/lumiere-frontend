@@ -3,7 +3,7 @@
 /**
  * StrategyPanel - Sidebar for strategy management
  * Used inside LeftPanel flex layout (not fixed positioning)
- * Collapsed: 64px, Expanded: 300px
+ * Collapsed: 64px, Expanded: 240px
  */
 
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -165,7 +165,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
   return (
     <aside className={cn(
       "h-full flex flex-col bg-card transition-all duration-300 border-r border-border shrink-0",
-      isOpen ? "w-[300px]" : "w-16"
+      isOpen ? "w-[240px]" : "w-16"
     )}>
       {/* Collapsed state */}
       {!isOpen && (
