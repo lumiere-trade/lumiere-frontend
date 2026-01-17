@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * StrategyDetailsPanel - Strategy details panel
+ * Used inside RightPanel flex layout (not fixed positioning)
+ * Always takes full height of parent container
+ */
+
 import { BookOpen, Sliders, Code, Play, Save, Loader2 } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
@@ -207,10 +213,7 @@ export function StrategyDetailsPanel({
   const isDeploying = deployStrategyMutation.isPending
 
   return (
-    <div
-      className="fixed right-0 top-[54px] h-[calc(100vh-54px)] bg-background border-l border-border z-10 flex flex-col"
-      style={{ width: '50vw' }}
-    >
+    <div className="h-full bg-background flex flex-col overflow-hidden">
       {/* Header with tab navigation and action buttons */}
       <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
         {/* LEFT: Tab Navigation */}
