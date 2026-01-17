@@ -189,12 +189,20 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
               <Plus className="h-5 w-5 mx-auto" />
             </button>
             <button
+              onClick={() => {
+                onToggle()
+                setStrategiesExpanded(true)
+              }}
               className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="Strategies"
             >
               <Layers className="h-5 w-5 mx-auto" />
             </button>
             <button
+              onClick={() => {
+                onToggle()
+                setLibraryExpanded(true)
+              }}
               className="w-full p-1.5 rounded hover:bg-background transition-colors flex items-center justify-center"
               title="Library"
             >
