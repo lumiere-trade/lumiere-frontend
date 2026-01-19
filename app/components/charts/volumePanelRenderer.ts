@@ -30,7 +30,7 @@ export class VolumePanelRenderer extends PanelRenderer {
 
     // Check candle volumes
     for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
-      if (i < candles.length && candles[i].v) {
+      if (i < candles.length && candles[i] && candles[i].v) {
         volumeMax = Math.max(volumeMax, candles[i].v!)
       }
     }
@@ -42,9 +42,9 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (indicator.name.toLowerCase() === 'volume') return
 
       for (let i = viewport.startIdx; i <= viewport.endIdx; i++) {
-        if (i < indicator.points.length) {
+        if (i < indicator.points.length && indicator.points[i]) {
           const point = indicator.points[i]
-          if (point && point.v !== null && point.v !== undefined) {
+          if (point && point.v !== null && point.v !== undefined && !isNaN(point.v)) {
             volumeMax = Math.max(volumeMax, point.v)
           }
         }
@@ -96,7 +96,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (i >= candles.length) break
 
       const candle = candles[i]
-      if (!candle.v) continue
+      if (!candle || !candle.v) continue
 
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       if (x < padding.left || x > this.width - padding.right) continue
@@ -136,7 +136,7 @@ export class VolumePanelRenderer extends PanelRenderer {
       if (i >= indicator.points.length) break
 
       const point = indicator.points[i]
-      if (!point || point.v === null || point.v === undefined) continue
+      if (!point || point.v === null || point.v === undefined || isNaN(point.v)) continue
 
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
       if (x < padding.left || x > this.width - padding.right) continue
