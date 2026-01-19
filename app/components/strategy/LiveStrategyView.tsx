@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@lumiere/shared/components/ui/card"
 import { Badge } from "@lumiere/shared/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@lumiere/shared/components/ui/tabs"
@@ -64,7 +64,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
   // Equity curve data
   const equityCurveData = useMemo(() => {
     if (recentTrades.length === 0) return []
-    
+
     let cumulative = initialCapital
     return recentTrades
       .filter(t => t.pnl !== null)
@@ -82,7 +82,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
   // PnL chart data
   const pnlChartData = useMemo(() => {
     if (recentTrades.length === 0) return []
-    
+
     let cumulative = 0
     return recentTrades
       .filter(t => t.side === 'SELL' && t.pnl !== null)
@@ -100,8 +100,8 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
   }
 
   // Current price from last candle
-  const currentPrice = chartCandles.length > 0 
-    ? chartCandles[chartCandles.length - 1].c 
+  const currentPrice = chartCandles.length > 0
+    ? chartCandles[chartCandles.length - 1].c
     : 0
 
   return (
@@ -133,7 +133,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
               </>
             )}
           </div>
-          
+
           {/* Latency */}
           {latencyMs !== null && (
             <div className="flex items-center gap-1">
@@ -195,7 +195,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
               "text-sm mt-1",
               isPositive ? "text-green-500" : "text-red-500"
             )}>
-              {isPositive ? '+' : ''${totalReturn.toFixed(2)}
+              {isPositive ? '+' : ''}${totalReturn.toFixed(2)}
             </p>
           </CardContent>
         </Card>
@@ -254,7 +254,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
                   "text-base font-mono font-medium",
                   position.unrealizedPnL >= 0 ? "text-green-500" : "text-red-500"
                 )}>
-                  {position.unrealizedPnL >= 0 ? '+' : ''}{position.unrealizedPnL.toFixed(2)} 
+                  {position.unrealizedPnL >= 0 ? '+' : ''}{position.unrealizedPnL.toFixed(2)}
                   ({position.unrealizedPnLPct >= 0 ? '+' : ''}{position.unrealizedPnLPct.toFixed(2)}%)
                 </p>
               </div>
@@ -346,7 +346,7 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
                         const isExpanded = expandedTrade === trade.id
 
                         return (
-                          <TableRow 
+                          <TableRow
                             key={trade.id}
                             className="cursor-pointer hover:bg-muted/50"
                             onClick={() => toggleTradeExpansion(trade.id)}
