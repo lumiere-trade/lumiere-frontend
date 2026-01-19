@@ -6,8 +6,15 @@
  * Always takes full height of parent container
  */
 
-import { BookOpen, Sliders, Code, Play, Save, Loader2, Activity } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, Save, Loader2, Activity, MoreVertical } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
@@ -299,7 +306,7 @@ export function StrategyDetailsPanel({
   return (
     <div className="h-full bg-background flex flex-col overflow-hidden">
       {/* Header with tab navigation and action buttons */}
-      <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
+      <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
         {/* LEFT: Tab Navigation */}
         <div className="flex items-center gap-2 overflow-x-auto">
           {educationalContent && (
@@ -307,35 +314,35 @@ export function StrategyDetailsPanel({
               variant={activeTab === 'library' ? 'default' : 'outline'}
               size="sm"
               onClick={() => onTabChange('library')}
-              className="gap-2 min-w-[120px] text-md"
+              className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
             >
               <BookOpen className="h-5 w-5" />
-              Library
+              <span className="hidden sm:inline">Library</span>
             </Button>
           )}
           <Button
             variant={activeTab === 'parameters' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onTabChange('parameters')}
-            className="gap-2 min-w-[120px] text-md"
+            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
           >
             <Sliders className="h-5 w-5" />
-            Parameters
+            <span className="hidden sm:inline">Parameters</span>
           </Button>
           <Button
             variant={activeTab === 'code' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onTabChange('code')}
-            className="gap-2 min-w-[120px] text-md"
+            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
           >
             <Code className="h-5 w-5" />
-            View Code
+            <span className="hidden sm:inline">Code</span>
           </Button>
           <Button
             variant={activeTab === 'backtest' ? 'default' : 'outline'}
             size="sm"
             onClick={handleBacktestClick}
-            className="gap-2 min-w-[120px] text-md"
+            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
             disabled={isBacktesting || isLiveDeployed}
           >
             {isBacktesting ? (
@@ -343,7 +350,7 @@ export function StrategyDetailsPanel({
             ) : (
               <Play className="h-5 w-5" />
             )}
-            Backtest
+            <span className="hidden sm:inline">Backtest</span>
           </Button>
 
           {/* Live Tab - ALWAYS visible, disabled if not deployed */}
@@ -353,50 +360,112 @@ export function StrategyDetailsPanel({
               size="sm"
               onClick={handleLiveTabClick}
               disabled={!isLiveTabEnabled}
-              className="gap-2 min-w-[120px] text-md"
+              className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
             >
               <Activity className="h-5 w-5" />
-              Live
+              <span className="hidden sm:inline">Live</span>
             </Button>
           )}
         </div>
 
         {/* RIGHT: Action Buttons - ONLY for owned strategies */}
         {!isLibraryStrategy && (
-          <div className="flex items-center gap-2">
-            {/* Status Badge with Dropdown Actions - Always shown */}
-            {!isLoadingDeployment && (
-              <StrategyStatusBadge
-                status={deploymentStatus}
-                deploymentId={deploymentId}
-                architectStrategyId={strategy?.id}
-                onActionComplete={handleActionComplete}
-                onDeploy={handleDeploy}
-                isDeploying={isDeploying}
-                canDeploy={canDeploy}
-              />
-            )}
-
-            {/* Save Button - disabled when live */}
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
-              className="gap-2 min-w-[120px] text-md"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save
-                </>
+          <>
+            {/* Desktop: Full buttons (lg and up) */}
+            <div className="hidden lg:flex items-center gap-2">
+              {!isLoadingDeployment && (
+                <StrategyStatusBadge
+                  status={deploymentStatus}
+                  deploymentId={deploymentId}
+                  architectStrategyId={strategy?.id}
+                  onActionComplete={handleActionComplete}
+                  onDeploy={handleDeploy}
+                  isDeploying={isDeploying}
+                  canDeploy={canDeploy}
+                />
               )}
-            </Button>
-          </div>
+
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
+                className="gap-2 min-w-[100px] text-md"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    Save
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Mobile/Tablet: Hamburger menu (below lg) */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-[200px]">
+                  {/* Save action */}
+                  <DropdownMenuItem
+                    onClick={handleSave}
+                    disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 h-4 w-4" />
+                        Save Changes
+                      </>
+                    )}
+                  </DropdownMenuItem>
+
+                  {/* Deploy/Status actions */}
+                  {deploymentStatus && (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED') ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
+                        Strategy Status: {deploymentStatus}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleDeploy}
+                        disabled={!canDeploy || isDeploying}
+                      >
+                        {isDeploying ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Deploying...
+                          </>
+                        ) : (
+                          <>
+                            <Play className="mr-2 h-4 w-4" />
+                            Deploy Strategy
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )}
       </div>
 

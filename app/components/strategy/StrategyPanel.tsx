@@ -224,7 +224,7 @@ export function StrategyPanel({ isOpen, onToggle }: StrategyPanelProps) {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search strategies..."
+                  placeholder="Search strategy..."
                   className="w-full pl-9 pr-9 py-2 text-base bg-background border border-primary/20 rounded-lg focus:outline-none focus:border-primary/40 transition-colors text-foreground placeholder:text-muted-foreground"
                 />
                 {searchQuery && (
