@@ -6,13 +6,15 @@
  * Always takes full height of parent container
  */
 
-import { BookOpen, Sliders, Code, Play, Save, Loader2 } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, Save, Loader2, Activity } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
+import { LiveStrategyView } from "./LiveStrategyView"
 import { LibraryEducationalContent } from "./LibraryEducationalContent"
 import { StrategyStatusBadge } from "./StrategyStatusBadge"
+import { LiveDashboardProvider, buildStrategyConfig } from "@/contexts/LiveDashboardContext"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
   useCreateStrategy,
@@ -27,11 +29,12 @@ import { useAuth } from "@/hooks/use-auth"
 import { useLogger } from "@/hooks/use-logger"
 import { LogCategory } from "@/lib/debug"
 import { toast } from "sonner"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import * as tsdlApi from "@/lib/api/tsdl"
 
 interface StrategyDetailsPanelProps {
-  activeTab: 'library' | 'parameters' | 'code' | 'backtest'
-  onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest') => void
+  activeTab: 'library' | 'parameters' | 'code' | 'backtest' | 'live'
+  onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest' | 'live') => void
 }
 
 export function StrategyDetailsPanel({
@@ -67,6 +70,10 @@ export function StrategyDetailsPanel({
     refetch: refetchDeploymentStatus
   } = useStrategyDeploymentStatus(strategy?.id)
 
+  // TSDL validation state for Live tab
+  const [validatedData, setValidatedData] = useState<any>(null)
+  const [isValidating, setIsValidating] = useState(false)
+
   // Debug logging
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -83,8 +90,49 @@ export function StrategyDetailsPanel({
   const deploymentStatus = deploymentData?.status || null
   const deploymentId = deploymentData?.deployment_id || null
 
+  // Show Live tab only if deployment is ACTIVE or PAUSED
+  const showLiveTab = !isLibraryStrategy &&
+                      deploymentStatus &&
+                      (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
+
   // Can deploy if: strategy is saved, no unsaved changes, not a library strategy
   const canDeploy = !!strategy?.id && !isDirty && !isLibraryStrategy
+
+  // Validate TSDL when Live tab is active and we have deployment
+  useEffect(() => {
+    if (activeTab !== 'live' || !showLiveTab || !strategy?.tsdl) {
+      return
+    }
+
+    let cancelled = false
+    setIsValidating(true)
+
+    async function validateTsdl() {
+      try {
+        const validated = await tsdlApi.extractAll(strategy.tsdl)
+
+        if (!cancelled) {
+          setValidatedData(validated)
+          log.info('[Live Tab] TSDL validated', { validated })
+        }
+      } catch (error) {
+        log.error('[Live Tab] TSDL validation failed', { error })
+        if (!cancelled) {
+          setValidatedData(null)
+        }
+      } finally {
+        if (!cancelled) {
+          setIsValidating(false)
+        }
+      }
+    }
+
+    validateTsdl()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, showLiveTab, strategy?.tsdl, strategy?.id])
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -197,6 +245,10 @@ export function StrategyDetailsPanel({
       // Refetch deployment status after deploy
       await refetchDeploymentStatus()
 
+      // Auto-switch to Live tab after successful deployment
+      onTabChange('live')
+
+      toast.success('Strategy deployed successfully')
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
     }
@@ -266,6 +318,19 @@ export function StrategyDetailsPanel({
             )}
             Backtest
           </Button>
+
+          {/* Live Tab - Only show if deployed */}
+          {showLiveTab && (
+            <Button
+              variant={activeTab === 'live' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onTabChange('live')}
+              className="gap-2 min-w-[120px] text-md"
+            >
+              <Activity className="h-5 w-5" />
+              Live
+            </Button>
+          )}
         </div>
 
         {/* RIGHT: Action Buttons - ONLY for owned strategies */}
@@ -346,6 +411,47 @@ export function StrategyDetailsPanel({
             )}
             {!isBacktesting && backtestResults && (
               <BacktestResults results={backtestResults} isTransitioning={false} />
+            )}
+          </div>
+        )}
+
+        {activeTab === 'live' && showLiveTab && (
+          <div>
+            {isValidating ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+                <p className="text-lg font-semibold">Connecting to live data...</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Validating strategy and establishing WebSocket connection
+                </p>
+              </div>
+            ) : !validatedData ? (
+              <div className="text-center py-12">
+                <p className="text-destructive mb-4">Failed to load live data</p>
+                <p className="text-sm text-muted-foreground">
+                  Strategy validation failed. Please check your strategy configuration.
+                </p>
+              </div>
+            ) : (
+              <LiveDashboardProvider
+                userId={user!.id}
+                config={buildStrategyConfig(
+                  deploymentId!,
+                  strategy!.id,
+                  validatedData.name,
+                  {
+                    symbol: validatedData.symbol,
+                    timeframe: validatedData.timeframe,
+                    indicators: validatedData.indicators
+                  }
+                )}
+                initialCapital={deploymentData?.current_capital || 10000}
+              >
+                <LiveStrategyView
+                  deploymentStatus={deploymentStatus!}
+                  deploymentVersion={deploymentData?.version || 1}
+                />
+              </LiveDashboardProvider>
             )}
           </div>
         )}
