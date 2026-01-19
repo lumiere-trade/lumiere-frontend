@@ -90,12 +90,10 @@ export function StrategyDetailsPanel({
   const deploymentId = deploymentData?.deployment_id || null
 
   // Live tab is enabled only if deployment is ACTIVE or PAUSED
-  const isLiveTabEnabled = !isLibraryStrategy &&
-                           deploymentStatus &&
-                           (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
+  const isLiveTabEnabled = deploymentStatus && (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
 
-  // Show Live tab for all non-library strategies
-  const showLiveTab = !isLibraryStrategy
+  // Live tab is ALWAYS shown (not dependent on library status)
+  const showLiveTab = true
 
   // Can deploy if: strategy is saved, no unsaved changes, not a library strategy
   const canDeploy = !!strategy?.id && !isDirty && !isLibraryStrategy
@@ -329,7 +327,7 @@ export function StrategyDetailsPanel({
             Backtest
           </Button>
 
-          {/* Live Tab - Always visible for owned strategies, disabled if not deployed */}
+          {/* Live Tab - ALWAYS visible, disabled if not deployed */}
           {showLiveTab && (
             <Button
               variant={activeTab === 'live' ? 'default' : 'outline'}
@@ -435,7 +433,7 @@ export function StrategyDetailsPanel({
                 <p className="text-sm text-muted-foreground mb-4">
                   Deploy your strategy to view live trading data and monitor performance in real-time.
                 </p>
-                <Button 
+                <Button
                   onClick={handleDeploy}
                   disabled={!canDeploy || isDeploying}
                   className="gap-2"
