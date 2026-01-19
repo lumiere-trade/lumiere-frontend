@@ -92,6 +92,9 @@ export function StrategyDetailsPanel({
   // Live tab is enabled only if deployment is ACTIVE or PAUSED
   const isLiveTabEnabled = deploymentStatus && (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
 
+  // Strategy is live deployed (read-only mode)
+  const isLiveDeployed = deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED'
+
   // Live tab is ALWAYS shown (not dependent on library status)
   const showLiveTab = true
 
@@ -140,6 +143,11 @@ export function StrategyDetailsPanel({
       return
     }
 
+    if (isLiveDeployed) {
+      toast.error('Cannot run backtest while strategy is live')
+      return
+    }
+
     setIsBacktesting(true)
     setBacktestResults(null)
 
@@ -161,6 +169,11 @@ export function StrategyDetailsPanel({
 
   const handleSave = async () => {
     if (!strategy || !editedStrategy) return
+
+    if (isLiveDeployed) {
+      toast.error('Cannot save changes while strategy is live')
+      return
+    }
 
     try {
       const isEditing = !!strategy.id
@@ -267,6 +280,17 @@ export function StrategyDetailsPanel({
     onTabChange('live')
   }
 
+  const handleBacktestClick = () => {
+    if (isLiveDeployed) {
+      toast.error('Cannot run backtest while strategy is live. Please stop the deployment first.')
+      return
+    }
+    onTabChange('backtest')
+    if (!backtestResults && !isBacktesting) {
+      handleRunBacktest()
+    }
+  }
+
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending
 
@@ -310,14 +334,9 @@ export function StrategyDetailsPanel({
           <Button
             variant={activeTab === 'backtest' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => {
-              onTabChange('backtest')
-              if (!backtestResults && !isBacktesting) {
-                handleRunBacktest()
-              }
-            }}
+            onClick={handleBacktestClick}
             className="gap-2 min-w-[120px] text-md"
-            disabled={isBacktesting}
+            disabled={isBacktesting || isLiveDeployed}
           >
             {isBacktesting ? (
               <Play className="h-5 w-5 animate-spin" />
@@ -358,11 +377,11 @@ export function StrategyDetailsPanel({
               />
             )}
 
-            {/* Save Button */}
+            {/* Save Button - disabled when live */}
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={!isDirty || isSaving || !strategy}
+              disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
               className="gap-2 min-w-[120px] text-md"
             >
               {isSaving ? (
@@ -391,6 +410,7 @@ export function StrategyDetailsPanel({
           <StrategyParameters
             hideActions={true}
             compact={true}
+            readOnly={isLiveDeployed}
           />
         )}
 
@@ -400,7 +420,15 @@ export function StrategyDetailsPanel({
 
         {activeTab === 'backtest' && (
           <div>
-            {isBacktesting && (
+            {isLiveDeployed ? (
+              <div className="text-center py-12">
+                <Play className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-semibold mb-2">Backtest Disabled</p>
+                <p className="text-sm text-muted-foreground">
+                  Cannot run backtest while strategy is live. Please stop the deployment first.
+                </p>
+              </div>
+            ) : isBacktesting ? (
               <div className="text-center py-12">
                 <Play className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
                 <p className="text-lg font-semibold">Running backtest...</p>
@@ -408,8 +436,7 @@ export function StrategyDetailsPanel({
                   This may take up to 60 seconds
                 </p>
               </div>
-            )}
-            {!isBacktesting && !backtestResults && (
+            ) : !backtestResults ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground mb-4">No backtest results yet</p>
                 <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px] text-md">
@@ -417,8 +444,7 @@ export function StrategyDetailsPanel({
                   Run Backtest
                 </Button>
               </div>
-            )}
-            {!isBacktesting && backtestResults && (
+            ) : (
               <BacktestResults results={backtestResults} isTransitioning={false} />
             )}
           </div>
