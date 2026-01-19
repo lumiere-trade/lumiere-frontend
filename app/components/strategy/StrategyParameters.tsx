@@ -30,9 +30,10 @@ import {
 interface StrategyParametersProps {
   hideActions?: boolean
   compact?: boolean
+  readOnly?: boolean
 }
 
-export function StrategyParameters({ hideActions = false, compact = false }: StrategyParametersProps) {
+export function StrategyParameters({ hideActions = false, compact = false, readOnly = false }: StrategyParametersProps) {
   const log = useLogger('StrategyParameters', LogCategory.COMPONENT)
   const { strategy, editedStrategy, editedName, updateEditedStrategy, setEditedName, updateStrategy, isDirty } = useStrategy()
   const { tokens } = useChronicler()
@@ -75,10 +76,19 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
   const strategyType = 'indicator_based'
 
   const handleFieldChange = (field: keyof StrategyJSON, value: any) => {
+    if (readOnly) {
+      toast.error('Cannot edit parameters while strategy is live')
+      return
+    }
     updateEditedStrategy({ [field]: value })
   }
 
   const handleTokenChange = (tokenAddress: string, tokenSymbol: string) => {
+    if (readOnly) {
+      toast.error('Cannot edit parameters while strategy is live')
+      return
+    }
+
     // Convert symbol to "SYMBOL/USDC" format for strategy
     const tradingPair = `${tokenSymbol}/USDC`;
     handleFieldChange('symbol', tradingPair);
@@ -88,6 +98,10 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   // Name editing handlers
   const handleStartEditName = () => {
+    if (readOnly) {
+      toast.error('Cannot edit name while strategy is live')
+      return
+    }
     setTempName(editedName)
     setIsEditingName(true)
   }
@@ -112,6 +126,10 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
 
   // Description editing handlers
   const handleStartEditDescription = () => {
+    if (readOnly) {
+      toast.error('Cannot edit description while strategy is live')
+      return
+    }
     setTempDescription(editedStrategy.description)
     setIsEditingDescription(true)
   }
@@ -354,13 +372,15 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
           ) : (
             <>
               <h3 className="text-xl font-semibold text-foreground">{editedName}</h3>
-              <button
-                onClick={handleStartEditName}
-                className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                title="Edit name"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {!readOnly && (
+                <button
+                  onClick={handleStartEditName}
+                  className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
+                  title="Edit name"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              )}
             </>
           )}
         </div>
@@ -403,13 +423,15 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                     <p className="text-muted-foreground leading-relaxed flex-1">
                       {editedStrategy.description}
                     </p>
-                    <button
-                      onClick={handleStartEditDescription}
-                      className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
-                      title="Edit description"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
+                    {!readOnly && (
+                      <button
+                        onClick={handleStartEditDescription}
+                        className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                        title="Edit description"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -424,6 +446,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 value={selectedTokenAddress}
                 onChange={handleTokenChange}
                 className="w-full"
+                disabled={readOnly}
               />
             </div>
           </div>
@@ -455,6 +478,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
               <Select
                 value={editedStrategy.timeframe}
                 onValueChange={(value) => handleFieldChange('timeframe', value)}
+                disabled={readOnly}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -547,6 +571,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                 max={stopLossSpec.max}
                 step={stopLossSpec.step}
                 className="w-full"
+                disabled={readOnly}
               />
               <p className="text-sm text-muted-foreground">{stopLossSpec.description} (required)</p>
             </div>
@@ -566,6 +591,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   max={takeProfitSpec.max}
                   step={takeProfitSpec.step}
                   className="w-full"
+                  disabled={readOnly}
                 />
                 <p className="text-sm text-muted-foreground">{takeProfitSpec.description} (optional)</p>
               </div>
@@ -586,6 +612,7 @@ export function StrategyParameters({ hideActions = false, compact = false }: Str
                   max={trailingStopSpec.max}
                   step={trailingStopSpec.step}
                   className="w-full"
+                  disabled={readOnly}
                 />
                 <p className="text-sm text-muted-foreground">{trailingStopSpec.description} (optional)</p>
               </div>

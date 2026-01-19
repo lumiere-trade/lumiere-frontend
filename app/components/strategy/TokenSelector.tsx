@@ -15,9 +15,10 @@ interface TokenSelectorProps {
   value?: string;
   onChange?: (tokenAddress: string, tokenSymbol: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
-export function TokenSelector({ value, onChange, className }: TokenSelectorProps) {
+export function TokenSelector({ value, onChange, className, disabled = false }: TokenSelectorProps) {
   const { tokens, isLoading, error } = useChronicler();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -56,13 +57,15 @@ export function TokenSelector({ value, onChange, className }: TokenSelectorProps
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <button
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           className={cn(
             'w-full px-4 py-2 border border-input rounded-lg bg-background hover:bg-muted transition-colors flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+            disabled && 'opacity-50 cursor-not-allowed hover:bg-background',
             className
           )}
         >
