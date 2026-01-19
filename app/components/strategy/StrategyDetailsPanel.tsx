@@ -55,7 +55,7 @@ export function StrategyDetailsPanel({
     strategy,
     editedStrategy,
     editedName,
-    updateStrategy,
+    useUpdateStrategy,
     updateEditedStrategy,
     backtestResults,
     isBacktesting,
@@ -308,49 +308,49 @@ export function StrategyDetailsPanel({
       {/* Header with tab navigation and action buttons */}
       <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
         {/* LEFT: Tab Navigation */}
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-2 overflow-x-auto flex-shrink-0">
           {educationalContent && (
             <Button
               variant={activeTab === 'library' ? 'default' : 'outline'}
               size="sm"
               onClick={() => onTabChange('library')}
-              className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
+              className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
             >
-              <BookOpen className="h-5 w-5" />
-              <span className="hidden sm:inline">Library</span>
+              <BookOpen className="h-5 w-5 flex-shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Library</span>
             </Button>
           )}
           <Button
             variant={activeTab === 'parameters' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onTabChange('parameters')}
-            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
+            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
           >
-            <Sliders className="h-5 w-5" />
-            <span className="hidden sm:inline">Parameters</span>
+            <Sliders className="h-5 w-5 flex-shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Parameters</span>
           </Button>
           <Button
             variant={activeTab === 'code' ? 'default' : 'outline'}
             size="sm"
             onClick={() => onTabChange('code')}
-            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
+            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
           >
-            <Code className="h-5 w-5" />
-            <span className="hidden sm:inline">Code</span>
+            <Code className="h-5 w-5 flex-shrink-0" />
+            <span className="hidden sm:inline whitespace-nowrap">Code</span>
           </Button>
           <Button
             variant={activeTab === 'backtest' ? 'default' : 'outline'}
             size="sm"
             onClick={handleBacktestClick}
-            className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
+            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
             disabled={isBacktesting || isLiveDeployed}
           >
             {isBacktesting ? (
-              <Play className="h-5 w-5 animate-spin" />
+              <Play className="h-5 w-5 animate-spin flex-shrink-0" />
             ) : (
-              <Play className="h-5 w-5" />
+              <Play className="h-5 w-5 flex-shrink-0" />
             )}
-            <span className="hidden sm:inline">Backtest</span>
+            <span className="hidden sm:inline whitespace-nowrap">Backtest</span>
           </Button>
 
           {/* Live Tab - ALWAYS visible, disabled if not deployed */}
@@ -360,10 +360,10 @@ export function StrategyDetailsPanel({
               size="sm"
               onClick={handleLiveTabClick}
               disabled={!isLiveTabEnabled}
-              className="gap-2 min-w-[100px] lg:min-w-[120px] text-md"
+              className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
             >
-              <Activity className="h-5 w-5" />
-              <span className="hidden sm:inline">Live</span>
+              <Activity className="h-5 w-5 flex-shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">Live</span>
             </Button>
           )}
         </div>
@@ -372,7 +372,7 @@ export function StrategyDetailsPanel({
         {!isLibraryStrategy && (
           <>
             {/* Desktop: Full buttons (lg and up) */}
-            <div className="hidden lg:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
               {!isLoadingDeployment && (
                 <StrategyStatusBadge
                   status={deploymentStatus}
@@ -406,7 +406,7 @@ export function StrategyDetailsPanel({
             </div>
 
             {/* Mobile/Tablet: Hamburger menu (below lg) */}
-            <div className="lg:hidden">
+            <div className="lg:hidden flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="h-9 w-9 p-0">
