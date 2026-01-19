@@ -311,14 +311,25 @@ export function MultiPanelChart({
     })
 
     if (macdIndicator && macdSignalIndicator) {
-      // Calculate histogram: MACD - Signal
-      const histogramPoints = macdIndicator.points.map((macdPoint, i) => {
-        const signalPoint = macdSignalIndicator.points[i]
-        return {
-          t: macdPoint.t,
-          v: macdPoint.v - signalPoint.v
-        }
-      })
+      // Calculate histogram: MACD - Signal with defensive null checks
+      const histogramPoints = macdIndicator.points
+        .map((macdPoint, i) => {
+          const signalPoint = macdSignalIndicator.points[i]
+          
+          // CRITICAL FIX: Check if both points exist and have valid values
+          if (!macdPoint || !signalPoint || 
+              macdPoint.v === null || macdPoint.v === undefined ||
+              signalPoint.v === null || signalPoint.v === undefined ||
+              isNaN(macdPoint.v) || isNaN(signalPoint.v)) {
+            return null
+          }
+          
+          return {
+            t: macdPoint.t,
+            v: macdPoint.v - signalPoint.v
+          }
+        })
+        .filter((point): point is { t: number; v: number } => point !== null)
 
       // Extract parameters from MACD name (e.g., "macd_12_26_9" -> "12, 26, 9")
       const paramsMatch = macdIndicator.name.match(/(\d+)_(\d+)_(\d+)/)
