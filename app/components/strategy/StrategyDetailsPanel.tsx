@@ -76,31 +76,33 @@ export function StrategyDetailsPanel({
 
   // Debug logging
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[StrategyDetailsPanel] Deployment state:', {
-        architectStrategyId: strategy?.id,
-        deploymentId: deploymentData?.deployment_id,
-        status: deploymentData?.status,
-        isLoading: isLoadingDeployment
-      })
-    }
-  }, [strategy?.id, deploymentData, isLoadingDeployment])
+    console.log('[StrategyDetailsPanel] Deployment state:', {
+      architectStrategyId: strategy?.id,
+      deploymentId: deploymentData?.deployment_id,
+      status: deploymentData?.status,
+      isLoading: isLoadingDeployment,
+      isLibraryStrategy: !!strategy?.userId && !!user?.id && strategy.userId !== user.id
+    })
+  }, [strategy?.id, deploymentData, isLoadingDeployment, strategy?.userId, user?.id])
 
   const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
   const deploymentStatus = deploymentData?.status || null
   const deploymentId = deploymentData?.deployment_id || null
 
-  // Show Live tab only if deployment is ACTIVE or PAUSED
-  const showLiveTab = !isLibraryStrategy &&
-                      deploymentStatus &&
-                      (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
+  // Live tab is enabled only if deployment is ACTIVE or PAUSED
+  const isLiveTabEnabled = !isLibraryStrategy &&
+                           deploymentStatus &&
+                           (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
+
+  // Show Live tab for all non-library strategies
+  const showLiveTab = !isLibraryStrategy
 
   // Can deploy if: strategy is saved, no unsaved changes, not a library strategy
   const canDeploy = !!strategy?.id && !isDirty && !isLibraryStrategy
 
   // Validate TSDL when Live tab is active and we have deployment
   useEffect(() => {
-    if (activeTab !== 'live' || !showLiveTab || !strategy?.tsdl) {
+    if (activeTab !== 'live' || !isLiveTabEnabled || !strategy?.tsdl) {
       return
     }
 
@@ -132,7 +134,7 @@ export function StrategyDetailsPanel({
     return () => {
       cancelled = true
     }
-  }, [activeTab, showLiveTab, strategy?.tsdl, strategy?.id])
+  }, [activeTab, isLiveTabEnabled, strategy?.tsdl, strategy?.id])
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
@@ -259,6 +261,14 @@ export function StrategyDetailsPanel({
     refetchDeploymentStatus()
   }
 
+  const handleLiveTabClick = () => {
+    if (!isLiveTabEnabled) {
+      toast.error('Please deploy the strategy first to view live data')
+      return
+    }
+    onTabChange('live')
+  }
+
   const isSaving = createStrategyMutation.isPending ||
                    updateStrategyMutation.isPending
 
@@ -319,12 +329,13 @@ export function StrategyDetailsPanel({
             Backtest
           </Button>
 
-          {/* Live Tab - Only show if deployed */}
+          {/* Live Tab - Always visible for owned strategies, disabled if not deployed */}
           {showLiveTab && (
             <Button
               variant={activeTab === 'live' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => onTabChange('live')}
+              onClick={handleLiveTabClick}
+              disabled={!isLiveTabEnabled}
               className="gap-2 min-w-[120px] text-md"
             >
               <Activity className="h-5 w-5" />
@@ -415,9 +426,34 @@ export function StrategyDetailsPanel({
           </div>
         )}
 
-        {activeTab === 'live' && showLiveTab && (
+        {activeTab === 'live' && (
           <div>
-            {isValidating ? (
+            {!isLiveTabEnabled ? (
+              <div className="text-center py-12">
+                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-semibold mb-2">Strategy Not Deployed</p>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Deploy your strategy to view live trading data and monitor performance in real-time.
+                </p>
+                <Button 
+                  onClick={handleDeploy}
+                  disabled={!canDeploy || isDeploying}
+                  className="gap-2"
+                >
+                  {isDeploying ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Deploying...
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4" />
+                      Deploy Strategy
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : isValidating ? (
               <div className="text-center py-12">
                 <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
                 <p className="text-lg font-semibold">Connecting to live data...</p>
