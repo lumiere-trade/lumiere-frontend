@@ -173,7 +173,7 @@ export function transformSignal(msg: DashboardSignal): LiveSignal {
 
 /**
  * Build WebSocket URL for dashboard channel
- * 
+ *
  * Production (Vercel): wss://api.lumiere.trade/courier/ws/dashboard.{user_id}
  * Development (local): ws://localhost:9765/ws/dashboard.{user_id}
  */
@@ -184,11 +184,11 @@ export function buildDashboardWsUrl(
 ): string {
   // Detect if production (wss://) or development (ws://)
   const isProduction = baseUrl.startsWith('wss://')
-  
+
   // Production uses /courier/ws/ path (nginx proxy)
   // Development connects directly to Courier on /ws/
   const wsPath = isProduction ? '/courier/ws' : '/ws'
-  
+
   const url = `${baseUrl}${wsPath}/dashboard.${userId}`
   return token ? `${url}?token=${token}` : url
 }
@@ -199,13 +199,18 @@ export function buildDashboardWsUrl(
 export function parseMessage(data: string): DashboardMessage | null {
   try {
     const parsed = JSON.parse(data)
-    
+
+    // Ignore ping/pong messages (WebSocket keep-alive)
+    if (parsed.type === 'ping' || parsed.type === 'pong') {
+      return null
+    }
+
     // Validate message has type field
     if (!parsed.type || !parsed.type.startsWith('dashboard.')) {
       console.warn('[Courier] Unknown message type:', parsed.type)
       return null
     }
-    
+
     return parsed as DashboardMessage
   } catch (error) {
     console.error('[Courier] Failed to parse message:', error)
