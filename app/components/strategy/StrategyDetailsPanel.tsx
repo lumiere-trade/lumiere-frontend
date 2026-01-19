@@ -55,7 +55,7 @@ export function StrategyDetailsPanel({
     strategy,
     editedStrategy,
     editedName,
-    useUpdateStrategy,
+    updateStrategy,
     updateEditedStrategy,
     backtestResults,
     isBacktesting,
