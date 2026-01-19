@@ -15,9 +15,10 @@ import { cn } from "@/lib/utils"
 interface LiveStrategyViewProps {
   deploymentStatus: string
   deploymentVersion: number
+  isPaperTrading?: boolean
 }
 
-export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveStrategyViewProps) {
+export function LiveStrategyView({ deploymentStatus, deploymentVersion, isPaperTrading = true }: LiveStrategyViewProps) {
   const {
     config,
     connectionStatus,
@@ -111,7 +112,10 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion }: LiveSt
         <div className="flex items-center gap-3">
           <h2 className="text-xl font-semibold text-foreground">Live Trading</h2>
           <Badge variant={deploymentStatus === 'ACTIVE' ? 'default' : 'secondary'}>
-            {deploymentStatus} • v{deploymentVersion}
+            {deploymentStatus}
+          </Badge>
+          <Badge variant={isPaperTrading ? 'outline' : 'default'}>
+            {isPaperTrading ? 'PAPER TRADING' : 'LIVE TRADING'}
           </Badge>
         </div>
         <div className="flex items-center gap-4 text-sm">

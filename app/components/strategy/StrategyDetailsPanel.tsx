@@ -484,6 +484,7 @@ export function StrategyDetailsPanel({
                 <LiveStrategyView
                   deploymentStatus={deploymentStatus!}
                   deploymentVersion={deploymentData?.version || 1}
+                  isPaperTrading={deploymentData?.is_paper_trading ?? true}
                 />
               </LiveDashboardProvider>
             )}
