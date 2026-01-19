@@ -1,6 +1,7 @@
 export { BacktestResults } from './BacktestResults'
 export { ExamplePrompts } from './ExamplePrompts'
 export { LibraryEducationalContent } from './LibraryEducationalContent'
+export { LiveStrategyView } from './LiveStrategyView'
 export { MarkdownMessage } from './MarkdownMessage'
 export { Message } from './Message'
 export { MessageInput } from './MessageInput'
