@@ -25,6 +25,7 @@ import {
   usePauseDeployment,
   useResumeDeployment,
   useStopDeployment,
+  useUndeployDeployment,
 } from "@/hooks/mutations/use-chevalier-mutations"
 import { useStrategyDeploymentStatus } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -69,6 +70,7 @@ export function StrategyDetailsPanel({
   const pauseDeploymentMutation = usePauseDeployment()
   const resumeDeploymentMutation = useResumeDeployment()
   const stopDeploymentMutation = useStopDeployment()
+  const undeployDeploymentMutation = useUndeployDeployment()
 
   // Query deployment status by Architect strategy ID
   const {
@@ -80,6 +82,15 @@ export function StrategyDetailsPanel({
   // TSDL validation state for Live tab
   const [validatedData, setValidatedData] = useState<any>(null)
   const [isValidating, setIsValidating] = useState(false)
+
+  // Debug: log deployment data
+  useEffect(() => {
+    log.info('Deployment status updated', {
+      strategyId: strategy?.id,
+      deploymentData,
+      isLoading: isLoadingDeployment
+    })
+  }, [deploymentData, isLoadingDeployment, strategy?.id])
 
   // Determine deployment state
   const getDeploymentState = (): DeploymentState => {
@@ -279,15 +290,20 @@ export function StrategyDetailsPanel({
     if (!deploymentId) return
 
     const confirmed = window.confirm(
-      'Are you sure you want to stop this strategy? This will close any open positions.'
+      'Are you sure you want to stop this strategy? This will close any open positions and undeploy the strategy.'
     )
     if (!confirmed) return
 
     try {
+      // First stop the deployment
       await stopDeploymentMutation.mutateAsync(deploymentId)
+
+      // Then undeploy it
+      await undeployDeploymentMutation.mutateAsync(deploymentId)
+
       await refetchDeploymentStatus()
       onTabChange('parameters')
-      toast.success('Strategy stopped')
+      toast.success('Strategy stopped and undeployed')
     } catch (error) {
       log.error('Failed to stop deployment', { error })
     }
@@ -297,7 +313,7 @@ export function StrategyDetailsPanel({
   const isGoingLive = deployStrategyMutation.isPending
   const isPausing = pauseDeploymentMutation.isPending
   const isResuming = resumeDeploymentMutation.isPending
-  const isStopping = stopDeploymentMutation.isPending
+  const isStopping = stopDeploymentMutation.isPending || undeployDeploymentMutation.isPending
 
   // Can go live if: strategy is saved, no unsaved changes
   const canGoLive = !!strategy?.id && !isDirty
@@ -355,7 +371,7 @@ export function StrategyDetailsPanel({
             <Button
               variant="default"
               size="sm"
-              className="gap-2 flex-shrink-0 bg-green-600 hover:bg-green-700"
+              className="gap-2 flex-shrink-0"
             >
               <Activity className="h-4 w-4 flex-shrink-0" />
               <span className="whitespace-nowrap">Live</span>
@@ -366,7 +382,7 @@ export function StrategyDetailsPanel({
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 flex-shrink-0 border-yellow-500 text-yellow-600"
+              className="gap-2 flex-shrink-0"
               disabled
             >
               <WifiOff className="h-4 w-4 flex-shrink-0" />
@@ -383,7 +399,7 @@ export function StrategyDetailsPanel({
                 size="sm"
                 onClick={handleGoLive}
                 disabled={!canGoLive || isGoingLive}
-                className="gap-2 bg-green-600 hover:bg-green-700"
+                className="gap-2"
               >
                 {isGoingLive ? (
                   <>
@@ -438,7 +454,7 @@ export function StrategyDetailsPanel({
               </Button>
 
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={handleStop}
                 disabled={isStopping}
@@ -460,7 +476,7 @@ export function StrategyDetailsPanel({
                 size="sm"
                 onClick={handleResume}
                 disabled={isResuming}
-                className="gap-2 bg-green-600 hover:bg-green-700"
+                className="gap-2"
               >
                 {isResuming ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -471,7 +487,7 @@ export function StrategyDetailsPanel({
               </Button>
 
               <Button
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={handleStop}
                 disabled={isStopping}
@@ -578,7 +594,7 @@ export function StrategyDetailsPanel({
         {/* PAUSED state content - Offline message */}
         {deploymentState === 'PAUSED' && (
           <div className="text-center py-12">
-            <WifiOff className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
+            <WifiOff className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
             <p className="text-xl font-semibold mb-2">Strategy Paused</p>
             <p className="text-muted-foreground mb-6">
               Your strategy is currently offline. No trades will be executed while paused.
@@ -586,7 +602,7 @@ export function StrategyDetailsPanel({
             <Button
               onClick={handleResume}
               disabled={isResuming}
-              className="gap-2 bg-green-600 hover:bg-green-700"
+              className="gap-2"
             >
               {isResuming ? (
                 <>

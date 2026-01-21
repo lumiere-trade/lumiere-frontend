@@ -13,6 +13,7 @@ import {
   DeployStrategyRequest
 } from '@/lib/api/chevalier'
 import { chevalierKeys } from '../queries/use-chevalier-queries'
+import { ApiError } from '@/lib/api/client'
 
 export const useDeployStrategy = () => {
   const queryClient = useQueryClient()
@@ -24,6 +25,10 @@ export const useDeployStrategy = () => {
       toast.success(`Strategy deployed successfully (v${data.version})`)
     },
     onError: (error: any) => {
+      // On 409 (already deployed), invalidate cache to show current state
+      if (error instanceof ApiError && error.statusCode === 409) {
+        queryClient.invalidateQueries({ queryKey: chevalierKeys.deployments() })
+      }
       const message = error.message || 'Failed to deploy strategy'
       toast.error(message)
     },
@@ -72,7 +77,6 @@ export const useStopDeployment = () => {
     onSuccess: (_, deploymentId) => {
       queryClient.invalidateQueries({ queryKey: chevalierKeys.deployment(deploymentId) })
       queryClient.invalidateQueries({ queryKey: chevalierKeys.deployments() })
-      toast.success('Strategy stopped')
     },
     onError: (error: any) => {
       const message = error.message || 'Failed to stop strategy'
@@ -89,7 +93,6 @@ export const useUndeployDeployment = () => {
     onSuccess: (_, deploymentId) => {
       queryClient.invalidateQueries({ queryKey: chevalierKeys.deployment(deploymentId) })
       queryClient.invalidateQueries({ queryKey: chevalierKeys.deployments() })
-      toast.success('Strategy undeployed')
     },
     onError: (error: any) => {
       const message = error.message || 'Failed to undeploy strategy'

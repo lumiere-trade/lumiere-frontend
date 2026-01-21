@@ -52,6 +52,7 @@ export const useStrategyDeploymentStatus = (
     },
     enabled: !!architectStrategyId,
     staleTime: 30 * 1000,
+    refetchOnMount: 'always',
     retry: (failureCount, error) => {
       if (error instanceof ApiError && error.statusCode === 404) {
         return false;
