@@ -21,6 +21,7 @@ import {
   fetchWarmupCandles,
   type ChroniclerCandle,
 } from '@/lib/api/chronicler'
+import { getDeploymentTrades, type TradeResponse } from '@/lib/api/chevalier'
 import { calculateAllIndicators, type IndicatorResults } from '@/lib/gpu'
 import type {
   ConnectionStatus,
@@ -112,6 +113,22 @@ function chroniclerToLiveCandle(c: ChroniclerCandle): LiveCandle {
 }
 
 /**
+ * Transform API TradeResponse to RecentTrade format
+ */
+function tradeResponseToRecentTrade(trade: TradeResponse): RecentTrade {
+  return {
+    id: trade.id,
+    side: trade.side,
+    price: parseFloat(trade.price),
+    quantity: parseFloat(trade.quantity),
+    pnl: trade.realized_pnl ? parseFloat(trade.realized_pnl) : null,
+    pnlPct: trade.realized_pnl_pct ? parseFloat(trade.realized_pnl_pct) : null,
+    timestamp: new Date(trade.executed_at),
+    reason: trade.reason || undefined,
+  }
+}
+
+/**
  * Normalize indicator name to standard format for GPU calculation
  * Input formats: "RSI(16)", "EMA(20)", "MACD(12,26,9)"
  * Output format: "rsi_16", "ema_20", "macd_12_26_9"
@@ -196,6 +213,7 @@ export function LiveDashboardProvider({
 }: LiveDashboardProviderProps) {
   // Warm-up state
   const [historicalCandles, setHistoricalCandles] = useState<LiveCandle[]>([])
+  const [historicalTrades, setHistoricalTrades] = useState<RecentTrade[]>([])
   const [isWarmingUp, setIsWarmingUp] = useState(true)
 
   // GPU-calculated indicator data for chart
@@ -241,6 +259,35 @@ export function LiveDashboardProvider({
       cancelled = true
     }
   }, [config.symbol, config.timeframe, warmupCandles])
+
+  // Fetch historical trades on mount
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadHistoricalTrades() {
+      try {
+        console.log('[Trades] Fetching historical trades...', {
+          deploymentId: config.deploymentId,
+        })
+
+        const response = await getDeploymentTrades(config.deploymentId, 100)
+
+        if (!cancelled) {
+          const transformed = response.trades.map(tradeResponseToRecentTrade)
+          setHistoricalTrades(transformed)
+          console.log('[Trades] Loaded', transformed.length, 'historical trades')
+        }
+      } catch (err) {
+        console.error('[Trades] Failed to load historical trades:', err)
+      }
+    }
+
+    loadHistoricalTrades()
+
+    return () => {
+      cancelled = true
+    }
+  }, [config.deploymentId])
 
   // WebSocket hook
   const {
@@ -354,23 +401,35 @@ export function LiveDashboardProvider({
     }
   }, [livePosition])
 
-  // Transform signals to recent trades for RecentTradesCard
+  // Merge historical trades + live signals into recentTrades
   const recentTrades: RecentTrade[] = useMemo(() => {
-    return signals.map(signal => ({
+    // Convert live signals to RecentTrade format
+    const liveTrades: RecentTrade[] = signals.map(signal => ({
       id: signal.id,
       side: signal.type === 'ENTRY' ? 'BUY' : 'SELL',
       price: signal.price,
       quantity: livePosition?.size || 0,
       pnl: signal.type === 'EXIT' ? (livePosition?.realizedPnL || null) : null,
-      pnlPct: null,  // TODO: Calculate
+      pnlPct: null,
       timestamp: signal.timestamp,
+      reason: signal.reasons?.join(', '),
     }))
-  }, [signals, livePosition])
+
+    // Merge: historical trades + live trades (avoiding duplicates by id)
+    const historicalIds = new Set(historicalTrades.map(t => t.id))
+    const newLiveTrades = liveTrades.filter(t => !historicalIds.has(t.id))
+
+    // Combine and sort by timestamp (newest first for display)
+    const merged = [...historicalTrades, ...newLiveTrades]
+    merged.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+
+    return merged
+  }, [historicalTrades, signals, livePosition])
 
   // Account values
   const equity = livePosition?.totalEquity || initialCapital
   const realizedPnL = livePosition?.realizedPnL || 0
-  const totalTrades = livePosition?.totalTrades || 0
+  const totalTrades = recentTrades.length
 
   const value: LiveDashboardContextType = {
     config,
@@ -420,12 +479,12 @@ export function useLiveDashboard() {
 
 /**
  * Build DeployedStrategyConfig from TSDL-validated data.
- * 
+ *
  * IMPORTANT: This accepts already-validated data from TSDL /data/all API.
  * Do NOT pass raw tsdl_code - parse it through TSDL API first.
- * 
+ *
  * @param deploymentId - Deployment UUID
- * @param strategyId - Architect strategy UUID  
+ * @param strategyId - Architect strategy UUID
  * @param strategyName - Strategy name (from validated data)
  * @param validatedData - Data from TSDL /data/all endpoint
  */

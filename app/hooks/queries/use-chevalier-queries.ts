@@ -7,7 +7,8 @@ import {
   getActiveDeployment,
   getActiveDeployments,
   getDeploymentStatus,
-  getDeploymentHistory
+  getDeploymentHistory,
+  getDeploymentTrades
 } from '@/lib/api/chevalier';
 import { ApiError } from '@/lib/api/client';
 
@@ -16,6 +17,8 @@ export const chevalierKeys = {
   deployments: () => [...chevalierKeys.all, 'deployments'] as const,
   deployment: (deploymentId: string) =>
     [...chevalierKeys.deployments(), deploymentId] as const,
+  deploymentTrades: (deploymentId: string, limit: number) =>
+    [...chevalierKeys.deployment(deploymentId), 'trades', limit] as const,
   activeDeployment: (architectStrategyId: string) =>
     [...chevalierKeys.deployments(), 'active', architectStrategyId] as const,
   activeDeployments: (userId?: string) =>
@@ -38,7 +41,6 @@ export const useStrategyDeploymentStatus = (
     queryKey: chevalierKeys.activeDeployment(architectStrategyId || ''),
     queryFn: async () => {
       if (!architectStrategyId) return null;
-
       try {
         return await getActiveDeployment(architectStrategyId);
       } catch (error) {
@@ -82,6 +84,22 @@ export const useDeploymentHistory = (
     queryFn: () => getDeploymentHistory(architectStrategyId!),
     enabled: !!architectStrategyId,
     staleTime: 60 * 1000,
+  });
+};
+
+/**
+ * Fetch trades for deployment
+ * Returns trades executed by this deployment instance
+ */
+export const useDeploymentTrades = (
+  deploymentId: string | null | undefined,
+  limit: number = 100
+) => {
+  return useQuery({
+    queryKey: chevalierKeys.deploymentTrades(deploymentId || '', limit),
+    queryFn: () => getDeploymentTrades(deploymentId!, limit),
+    enabled: !!deploymentId,
+    staleTime: 10 * 1000, // 10 seconds - trades update frequently
   });
 };
 

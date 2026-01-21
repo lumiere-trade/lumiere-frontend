@@ -44,6 +44,30 @@ export interface HealthResponse {
   service: string;
 }
 
+export interface TradeResponse {
+  id: string;
+  deployment_id: string;
+  architect_strategy_id: string;
+  version: number;
+  user_id: string;
+  symbol: string;
+  signal_type: 'ENTRY' | 'EXIT';
+  side: 'BUY' | 'SELL';
+  price: string;
+  quantity: string;
+  total_value: string;
+  realized_pnl: string | null;
+  realized_pnl_pct: string | null;
+  reason: string | null;
+  executed_at: string;
+}
+
+export interface TradesListResponse {
+  deployment_id: string;
+  trades: TradeResponse[];
+  total_count: number;
+}
+
 // Re-export for convenience
 export type { StrategyStatus, DeploymentStatusResponse } from './types';
 
@@ -265,6 +289,38 @@ export const getDeploymentStatus = async (
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to fetch deployment status', {
+      error,
+      deploymentId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get trades for deployment
+ *
+ * Returns all trades executed by this deployment instance,
+ * ordered by execution time (newest first).
+ */
+export const getDeploymentTrades = async (
+  deploymentId: string,
+  limit: number = 100
+): Promise<TradesListResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching deployment trades', { deploymentId, limit });
+
+  try {
+    const result = await get<TradesListResponse>(
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/trades?limit=${limit}`
+    );
+
+    logger.debug(LOG_CATEGORY, 'Deployment trades fetched', {
+      deploymentId,
+      count: result.total_count,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch deployment trades', {
       error,
       deploymentId
     });

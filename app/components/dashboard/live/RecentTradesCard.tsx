@@ -13,6 +13,7 @@ export interface RecentTrade {
   pnl: number | null
   pnlPct: number | null
   timestamp: Date
+  reason?: string
 }
 
 interface RecentTradesCardProps {
