@@ -123,7 +123,7 @@ export function useStrategyLoader({
       setStrategy(newStrategy)
       setEducationalContent(lib.educational_content || null)
       toast.success(`Library strategy "${lib.name}" loaded as template`)
-      setDetailsPanelTab('library')
+      setDetailsPanelTab('parameters')
       setTimeout(() => openDetailsPanel(), 100)
     } catch (error) {
       console.error('Failed to load library strategy:', error)

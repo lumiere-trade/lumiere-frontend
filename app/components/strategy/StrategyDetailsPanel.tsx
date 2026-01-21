@@ -1,26 +1,19 @@
 "use client"
 
 /**
- * StrategyDetailsPanel - Strategy details panel
- * Used inside RightPanel flex layout (not fixed positioning)
- * Always takes full height of parent container
+ * StrategyDetailsPanel - Strategy details panel with deployment state machine
+ *
+ * State 1 (NOT DEPLOYED): LEFT = Parameters, Code, Backtest | RIGHT = Go Live, Save
+ * State 2 (ACTIVE):       LEFT = Live                       | RIGHT = Pause, Stop
+ * State 3 (PAUSED):       LEFT = Offline indicator          | RIGHT = Resume, Stop
  */
 
-import { BookOpen, Sliders, Code, Play, Save, Loader2, Activity, MoreVertical } from "lucide-react"
+import { Sliders, Code, Play, Save, Loader2, Activity, Pause, Square, RotateCcw, WifiOff } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
 import { LiveStrategyView } from "./LiveStrategyView"
-import { LibraryEducationalContent } from "./LibraryEducationalContent"
-import { StrategyStatusBadge } from "./StrategyStatusBadge"
 import { LiveDashboardProvider, buildStrategyConfig } from "@/contexts/LiveDashboardContext"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
@@ -28,7 +21,10 @@ import {
   useUpdateStrategy,
 } from "@/hooks/mutations/use-architect-mutations"
 import {
-  useDeployStrategy
+  useDeployStrategy,
+  usePauseDeployment,
+  useResumeDeployment,
+  useStopDeployment,
 } from "@/hooks/mutations/use-chevalier-mutations"
 import { useStrategyDeploymentStatus } from "@/hooks/queries/use-chevalier-queries"
 import { useStrategy } from "@/contexts/StrategyContext"
@@ -39,9 +35,11 @@ import { toast } from "sonner"
 import { useEffect, useState } from "react"
 import * as tsdlApi from "@/lib/api/tsdl"
 
+type DeploymentState = 'NOT_DEPLOYED' | 'ACTIVE' | 'PAUSED'
+
 interface StrategyDetailsPanelProps {
-  activeTab: 'library' | 'parameters' | 'code' | 'backtest' | 'live'
-  onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest' | 'live') => void
+  activeTab: 'parameters' | 'code' | 'backtest' | 'live'
+  onTabChange: (tab: 'parameters' | 'code' | 'backtest' | 'live') => void
 }
 
 export function StrategyDetailsPanel({
@@ -61,7 +59,6 @@ export function StrategyDetailsPanel({
     isBacktesting,
     setBacktestResults,
     setIsBacktesting,
-    educationalContent,
     isDirty
   } = useStrategy()
 
@@ -69,6 +66,9 @@ export function StrategyDetailsPanel({
   const createStrategyMutation = useCreateStrategy()
   const updateStrategyMutation = useUpdateStrategy()
   const deployStrategyMutation = useDeployStrategy()
+  const pauseDeploymentMutation = usePauseDeployment()
+  const resumeDeploymentMutation = useResumeDeployment()
+  const stopDeploymentMutation = useStopDeployment()
 
   // Query deployment status by Architect strategy ID
   const {
@@ -81,36 +81,30 @@ export function StrategyDetailsPanel({
   const [validatedData, setValidatedData] = useState<any>(null)
   const [isValidating, setIsValidating] = useState(false)
 
-  // Debug logging
-  useEffect(() => {
-    console.log('[StrategyDetailsPanel] Deployment state:', {
-      architectStrategyId: strategy?.id,
-      deploymentId: deploymentData?.deployment_id,
-      status: deploymentData?.status,
-      isLoading: isLoadingDeployment,
-      isLibraryStrategy: !!strategy?.userId && !!user?.id && strategy.userId !== user.id
-    })
-  }, [strategy?.id, deploymentData, isLoadingDeployment, strategy?.userId, user?.id])
+  // Determine deployment state
+  const getDeploymentState = (): DeploymentState => {
+    const status = deploymentData?.status
+    if (status === 'ACTIVE') return 'ACTIVE'
+    if (status === 'PAUSED') return 'PAUSED'
+    return 'NOT_DEPLOYED'
+  }
 
-  const isLibraryStrategy = !!strategy?.userId && !!user?.id && strategy.userId !== user.id
-  const deploymentStatus = deploymentData?.status || null
+  const deploymentState = getDeploymentState()
   const deploymentId = deploymentData?.deployment_id || null
+  const isDeployed = deploymentState === 'ACTIVE' || deploymentState === 'PAUSED'
 
-  // Live tab is enabled only if deployment is ACTIVE or PAUSED
-  const isLiveTabEnabled = deploymentStatus && (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED')
-
-  // Strategy is live deployed (read-only mode)
-  const isLiveDeployed = deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED'
-
-  // Live tab is ALWAYS shown (not dependent on library status)
-  const showLiveTab = true
-
-  // Can deploy if: strategy is saved, no unsaved changes, not a library strategy
-  const canDeploy = !!strategy?.id && !isDirty && !isLibraryStrategy
-
-  // Validate TSDL when Live tab is active and we have deployment
+  // Force tab to 'live' when deployed, 'parameters' when not deployed
   useEffect(() => {
-    if (activeTab !== 'live' || !isLiveTabEnabled || !strategy?.tsdl) {
+    if (deploymentState === 'ACTIVE' && activeTab !== 'live') {
+      onTabChange('live')
+    } else if (deploymentState === 'NOT_DEPLOYED' && activeTab === 'live') {
+      onTabChange('parameters')
+    }
+  }, [deploymentState, activeTab, onTabChange])
+
+  // Validate TSDL when in ACTIVE state
+  useEffect(() => {
+    if (deploymentState !== 'ACTIVE' || !strategy?.tsdl) {
       return
     }
 
@@ -142,16 +136,11 @@ export function StrategyDetailsPanel({
     return () => {
       cancelled = true
     }
-  }, [activeTab, isLiveTabEnabled, strategy?.tsdl, strategy?.id])
+  }, [deploymentState, strategy?.tsdl, strategy?.id])
 
   const handleRunBacktest = async () => {
     if (!editedStrategy) {
       log.error('No strategy to backtest')
-      return
-    }
-
-    if (isLiveDeployed) {
-      toast.error('Cannot run backtest while strategy is live')
       return
     }
 
@@ -176,11 +165,6 @@ export function StrategyDetailsPanel({
 
   const handleSave = async () => {
     if (!strategy || !editedStrategy) return
-
-    if (isLiveDeployed) {
-      toast.error('Cannot save changes while strategy is live')
-      return
-    }
 
     try {
       const isEditing = !!strategy.id
@@ -227,14 +211,14 @@ export function StrategyDetailsPanel({
     }
   }
 
-  const handleDeploy = async () => {
+  const handleGoLive = async () => {
     if (!strategy?.id) {
-      toast.error('Please save strategy before deploying')
+      toast.error('Please save strategy before going live')
       return
     }
 
     if (isDirty) {
-      toast.error('Please save changes before deploying')
+      toast.error('Please save changes before going live')
       return
     }
 
@@ -262,296 +246,301 @@ export function StrategyDetailsPanel({
         is_paper_trading: true,
       })
 
-      // Refetch deployment status after deploy
       await refetchDeploymentStatus()
-
-      // Auto-switch to Live tab after successful deployment
-      onTabChange('live')
-
-      toast.success('Strategy deployed successfully')
+      toast.success('Strategy is now live')
     } catch (error) {
       log.error('Failed to deploy strategy', { error })
     }
   }
 
-  const handleActionComplete = () => {
-    // Refetch deployment status after any lifecycle action
-    refetchDeploymentStatus()
-  }
+  const handlePause = async () => {
+    if (!deploymentId) return
 
-  const handleLiveTabClick = () => {
-    if (!isLiveTabEnabled) {
-      toast.error('Please deploy the strategy first to view live data')
-      return
-    }
-    onTabChange('live')
-  }
-
-  const handleBacktestClick = () => {
-    if (isLiveDeployed) {
-      toast.error('Cannot run backtest while strategy is live. Please stop the deployment first.')
-      return
-    }
-    onTabChange('backtest')
-    if (!backtestResults && !isBacktesting) {
-      handleRunBacktest()
+    try {
+      await pauseDeploymentMutation.mutateAsync(deploymentId)
+      await refetchDeploymentStatus()
+    } catch (error) {
+      log.error('Failed to pause deployment', { error })
     }
   }
 
-  const isSaving = createStrategyMutation.isPending ||
-                   updateStrategyMutation.isPending
+  const handleResume = async () => {
+    if (!deploymentId) return
 
-  const isDeploying = deployStrategyMutation.isPending
+    try {
+      await resumeDeploymentMutation.mutateAsync(deploymentId)
+      await refetchDeploymentStatus()
+    } catch (error) {
+      log.error('Failed to resume deployment', { error })
+    }
+  }
+
+  const handleStop = async () => {
+    if (!deploymentId) return
+
+    const confirmed = window.confirm(
+      'Are you sure you want to stop this strategy? This will close any open positions.'
+    )
+    if (!confirmed) return
+
+    try {
+      await stopDeploymentMutation.mutateAsync(deploymentId)
+      await refetchDeploymentStatus()
+      onTabChange('parameters')
+      toast.success('Strategy stopped')
+    } catch (error) {
+      log.error('Failed to stop deployment', { error })
+    }
+  }
+
+  const isSaving = createStrategyMutation.isPending || updateStrategyMutation.isPending
+  const isGoingLive = deployStrategyMutation.isPending
+  const isPausing = pauseDeploymentMutation.isPending
+  const isResuming = resumeDeploymentMutation.isPending
+  const isStopping = stopDeploymentMutation.isPending
+
+  // Can go live if: strategy is saved, no unsaved changes
+  const canGoLive = !!strategy?.id && !isDirty
 
   return (
     <div className="h-full bg-background flex flex-col overflow-hidden">
-      {/* Header with tab navigation and action buttons */}
+      {/* Header with state-based navigation and actions */}
       <div className="border-b border-border flex-shrink-0 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between gap-2">
-        {/* LEFT: Tab Navigation */}
+
+        {/* LEFT SIDE - State-dependent tabs/indicators */}
         <div className="flex items-center gap-2 overflow-x-auto flex-shrink-0">
-          {educationalContent && (
+          {deploymentState === 'NOT_DEPLOYED' && (
+            <>
+              <Button
+                variant={activeTab === 'parameters' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('parameters')}
+                className="gap-2 flex-shrink-0"
+              >
+                <Sliders className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Parameters</span>
+              </Button>
+              <Button
+                variant={activeTab === 'code' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => onTabChange('code')}
+                className="gap-2 flex-shrink-0"
+              >
+                <Code className="h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline whitespace-nowrap">Code</span>
+              </Button>
+              <Button
+                variant={activeTab === 'backtest' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  onTabChange('backtest')
+                  if (!backtestResults && !isBacktesting) {
+                    handleRunBacktest()
+                  }
+                }}
+                disabled={isBacktesting}
+                className="gap-2 flex-shrink-0"
+              >
+                {isBacktesting ? (
+                  <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                ) : (
+                  <Play className="h-4 w-4 flex-shrink-0" />
+                )}
+                <span className="hidden sm:inline whitespace-nowrap">Backtest</span>
+              </Button>
+            </>
+          )}
+
+          {deploymentState === 'ACTIVE' && (
             <Button
-              variant={activeTab === 'library' ? 'default' : 'outline'}
+              variant="default"
               size="sm"
-              onClick={() => onTabChange('library')}
-              className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
+              className="gap-2 flex-shrink-0 bg-green-600 hover:bg-green-700"
             >
-              <BookOpen className="h-5 w-5 flex-shrink-0" />
-              <span className="hidden sm:inline whitespace-nowrap">Library</span>
+              <Activity className="h-4 w-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Live</span>
             </Button>
           )}
-          <Button
-            variant={activeTab === 'parameters' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onTabChange('parameters')}
-            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
-          >
-            <Sliders className="h-5 w-5 flex-shrink-0" />
-            <span className="hidden sm:inline whitespace-nowrap">Parameters</span>
-          </Button>
-          <Button
-            variant={activeTab === 'code' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => onTabChange('code')}
-            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
-          >
-            <Code className="h-5 w-5 flex-shrink-0" />
-            <span className="hidden sm:inline whitespace-nowrap">Code</span>
-          </Button>
-          <Button
-            variant={activeTab === 'backtest' ? 'default' : 'outline'}
-            size="sm"
-            onClick={handleBacktestClick}
-            className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
-            disabled={isBacktesting || isLiveDeployed}
-          >
-            {isBacktesting ? (
-              <Play className="h-5 w-5 animate-spin flex-shrink-0" />
-            ) : (
-              <Play className="h-5 w-5 flex-shrink-0" />
-            )}
-            <span className="hidden sm:inline whitespace-nowrap">Backtest</span>
-          </Button>
 
-          {/* Live Tab - ALWAYS visible, disabled if not deployed */}
-          {showLiveTab && (
+          {deploymentState === 'PAUSED' && (
             <Button
-              variant={activeTab === 'live' ? 'default' : 'outline'}
+              variant="outline"
               size="sm"
-              onClick={handleLiveTabClick}
-              disabled={!isLiveTabEnabled}
-              className="gap-2 flex-shrink-0 sm:min-w-[120px] text-md"
+              className="gap-2 flex-shrink-0 border-yellow-500 text-yellow-600"
+              disabled
             >
-              <Activity className="h-5 w-5 flex-shrink-0" />
-              <span className="hidden sm:inline whitespace-nowrap">Live</span>
+              <WifiOff className="h-4 w-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Offline</span>
             </Button>
           )}
         </div>
 
-        {/* RIGHT: Action Buttons - ONLY for owned strategies */}
-        {!isLibraryStrategy && (
-          <>
-            {/* Desktop: Full buttons (lg and up) */}
-            <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
-              {!isLoadingDeployment && (
-                <StrategyStatusBadge
-                  status={deploymentStatus}
-                  deploymentId={deploymentId}
-                  architectStrategyId={strategy?.id}
-                  onActionComplete={handleActionComplete}
-                  onDeploy={handleDeploy}
-                  isDeploying={isDeploying}
-                  canDeploy={canDeploy}
-                />
-              )}
-
+        {/* RIGHT SIDE - State-dependent action buttons */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {deploymentState === 'NOT_DEPLOYED' && (
+            <>
               <Button
                 size="sm"
+                onClick={handleGoLive}
+                disabled={!canGoLive || isGoingLive}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                {isGoingLive ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="hidden sm:inline">Starting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Activity className="h-4 w-4" />
+                    <span className="hidden sm:inline">Go Live</span>
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleSave}
-                disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
-                className="gap-2 min-w-[100px] text-md"
+                disabled={!isDirty || isSaving || !strategy}
+                className="gap-2"
               >
                 {isSaving ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
+                    <span className="hidden sm:inline">Saving...</span>
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4" />
-                    Save
+                    <span className="hidden sm:inline">Save</span>
                   </>
                 )}
               </Button>
-            </div>
+            </>
+          )}
 
-            {/* Mobile/Tablet: Hamburger menu (below lg) */}
-            <div className="lg:hidden flex-shrink-0">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 w-9 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
-                  {/* Save action */}
-                  <DropdownMenuItem
-                    onClick={handleSave}
-                    disabled={!isDirty || isSaving || !strategy || isLiveDeployed}
-                  >
-                    {isSaving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    )}
-                  </DropdownMenuItem>
+          {deploymentState === 'ACTIVE' && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePause}
+                disabled={isPausing}
+                className="gap-2"
+              >
+                {isPausing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Pause className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Pause</span>
+              </Button>
 
-                  {/* Deploy/Status actions */}
-                  {deploymentStatus && (deploymentStatus === 'ACTIVE' || deploymentStatus === 'PAUSED') ? (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">
-                        Strategy Status: {deploymentStatus}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleDeploy}
-                        disabled={!canDeploy || isDeploying}
-                      >
-                        {isDeploying ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Deploying...
-                          </>
-                        ) : (
-                          <>
-                            <Play className="mr-2 h-4 w-4" />
-                            Deploy Strategy
-                          </>
-                        )}
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </>
-        )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleStop}
+                disabled={isStopping}
+                className="gap-2"
+              >
+                {isStopping ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Stop</span>
+              </Button>
+            </>
+          )}
+
+          {deploymentState === 'PAUSED' && (
+            <>
+              <Button
+                size="sm"
+                onClick={handleResume}
+                disabled={isResuming}
+                className="gap-2 bg-green-600 hover:bg-green-700"
+              >
+                {isResuming ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Resume</span>
+              </Button>
+
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleStop}
+                disabled={isStopping}
+                className="gap-2"
+              >
+                {isStopping ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Stop</span>
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] px-6 py-4">
-        {activeTab === 'library' && (
-          <LibraryEducationalContent />
-        )}
-
-        {activeTab === 'parameters' && (
-          <StrategyParameters
-            hideActions={true}
-            compact={true}
-            readOnly={isLiveDeployed}
-          />
-        )}
-
-        {activeTab === 'code' && (
-          <StrategyCodeView />
-        )}
-
-        {activeTab === 'backtest' && (
-          <div>
-            {isLiveDeployed ? (
-              <div className="text-center py-12">
-                <Play className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-semibold mb-2">Backtest Disabled</p>
-                <p className="text-sm text-muted-foreground">
-                  Cannot run backtest while strategy is live. Please stop the deployment first.
-                </p>
-              </div>
-            ) : isBacktesting ? (
-              <div className="text-center py-12">
-                <Play className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
-                <p className="text-lg font-semibold">Running backtest...</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  This may take up to 60 seconds
-                </p>
-              </div>
-            ) : !backtestResults ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">No backtest results yet</p>
-                <Button onClick={handleRunBacktest} className="gap-2 min-w-[120px] text-md">
-                  <Play className="h-5 w-5" />
-                  Run Backtest
-                </Button>
-              </div>
-            ) : (
-              <BacktestResults results={backtestResults} isTransitioning={false} />
+        {/* NOT_DEPLOYED state content */}
+        {deploymentState === 'NOT_DEPLOYED' && (
+          <>
+            {activeTab === 'parameters' && (
+              <StrategyParameters
+                hideActions={true}
+                compact={true}
+                readOnly={false}
+              />
             )}
-          </div>
+
+            {activeTab === 'code' && (
+              <StrategyCodeView />
+            )}
+
+            {activeTab === 'backtest' && (
+              <div>
+                {isBacktesting ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
+                    <p className="text-lg font-semibold">Running backtest...</p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      This may take up to 60 seconds
+                    </p>
+                  </div>
+                ) : !backtestResults ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground mb-4">No backtest results yet</p>
+                    <Button onClick={handleRunBacktest} className="gap-2">
+                      <Play className="h-4 w-4" />
+                      Run Backtest
+                    </Button>
+                  </div>
+                ) : (
+                  <BacktestResults results={backtestResults} isTransitioning={false} />
+                )}
+              </div>
+            )}
+          </>
         )}
 
-        {activeTab === 'live' && (
+        {/* ACTIVE state content - Live view */}
+        {deploymentState === 'ACTIVE' && (
           <div>
-            {!isLiveTabEnabled ? (
-              <div className="text-center py-12">
-                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-semibold mb-2">Strategy Not Deployed</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Deploy your strategy to view live trading data and monitor performance in real-time.
-                </p>
-                <Button
-                  onClick={handleDeploy}
-                  disabled={!canDeploy || isDeploying}
-                  className="gap-2"
-                >
-                  {isDeploying ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Deploying...
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4" />
-                      Deploy Strategy
-                    </>
-                  )}
-                </Button>
-              </div>
-            ) : isValidating ? (
+            {isValidating ? (
               <div className="text-center py-12">
                 <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary mb-4" />
                 <p className="text-lg font-semibold">Connecting to live data...</p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Validating strategy and establishing WebSocket connection
+                  Validating strategy and establishing connection
                 </p>
               </div>
             ) : !validatedData ? (
@@ -577,12 +566,40 @@ export function StrategyDetailsPanel({
                 initialCapital={deploymentData?.current_capital || 10000}
               >
                 <LiveStrategyView
-                  deploymentStatus={deploymentStatus!}
+                  deploymentStatus="ACTIVE"
                   deploymentVersion={deploymentData?.version || 1}
                   isPaperTrading={deploymentData?.is_paper_trading ?? true}
                 />
               </LiveDashboardProvider>
             )}
+          </div>
+        )}
+
+        {/* PAUSED state content - Offline message */}
+        {deploymentState === 'PAUSED' && (
+          <div className="text-center py-12">
+            <WifiOff className="h-16 w-16 mx-auto text-yellow-500 mb-4" />
+            <p className="text-xl font-semibold mb-2">Strategy Paused</p>
+            <p className="text-muted-foreground mb-6">
+              Your strategy is currently offline. No trades will be executed while paused.
+            </p>
+            <Button
+              onClick={handleResume}
+              disabled={isResuming}
+              className="gap-2 bg-green-600 hover:bg-green-700"
+            >
+              {isResuming ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Resuming...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="h-4 w-4" />
+                  Resume Trading
+                </>
+              )}
+            </Button>
           </div>
         )}
       </div>
