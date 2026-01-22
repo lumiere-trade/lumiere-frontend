@@ -210,6 +210,23 @@ function mergeIndicatorData(
   const candleIndexMap = new Map<number, number>()
   candles.forEach((c, idx) => candleIndexMap.set(c.t, idx))
 
+  // DEBUG: Log timestamp matching
+  if (wsHistory.length > 0) {
+    const lastWs = wsHistory[wsHistory.length - 1]
+    const lastCandle = candles[candles.length - 1]
+    const matchedIndex = candleIndexMap.get(lastWs.t)
+    console.log('[mergeIndicatorData] DEBUG:', {
+      wsTimestamp: lastWs.t,
+      wsDate: new Date(lastWs.t).toISOString(),
+      wsValues: lastWs.values,
+      lastCandleTimestamp: lastCandle?.t,
+      lastCandleDate: lastCandle ? new Date(lastCandle.t).toISOString() : null,
+      matchedIndex,
+      candleCount: candles.length,
+      wsHistoryCount: wsHistory.length,
+    })
+  }
+
   // Create merged data
   const mergedData: IndicatorData[] = []
 
