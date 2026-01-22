@@ -2,7 +2,7 @@
  * Live Dashboard Context
  * Provides real-time trading data via WebSocket to LiveDashboard components
  * Includes historical candle warm-up from Chronicler
- * GPU-accelerated indicator calculation
+ * GPU-accelerated indicator calculation with real-time WebSocket sync
  */
 
 "use client"
@@ -26,6 +26,7 @@ import { calculateAllIndicators, type IndicatorResults } from '@/lib/gpu'
 import type {
   ConnectionStatus,
   LiveCandle,
+  LiveIndicators,
   DashboardError,
 } from '@/lib/api/courier'
 import type { Candle, Trade, Indicator } from '@/components/charts/types'
@@ -59,7 +60,7 @@ interface LiveDashboardContextType {
   chartCandles: Candle[]
   chartTrades: Trade[]
 
-  // Indicator data for chart (GPU-calculated)
+  // Indicator data for chart (GPU-calculated + real-time sync)
   indicatorData: IndicatorData[]
 
   // Position data (transformed for PositionCard)
@@ -192,6 +193,70 @@ function transformToIndicatorData(
   return data
 }
 
+/**
+ * Merge GPU-calculated indicators with real-time WebSocket indicators
+ * WebSocket provides timestamped indicator values that sync with candles
+ */
+function mergeIndicatorData(
+  gpuData: IndicatorData[],
+  wsHistory: LiveIndicators[],
+  candles: Candle[]
+): IndicatorData[] {
+  if (wsHistory.length === 0) {
+    return gpuData
+  }
+
+  // Create a map of candle timestamp -> index
+  const candleIndexMap = new Map<number, number>()
+  candles.forEach((c, idx) => candleIndexMap.set(c.t, idx))
+
+  // Create merged data
+  const mergedData: IndicatorData[] = []
+
+  // Get all indicator names from both sources
+  const indicatorNames = new Set<string>()
+  gpuData.forEach(d => indicatorNames.add(d.name))
+  wsHistory.forEach(ws => {
+    Object.keys(ws.values).forEach(name => indicatorNames.add(name.toUpperCase()))
+  })
+
+  for (const name of indicatorNames) {
+    // Start with GPU data
+    const gpuIndicator = gpuData.find(d => d.name === name)
+    const valuesMap = new Map<number, number>()
+
+    // Add GPU values
+    if (gpuIndicator) {
+      gpuIndicator.values.forEach(v => valuesMap.set(v.index, v.value))
+    }
+
+    // Override/add WebSocket values (real-time, synced with candles)
+    for (const ws of wsHistory) {
+      const candleIndex = candleIndexMap.get(ws.t)
+      if (candleIndex !== undefined) {
+        // Find matching indicator in WebSocket data
+        const wsKey = Object.keys(ws.values).find(
+          k => k.toUpperCase() === name || normalizeIndicatorName(k).toUpperCase() === name
+        )
+        if (wsKey && ws.values[wsKey] !== undefined) {
+          valuesMap.set(candleIndex, ws.values[wsKey])
+        }
+      }
+    }
+
+    // Convert map to sorted array
+    const values = Array.from(valuesMap.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([index, value]) => ({ index, value }))
+
+    if (values.length > 0) {
+      mergedData.push({ name, values })
+    }
+  }
+
+  return mergedData
+}
+
 // ============================================================================
 // PROVIDER
 // ============================================================================
@@ -216,8 +281,8 @@ export function LiveDashboardProvider({
   const [historicalTrades, setHistoricalTrades] = useState<RecentTrade[]>([])
   const [isWarmingUp, setIsWarmingUp] = useState(true)
 
-  // GPU-calculated indicator data for chart
-  const [indicatorData, setIndicatorData] = useState<IndicatorData[]>([])
+  // GPU-calculated indicator data for chart (historical)
+  const [gpuIndicatorData, setGpuIndicatorData] = useState<IndicatorData[]>([])
   const indicatorCalcPending = useRef(false)
 
   // Fetch historical candles on mount
@@ -289,13 +354,14 @@ export function LiveDashboardProvider({
     }
   }, [config.deploymentId])
 
-  // WebSocket hook
+  // WebSocket hook - now includes indicatorsHistory
   const {
     connectionStatus,
     isConnected,
     latencyMs,
     candles: liveCandles,
     indicators,
+    indicatorsHistory,
     position: livePosition,
     signals,
     error,
@@ -330,7 +396,7 @@ export function LiveDashboardProvider({
     return merged.slice(-500)
   }, [historicalCandles, liveCandles])
 
-  // GPU-accelerated indicator calculation
+  // GPU-accelerated indicator calculation (for historical data)
   useEffect(() => {
     if (chartCandles.length < 50 || indicatorCalcPending.current) {
       return
@@ -338,11 +404,6 @@ export function LiveDashboardProvider({
 
     // Parse indicator configs from strategy
     const indicatorConfigs = parseIndicatorConfigs(config.indicatorNames)
-
-    console.log('[GPU] Indicator configs:', {
-      rawNames: config.indicatorNames,
-      parsed: indicatorConfigs,
-    })
 
     if (Object.keys(indicatorConfigs).length === 0) {
       console.log('[GPU] No indicators to calculate')
@@ -360,7 +421,7 @@ export function LiveDashboardProvider({
         console.log(`[GPU] Calculated ${Object.keys(results).length} indicators in ${elapsed.toFixed(2)}ms`)
 
         const data = transformToIndicatorData(results, indicatorConfigs)
-        setIndicatorData(data)
+        setGpuIndicatorData(data)
       })
       .catch(err => {
         console.error('[GPU] Indicator calculation failed:', err)
@@ -369,6 +430,11 @@ export function LiveDashboardProvider({
         indicatorCalcPending.current = false
       })
   }, [chartCandles, config.indicatorNames])
+
+  // Merge GPU + WebSocket indicators for real-time sync
+  const indicatorData: IndicatorData[] = useMemo(() => {
+    return mergeIndicatorData(gpuIndicatorData, indicatorsHistory, chartCandles)
+  }, [gpuIndicatorData, indicatorsHistory, chartCandles])
 
   // Transform signals to trades for chart markers
   const chartTrades: Trade[] = useMemo(() => {

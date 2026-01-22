@@ -22,7 +22,8 @@ export interface DashboardCandle {
 export interface DashboardIndicators {
   type: 'dashboard.indicators'
   deployment_id: string
-  values: Record<string, number>  // e.g., { "rsi_16": 52.55, "ema_20": 135.50 }
+  timestamp: string  // Added: sync with candle timestamp
+  values: Record<string, number>  // e.g., { "rsi_14": 52.55, "ema_20": 135.50 }
 }
 
 export interface DashboardPosition {
@@ -90,6 +91,11 @@ export interface LiveCandle {
   v: number   // volume
 }
 
+export interface LiveIndicators {
+  t: number   // timestamp as unix ms (synced with candle)
+  values: Record<string, number>
+}
+
 export interface LivePosition {
   hasPosition: boolean
   side: 'LONG' | 'SHORT' | null
@@ -129,6 +135,16 @@ export function transformCandle(msg: DashboardCandle): LiveCandle {
     l: msg.low,
     c: msg.close,
     v: msg.volume,
+  }
+}
+
+/**
+ * Transform DashboardIndicators to chart-compatible format
+ */
+export function transformIndicators(msg: DashboardIndicators): LiveIndicators {
+  return {
+    t: new Date(msg.timestamp).getTime(),
+    values: msg.values,
   }
 }
 
