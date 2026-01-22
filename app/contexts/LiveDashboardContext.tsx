@@ -194,6 +194,20 @@ function transformToIndicatorData(
 }
 
 /**
+ * Safe timestamp to ISO string conversion
+ */
+function safeToISOString(timestamp: number | undefined | null): string {
+  if (timestamp === undefined || timestamp === null || isNaN(timestamp)) {
+    return 'INVALID'
+  }
+  try {
+    return new Date(timestamp).toISOString()
+  } catch {
+    return 'INVALID'
+  }
+}
+
+/**
  * Merge GPU-calculated indicators with real-time WebSocket indicators
  * WebSocket provides timestamped indicator values that sync with candles
  */
@@ -210,17 +224,17 @@ function mergeIndicatorData(
   const candleIndexMap = new Map<number, number>()
   candles.forEach((c, idx) => candleIndexMap.set(c.t, idx))
 
-  // DEBUG: Log timestamp matching
-  if (wsHistory.length > 0) {
+  // DEBUG: Log timestamp matching (with safety checks)
+  if (wsHistory.length > 0 && candles.length > 0) {
     const lastWs = wsHistory[wsHistory.length - 1]
     const lastCandle = candles[candles.length - 1]
-    const matchedIndex = candleIndexMap.get(lastWs.t)
+    const matchedIndex = lastWs?.t ? candleIndexMap.get(lastWs.t) : undefined
     console.log('[mergeIndicatorData] DEBUG:', {
-      wsTimestamp: lastWs.t,
-      wsDate: new Date(lastWs.t).toISOString(),
-      wsValues: lastWs.values,
+      wsTimestamp: lastWs?.t,
+      wsDate: safeToISOString(lastWs?.t),
+      wsValues: lastWs?.values,
       lastCandleTimestamp: lastCandle?.t,
-      lastCandleDate: lastCandle ? new Date(lastCandle.t).toISOString() : null,
+      lastCandleDate: safeToISOString(lastCandle?.t),
       matchedIndex,
       candleCount: candles.length,
       wsHistoryCount: wsHistory.length,
