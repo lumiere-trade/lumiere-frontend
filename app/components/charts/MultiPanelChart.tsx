@@ -293,7 +293,7 @@ export function MultiPanelChart({
         color: assignIndicatorColor(idx),
         visible: initialVisibility?.[ind.name] ?? true,
         points: ind.values.map((val, i) => ({
-          t: i,
+          t: (val as any).index ?? i,
           v: val.value
         })),
         type
