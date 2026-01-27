@@ -117,7 +117,7 @@ export function LiveDashboard({
                     }
                     {indicatorData.length > 0 && (
                       <span className="ml-2 text-primary">
-                        | {indicatorData.length} indicators (GPU)
+                        | {indicatorData.length} indicators (Backend)
                       </span>
                     )}
                   </span>

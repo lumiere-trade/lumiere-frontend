@@ -2,7 +2,7 @@
  * Live Dashboard Context
  * Provides real-time trading data via WebSocket to LiveDashboard components
  * Includes historical candle warm-up from Chronicler
- * Backend-calculated indicators (no GPU calculation)
+ * GPU-accelerated indicator calculation
  */
 
 "use client"
@@ -13,6 +13,7 @@ import {
   useMemo,
   useEffect,
   useState,
+  useRef,
   ReactNode,
 } from 'react'
 import { useDashboardWebSocket } from '@/hooks/use-dashboard-websocket'
@@ -21,13 +22,13 @@ import {
   type ChroniclerCandle,
 } from '@/lib/api/chronicler'
 import { getDeploymentTrades, type TradeResponse } from '@/lib/api/chevalier'
+import { calculateAllIndicators, type IndicatorResults } from '@/lib/gpu'
 import type {
   ConnectionStatus,
   LiveCandle,
-  LiveIndicators,
   DashboardError,
 } from '@/lib/api/courier'
-import type { Candle, Trade } from '@/components/charts/types'
+import type { Candle, Trade, Indicator } from '@/components/charts/types'
 import type { Position } from '@/components/dashboard/live/PositionCard'
 import type { RecentTrade } from '@/components/dashboard/live/RecentTradesCard'
 import type { IndicatorData } from '@/lib/api/cartographe'
@@ -42,7 +43,7 @@ interface DeployedStrategyConfig {
   strategyName: string
   symbol: string
   timeframe: string
-  indicatorNames: string[]  // e.g., ["RSI(14)", "EMA(20)"]
+  indicatorNames: string[]  // e.g., ["rsi_16", "ema_20"]
 }
 
 interface LiveDashboardContextType {
@@ -58,7 +59,7 @@ interface LiveDashboardContextType {
   chartCandles: Candle[]
   chartTrades: Trade[]
 
-  // Indicator data for chart (backend-calculated, real-time)
+  // Indicator data for chart (GPU-calculated)
   indicatorData: IndicatorData[]
 
   // Position data (transformed for PositionCard)
@@ -128,67 +129,67 @@ function tradeResponseToRecentTrade(trade: TradeResponse): RecentTrade {
 }
 
 /**
- * Transform WebSocket indicators to IndicatorData format for chart
- * 
- * Backend (Chevalier) calculates indicators using Cython and broadcasts them
- * with timestamps synced to candles. This function transforms the WebSocket
- * data into the format expected by MultiPanelChart.
+ * Normalize indicator name to standard format for GPU calculation
+ * Input formats: "RSI(16)", "EMA(20)", "MACD(12,26,9)"
+ * Output format: "rsi_16", "ema_20", "macd_12_26_9"
  */
-function transformIndicatorsToChartData(
-  wsIndicators: LiveIndicators[],
-  candles: Candle[]
+function normalizeIndicatorName(name: string): string {
+  // Handle formats like "RSI(16)" -> "rsi_16"
+  const match = name.match(/^([A-Za-z]+)\(([^)]+)\)$/)
+  if (match) {
+    const type = match[1].toLowerCase()
+    const params = match[2].split(',').map(p => p.trim()).join('_')
+    return `${type}_${params}`
+  }
+  // Already in snake_case format or simple name
+  return name.toLowerCase().replace(/[^a-z0-9_]/g, '_')
+}
+
+/**
+ * Parse indicator configs from strategy indicator names
+ */
+function parseIndicatorConfigs(
+  indicatorNames: string[]
+): Record<string, { type: string; params?: number[] }> {
+  const configs: Record<string, { type: string; params?: number[] }> = {}
+
+  for (const rawName of indicatorNames) {
+    const name = normalizeIndicatorName(rawName)
+    // Parse names like "rsi_16", "ema_20", "macd_12_26_9"
+    const parts = name.split('_')
+    const type = parts[0].toUpperCase()
+    const params = parts.slice(1).map(Number).filter(n => !isNaN(n))
+
+    configs[name] = { type, params: params.length > 0 ? params : undefined }
+  }
+
+  return configs
+}
+
+/**
+ * Transform GPU indicator results to IndicatorData format for chart
+ */
+function transformToIndicatorData(
+  results: IndicatorResults,
+  indicatorConfigs: Record<string, { type: string; params?: number[] }>
 ): IndicatorData[] {
-  if (wsIndicators.length === 0 || candles.length === 0) {
-    return []
-  }
+  const data: IndicatorData[] = []
 
-  // Create timestamp -> candle index map
-  const timestampToIndex = new Map<number, number>()
-  candles.forEach((candle, idx) => {
-    timestampToIndex.set(candle.t, idx)
-  })
-
-  // Group indicators by name
-  const indicatorsByName = new Map<string, Map<number, number>>()
-
-  for (const wsIndicator of wsIndicators) {
-    const candleIndex = timestampToIndex.get(wsIndicator.t)
-    if (candleIndex === undefined) continue
-
-    // Add all indicator values for this timestamp
-    for (const [name, value] of Object.entries(wsIndicator.values)) {
-      const normalizedName = name.toUpperCase()
-      
-      if (!indicatorsByName.has(normalizedName)) {
-        indicatorsByName.set(normalizedName, new Map())
-      }
-      
-      indicatorsByName.get(normalizedName)!.set(candleIndex, value)
-    }
-  }
-
-  // Convert to IndicatorData array
-  const result: IndicatorData[] = []
-  
-  for (const [name, valuesMap] of indicatorsByName.entries()) {
-    const values = Array.from(valuesMap.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([index, value]) => ({ index, value }))
+  for (const [name, values] of Object.entries(results)) {
+    // Filter out NaN values and create IndicatorValue array
+    const indicatorValues = values
+      .map((value, index) => ({ index, value }))
       .filter(v => !isNaN(v.value))
 
-    if (values.length > 0) {
-      result.push({ name, values })
+    if (indicatorValues.length > 0) {
+      data.push({
+        name: name.toUpperCase(),
+        values: indicatorValues,
+      })
     }
   }
 
-  console.log('[transformIndicators] Backend indicators:', {
-    wsCount: wsIndicators.length,
-    candleCount: candles.length,
-    indicatorNames: result.map(r => r.name),
-    sampleValues: result[0]?.values.slice(-3),
-  })
-
-  return result
+  return data
 }
 
 // ============================================================================
@@ -214,6 +215,10 @@ export function LiveDashboardProvider({
   const [historicalCandles, setHistoricalCandles] = useState<LiveCandle[]>([])
   const [historicalTrades, setHistoricalTrades] = useState<RecentTrade[]>([])
   const [isWarmingUp, setIsWarmingUp] = useState(true)
+
+  // GPU-calculated indicator data for chart
+  const [indicatorData, setIndicatorData] = useState<IndicatorData[]>([])
+  const indicatorCalcPending = useRef(false)
 
   // Fetch historical candles on mount
   useEffect(() => {
@@ -284,14 +289,13 @@ export function LiveDashboardProvider({
     }
   }, [config.deploymentId])
 
-  // WebSocket hook - provides real-time data from Chevalier
+  // WebSocket hook
   const {
     connectionStatus,
     isConnected,
     latencyMs,
     candles: liveCandles,
     indicators,
-    indicatorsHistory,
     position: livePosition,
     signals,
     error,
@@ -322,13 +326,49 @@ export function LiveDashboardProvider({
 
     // Sort by timestamp and limit to max candles
     merged.sort((a, b) => a.t - b.t)
+
     return merged.slice(-500)
   }, [historicalCandles, liveCandles])
 
-  // Transform backend indicators to chart format
-  const indicatorData: IndicatorData[] = useMemo(() => {
-    return transformIndicatorsToChartData(indicatorsHistory, chartCandles)
-  }, [indicatorsHistory, chartCandles])
+  // GPU-accelerated indicator calculation
+  useEffect(() => {
+    if (chartCandles.length < 50 || indicatorCalcPending.current) {
+      return
+    }
+
+    // Parse indicator configs from strategy
+    const indicatorConfigs = parseIndicatorConfigs(config.indicatorNames)
+
+    console.log('[GPU] Indicator configs:', {
+      rawNames: config.indicatorNames,
+      parsed: indicatorConfigs,
+    })
+
+    if (Object.keys(indicatorConfigs).length === 0) {
+      console.log('[GPU] No indicators to calculate')
+      return
+    }
+
+    indicatorCalcPending.current = true
+
+    // Calculate indicators using GPU
+    const startTime = performance.now()
+
+    calculateAllIndicators(chartCandles, indicatorConfigs)
+      .then(results => {
+        const elapsed = performance.now() - startTime
+        console.log(`[GPU] Calculated ${Object.keys(results).length} indicators in ${elapsed.toFixed(2)}ms`)
+
+        const data = transformToIndicatorData(results, indicatorConfigs)
+        setIndicatorData(data)
+      })
+      .catch(err => {
+        console.error('[GPU] Indicator calculation failed:', err)
+      })
+      .finally(() => {
+        indicatorCalcPending.current = false
+      })
+  }, [chartCandles, config.indicatorNames])
 
   // Transform signals to trades for chart markers
   const chartTrades: Trade[] = useMemo(() => {
@@ -442,6 +482,11 @@ export function useLiveDashboard() {
  *
  * IMPORTANT: This accepts already-validated data from TSDL /data/all API.
  * Do NOT pass raw tsdl_code - parse it through TSDL API first.
+ *
+ * @param deploymentId - Deployment UUID
+ * @param strategyId - Architect strategy UUID
+ * @param strategyName - Strategy name (from validated data)
+ * @param validatedData - Data from TSDL /data/all endpoint
  */
 export function buildStrategyConfig(
   deploymentId: string,
@@ -453,12 +498,20 @@ export function buildStrategyConfig(
     indicators: string[]
   }
 ): DeployedStrategyConfig {
+  // Normalize indicators for GPU calculation
+  const indicatorNames = validatedData.indicators.map(normalizeIndicatorName)
+
+  console.log('[buildStrategyConfig] Built from validated data:', {
+    raw: validatedData.indicators,
+    normalized: indicatorNames,
+  })
+
   return {
     deploymentId,
     strategyId,
     strategyName,
     symbol: validatedData.symbol,
     timeframe: validatedData.timeframe,
-    indicatorNames: validatedData.indicators,
+    indicatorNames,
   }
 }
