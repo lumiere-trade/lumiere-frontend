@@ -49,7 +49,7 @@ export function useWalletSync() {
 
     // Find the correct wallet by name
     const userWalletType = user.walletType.toLowerCase()
-    const matchingWallet = wallets.find(w => 
+    const matchingWallet = wallets.find(w =>
       w.adapter.name.toLowerCase().includes(userWalletType)
     )
 
@@ -63,7 +63,7 @@ export function useWalletSync() {
 
       // Select the wallet first, then connect
       select(matchingWallet.adapter.name)
-      
+
       // Small delay to let selection complete
       setTimeout(() => {
         connect().catch((error) => {
@@ -78,7 +78,7 @@ export function useWalletSync() {
     // No matching wallet detected yet - retry with backoff
     if (retryCount < MAX_RETRIES) {
       const delay = Math.min(INITIAL_DELAY * Math.pow(2, retryCount), MAX_DELAY)
-      
+
       log.debug('Wallet not detected, retrying...', {
         retryCount,
         nextRetryIn: delay,
@@ -103,14 +103,4 @@ export function useWalletSync() {
       }
     }
   }, [isAuthenticated, user, connected, connecting, wallets, select, connect, retryCount, log])
-
-  log.debug('Wallet sync state', {
-    isAuthenticated,
-    hasUser: !!user,
-    userWalletType: user?.walletType,
-    connected,
-    connecting,
-    availableWallets: wallets.map(w => w.adapter.name),
-    retryCount,
-  })
 }
