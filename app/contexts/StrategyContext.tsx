@@ -30,7 +30,7 @@ export interface Strategy {
   updatedAt: string | null
 }
 
-export type DetailsPanelTab = 'parameters' | 'code' | 'backtest' | 'live'
+export type DetailsPanelTab = 'library' | 'parameters' | 'code' | 'backtest' | 'live'
 
 interface StrategyContextType {
   // Base strategy (saved version from DB)

@@ -3,17 +3,18 @@
 /**
  * StrategyDetailsPanel - Strategy details panel with deployment state machine
  *
- * State 1 (NOT DEPLOYED): LEFT = Parameters, Code, Backtest | RIGHT = Go Live, Save
- * State 2 (ACTIVE):       LEFT = Live                       | RIGHT = Pause, Stop
- * State 3 (PAUSED):       LEFT = Offline indicator          | RIGHT = Resume, Stop
+ * State 1 (NOT DEPLOYED): LEFT = Library, Parameters, Code, Backtest | RIGHT = Go Live, Save
+ * State 2 (ACTIVE):       LEFT = Live                               | RIGHT = Pause, Stop
+ * State 3 (PAUSED):       LEFT = Offline indicator                  | RIGHT = Resume, Stop
  */
 
-import { Sliders, Code, Play, Save, Loader2, Activity, Pause, Square, RotateCcw, WifiOff } from "lucide-react"
+import { BookOpen, Sliders, Code, Play, Save, Loader2, Activity, Pause, Square, RotateCcw, WifiOff } from "lucide-react"
 import { Button } from "@lumiere/shared/components/ui/button"
 import { StrategyParameters } from "./StrategyParameters"
 import { StrategyCodeView } from "./StrategyCodeView"
 import { BacktestResults } from "./BacktestResults"
 import { LiveStrategyView } from "./LiveStrategyView"
+import { LibraryEducationalContent } from "./LibraryEducationalContent"
 import { LiveDashboardProvider, buildStrategyConfig } from "@/contexts/LiveDashboardContext"
 import { useRunBacktest } from "@/hooks/mutations/use-cartographe-mutations"
 import {
@@ -39,8 +40,8 @@ import * as tsdlApi from "@/lib/api/tsdl"
 type DeploymentState = 'NOT_DEPLOYED' | 'ACTIVE' | 'PAUSED'
 
 interface StrategyDetailsPanelProps {
-  activeTab: 'parameters' | 'code' | 'backtest' | 'live'
-  onTabChange: (tab: 'parameters' | 'code' | 'backtest' | 'live') => void
+  activeTab: 'library' | 'parameters' | 'code' | 'backtest' | 'live'
+  onTabChange: (tab: 'library' | 'parameters' | 'code' | 'backtest' | 'live') => void
 }
 
 export function StrategyDetailsPanel({
@@ -60,6 +61,7 @@ export function StrategyDetailsPanel({
     isBacktesting,
     setBacktestResults,
     setIsBacktesting,
+    educationalContent,
     isDirty
   } = useStrategy()
 
@@ -295,12 +297,8 @@ export function StrategyDetailsPanel({
     if (!confirmed) return
 
     try {
-      // First stop the deployment
       await stopDeploymentMutation.mutateAsync(deploymentId)
-
-      // Then undeploy it
       await undeployDeploymentMutation.mutateAsync(deploymentId)
-
       await refetchDeploymentStatus()
       onTabChange('parameters')
       toast.success('Strategy stopped and undeployed')
@@ -315,7 +313,6 @@ export function StrategyDetailsPanel({
   const isResuming = resumeDeploymentMutation.isPending
   const isStopping = stopDeploymentMutation.isPending || undeployDeploymentMutation.isPending
 
-  // Can go live if: strategy is saved, no unsaved changes
   const canGoLive = !!strategy?.id && !isDirty
 
   return (
@@ -327,6 +324,17 @@ export function StrategyDetailsPanel({
         <div className="flex items-center gap-2 overflow-x-auto flex-shrink-0">
           {deploymentState === 'NOT_DEPLOYED' && (
             <>
+              {educationalContent && (
+                <Button
+                  variant={activeTab === 'library' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => onTabChange('library')}
+                  className="gap-2 flex-shrink-0"
+                >
+                  <BookOpen className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline whitespace-nowrap">Library</span>
+                </Button>
+              )}
               <Button
                 variant={activeTab === 'parameters' ? 'default' : 'outline'}
                 size="sm"
@@ -510,6 +518,10 @@ export function StrategyDetailsPanel({
         {/* NOT_DEPLOYED state content */}
         {deploymentState === 'NOT_DEPLOYED' && (
           <>
+            {activeTab === 'library' && (
+              <LibraryEducationalContent />
+            )}
+
             {activeTab === 'parameters' && (
               <StrategyParameters
                 hideActions={true}
