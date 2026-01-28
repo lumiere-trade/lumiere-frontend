@@ -279,10 +279,10 @@ export function LiveDashboardProvider({
       try {
         console.log('[Indicators] Fetching historical indicators...', {
           deploymentId: config.deploymentId,
-          target: 200,
+          target: warmupCandles,
         })
 
-        const response = await getIndicatorsHistory(config.deploymentId, 200)
+        const response = await getIndicatorsHistory(config.deploymentId, warmupCandles)
 
         if (!cancelled) {
           const transformed = response.indicators.map(indicatorHistoryToLiveIndicators)
@@ -299,7 +299,7 @@ export function LiveDashboardProvider({
     return () => {
       cancelled = true
     }
-  }, [config.deploymentId])
+  }, [config.deploymentId, warmupCandles])
 
   // Fetch historical trades on mount
   useEffect(() => {
