@@ -103,6 +103,32 @@ const LiveDashboardContext = createContext<LiveDashboardContextType | undefined>
 // ============================================================================
 
 /**
+ * Round timestamp to timeframe interval
+ * e.g., for 5m: 21:36:00 -> 21:35:00, 21:40:00 -> 21:40:00
+ */
+function roundToTimeframe(timestamp: number, timeframe: string): number {
+  const minutes = parseInt(timeframe.replace('m', ''))
+  const date = new Date(timestamp)
+  const roundedMinutes = Math.floor(date.getMinutes() / minutes) * minutes
+  date.setMinutes(roundedMinutes, 0, 0)
+  return date.getTime()
+}
+
+/**
+ * Merge two candles - update OHLCV properly
+ */
+function mergeCandles(existing: LiveCandle, incoming: LiveCandle): LiveCandle {
+  return {
+    t: existing.t, // Keep original rounded timestamp
+    o: existing.o, // Keep original open
+    h: Math.max(existing.h, incoming.h), // Update high
+    l: Math.min(existing.l, incoming.l), // Update low
+    c: incoming.c, // Update to latest close
+    v: incoming.v, // Update to latest volume
+  }
+}
+
+/**
  * Transform Chronicler candle format to LiveCandle format
  */
 function chroniclerToLiveCandle(c: ChroniclerCandle): LiveCandle {
@@ -349,49 +375,58 @@ export function LiveDashboardProvider({
     enabled: true,
   })
 
-  // Merge historical + live candles
+  // Merge historical + live candles with timeframe rounding
   const chartCandles: Candle[] = useMemo(() => {
     // Start with historical candles
     const merged = [...historicalCandles]
 
-    // Add/update live candles
+    // Add/update live candles with timeframe rounding
     for (const live of liveCandles) {
-      const existingIdx = merged.findIndex(c => c.t === live.t)
+      // Round live candle timestamp to timeframe interval
+      const roundedT = roundToTimeframe(live.t, config.timeframe)
+      const existingIdx = merged.findIndex(c => c.t === roundedT)
+
       if (existingIdx >= 0) {
-        // Update existing candle (same timestamp)
-        merged[existingIdx] = live
-      } else if (merged.length === 0 || live.t > merged[merged.length - 1].t) {
-        // Append new candle
-        merged.push(live)
+        // Update existing candle (merge OHLCV)
+        merged[existingIdx] = mergeCandles(merged[existingIdx], {
+          ...live,
+          t: roundedT,
+        })
+      } else if (merged.length === 0 || roundedT > merged[merged.length - 1].t) {
+        // Append new candle with rounded timestamp
+        merged.push({ ...live, t: roundedT })
       }
     }
 
     // Sort by timestamp and limit to max candles
     merged.sort((a, b) => a.t - b.t)
     return merged.slice(-500)
-  }, [historicalCandles, liveCandles])
+  }, [historicalCandles, liveCandles, config.timeframe])
 
-  // Merge historical + live indicators
+  // Merge historical + live indicators with timeframe rounding
   const allIndicators: LiveIndicators[] = useMemo(() => {
     // Start with historical indicators
     const merged = [...historicalIndicators]
 
-    // Add/update live indicators
+    // Add/update live indicators with timeframe rounding
     for (const live of liveIndicators) {
-      const existingIdx = merged.findIndex(i => i.t === live.t)
+      // Round live indicator timestamp to timeframe interval
+      const roundedT = roundToTimeframe(live.t, config.timeframe)
+      const existingIdx = merged.findIndex(i => i.t === roundedT)
+
       if (existingIdx >= 0) {
-        // Update existing indicator (same timestamp)
-        merged[existingIdx] = live
-      } else if (merged.length === 0 || live.t > merged[merged.length - 1].t) {
-        // Append new indicator
-        merged.push(live)
+        // Update existing indicator (replace with latest values)
+        merged[existingIdx] = { t: roundedT, values: live.values }
+      } else if (merged.length === 0 || roundedT > merged[merged.length - 1].t) {
+        // Append new indicator with rounded timestamp
+        merged.push({ t: roundedT, values: live.values })
       }
     }
 
     // Sort by timestamp
     merged.sort((a, b) => a.t - b.t)
     return merged
-  }, [historicalIndicators, liveIndicators])
+  }, [historicalIndicators, liveIndicators, config.timeframe])
 
   // Transform backend indicators to chart format
   const indicatorData: IndicatorData[] = useMemo(() => {
