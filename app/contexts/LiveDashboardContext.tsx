@@ -20,7 +20,12 @@ import {
   fetchWarmupCandles,
   type ChroniclerCandle,
 } from '@/lib/api/chronicler'
-import { getDeploymentTrades, type TradeResponse } from '@/lib/api/chevalier'
+import {
+  getDeploymentTrades,
+  getIndicatorsHistory,
+  type TradeResponse,
+  type IndicatorHistoryItem,
+} from '@/lib/api/chevalier'
 import type {
   ConnectionStatus,
   LiveCandle,
@@ -128,8 +133,18 @@ function tradeResponseToRecentTrade(trade: TradeResponse): RecentTrade {
 }
 
 /**
+ * Transform Chevalier indicator history to LiveIndicators format
+ */
+function indicatorHistoryToLiveIndicators(item: IndicatorHistoryItem): LiveIndicators {
+  return {
+    t: new Date(item.timestamp).getTime(),
+    values: item.values,
+  }
+}
+
+/**
  * Transform WebSocket indicators to IndicatorData format for chart
- * 
+ *
  * Backend (Chevalier) calculates indicators using Cython and broadcasts them
  * with timestamps synced to candles. This function transforms the WebSocket
  * data into the format expected by MultiPanelChart.
@@ -158,18 +173,18 @@ function transformIndicatorsToChartData(
     // Add all indicator values for this timestamp
     for (const [name, value] of Object.entries(wsIndicator.values)) {
       const normalizedName = name.toUpperCase()
-      
+
       if (!indicatorsByName.has(normalizedName)) {
         indicatorsByName.set(normalizedName, new Map())
       }
-      
+
       indicatorsByName.get(normalizedName)!.set(candleIndex, value)
     }
   }
 
   // Convert to IndicatorData array
   const result: IndicatorData[] = []
-  
+
   for (const [name, valuesMap] of indicatorsByName.entries()) {
     const values = Array.from(valuesMap.entries())
       .sort((a, b) => a[0] - b[0])
@@ -212,6 +227,7 @@ export function LiveDashboardProvider({
 }: LiveDashboardProviderProps) {
   // Warm-up state
   const [historicalCandles, setHistoricalCandles] = useState<LiveCandle[]>([])
+  const [historicalIndicators, setHistoricalIndicators] = useState<LiveIndicators[]>([])
   const [historicalTrades, setHistoricalTrades] = useState<RecentTrade[]>([])
   const [isWarmingUp, setIsWarmingUp] = useState(true)
 
@@ -255,6 +271,36 @@ export function LiveDashboardProvider({
     }
   }, [config.symbol, config.timeframe, warmupCandles])
 
+  // Fetch historical indicators on mount
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadIndicatorHistory() {
+      try {
+        console.log('[Indicators] Fetching historical indicators...', {
+          deploymentId: config.deploymentId,
+          target: 200,
+        })
+
+        const response = await getIndicatorsHistory(config.deploymentId, 200)
+
+        if (!cancelled) {
+          const transformed = response.indicators.map(indicatorHistoryToLiveIndicators)
+          setHistoricalIndicators(transformed)
+          console.log('[Indicators] Loaded', transformed.length, 'historical indicators')
+        }
+      } catch (err) {
+        console.error('[Indicators] Failed to load historical indicators:', err)
+      }
+    }
+
+    loadIndicatorHistory()
+
+    return () => {
+      cancelled = true
+    }
+  }, [config.deploymentId])
+
   // Fetch historical trades on mount
   useEffect(() => {
     let cancelled = false
@@ -291,7 +337,7 @@ export function LiveDashboardProvider({
     latencyMs,
     candles: liveCandles,
     indicators,
-    indicatorsHistory,
+    indicatorsHistory: liveIndicators,
     position: livePosition,
     signals,
     error,
@@ -325,10 +371,32 @@ export function LiveDashboardProvider({
     return merged.slice(-500)
   }, [historicalCandles, liveCandles])
 
+  // Merge historical + live indicators
+  const allIndicators: LiveIndicators[] = useMemo(() => {
+    // Start with historical indicators
+    const merged = [...historicalIndicators]
+
+    // Add/update live indicators
+    for (const live of liveIndicators) {
+      const existingIdx = merged.findIndex(i => i.t === live.t)
+      if (existingIdx >= 0) {
+        // Update existing indicator (same timestamp)
+        merged[existingIdx] = live
+      } else if (merged.length === 0 || live.t > merged[merged.length - 1].t) {
+        // Append new indicator
+        merged.push(live)
+      }
+    }
+
+    // Sort by timestamp
+    merged.sort((a, b) => a.t - b.t)
+    return merged
+  }, [historicalIndicators, liveIndicators])
+
   // Transform backend indicators to chart format
   const indicatorData: IndicatorData[] = useMemo(() => {
-    return transformIndicatorsToChartData(indicatorsHistory, chartCandles)
-  }, [indicatorsHistory, chartCandles])
+    return transformIndicatorsToChartData(allIndicators, chartCandles)
+  }, [allIndicators, chartCandles])
 
   // Transform signals to trades for chart markers
   const chartTrades: Trade[] = useMemo(() => {

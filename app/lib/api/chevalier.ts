@@ -68,6 +68,15 @@ export interface TradesListResponse {
   total_count: number;
 }
 
+export interface IndicatorHistoryItem {
+  timestamp: string;
+  values: Record<string, number>;
+}
+
+export interface IndicatorsHistoryResponse {
+  indicators: IndicatorHistoryItem[];
+}
+
 // Re-export for convenience
 export type { StrategyStatus, DeploymentStatusResponse } from './types';
 
@@ -321,6 +330,38 @@ export const getDeploymentTrades = async (
     return result;
   } catch (error) {
     logger.error(LOG_CATEGORY, 'Failed to fetch deployment trades', {
+      error,
+      deploymentId
+    });
+    throw error;
+  }
+};
+
+/**
+ * Get historical indicator values for deployment
+ *
+ * Frontend calls this on mount to populate indicator charts with history.
+ * Returns calculated indicators for last N candles.
+ */
+export const getIndicatorsHistory = async (
+  deploymentId: string,
+  last: number = 200
+): Promise<IndicatorsHistoryResponse> => {
+  logger.debug(LOG_CATEGORY, 'Fetching indicators history', { deploymentId, last });
+
+  try {
+    const result = await get<IndicatorsHistoryResponse>(
+      `${CHEVALIER_PREFIX}/strategies/deployments/${deploymentId}/indicators/history?last=${last}`
+    );
+
+    logger.debug(LOG_CATEGORY, 'Indicators history fetched', {
+      deploymentId,
+      count: result.indicators.length,
+    });
+
+    return result;
+  } catch (error) {
+    logger.error(LOG_CATEGORY, 'Failed to fetch indicators history', {
       error,
       deploymentId
     });
