@@ -59,10 +59,13 @@ interface Props {
   onVisibilityChange?: (visibility: Record<string, boolean>) => void
 }
 
+// Right padding in candles - space after last candle
+const RIGHT_PADDING = 10
+
 export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, timeframe, onVisibilityChange }: Props) {
-  // Initialize shared viewport - show LAST candles (newest data)
+  // Initialize shared viewport - show LAST candles (newest data) with RIGHT_PADDING
   const candleWidth = 8
-  const visibleCandles = Math.floor(containerWidth / candleWidth)
+  const visibleCandles = Math.floor(containerWidth / candleWidth) - RIGHT_PADDING
   const initialOffsetX = -(candles.length - visibleCandles) * candleWidth
 
   const initialViewport: SharedViewport = {
@@ -192,14 +195,14 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
   const candlesRef = useRef(candles)
   candlesRef.current = candles
 
-  // Recalculate viewport when zoom/pan changes + DEBUG
+  // Recalculate viewport when zoom/pan changes with RIGHT_PADDING
   const recalculateViewport = useCallback((
     zoom: number,
     offsetX: number,
     width: number
   ): SharedViewport => {
     const candleWidth = Math.max(2, 8 * zoom)
-    const visibleCandles = Math.floor(width / candleWidth)
+    const visibleCandles = Math.floor(width / candleWidth) - RIGHT_PADDING
 
     // Calculate startIdx from offsetX
     const startIdx = Math.max(0, Math.floor(-offsetX / candleWidth))
@@ -237,8 +240,8 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       // Formula: offsetX = mouseX - paddingLeft - candlePosition * newCandleWidth
       let newOffsetX = mouseX - paddingLeft - candlePositionUnderCursor * newCandleWidth
 
-      // Apply bounds clamping
-      const visibleCandles = Math.floor(containerWidth / newCandleWidth)
+      // Apply bounds clamping with RIGHT_PADDING
+      const visibleCandles = Math.floor(containerWidth / newCandleWidth) - RIGHT_PADDING
       const maxOffset = -(candlesRef.current.length - visibleCandles) * newCandleWidth
       const minOffset = 0
 
@@ -250,7 +253,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
       let newMouse = prev.mouse
       if (lastCandleRef.current) {
         const { candleIndex, y, panelId } = lastCandleRef.current
-        
+
         // Check if candle is visible in new viewport
         if (candleIndex >= newViewport.startIdx && candleIndex <= newViewport.endIdx) {
           // Calculate position of SAME candle in new viewport
@@ -268,15 +271,13 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     })
   }, [containerWidth, recalculateViewport])
 
-  // Pan handler - DIRECT movement like old TradingChart
+  // Pan handler - DIRECT movement with RIGHT_PADDING
   const handlePan = useCallback((movementX: number) => {
     setState(prev => {
       const newOffsetX = prev.sharedViewport.offsetX + movementX
 
-      // Clamp bounds:
-      // maxOffset = -(totalCandles - visibleCandles) * candleWidth
-      // This allows panning until the LAST candle is visible on right edge
-      const visibleCandles = Math.floor(containerWidth / prev.sharedViewport.candleWidth)
+      // Clamp bounds with RIGHT_PADDING
+      const visibleCandles = Math.floor(containerWidth / prev.sharedViewport.candleWidth) - RIGHT_PADDING
       const maxOffset = -(candlesRef.current.length - visibleCandles) * prev.sharedViewport.candleWidth
 
       // minOffset = 0 (show first candles on left edge)
@@ -295,10 +296,10 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     })
   }, [containerWidth, recalculateViewport])
 
-  // Reset viewport - back to LAST candles (newest data)
+  // Reset viewport - back to LAST candles (newest data) with RIGHT_PADDING
   const handleReset = useCallback(() => {
     const candleWidth = 8
-    const visibleCandles = Math.floor(containerWidth / candleWidth)
+    const visibleCandles = Math.floor(containerWidth / candleWidth) - RIGHT_PADDING
     const initialOffsetX = -(candlesRef.current.length - visibleCandles) * candleWidth
 
     setState(prev => ({
@@ -445,7 +446,7 @@ export function SharedViewportProvider({ candles, indicators, trades, children, 
     })
   }, [onVisibilityChange])
 
-  // Mouse tracking with SNAP to candle center (TradingView behavior) + DEBUG
+  // Mouse tracking with SNAP to candle center (TradingView behavior)
   const updateMouse = useCallback((x: number, y: number, panelId: string) => {
     setState(prev => {
       // Calculate padding (match renderer logic)
