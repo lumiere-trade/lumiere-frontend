@@ -433,37 +433,6 @@ export function LiveDashboardProvider({
     return transformIndicatorsToChartData(allIndicators, chartCandles)
   }, [allIndicators, chartCandles])
 
-  // Transform signals to trades for chart markers
-  const chartTrades: Trade[] = useMemo(() => {
-    return signals.map(signal => ({
-      t: signal.timestamp.getTime(),
-      p: signal.price,
-      s: signal.type === 'ENTRY' ? 'B' : 'S',
-      reason: signal.reasons.join(', '),
-      indicators: signal.indicators,
-    }))
-  }, [signals])
-
-  // Transform position for PositionCard
-  const position: Position | null = useMemo(() => {
-    if (!livePosition || !livePosition.hasPosition) {
-      return null
-    }
-
-    return {
-      side: livePosition.side || 'LONG',
-      entryPrice: livePosition.entryPrice,
-      currentPrice: livePosition.currentPrice,
-      quantity: livePosition.size,
-      value: livePosition.value,
-      unrealizedPnL: livePosition.unrealizedPnL,
-      unrealizedPnLPct: livePosition.unrealizedPnLPct,
-      stopLoss: null,  // TODO: Get from strategy config
-      takeProfit: null,  // TODO: Get from strategy config
-      entryTime: new Date(),  // TODO: Track entry time
-    }
-  }, [livePosition])
-
   // Merge historical trades + live signals into recentTrades
   const recentTrades: RecentTrade[] = useMemo(() => {
     // Convert live signals to RecentTrade format
@@ -488,6 +457,43 @@ export function LiveDashboardProvider({
 
     return merged
   }, [historicalTrades, signals, livePosition])
+
+  // Transform recentTrades to chart markers (with quantity, value, pnl)
+  const chartTrades: Trade[] = useMemo(() => {
+    return [...recentTrades]
+      .reverse()
+      .map(trade => ({
+        t: trade.timestamp.getTime(),
+        p: trade.price,
+        s: trade.side === 'BUY' ? 'B' : 'S',
+        q: trade.quantity,
+        val: trade.price * trade.quantity,
+        reason: trade.reason,
+        indicators: undefined,
+        pnl: trade.pnl ?? undefined,
+        pnl_pct: trade.pnlPct ?? undefined,
+      }))
+  }, [recentTrades])
+
+  // Transform position for PositionCard
+  const position: Position | null = useMemo(() => {
+    if (!livePosition || !livePosition.hasPosition) {
+      return null
+    }
+
+    return {
+      side: livePosition.side || 'LONG',
+      entryPrice: livePosition.entryPrice,
+      currentPrice: livePosition.currentPrice,
+      quantity: livePosition.size,
+      value: livePosition.value,
+      unrealizedPnL: livePosition.unrealizedPnL,
+      unrealizedPnLPct: livePosition.unrealizedPnLPct,
+      stopLoss: null,  // TODO: Get from strategy config
+      takeProfit: null,  // TODO: Get from strategy config
+      entryTime: new Date(),  // TODO: Track entry time
+    }
+  }, [livePosition])
 
   // Account values
   const equity = livePosition?.totalEquity || initialCapital
