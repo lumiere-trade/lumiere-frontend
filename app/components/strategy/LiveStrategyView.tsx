@@ -348,37 +348,84 @@ export function LiveStrategyView({ deploymentStatus, deploymentVersion, isPaperT
                     <TableBody>
                       {[...recentTrades].reverse().map((trade) => {
                         const isExpanded = expandedTrade === trade.id
+                        const hasIndicators = trade.indicators && Object.keys(trade.indicators).length > 0
 
                         return (
-                          <TableRow
-                            key={trade.id}
-                            className="cursor-pointer hover:bg-muted/50"
-                            onClick={() => toggleTradeExpansion(trade.id)}
-                          >
-                            <TableCell className="w-[50px]">
-                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </TableCell>
-                            <TableCell className="w-[140px] font-mono text-md">
-                              {format(trade.timestamp, 'MMM dd HH:mm:ss')}
-                            </TableCell>
-                            <TableCell className="w-[80px]">
-                              <Badge variant={trade.side === 'BUY' ? 'default' : 'destructive'}>
-                                {trade.side}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="w-[100px] text-right font-mono text-md">
-                              ${trade.price.toFixed(2)}
-                            </TableCell>
-                            <TableCell className="w-[100px] text-right font-mono text-md">
-                              {trade.quantity.toFixed(4)}
-                            </TableCell>
-                            <TableCell className={cn(
-                              "w-[110px] text-right font-mono text-md",
-                              trade.pnl !== null ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''
-                            )}>
-                              {trade.pnl !== null ? `$${trade.pnl.toFixed(2)}` : '-'}
-                            </TableCell>
-                          </TableRow>
+                          <>
+                            <TableRow
+                              key={trade.id}
+                              className="cursor-pointer hover:bg-muted/50"
+                              onClick={() => toggleTradeExpansion(trade.id)}
+                            >
+                              <TableCell className="w-[50px]">
+                                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                              </TableCell>
+                              <TableCell className="w-[140px] font-mono text-md">
+                                {format(trade.timestamp, 'MMM dd HH:mm:ss')}
+                              </TableCell>
+                              <TableCell className="w-[80px]">
+                                <Badge variant={trade.side === 'BUY' ? 'default' : 'destructive'}>
+                                  {trade.side}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="w-[100px] text-right font-mono text-md">
+                                ${trade.price.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="w-[100px] text-right font-mono text-md">
+                                {trade.quantity.toFixed(4)}
+                              </TableCell>
+                              <TableCell className={cn(
+                                "w-[110px] text-right font-mono text-md",
+                                trade.pnl !== null ? (trade.pnl >= 0 ? 'text-green-500' : 'text-red-500') : ''
+                              )}>
+                                {trade.pnl !== null ? `$${trade.pnl.toFixed(2)}` : '-'}
+                              </TableCell>
+                            </TableRow>
+
+                            {/* Expandable Row - Indicators & Reason */}
+                            {isExpanded && (
+                              <TableRow key={`${trade.id}-expanded`}>
+                                <TableCell colSpan={6} className="bg-muted/30 p-4">
+                                  <div className="space-y-3">
+                                    {/* Reason */}
+                                    {trade.reason && (
+                                      <div>
+                                        <p className="text-sm font-medium text-muted-foreground mb-1">Reason</p>
+                                        <p className="text-sm">{trade.reason}</p>
+                                      </div>
+                                    )}
+
+                                    {/* Indicators */}
+                                    {hasIndicators && (
+                                      <div>
+                                        <p className="text-sm font-medium text-muted-foreground mb-2">
+                                          Indicator Values at Execution
+                                        </p>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                          {Object.entries(trade.indicators!).map(([name, value]) => (
+                                            <div
+                                              key={name}
+                                              className="flex justify-between items-center p-2 rounded bg-background/50 border border-primary/10"
+                                            >
+                                              <span className="text-sm text-muted-foreground">{name}</span>
+                                              <span className="text-sm font-mono font-medium">{value.toFixed(2)}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Empty state */}
+                                    {!trade.reason && !hasIndicators && (
+                                      <p className="text-sm text-muted-foreground text-center py-2">
+                                        No additional details available
+                                      </p>
+                                    )}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </>
                         )
                       })}
                     </TableBody>

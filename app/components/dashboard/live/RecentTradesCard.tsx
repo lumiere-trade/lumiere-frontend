@@ -14,6 +14,7 @@ export interface RecentTrade {
   pnlPct: number | null
   timestamp: Date
   reason?: string
+  indicators?: Record<string, number>
 }
 
 interface RecentTradesCardProps {

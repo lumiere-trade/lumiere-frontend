@@ -60,6 +60,7 @@ export interface TradeResponse {
   realized_pnl_pct: string | null;
   reason: string | null;
   executed_at: string;
+  indicators: Record<string, number> | null;
 }
 
 export interface TradesListResponse {

@@ -4,7 +4,6 @@
  * Includes historical candle warm-up from Chronicler
  * Backend-calculated indicators (no GPU calculation)
  */
-
 "use client"
 
 import {
@@ -155,6 +154,7 @@ function tradeResponseToRecentTrade(trade: TradeResponse): RecentTrade {
     pnlPct: trade.realized_pnl_pct ? parseFloat(trade.realized_pnl_pct) : null,
     timestamp: new Date(trade.executed_at),
     reason: trade.reason || undefined,
+    indicators: trade.indicators || undefined,
   }
 }
 
@@ -263,6 +263,7 @@ export function LiveDashboardProvider({
 
     async function loadWarmup() {
       setIsWarmingUp(true)
+
       try {
         console.log('[Warmup] Fetching historical candles...', {
           symbol: config.symbol,
@@ -384,6 +385,7 @@ export function LiveDashboardProvider({
     for (const live of liveCandles) {
       // Round live candle timestamp to timeframe interval
       const roundedT = roundToTimeframe(live.t, config.timeframe)
+
       const existingIdx = merged.findIndex(c => c.t === roundedT)
 
       if (existingIdx >= 0) {
@@ -412,6 +414,7 @@ export function LiveDashboardProvider({
     for (const live of liveIndicators) {
       // Round live indicator timestamp to timeframe interval
       const roundedT = roundToTimeframe(live.t, config.timeframe)
+
       const existingIdx = merged.findIndex(i => i.t === roundedT)
 
       if (existingIdx >= 0) {
@@ -469,7 +472,7 @@ export function LiveDashboardProvider({
         q: trade.quantity,
         val: trade.price * trade.quantity,
         reason: trade.reason,
-        indicators: undefined,
+        indicators: trade.indicators,
         pnl: trade.pnl ?? undefined,
         pnl_pct: trade.pnlPct ?? undefined,
       }))
@@ -534,11 +537,9 @@ export function LiveDashboardProvider({
 
 export function useLiveDashboard() {
   const context = useContext(LiveDashboardContext)
-
   if (context === undefined) {
     throw new Error('useLiveDashboard must be used within a LiveDashboardProvider')
   }
-
   return context
 }
 
