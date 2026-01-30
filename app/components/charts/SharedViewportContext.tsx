@@ -60,7 +60,7 @@ interface Props {
 }
 
 // Right padding in pixels - fixed space after last candle regardless of zoom
-const RIGHT_PADDING_PX = 80
+const RIGHT_PADDING_PX = 45
 
 export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, timeframe, onVisibilityChange }: Props) {
   // Initialize shared viewport - show LAST candles (newest data) with RIGHT_PADDING_PX
