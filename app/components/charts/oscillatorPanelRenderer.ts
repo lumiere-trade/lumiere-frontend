@@ -6,7 +6,7 @@ import { indexToX } from './chartUtils'
 function getPadding(width: number) {
   return {
     top: 5,
-    right: Math.max(58, width * 0.075),
+    right: Math.max(80, width * 0.10),  // Increased to 10% with 80px minimum
     bottom: 5,
     left: Math.max(15, width * 0.02)
   }
@@ -105,6 +105,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
     this.ctx.strokeStyle = 'rgba(136, 136, 136, 0.5)'
 
     const y0 = this.valueToY(0, yMin, yMax, panelHeight, padding.top)
+
     this.ctx.beginPath()
     this.ctx.moveTo(padding.left, y0)
     this.ctx.lineTo(this.width - padding.right, y0)
@@ -144,6 +145,7 @@ export class OscillatorPanelRenderer extends PanelRenderer {
       if (!point || point.v === null || point.v === undefined) continue
 
       const x = indexToX(i, viewport.candleWidth, viewport.offsetX, padding.left, viewport.startIdx)
+
       if (x < padding.left || x > this.width - padding.right) continue
 
       const valueY = this.valueToY(point.v, yMin, yMax, viewport.panelHeight, padding.top)
