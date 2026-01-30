@@ -4,6 +4,7 @@ import React, { useRef, useEffect, useCallback, useState, useMemo } from 'react'
 import { useSharedViewport } from './SharedViewportContext'
 import { PanelViewport, PanelConfig } from './panelTypes'
 import { PanelRenderer } from './panelRenderer'
+import { YAxisOverlay } from './YAxisOverlay'
 import { Eye, EyeOff } from 'lucide-react'
 
 interface PanelProps {
@@ -14,6 +15,7 @@ interface PanelProps {
 }
 
 const PANEL_HEADER_HEIGHT = 18 // px height of panel header (must match MultiPanelChart.tsx)
+const CHART_RIGHT_PADDING = 60 // px width reserved for Y-axis overlay
 
 export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -44,13 +46,10 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
     // FIXED: state.mouse.x is already CENTER of candle (after snap in SharedViewportContext)
     // So we just need: (center - paddingLeft) / candleWidth to find which candle
-    // OLD (WRONG): const relativeIdx = Math.floor((state.mouse.x - paddingLeft + candleWidth / 2) / candleWidth)
     const relativeIdx = Math.floor((state.mouse.x - paddingLeft) / candleWidth)
 
     // Convert to ABSOLUTE index in candles array
     const candleIdx = startIdx + relativeIdx
-
-    // DEBUG - verify correct candle is selected
 
     // Clamp to valid range
     if (candleIdx < 0 || candleIdx >= candles.length) return null
@@ -86,6 +85,126 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     return candleIdx
   }, [state.mouse, state.sharedViewport, candles, panelTop, panelHeight])
 
+  // Calculate price range for Y-axis overlay
+  const priceRange = useMemo(() => {
+    if (candles.length === 0) return { priceMin: 0, priceMax: 100 }
+
+    const { startIdx, endIdx } = state.sharedViewport
+
+    // For price panel - calculate from candles + indicators
+    if (config.type === 'price') {
+      let priceMin = Infinity
+      let priceMax = -Infinity
+
+      // Price range from candles
+      for (let i = startIdx; i <= endIdx && i < candles.length; i++) {
+        priceMin = Math.min(priceMin, candles[i].l)
+        priceMax = Math.max(priceMax, candles[i].h)
+      }
+
+      // Price range from visible indicators
+      config.indicators.forEach(ind => {
+        if (!ind.visible) return
+        for (let i = startIdx; i <= endIdx && i < ind.points.length; i++) {
+          const value = ind.points[i].v
+          if (!isNaN(value) && isFinite(value)) {
+            priceMin = Math.min(priceMin, value)
+            priceMax = Math.max(priceMax, value)
+          }
+        }
+      })
+
+      // Add 5% padding
+      const padding = (priceMax - priceMin) * 0.05
+      priceMin -= padding
+      priceMax += padding
+
+      return { priceMin, priceMax }
+    }
+
+    // For oscillator panel - use fixed or auto range
+    if (config.type === 'oscillator') {
+      if (config.yAxis.fixed) {
+        return {
+          priceMin: config.yAxis.fixed.min,
+          priceMax: config.yAxis.fixed.max
+        }
+      }
+
+      // Auto-calculate from visible indicators
+      let yMin = Infinity
+      let yMax = -Infinity
+
+      config.indicators.forEach(ind => {
+        if (!ind.visible) return
+        for (let i = startIdx; i <= endIdx && i < ind.points.length; i++) {
+          const value = ind.points[i].v
+          if (isFinite(value)) {
+            yMin = Math.min(yMin, value)
+            yMax = Math.max(yMax, value)
+          }
+        }
+      })
+
+      // Add padding
+      const rangePadding = (yMax - yMin) * 0.1
+      yMin -= rangePadding
+      yMax += rangePadding
+
+      return { priceMin: yMin, priceMax: yMax }
+    }
+
+    // For volume panel - calculate max volume
+    if (config.type === 'volume') {
+      let volumeMax = 0
+
+      for (let i = startIdx; i <= endIdx && i < candles.length; i++) {
+        if (candles[i].v) {
+          volumeMax = Math.max(volumeMax, candles[i].v!)
+        }
+      }
+
+      // Check indicator values
+      config.indicators.forEach(ind => {
+        if (!ind.visible || ind.name.toLowerCase() === 'volume') return
+        for (let i = startIdx; i <= endIdx && i < ind.points.length; i++) {
+          const point = ind.points[i]
+          if (point && !isNaN(point.v)) {
+            volumeMax = Math.max(volumeMax, point.v)
+          }
+        }
+      })
+
+      return { priceMin: 0, priceMax: volumeMax * 1.1 }
+    }
+
+    return { priceMin: 0, priceMax: 100 }
+  }, [candles, state.sharedViewport, config])
+
+  // Calculate mouse price for Y-axis label
+  const mousePrice = useMemo(() => {
+    if (!state.mouse) return undefined
+    if (state.mouse.y < panelTop || state.mouse.y > panelTop + panelHeight) {
+      return undefined
+    }
+
+    // Convert mouse Y to price
+    const panelRelativeY = state.mouse.y - panelTop - PANEL_HEADER_HEIGHT
+    const pricePercentage = panelRelativeY / panelHeight
+    const price = priceRange.priceMax - (pricePercentage * (priceRange.priceMax - priceRange.priceMin))
+
+    return price
+  }, [state.mouse, panelTop, panelHeight, priceRange])
+
+  // Calculate mouse Y relative to panel
+  const mousePanelY = useMemo(() => {
+    if (!state.mouse) return undefined
+    if (state.mouse.y < panelTop || state.mouse.y > panelTop + panelHeight) {
+      return undefined
+    }
+    return state.mouse.y - panelTop - PANEL_HEADER_HEIGHT
+  }, [state.mouse, panelTop, panelHeight])
+
   // Render function
   const renderChart = useCallback(() => {
     const canvas = canvasRef.current
@@ -97,8 +216,8 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
 
     const panelViewport: PanelViewport = {
       ...state.sharedViewport,
-      priceMin: config.yAxis.min,
-      priceMax: config.yAxis.max,
+      priceMin: priceRange.priceMin,
+      priceMax: priceRange.priceMax,
       panelHeight,
       panelTop
     }
@@ -106,7 +225,6 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     let panelMouse: { x: number; y: number } | null = null
     if (state.mouse) {
       // Convert wrapper-relative mouse Y to canvas-relative Y
-      // panelTop now includes header height, so we subtract both panelTop AND header
       panelMouse = {
         x: state.mouse.x,
         y: state.mouse.y - panelTop - PANEL_HEADER_HEIGHT
@@ -114,7 +232,7 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
     }
 
     renderer.render(candles, panelViewport, config, panelMouse, trades)
-  }, [state, candles, trades, config, panelHeight, panelTop])
+  }, [state, candles, trades, config, panelHeight, panelTop, priceRange])
 
   // Setup canvas size with THROTTLED ResizeObserver (smooth during animation)
   useEffect(() => {
@@ -341,15 +459,34 @@ export function Panel({ config, panelTop, panelHeight, createRenderer }: PanelPr
         )}
       </div>
 
-      {/* Canvas container - panel itself */}
+      {/* Canvas container with Y-axis overlay */}
       <div
-        ref={containerRef}
         className="relative border-b border-border"
         style={{ height: `${panelHeight}px` }}
       >
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full"
+        {/* Chart canvas - reduced width to make room for Y-axis */}
+        <div
+          ref={containerRef}
+          className="absolute left-0 top-0"
+          style={{
+            width: `calc(100% - ${CHART_RIGHT_PADDING}px)`,
+            height: `${panelHeight}px`
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full"
+          />
+        </div>
+
+        {/* Y-axis overlay - positioned on the right */}
+        <YAxisOverlay
+          priceMin={priceRange.priceMin}
+          priceMax={priceRange.priceMax}
+          panelHeight={panelHeight}
+          panelType={config.type}
+          mouseY={mousePanelY}
+          mousePrice={mousePrice}
         />
       </div>
     </div>

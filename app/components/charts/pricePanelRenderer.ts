@@ -6,7 +6,7 @@ import { priceToY, indexToX, findCandleIndex } from './chartUtils'
 function getPadding(width: number) {
   return {
     top: 5,
-    right: Math.max(45, width * 0.065),
+    right: 0,  // No right padding - Y-axis is now separate overlay
     bottom: 5,
     left: Math.max(15, width * 0.02)
   }
@@ -69,18 +69,12 @@ export class PricePanelRenderer extends PanelRenderer {
       this.drawTradeArrows(trades, candles, viewport, priceMin, priceMax, padding)
     }
 
-    // Draw Y-axis
-    this.drawYAxis(priceMin, priceMax, viewport.panelHeight, padding)
-
-    // Draw horizontal crosshair BEFORE price label (so label renders on top)
+    // Draw horizontal crosshair
     if (mouse) {
       this.drawHorizontalCrosshair(mouse, viewport, padding)
     }
 
-    // Draw price value label if mouse is present (renders on top of crosshair)
-    if (mouse) {
-      this.drawPriceValueLabel(mouse, viewport, priceMin, priceMax, padding)
-    }
+    // NOTE: Y-axis and price label now rendered by YAxisOverlay component
   }
 
   private drawCandles(

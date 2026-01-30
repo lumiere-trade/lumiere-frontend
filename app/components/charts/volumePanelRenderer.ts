@@ -6,7 +6,7 @@ import { indexToX } from './chartUtils'
 function getPadding(width: number) {
   return {
     top: 5,
-    right: Math.max(45, width * 0.065),
+    right: 0,  // No right padding - Y-axis is now separate overlay
     bottom: 5,
     left: Math.max(15, width * 0.02)
   }
@@ -69,18 +69,12 @@ export class VolumePanelRenderer extends PanelRenderer {
       }
     })
 
-    // Draw Y-axis
-    this.drawYAxis(volumeMin, volumeMax, viewport.panelHeight, padding, this.formatVolume)
-
-    // Draw horizontal crosshair BEFORE value label (so label renders on top)
+    // Draw horizontal crosshair
     if (mouse) {
       this.drawHorizontalCrosshair(mouse, viewport, padding)
     }
 
-    // Draw volume value label if mouse is present (renders on top of crosshair)
-    if (mouse) {
-      this.drawPriceValueLabel(mouse, viewport, volumeMin, volumeMax, padding, this.formatVolume)
-    }
+    // NOTE: Y-axis and volume label now rendered by YAxisOverlay component
   }
 
   private drawVolumeBars(
