@@ -61,7 +61,7 @@ interface Props {
 
 // Canvas width reduced by this amount for Y-axis overlay (must match Panel.tsx)
 const CHART_RIGHT_PADDING = 60
-const RIGHT_PADDING_PX = 0  // Additional padding after candles (currently none)
+const RIGHT_PADDING_PX = 20  // Breathing room between last candle and Y-axis
 
 export function SharedViewportProvider({ candles, indicators, trades, children, containerWidth, timeframe, onVisibilityChange }: Props) {
   // Calculate effective width for chart (excluding Y-axis overlay)
