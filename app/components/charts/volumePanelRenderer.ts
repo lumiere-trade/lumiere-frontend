@@ -6,7 +6,7 @@ import { indexToX } from './chartUtils'
 function getPadding(width: number) {
   return {
     top: 5,
-    right: Math.max(80, width * 0.10),  // Increased to 10% with 80px minimum
+    right: Math.max(45, width * 0.065),
     bottom: 5,
     left: Math.max(15, width * 0.02)
   }
