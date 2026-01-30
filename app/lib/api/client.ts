@@ -90,6 +90,19 @@ async function fetchWithTimeout(
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
+  // Handle 401 Unauthorized - token expired or invalid
+  if (response.status === 401) {
+    console.warn('[API] 401 Unauthorized - clearing auth and redirecting to login')
+    clearAuthToken()
+    
+    // Redirect to login page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    
+    throw new ApiError('Authentication expired. Please login again.', 401, 'UNAUTHORIZED')
+  }
+
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}`
     let errorCode: string | undefined
