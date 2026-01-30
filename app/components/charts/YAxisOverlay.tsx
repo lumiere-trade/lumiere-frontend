@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { formatPrice } from './chartUtils'
 
 interface YAxisOverlayProps {
   priceMin: number
@@ -44,7 +43,8 @@ export function YAxisOverlay({
       if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`
       return value.toFixed(0)
     }
-    return formatPrice(value)
+    // Price and oscillator - always 2 decimals
+    return value.toFixed(2)
   }
 
   return (
